@@ -34,6 +34,12 @@
 
 - [ ] **CLUB-01**: Admin can configure zero or more governing body affiliations for the club; each affiliation records a code (e.g. `BRCA`), a display name (e.g. `British Radio Car Association`), and a `membershipRequired` flag; if `membershipRequired` is true, racers must have a matching membership number on their profile to submit an entry to any event
 
+### Tracks
+
+- [ ] **TRACK-01**: Admin can define and manage tracks (name, venue/location notes); a club may have multiple tracks
+- [ ] **TRACK-02**: Each track has a configurable minimum lap time per racing class; passing events with crossings faster than this threshold are ignored (prevents loop double-counting and track-cutting); a track-wide default applies to all classes unless a class-specific override is set
+- [ ] **TRACK-03**: Each track has a configurable maximum last lap time per racing class; a race closes automatically if no crossing occurs within this window after the clock expires (prevents infinite wait for broken cars)
+
 ### Racing Classes
 
 - [ ] **RACECLASS-01**: Admin can define and manage racing classes (name, description)
@@ -41,6 +47,7 @@
 ### Event Management
 
 - [ ] **EVENT-01**: Admin can create an event with a name, date, and venue
+- [ ] **EVENT-07**: Admin associates an event with a configured track; track lap time thresholds (TRACK-02, TRACK-03) apply automatically to all races at that event
 - [ ] **EVENT-02**: Admin can add racing classes to an event and assign a race format to each class
 - [ ] **EVENT-03**: Racer can enter an event online via the portal, selecting their class, car, and transponder
 - [ ] **EVENT-04**: Public event schedule is visible without login
@@ -51,7 +58,7 @@
 
 ### Race Format Configuration
 
-- [ ] **FORMAT-01**: Admin can configure a standard timed race (duration, start type, qualifying type, min/max lap times)
+- [ ] **FORMAT-01**: Admin can configure a standard timed race (duration, start type, qualifying type); lap time thresholds are set at the track level (see TRACK-02, TRACK-03)
 - [ ] **FORMAT-02**: Admin can configure bump-up finals (qualifying heats, heat duration, best heats count, grid size, bump spots — default 2); number of finals is calculated automatically from actual entry count at event time
 - [ ] **FORMAT-03**: Admin can configure a Reedy race format (rounds, round duration)
 - [ ] **FORMAT-04**: Admin can configure points finals (qualifying heats, finals count, final duration)
@@ -60,12 +67,10 @@
 - [ ] **FORMAT-07**: Admin can override individual format config fields at the event-class level without modifying the underlying template
 - [ ] **FORMAT-08**: Start type is configurable per class per phase: STAGGER (car numbers called sequentially at configured interval), GRID (all start simultaneously on buzzer), ROLLING (time starts on first crossing after buzzer); qualifying and finals may use different start types
 - [ ] **FORMAT-09**: Qualifying type is configurable: FTQ (fastest time across all heats), ROUND_BY_ROUND (points per finishing position each round), FASTEST_LAP (best single lap from any heat), CONSECUTIVE_LAPS (best N consecutive laps)
-- [ ] **FORMAT-10**: Minimum lap time is configurable per class; crossings faster than this threshold are ignored (prevents loop double-counting and track-cutting)
-- [ ] **FORMAT-11**: Maximum last lap time is configurable per class; race closes if no crossing occurs within this window after the clock expires (prevents infinite wait for broken cars)
-- [ ] **FORMAT-12**: Gap between successive races is configurable per class
-- [ ] **FORMAT-13**: Stagger start interval is configurable (default 1 second between car number calls)
-- [ ] **FORMAT-14**: For bump-up events, the system automatically calculates the number of finals and generates final grid assignments from qualifying results using the configured grid size and bump spots; the lowest final may have fewer than grid_size racers
-- [ ] **FORMAT-15**: Championship points for bump-up events are assigned from a single class-wide finishing order: A-final positions fill first, then non-promoted finishers from each lower final in finish order cascading down
+- [ ] **FORMAT-10**: Gap between successive races is configurable per class
+- [ ] **FORMAT-11**: Stagger start interval is configurable (default 1 second between car number calls)
+- [ ] **FORMAT-12**: For bump-up events, the system automatically calculates the number of finals and generates final grid assignments from qualifying results using the configured grid size and bump spots; the lowest final may have fewer than grid_size racers
+- [ ] **FORMAT-13**: Championship points for bump-up events are assigned from a single class-wide finishing order: A-final positions fill first, then non-promoted finishers from each lower final in finish order cascading down
 
 ### Local Forwarder
 
@@ -205,6 +210,9 @@ Populated during roadmap creation.
 | RACER-13 | — | Pending |
 | RACER-14 | — | Pending |
 | CLUB-01 | — | Pending |
+| TRACK-01 | — | Pending |
+| TRACK-02 | — | Pending |
+| TRACK-03 | — | Pending |
 | RACECLASS-01 | — | Pending |
 | EVENT-01 | — | Pending |
 | EVENT-02 | — | Pending |
@@ -212,6 +220,7 @@ Populated during roadmap creation.
 | EVENT-04 | — | Pending |
 | EVENT-05 | — | Pending |
 | EVENT-06 | — | Pending |
+| EVENT-07 | — | Pending |
 | ENTRY-01 | — | Pending |
 | ENTRY-02 | — | Pending |
 | FORMAT-01 | — | Pending |
@@ -227,8 +236,6 @@ Populated during roadmap creation.
 | FORMAT-11 | — | Pending |
 | FORMAT-12 | — | Pending |
 | FORMAT-13 | — | Pending |
-| FORMAT-14 | — | Pending |
-| FORMAT-15 | — | Pending |
 | FORWARDER-01 | — | Pending |
 | FORWARDER-02 | — | Pending |
 | FORWARDER-03 | — | Pending |
@@ -281,10 +288,10 @@ Populated during roadmap creation.
 | RESULT-05 | — | Pending |
 
 **Coverage:**
-- v1 requirements: 86 total
+- v1 requirements: 88 total
 - Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 86 ⚠️
+- Unmapped: 88 ⚠️
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-04-15 after requirements review session*
+*Last updated: 2026-04-16 — added track entity (TRACK-01–03), EVENT-07 (track association), governing body membership (RACER-13–14, CLUB-01); removed min/max lap times from FORMAT section (moved to track config); renumbered FORMAT-10–13*
