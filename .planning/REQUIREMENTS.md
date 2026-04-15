@@ -27,6 +27,12 @@
 - [ ] **RACER-10**: Admin can define and manage car tag categories (default set installed: Chassis, ESC, Motor, Servo, Battery, Body, Tyres)
 - [ ] **RACER-11**: Racer can add free-text values for any tag category to each of their cars
 - [ ] **RACER-12**: Racer has an ability rating (0–100) per racing class, used to seed qualifying heats; updated automatically from championship points after each round
+- [ ] **RACER-13**: Racer profile stores zero or more governing body membership numbers, keyed by governing body code (e.g. `BRCA → 12345`, `ROAR → 67890`); admin can add or edit these on behalf of a racer
+- [ ] **RACER-14**: If the club has a governing body affiliation with `membershipRequired = true`, entry submission is blocked for racers without a matching membership number on their profile; admin can override on a per-entry basis with an audit log entry
+
+### Club Configuration
+
+- [ ] **CLUB-01**: Admin can configure zero or more governing body affiliations for the club; each affiliation records a code (e.g. `BRCA`), a display name (e.g. `British Radio Car Association`), and a `membershipRequired` flag; if `membershipRequired` is true, racers must have a matching membership number on their profile to submit an entry to any event
 
 ### Racing Classes
 
@@ -137,6 +143,10 @@
 
 ## v2 Requirements
 
+### Governing Body Integration
+
+- **CLUB-02**: If a governing body affiliation has a `validationApiUrl` configured, the system validates membership numbers against that external API on entry submission; validation result (UNVERIFIED / VALID / INVALID) is stored per racer per governing body and surfaced to admins
+
 ### Notifications
 
 - **NOTF-01**: Racer receives email confirmation when their event entry is accepted
@@ -192,6 +202,9 @@ Populated during roadmap creation.
 | RACER-10 | — | Pending |
 | RACER-11 | — | Pending |
 | RACER-12 | — | Pending |
+| RACER-13 | — | Pending |
+| RACER-14 | — | Pending |
+| CLUB-01 | — | Pending |
 | RACECLASS-01 | — | Pending |
 | EVENT-01 | — | Pending |
 | EVENT-02 | — | Pending |
@@ -268,9 +281,9 @@ Populated during roadmap creation.
 | RESULT-05 | — | Pending |
 
 **Coverage:**
-- v1 requirements: 83 total
+- v1 requirements: 86 total
 - Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 83 ⚠️
+- Unmapped: 86 ⚠️
 
 ---
 *Requirements defined: 2026-04-15*
