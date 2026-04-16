@@ -32,7 +32,17 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. An admin can create club profile and governing body affiliations, define tracks with lap time thresholds and decoder loop configuration, and define racing classes
   4. An admin can create, edit, and delete race format templates (timed, bump-up finals, points finals) including all configurable fields; format config exports to JSON and re-imports cleanly
   5. Assigning a format template to an event class snapshots the config; editing the template afterwards does not change the existing assignment
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Gradle multi-module scaffold, Docker Compose, Spring Boot config, and all Flyway migrations
+- [ ] 01-02-PLAN.md — Core domain entities (User, Club, Track, RacingClass) and Spring Data repositories
+- [ ] 01-03-PLAN.md — Race format config sealed interface, JSONB entities, merge service, and unit tests
+- [ ] 01-04-PLAN.md — JWT auth system (security config, token service, auth controller, password reset)
+- [ ] 01-05-PLAN.md — Admin CRUD APIs (club, track, racing class, race format with JSON/YAML export/import)
+- [ ] 01-06-PLAN.md — React frontend scaffold with auth screens (login, register, password reset)
+- [ ] 01-07-PLAN.md — Integration test suite (all APIs verified against Testcontainers PostgreSQL)
+
 **UI hint**: yes
 
 ### Phase 2: Racer Portal
@@ -115,7 +125,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Domain Foundation | 0/TBD | Not started | - |
+| 1. Domain Foundation | 0/7 | Planning complete | - |
 | 2. Racer Portal | 0/TBD | Not started | - |
 | 3. Admin Panel & Event Management | 0/TBD | Not started | - |
 | 4. Race Control | 0/TBD | Not started | - |
