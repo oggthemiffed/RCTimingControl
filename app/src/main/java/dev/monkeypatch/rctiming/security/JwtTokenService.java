@@ -24,7 +24,7 @@ public class JwtTokenService {
     // SecretKey is from Java SE (java.security / javax.crypto) — not a Jakarta EE namespace.
     // There is no jakarta.crypto equivalent; this import is correct for Spring Boot 3.x.
     private final io.jsonwebtoken.security.MacAlgorithm signingAlg;
-    private final java.security.Key signingKey;
+    private final javax.crypto.SecretKey signingKey;
     private final long accessTokenTtlMs;
     private final long refreshTokenTtlMs;
 
@@ -58,11 +58,8 @@ public class JwtTokenService {
     }
 
     public Claims parseToken(String token) {
-        // Keys.hmacShaKeyFor always returns a SecretKey — safe unchecked cast
-        @SuppressWarnings("unchecked")
-        var secretKey = (javax.crypto.SecretKey) signingKey;
         return Jwts.parser()
-                .verifyWith(secretKey)
+                .verifyWith(signingKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
