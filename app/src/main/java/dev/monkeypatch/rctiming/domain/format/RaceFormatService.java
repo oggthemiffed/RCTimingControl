@@ -2,9 +2,12 @@ package dev.monkeypatch.rctiming.domain.format;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -68,5 +71,51 @@ public class RaceFormatService {
         eventClass.setConfigSnapshot(snapshot);
         eventClass.setTemplate(template);
         return eventClass;
+    }
+
+    // --- CRUD methods for format templates ---
+
+    @Transactional(readOnly = true)
+    public List<RaceFormatTemplate> findAll() {
+        return templateRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public RaceFormatTemplate findById(Long id) {
+        return templateRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Race format template not found: " + id));
+    }
+
+    public RaceFormatTemplate create(String name, RaceFormatConfig config) {
+        RaceFormatTemplate template = new RaceFormatTemplate();
+        template.setName(name);
+        template.setConfig(config);
+        Instant now = Instant.now();
+        template.setCreatedAt(now);
+        template.setUpdatedAt(now);
+        return templateRepository.save(template);
+    }
+
+    public RaceFormatTemplate update(Long id, String name, RaceFormatConfig config) {
+        RaceFormatTemplate template = findById(id);
+        template.setName(name);
+        template.setConfig(config);
+        template.setUpdatedAt(Instant.now());
+        return templateRepository.save(template);
+    }
+
+    public void delete(Long id) {
+        if (!templateRepository.existsById(id)) {
+            throw new EntityNotFoundException("Race format template not found: " + id);
+        }
+        templateRepository.deleteById(id);
+    }
+
+    public RaceFormatConfig exportConfig(Long id) {
+        return findById(id).getConfig();
+    }
+
+    public RaceFormatTemplate importConfig(String name, RaceFormatConfig config) {
+        return create(name, config);
     }
 }
