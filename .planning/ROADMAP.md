@@ -1,0 +1,124 @@
+# Roadmap: RCTimingControl
+
+## Overview
+
+Seven phases deliver a complete RC club management and race timing system. The build order follows a strict dependency chain: domain entities and auth unlock the racer portal; event management and format config unlock race control; race control unlocks live timing integration; audio and practice layer on top of a running timing system; results and championship scoring close out with post-race publishing. Each phase delivers a coherent, independently verifiable capability.
+
+## Phases
+
+**Phase Numbering:**
+- Integer phases (1, 2, 3): Planned milestone work
+- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+
+Decimal phases appear between their surrounding integers in numeric order.
+
+- [ ] **Phase 1: Domain Foundation** - Core entities, database schema, auth, club/track/class/format config APIs
+- [ ] **Phase 2: Racer Portal** - Racer self-service (profile, cars, transponders), online event entry, public schedule
+- [ ] **Phase 3: Admin Panel & Event Management** - Admin event/class/entry management, event state machine, championship setup
+- [ ] **Phase 4: Race Control** - Browser-based race control client, race state machine, marshal laps, referee tools
+- [ ] **Phase 5: Live Timing & Forwarder** - AMB P3 forwarder, gRPC streaming, WebSocket live timing display
+- [ ] **Phase 6: Audio & Practice** - Voice announcements (Web Speech API + TTS), open practice sessions
+- [ ] **Phase 7: Results & Championship** - Post-race result snapshots, championship standings, PDF export
+
+## Phase Details
+
+### Phase 1: Domain Foundation
+**Goal**: The database schema, core entities, and admin configuration APIs exist so that clubs, tracks, classes, and race formats can be managed and auth works end-to-end
+**Depends on**: Nothing (first phase)
+**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, CLUB-01, CLUB-02, TRACK-01, TRACK-02, TRACK-03, TRACK-04, RACECLASS-01, FORMAT-01, FORMAT-02, FORMAT-04, FORMAT-05, FORMAT-06, FORMAT-07, FORMAT-08, FORMAT-09, FORMAT-10, FORMAT-11, FORMAT-12, FORMAT-13, FORMAT-14
+**Success Criteria** (what must be TRUE):
+  1. A racer can self-register with email/password and remain logged in across browser sessions, and can reset a forgotten password via email
+  2. A staff user can log in and access only the tools their assigned roles permit (ADMIN, RACE_DIRECTOR, REFEREE)
+  3. An admin can create club profile and governing body affiliations, define tracks with lap time thresholds and decoder loop configuration, and define racing classes
+  4. An admin can create, edit, and delete race format templates (timed, bump-up finals, points finals) including all configurable fields; format config exports to JSON and re-imports cleanly
+  5. Assigning a format template to an event class snapshots the config; editing the template afterwards does not change the existing assignment
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 2: Racer Portal
+**Goal**: Racers can manage their own profile, cars, and transponders through a self-service web portal and submit online entries to published events
+**Depends on**: Phase 1
+**Requirements**: RACER-01, RACER-02, RACER-03, RACER-04, RACER-05, RACER-06, RACER-07, RACER-08, RACER-09, RACER-10, RACER-11, RACER-12, RACER-13, RACER-14, EVENT-03, EVENT-04, ENTRY-01
+**Success Criteria** (what must be TRUE):
+  1. Racer can create and edit their profile including governing body membership numbers, and add or edit cars with tag categories and values; cars are archived not deleted
+  2. Racer can register transponders (rejected if duplicate system-wide) and select a transponder when submitting an entry; the transponder is snapshotted at submission time
+  3. Racer can submit an entry to a published event, selecting class, car, and transponder; submission is blocked if the club requires governing body membership and the racer has no matching number (admin can override)
+  4. Racer can view and withdraw their own entries before entries close, and view their entry history and past results
+  5. Public event schedule is visible to anyone without login
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 3: Admin Panel & Event Management
+**Goal**: Admins can create and configure events end-to-end — setting up classes, assigning formats, managing entries, and configuring championships — so a complete meeting structure exists before race day
+**Depends on**: Phase 1
+**Requirements**: EVENT-01, EVENT-02, EVENT-05, EVENT-06, EVENT-07, ENTRY-02, CHAMP-01, CHAMP-02, CHAMP-03, CHAMP-04, CHAMP-06, CHAMP-07, CHAMP-08, CHAMP-09, CHAMP-10
+**Success Criteria** (what must be TRUE):
+  1. Admin can create an event with a name, date, track association, and move it through its full state machine (DRAFT → PUBLISHED → OPEN → ENTRIES_CLOSED → IN_PROGRESS → COMPLETED); invalid transitions are rejected
+  2. Admin can add racing classes to an event, assign race format templates (with override capability), and combine low-turnout classes into a single combined race
+  3. Admin can view and manage all entries per event and per class
+  4. Admin can create a championship, configure best-X-from-Y scoring, a custom points scale, and bonus points for TQ and A-final winner; standings display correctly with drops and tiebreaks
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 4: Race Control
+**Goal**: A race director can run a complete race meeting from any browser — calling the grid, starting and stopping races, applying marshal laps, and handling incidents — with all commands enforced server-side
+**Depends on**: Phase 3
+**Requirements**: CTRL-01, CTRL-02, CTRL-03, CTRL-04, CTRL-05, CTRL-06, CTRL-07, CTRL-08, CTRL-09, OFFICIAL-01, OFFICIAL-02, OFFICIAL-03, OFFICIAL-04
+**Success Criteria** (what must be TRUE):
+  1. Race director can start and stop a race; conflicting commands from a second browser window are rejected with HTTP 409; the race follows PENDING → GRID → RUNNING → FINISHED state machine
+  2. Race control displays the marshal list (drivers from previous race) and the grid call (cars due on track next) for the current race
+  3. Race director can add or remove marshal laps with a full audit trail; results update immediately
+  4. Race director can abandon a race in progress (results saved to that point), skip to a specific race/round, and link an unknown transponder passing to an entry retroactively
+  5. Race referee can raise incident reports and apply lap or time penalties that immediately update live standings; steward view highlights proximity alerts and backmarker situations
+  6. Race results can be exported as a printable PDF sheet at the venue
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 5: Live Timing & Forwarder
+**Goal**: The local forwarder application connects to the AMB decoder over TCP and streams live lap data to the cloud service, which broadcasts real-time positions and gaps to all connected browsers
+**Depends on**: Phase 4
+**Requirements**: FORWARDER-01, FORWARDER-02, FORWARDER-03, FORWARDER-04, FORWARDER-05, TIMING-01, TIMING-02, TIMING-03, TIMING-04, TIMING-05, TIMING-06, TIMING-07, TIMING-08
+**Success Criteria** (what must be TRUE):
+  1. The forwarder (separate Java Gradle submodule) connects to the AMB decoder via TCP, completes the FIRST_CONTACT handshake, and streams decoded PASSING events to the cloud service via gRPC bidirectional streaming using a pre-configured API token
+  2. The forwarder auto-reconnects to the decoder on connection loss; WATCHDOG absence triggers reconnect; both forwarder-to-decoder and forwarder-to-cloud connection status are visible in the race control UI
+  3. The forwarder detects PASSING_NUMBER gaps and sends RESEND requests to the decoder; lap timestamps use the decoder's own RTC_TIME field, not server clock
+  4. Live lap times, positions, and gaps update in the browser in real time during a race; unknown transponder passings are surfaced in race control UI without blocking lap counting for registered entries
+  5. Switching to a new timing protocol requires only a new TimingSource implementation class with no changes to race control or timing logic
+**Plans**: TBD
+
+### Phase 6: Audio & Practice
+**Goal**: The race control browser produces voice announcements throughout the meeting and officials can run open practice sessions with live lap display
+**Depends on**: Phase 5
+**Requirements**: AUDIO-01, AUDIO-02, AUDIO-03, AUDIO-04, AUDIO-05, AUDIO-06, AUDIO-07, AUDIO-08, AUDIO-09, AUDIO-10, AUDIO-11, AUDIO-12, AUDIO-13, AUDIO-14, AUDIO-15, PRACTICE-01, PRACTICE-02
+**Success Criteria** (what must be TRUE):
+  1. Race control browser produces voice announcements for countdown intervals, stagger car-number calls, per-lap beeps (improving/not-improving), and finish announcements; all announcement types are individually togglable
+  2. Pre-generated TTS audio clips for a race are fetched and cached by the client during grid preparation; if a clip is unavailable at playback time, Web Speech API synthesis is used as a non-blocking fallback
+  3. Racer profile includes a phonetic spelling field; the server generates a TTS name clip on profile create/update using a configured TTS provider; racer can preview the clip and select a preferred voice; profanity blocklist screens both display name and phonetic spelling before saving
+  4. Admin can run an open practice session using the decoder; live lap times are displayed and each racer's best N consecutive laps are shown; results are printable after the session
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 7: Results & Championship
+**Goal**: Final race results are published after each race, championship standings update automatically, and per-racer history is visible on the portal
+**Depends on**: Phase 6
+**Requirements**: RESULT-01, RESULT-02, RESULT-03, RESULT-04, RESULT-05, CHAMP-05
+**Success Criteria** (what must be TRUE):
+  1. Final race results are published publicly after each race, correctly reflecting all marshal lap adjustments and penalties, including every individual lap time
+  2. Championship standings table is live on the web with no login required, showing results in best-to-worst order per driver with drop scores visible
+  3. Per-racer result history is viewable on the racer's portal page; printed results optionally display car tag values beneath the racer's name (controlled by admin setting)
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Domain Foundation | 0/TBD | Not started | - |
+| 2. Racer Portal | 0/TBD | Not started | - |
+| 3. Admin Panel & Event Management | 0/TBD | Not started | - |
+| 4. Race Control | 0/TBD | Not started | - |
+| 5. Live Timing & Forwarder | 0/TBD | Not started | - |
+| 6. Audio & Practice | 0/TBD | Not started | - |
+| 7. Results & Championship | 0/TBD | Not started | - |

@@ -1,7 +1,7 @@
 # Requirements: RCTimingControl
 
 **Defined:** 2026-04-15
-**Updated:** 2026-04-15
+**Updated:** 2026-04-16
 **Core Value:** Racers can enter events online and manage their own car/transponder details, while officials run a full race meeting from any Windows or Linux machine — with live timing fed directly from AMB/MyLaps hardware via a local forwarder agent to a cloud-hosted service.
 
 ## v1 Requirements
@@ -11,7 +11,8 @@
 - [ ] **AUTH-01**: Racer can self-register with email and password
 - [ ] **AUTH-02**: Racer can log in and remain logged in across browser sessions
 - [ ] **AUTH-03**: Racer can reset password via email link
-- [ ] **AUTH-04**: Admin can log in with elevated privileges to access admin panel and race control
+- [ ] **AUTH-04**: Staff users can log in with elevated privileges; access to admin panel, race control, and referee tools is gated by role
+- [ ] **AUTH-05**: Staff accounts can be assigned one or more roles (`ADMIN`, `RACE_DIRECTOR`, `REFEREE`); roles are stackable — a user may hold any combination simultaneously; `ADMIN` covers club config and event setup, `RACE_DIRECTOR` covers race control client, `REFEREE` covers penalties and incident management
 
 ### Racer Profile & Equipment
 
@@ -33,12 +34,14 @@
 ### Club Configuration
 
 - [ ] **CLUB-01**: Admin can configure zero or more governing body affiliations for the club; each affiliation records a code (e.g. `BRCA`), a display name (e.g. `British Radio Car Association`), and a `membershipRequired` flag; if `membershipRequired` is true, racers must have a matching membership number on their profile to submit an entry to any event
+- [ ] **CLUB-02**: Admin can configure the club profile: name, contact details (email and phone), website URL, GPS coordinates (latitude/longitude) for public map display, IANA time zone (e.g. `Europe/London`), and logo (SVG and PNG formats both storable); profile data is used in the public portal and on printed/exported results
 
 ### Tracks
 
-- [ ] **TRACK-01**: Admin can define and manage tracks (name, venue/location notes); a club may have multiple tracks
+- [ ] **TRACK-01**: Admin can define and manage tracks (name, venue/location notes, optional track length); a club may have multiple tracks
 - [ ] **TRACK-02**: Each track has a configurable minimum lap time per racing class; passing events with crossings faster than this threshold are ignored (prevents loop double-counting and track-cutting); a track-wide default applies to all classes unless a class-specific override is set
 - [ ] **TRACK-03**: Each track has a configurable maximum last lap time per racing class; a race closes automatically if no crossing occurs within this window after the clock expires (prevents infinite wait for broken cars)
+- [ ] **TRACK-04**: Admin can configure the decoder loops associated with a track; each loop has a decoder-assigned loop ID, a display name, and a type (`FINISH_LINE`, `CHICANE`, `OTHER`); one or more loops are designated as primary scoring loops; crossing events on non-primary loops are recorded but excluded from lap counting; the model accommodates multiple loops and multiple decoders per track (multi-decoder operation is deferred to post-v1)
 
 ### Racing Classes
 
@@ -60,7 +63,6 @@
 
 - [ ] **FORMAT-01**: Admin can configure a standard timed race (duration, start type, qualifying type); lap time thresholds are set at the track level (see TRACK-02, TRACK-03)
 - [ ] **FORMAT-02**: Admin can configure bump-up finals (qualifying heats, heat duration, best heats count, grid size, bump spots — default 2); number of finals is calculated automatically from actual entry count at event time
-- [ ] **FORMAT-03**: Admin can configure a Reedy race format (rounds, round duration)
 - [ ] **FORMAT-04**: Admin can configure points finals (qualifying heats, finals count, final duration)
 - [ ] **FORMAT-05**: Race format config is type-discriminated; only fields valid for the chosen type are accepted and required fields are validated
 - [ ] **FORMAT-06**: Assigning a format to an event class takes a snapshot of the template at assignment time; subsequent template edits do not affect existing events
@@ -71,6 +73,7 @@
 - [ ] **FORMAT-11**: Stagger start interval is configurable (default 1 second between car number calls)
 - [ ] **FORMAT-12**: For bump-up events, the system automatically calculates the number of finals and generates final grid assignments from qualifying results using the configured grid size and bump spots; the lowest final may have fewer than grid_size racers
 - [ ] **FORMAT-13**: Championship points for bump-up events are assigned from a single class-wide finishing order: A-final positions fill first, then non-promoted finishers from each lower final in finish order cascading down
+- [ ] **FORMAT-14**: Race format configurations can be exported as JSON and re-imported; imported configs are validated against the schema for the declared format type before saving; this allows format templates to be authored in external tools and shared between clubs
 
 ### Local Forwarder
 
@@ -112,6 +115,14 @@
 - [ ] **AUDIO-05**: When a driver finishes, a longer beep followed by their car number is announced
 - [ ] **AUDIO-06**: Running order is announced at 2-minute intervals for the first 10 minutes of a race, then at 5-minute intervals
 - [ ] **AUDIO-07**: Admin can enable or disable individual announcement types from the settings panel
+- [ ] **AUDIO-08**: When a racer profile is created or updated, the server generates a TTS audio clip for the racer's name using a configured TTS provider (e.g. Google Cloud TTS) and stores it; the clip is regenerated if the display name or phonetic spelling changes
+- [ ] **AUDIO-09**: When a race transitions to `GRID` state, the server pre-generates audio clips for all predictable announcements for that race: car number calls (stagger start), countdown intervals with race number, and per-driver finish announcements; clips are cached and ready before the race starts
+- [ ] **AUDIO-10**: Pre-generated audio clips are served via HTTP; the race control client fetches and locally caches all clips for the current race during grid preparation before the race starts
+- [ ] **AUDIO-11**: If a pre-generated clip is unavailable at playback time, the client falls back to Web Speech API synthesis; clip unavailability is non-blocking and never prevents a race from running
+- [ ] **AUDIO-12**: Racer profile includes an optional **phonetic spelling** field for their display name, editable by the racer and admins; if set, it is used as the TTS input instead of the display name
+- [ ] **AUDIO-13**: Racer can preview their generated name clip from their profile and select a preferred TTS voice from the voices available for the configured provider; the voice preference is stored per racer and used for all announcements of their name; admin configures the system default voice
+- [ ] **AUDIO-14**: Display name and phonetic spelling fields are screened against a configurable profanity blocklist before saving; if a match is found the save is rejected with a validation error informing the racer their submission contains inappropriate content; admins can extend the blocklist with club-specific terms
+- [ ] **AUDIO-15**: Admin can review any racer's phonetic spelling, override it, or clear the generated clip to force regeneration
 
 ### Race Official Views
 
@@ -150,7 +161,7 @@
 
 ### Governing Body Integration
 
-- **CLUB-02**: If a governing body affiliation has a `validationApiUrl` configured, the system validates membership numbers against that external API on entry submission; validation result (UNVERIFIED / VALID / INVALID) is stored per racer per governing body and surfaced to admins
+- **CLUB-03**: If a governing body affiliation has a `validationApiUrl` configured, the system validates membership numbers against that external API on entry submission; validation result (UNVERIFIED / VALID / INVALID) is stored per racer per governing body and surfaced to admins
 
 ### Notifications
 
@@ -184,114 +195,124 @@
 | Kafka / message broker | Single-club deployment; in-process STOMP broker is sufficient |
 | Serial transport for forwarder | TCP is sufficient for v1; TimingSource interface supports future addition |
 | Non-P3 timing protocols | TimingSource interface supports future protocols; AMB P3 only for v1 |
+| Reedy race format | Specialist pairing-schedule and scoring rules require expert input from an active organizer; deferred to post-v1 |
 
 ## Traceability
 
-Populated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| RACER-01 | — | Pending |
-| RACER-02 | — | Pending |
-| RACER-03 | — | Pending |
-| RACER-04 | — | Pending |
-| RACER-05 | — | Pending |
-| RACER-06 | — | Pending |
-| RACER-07 | — | Pending |
-| RACER-08 | — | Pending |
-| RACER-09 | — | Pending |
-| RACER-10 | — | Pending |
-| RACER-11 | — | Pending |
-| RACER-12 | — | Pending |
-| RACER-13 | — | Pending |
-| RACER-14 | — | Pending |
-| CLUB-01 | — | Pending |
-| TRACK-01 | — | Pending |
-| TRACK-02 | — | Pending |
-| TRACK-03 | — | Pending |
-| RACECLASS-01 | — | Pending |
-| EVENT-01 | — | Pending |
-| EVENT-02 | — | Pending |
-| EVENT-03 | — | Pending |
-| EVENT-04 | — | Pending |
-| EVENT-05 | — | Pending |
-| EVENT-06 | — | Pending |
-| EVENT-07 | — | Pending |
-| ENTRY-01 | — | Pending |
-| ENTRY-02 | — | Pending |
-| FORMAT-01 | — | Pending |
-| FORMAT-02 | — | Pending |
-| FORMAT-03 | — | Pending |
-| FORMAT-04 | — | Pending |
-| FORMAT-05 | — | Pending |
-| FORMAT-06 | — | Pending |
-| FORMAT-07 | — | Pending |
-| FORMAT-08 | — | Pending |
-| FORMAT-09 | — | Pending |
-| FORMAT-10 | — | Pending |
-| FORMAT-11 | — | Pending |
-| FORMAT-12 | — | Pending |
-| FORMAT-13 | — | Pending |
-| FORWARDER-01 | — | Pending |
-| FORWARDER-02 | — | Pending |
-| FORWARDER-03 | — | Pending |
-| FORWARDER-04 | — | Pending |
-| FORWARDER-05 | — | Pending |
-| TIMING-01 | — | Pending |
-| TIMING-02 | — | Pending |
-| TIMING-03 | — | Pending |
-| TIMING-04 | — | Pending |
-| TIMING-05 | — | Pending |
-| TIMING-06 | — | Pending |
-| TIMING-07 | — | Pending |
-| TIMING-08 | — | Pending |
-| CTRL-01 | — | Pending |
-| CTRL-02 | — | Pending |
-| CTRL-03 | — | Pending |
-| CTRL-04 | — | Pending |
-| CTRL-05 | — | Pending |
-| CTRL-06 | — | Pending |
-| CTRL-07 | — | Pending |
-| CTRL-08 | — | Pending |
-| CTRL-09 | — | Pending |
-| AUDIO-01 | — | Pending |
-| AUDIO-02 | — | Pending |
-| AUDIO-03 | — | Pending |
-| AUDIO-04 | — | Pending |
-| AUDIO-05 | — | Pending |
-| AUDIO-06 | — | Pending |
-| AUDIO-07 | — | Pending |
-| OFFICIAL-01 | — | Pending |
-| OFFICIAL-02 | — | Pending |
-| OFFICIAL-03 | — | Pending |
-| OFFICIAL-04 | — | Pending |
-| PRACTICE-01 | — | Pending |
-| PRACTICE-02 | — | Pending |
-| CHAMP-01 | — | Pending |
-| CHAMP-02 | — | Pending |
-| CHAMP-03 | — | Pending |
-| CHAMP-04 | — | Pending |
-| CHAMP-05 | — | Pending |
-| CHAMP-06 | — | Pending |
-| CHAMP-07 | — | Pending |
-| CHAMP-08 | — | Pending |
-| CHAMP-09 | — | Pending |
-| CHAMP-10 | — | Pending |
-| RESULT-01 | — | Pending |
-| RESULT-02 | — | Pending |
-| RESULT-03 | — | Pending |
-| RESULT-04 | — | Pending |
-| RESULT-05 | — | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| AUTH-05 | Phase 1 | Pending |
+| RACER-01 | Phase 2 | Pending |
+| RACER-02 | Phase 2 | Pending |
+| RACER-03 | Phase 2 | Pending |
+| RACER-04 | Phase 2 | Pending |
+| RACER-05 | Phase 2 | Pending |
+| RACER-06 | Phase 2 | Pending |
+| RACER-07 | Phase 2 | Pending |
+| RACER-08 | Phase 2 | Pending |
+| RACER-09 | Phase 2 | Pending |
+| RACER-10 | Phase 2 | Pending |
+| RACER-11 | Phase 2 | Pending |
+| RACER-12 | Phase 2 | Pending |
+| RACER-13 | Phase 2 | Pending |
+| RACER-14 | Phase 2 | Pending |
+| CLUB-01 | Phase 1 | Pending |
+| CLUB-02 | Phase 1 | Pending |
+| TRACK-01 | Phase 1 | Pending |
+| TRACK-02 | Phase 1 | Pending |
+| TRACK-03 | Phase 1 | Pending |
+| TRACK-04 | Phase 1 | Pending |
+| RACECLASS-01 | Phase 1 | Pending |
+| EVENT-01 | Phase 3 | Pending |
+| EVENT-02 | Phase 3 | Pending |
+| EVENT-03 | Phase 2 | Pending |
+| EVENT-04 | Phase 2 | Pending |
+| EVENT-05 | Phase 3 | Pending |
+| EVENT-06 | Phase 3 | Pending |
+| EVENT-07 | Phase 3 | Pending |
+| ENTRY-01 | Phase 2 | Pending |
+| ENTRY-02 | Phase 3 | Pending |
+| FORMAT-01 | Phase 1 | Pending |
+| FORMAT-02 | Phase 1 | Pending |
+| FORMAT-04 | Phase 1 | Pending |
+| FORMAT-05 | Phase 1 | Pending |
+| FORMAT-06 | Phase 1 | Pending |
+| FORMAT-07 | Phase 1 | Pending |
+| FORMAT-08 | Phase 1 | Pending |
+| FORMAT-09 | Phase 1 | Pending |
+| FORMAT-10 | Phase 1 | Pending |
+| FORMAT-11 | Phase 1 | Pending |
+| FORMAT-12 | Phase 1 | Pending |
+| FORMAT-13 | Phase 1 | Pending |
+| FORMAT-14 | Phase 1 | Pending |
+| FORWARDER-01 | Phase 5 | Pending |
+| FORWARDER-02 | Phase 5 | Pending |
+| FORWARDER-03 | Phase 5 | Pending |
+| FORWARDER-04 | Phase 5 | Pending |
+| FORWARDER-05 | Phase 5 | Pending |
+| TIMING-01 | Phase 5 | Pending |
+| TIMING-02 | Phase 5 | Pending |
+| TIMING-03 | Phase 5 | Pending |
+| TIMING-04 | Phase 5 | Pending |
+| TIMING-05 | Phase 5 | Pending |
+| TIMING-06 | Phase 5 | Pending |
+| TIMING-07 | Phase 5 | Pending |
+| TIMING-08 | Phase 5 | Pending |
+| CTRL-01 | Phase 4 | Pending |
+| CTRL-02 | Phase 4 | Pending |
+| CTRL-03 | Phase 4 | Pending |
+| CTRL-04 | Phase 4 | Pending |
+| CTRL-05 | Phase 4 | Pending |
+| CTRL-06 | Phase 4 | Pending |
+| CTRL-07 | Phase 4 | Pending |
+| CTRL-08 | Phase 4 | Pending |
+| CTRL-09 | Phase 4 | Pending |
+| AUDIO-01 | Phase 6 | Pending |
+| AUDIO-02 | Phase 6 | Pending |
+| AUDIO-03 | Phase 6 | Pending |
+| AUDIO-04 | Phase 6 | Pending |
+| AUDIO-05 | Phase 6 | Pending |
+| AUDIO-06 | Phase 6 | Pending |
+| AUDIO-07 | Phase 6 | Pending |
+| AUDIO-08 | Phase 6 | Pending |
+| AUDIO-09 | Phase 6 | Pending |
+| AUDIO-10 | Phase 6 | Pending |
+| AUDIO-11 | Phase 6 | Pending |
+| AUDIO-12 | Phase 6 | Pending |
+| AUDIO-13 | Phase 6 | Pending |
+| AUDIO-14 | Phase 6 | Pending |
+| AUDIO-15 | Phase 6 | Pending |
+| OFFICIAL-01 | Phase 4 | Pending |
+| OFFICIAL-02 | Phase 4 | Pending |
+| OFFICIAL-03 | Phase 4 | Pending |
+| OFFICIAL-04 | Phase 4 | Pending |
+| PRACTICE-01 | Phase 6 | Pending |
+| PRACTICE-02 | Phase 6 | Pending |
+| CHAMP-01 | Phase 3 | Pending |
+| CHAMP-02 | Phase 3 | Pending |
+| CHAMP-03 | Phase 3 | Pending |
+| CHAMP-04 | Phase 3 | Pending |
+| CHAMP-05 | Phase 7 | Pending |
+| CHAMP-06 | Phase 3 | Pending |
+| CHAMP-07 | Phase 3 | Pending |
+| CHAMP-08 | Phase 3 | Pending |
+| CHAMP-09 | Phase 3 | Pending |
+| CHAMP-10 | Phase 3 | Pending |
+| RESULT-01 | Phase 7 | Pending |
+| RESULT-02 | Phase 7 | Pending |
+| RESULT-03 | Phase 7 | Pending |
+| RESULT-04 | Phase 7 | Pending |
+| RESULT-05 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 88 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 88 ⚠️
+- v1 requirements: 91 total
+- Mapped to phases: 91 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-04-16 — added track entity (TRACK-01–03), EVENT-07 (track association), governing body membership (RACER-13–14, CLUB-01); removed min/max lap times from FORMAT section (moved to track config); renumbered FORMAT-10–13*
+*Last updated: 2026-04-16 — added track entity (TRACK-01–03), EVENT-07 (track association), governing body membership (RACER-13–14, CLUB-01); removed min/max lap times from FORMAT section (moved to track config); renumbered FORMAT-10–13; removed FORMAT-03 (Reedy — deferred post-v1); added FORMAT-14 (race config JSON import/export); added AUTH-05 (stackable roles: ADMIN/RACE_DIRECTOR/REFEREE); added CLUB-02 (club profile); renumbered v2 CLUB-02→CLUB-03; updated TRACK-01 (optional track length); added TRACK-04 (decoder loop configuration); traceability populated (roadmap created)*
