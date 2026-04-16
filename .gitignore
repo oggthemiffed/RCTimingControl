@@ -1,0 +1,27 @@
+# Gradle build outputs
+.gradle/
+build/
+**/build/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Spring Boot
+*.jar
+*.war
+!gradle/wrapper/gradle-wrapper.jar
+
+# Environment
+.env
+.env.local
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
