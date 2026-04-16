@@ -1,0 +1,18 @@
+spring:
+  mail:
+    host: localhost
+    port: 25
+    test-connection: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  jwt:
+    secret: dGhpcyBpcyBhIHRlc3Qgc2VjcmV0IGtleSBmb3IgdGVzdHMgdGhhdCBpcyBsb25nIGVub3VnaA==
+    access-token-ttl-ms: 900000
+    refresh-token-ttl-ms: 604800000
