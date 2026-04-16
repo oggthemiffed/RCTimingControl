@@ -36,3 +36,7 @@ dependencies {
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
 }
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}
