@@ -7,9 +7,14 @@ import RegisterPage from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
 import AdminPlaceholderPage from '@/pages/admin/AdminPlaceholderPage';
-import RacerPlaceholderPage from '@/pages/racer/RacerPlaceholderPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import { Toaster } from '@/components/ui/sonner';
+import RacerPortalLayout from '@/pages/racer/RacerPortalLayout';
+import ProfilePage from '@/pages/racer/ProfilePage';
+import CarsPage from '@/pages/racer/CarsPage';
+import TranspondersPage from '@/pages/racer/TranspondersPage';
+import EntriesPage from '@/pages/racer/EntriesPage';
+import EventSchedulePage from '@/pages/events/EventSchedulePage';
 
 const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace /> },
@@ -26,13 +31,21 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: '/racer/*',
+    path: '/racer',
     element: (
       <ProtectedRoute>
-        <RacerPlaceholderPage />
+        <RacerPortalLayout />
       </ProtectedRoute>
     ),
+    children: [
+      { index: true, element: <Navigate to="/racer/profile" replace /> },
+      { path: 'profile', element: <ProfilePage /> },
+      { path: 'cars', element: <CarsPage /> },
+      { path: 'transponders', element: <TranspondersPage /> },
+      { path: 'entries', element: <EntriesPage /> },
+    ],
   },
+  { path: '/events', element: <EventSchedulePage /> },
   { path: '*', element: <NotFoundPage /> },
 ]);
 
