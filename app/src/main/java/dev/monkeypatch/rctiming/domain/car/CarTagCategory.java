@@ -20,8 +20,8 @@ public class CarTagCategory {
     @Column(unique = true, nullable = false)
     private String name;
 
-    @Column(name = "sort_order", nullable = false)
-    private int sortOrder;
+    @Column(name = "sort_order", nullable = false, columnDefinition = "smallint")
+    private short sortOrder;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -32,8 +32,8 @@ public class CarTagCategory {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public int getSortOrder() { return sortOrder; }
-    public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
+    public short getSortOrder() { return sortOrder; }
+    public void setSortOrder(short sortOrder) { this.sortOrder = sortOrder; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

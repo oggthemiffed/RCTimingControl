@@ -34,7 +34,7 @@ public class CarTagCategoryService {
     public CarTagCategoryDto create(CreateCarTagCategoryRequest request) {
         CarTagCategory category = new CarTagCategory();
         category.setName(request.name());
-        category.setSortOrder(request.sortOrder() != null ? request.sortOrder() : 0);
+        category.setSortOrder(request.sortOrder() != null ? request.sortOrder().shortValue() : (short) 0);
         category.setCreatedAt(Instant.now());
         return CarTagCategoryDto.from(carTagCategoryRepository.save(category));
     }
@@ -43,7 +43,7 @@ public class CarTagCategoryService {
         CarTagCategory category = getCategoryOrThrow(id);
         category.setName(request.name());
         if (request.sortOrder() != null) {
-            category.setSortOrder(request.sortOrder());
+            category.setSortOrder(request.sortOrder().shortValue());
         }
         return CarTagCategoryDto.from(carTagCategoryRepository.save(category));
     }
