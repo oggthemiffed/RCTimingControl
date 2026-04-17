@@ -30,8 +30,8 @@ create table entry_audit_log (
     admin_user_id   bigint          not null references users(id),
     action          varchar(40)     not null,   -- 'TRANSPONDER_SWAP' | 'MEMBERSHIP_OVERRIDE'
     reason          text,
-    before_snapshot jsonb,
-    after_snapshot  jsonb,
+    before_snapshot text,
+    after_snapshot  text,
     created_at      timestamptz     not null default now()
 );
 

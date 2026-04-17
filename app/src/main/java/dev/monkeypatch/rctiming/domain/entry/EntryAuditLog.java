@@ -29,10 +29,10 @@ public class EntryAuditLog {
     @Column(columnDefinition = "text")
     private String reason;
 
-    @Column(name = "before_snapshot", columnDefinition = "jsonb")
+    @Column(name = "before_snapshot", columnDefinition = "text")
     private String beforeSnapshot;
 
-    @Column(name = "after_snapshot", columnDefinition = "jsonb")
+    @Column(name = "after_snapshot", columnDefinition = "text")
     private String afterSnapshot;
 
     @Column(name = "created_at", nullable = false)

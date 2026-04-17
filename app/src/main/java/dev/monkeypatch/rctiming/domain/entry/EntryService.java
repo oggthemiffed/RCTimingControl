@@ -10,12 +10,11 @@ import dev.monkeypatch.rctiming.domain.car.CarRepository;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
-import dev.monkeypatch.rctiming.domain.format.EventClass;
-import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.transponder.Transponder;
 import dev.monkeypatch.rctiming.domain.transponder.TransponderRepository;
 import dev.monkeypatch.rctiming.domain.user.UserGoverningBodyMembershipRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.jooq.DSLContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +25,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
+
 @Service
 @Transactional
 public class EntryService {
 
     private final EntryRepository entryRepository;
     private final EventRepository eventRepository;
-    private final EventClassRepository eventClassRepository;
+    private final DSLContext dsl;
     private final CarRepository carRepository;
     private final TransponderRepository transponderRepository;
     private final UserGoverningBodyMembershipRepository membershipRepository;
@@ -41,7 +42,7 @@ public class EntryService {
 
     public EntryService(EntryRepository entryRepository,
                         EventRepository eventRepository,
-                        EventClassRepository eventClassRepository,
+                        DSLContext dsl,
                         CarRepository carRepository,
                         TransponderRepository transponderRepository,
                         UserGoverningBodyMembershipRepository membershipRepository,
@@ -49,7 +50,7 @@ public class EntryService {
                         ObjectMapper objectMapper) {
         this.entryRepository = entryRepository;
         this.eventRepository = eventRepository;
-        this.eventClassRepository = eventClassRepository;
+        this.dsl = dsl;
         this.carRepository = carRepository;
         this.transponderRepository = transponderRepository;
         this.membershipRepository = membershipRepository;
@@ -69,11 +70,18 @@ public class EntryService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Event entry has closed");
         }
 
-        EventClass eventClass = eventClassRepository.findById(req.eventClassId())
+        // Use jOOQ to fetch only the two columns we need — avoids loading the JSONB config_snapshot
+        // via Hibernate's JsonType which has deserialization issues in the test environment
+        var ecRow = dsl.select(EVENT_CLASSES.EVENT_ID, EVENT_CLASSES.REQUIRED_GOVERNING_BODY_CODE)
+                .from(EVENT_CLASSES)
+                .where(EVENT_CLASSES.ID.eq(req.eventClassId()))
+                .fetchOptional()
                 .orElseThrow(() -> new EntityNotFoundException("Event class not found: " + req.eventClassId()));
-        if (eventClass.getEventId() == null || !eventClass.getEventId().equals(req.eventId())) {
+        Long ecEventId = ecRow.get(EVENT_CLASSES.EVENT_ID);
+        if (ecEventId == null || !ecEventId.equals(req.eventId())) {
             throw new IllegalArgumentException("Event class does not belong to the submitted event");
         }
+        String requiredCode = ecRow.get(EVENT_CLASSES.REQUIRED_GOVERNING_BODY_CODE);
 
         Transponder transponder = transponderRepository.findById(req.transponderId())
                 .filter(t -> t.getUserId().equals(userId))
@@ -84,7 +92,6 @@ public class EntryService {
                 .orElseThrow(() -> new EntityNotFoundException("Car not found"));
 
         // RACER-14 hard block: if class requires membership, racer must hold it (unless admin overrides later)
-        String requiredCode = eventClass.getRequiredGoverningBodyCode();
         if (requiredCode != null && !requiredCode.isBlank()) {
             boolean holds = membershipRepository
                     .findByUserIdAndGoverningBodyCode(userId, requiredCode).isPresent();
@@ -98,7 +105,7 @@ public class EntryService {
         Entry entry = new Entry();
         entry.setUserId(userId);
         entry.setEventId(event.getId());
-        entry.setEventClassId(eventClass.getId());
+        entry.setEventClassId(req.eventClassId());
         entry.setCarId(car.getId());
         entry.setTransponderId(transponder.getId());
         entry.setTransponderNumberSnapshot(transponder.getTransponderNumber());
