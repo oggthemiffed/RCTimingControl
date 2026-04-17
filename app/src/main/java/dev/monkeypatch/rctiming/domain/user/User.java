@@ -49,6 +49,18 @@ public class User {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @Column(name = "phone_number")
+    private String phoneNumber;
+
+    @Column(name = "emergency_contact_name")
+    private String emergencyContactName;
+
+    @Column(name = "emergency_contact_phone")
+    private String emergencyContactPhone;
+
+    @Column(name = "phonetic_name")
+    private String phoneticName;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -72,4 +84,16 @@ public class User {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+
+    public String getEmergencyContactName() { return emergencyContactName; }
+    public void setEmergencyContactName(String emergencyContactName) { this.emergencyContactName = emergencyContactName; }
+
+    public String getEmergencyContactPhone() { return emergencyContactPhone; }
+    public void setEmergencyContactPhone(String emergencyContactPhone) { this.emergencyContactPhone = emergencyContactPhone; }
+
+    public String getPhoneticName() { return phoneticName; }
+    public void setPhoneticName(String phoneticName) { this.phoneticName = phoneticName; }
 }
