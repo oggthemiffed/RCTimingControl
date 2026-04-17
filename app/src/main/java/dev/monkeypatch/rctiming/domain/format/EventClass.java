@@ -41,6 +41,12 @@ public class EventClass {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
+    @Column(name = "event_id")
+    private Long eventId;
+
+    @Column(name = "required_governing_body_code", length = 50)
+    private String requiredGoverningBodyCode;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -58,4 +64,10 @@ public class EventClass {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public Long getEventId() { return eventId; }
+    public void setEventId(Long eventId) { this.eventId = eventId; }
+
+    public String getRequiredGoverningBodyCode() { return requiredGoverningBodyCode; }
+    public void setRequiredGoverningBodyCode(String requiredGoverningBodyCode) { this.requiredGoverningBodyCode = requiredGoverningBodyCode; }
 }
