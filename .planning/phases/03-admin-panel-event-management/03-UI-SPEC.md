@@ -56,11 +56,13 @@ All sizes use Figtree Variable. Two weights only.
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Body | 14px (`text-sm`) | 400 (regular) | 1.5 | Table cell text, form helper text, secondary copy |
-| Label | 16px (`text-base`) | 400 (regular) | 1.5 | Form labels, nav item labels, card body |
+| Label | 16px (`text-base`) | 600 (semibold) | 1.5 | Form labels, nav item labels, card body |
 | Heading | 20px (`text-xl`) | 600 (semibold) | 1.2 | Page section headings, card titles, dialog titles |
 | Display | 28px (`text-2xl`) | 600 (semibold) | 1.2 | Page title (event name, championship name) |
 
-Source: defaults matched to Phase 2 racer portal patterns.
+Body (14px/400) and Label (16px/600) are differentiated by both size and weight to ensure clear visual separation. Label is semibold to signal interactive or structural copy (form labels, nav); body is regular for passive reading text.
+
+Source: defaults matched to Phase 2 racer portal patterns; label weight elevated from 400 to 600 to resolve checker Dimension 4 finding.
 
 ---
 
@@ -77,7 +79,7 @@ Colors reference CSS custom properties from `src/index.css`. All values are OKLC
 
 **Accent (`--primary`) reserved for:**
 - Active sidebar nav item highlight (text + left border indicator)
-- Primary CTA button fill ("Create Event", "Save", "Publish Event", "Create Championship")
+- Primary CTA button fill ("Create Event", "Publish Event", "Create Championship")
 - Active state indicator on event status action buttons
 - Active NavLink underline border (matching racer portal pattern)
 
@@ -127,6 +129,14 @@ Colors reference CSS custom properties from `src/index.css`. All values are OKLC
 - Bottom nav items: Events, Championships, Tracks, Formats, Club, Categories
 
 **Component to create:** `AdminPanelLayout.tsx` in `frontend/src/pages/admin/` — adapt `RacerPortalLayout.tsx` replacing the top nav links with the sidebar structure described above.
+
+### Primary Screen Focal Point — Event List Page
+
+**Focal point:** The status-coded table rows are the primary visual anchor. Each row's colour-coded `<Badge>` (DRAFT/PUBLISHED/OPEN/ENTRIES_CLOSED/IN_PROGRESS/COMPLETED) draws the eye to event status at a glance and is the first thing an admin reads when landing on `/admin/events`.
+
+**Secondary anchor:** The "Create Event" button is the sole primary CTA on this page; it is right-aligned in the page header, `<Button variant="default">`, and never competes with the table for visual weight.
+
+**Visual hierarchy rule:** The table fills the full content width with no competing panels or cards alongside it. Empty-state illustration/copy is centred in the table area, not in a sidebar or offset container.
 
 ### Route Structure
 
@@ -178,18 +188,25 @@ All components are from the existing `frontend/src/components/ui/` set. No new i
 
 ### Primary CTAs
 
+Each CTA names the specific entity being acted on. No generic "Save" or "Save Changes" labels.
+
 | Page / Context | CTA Label |
 |----------------|-----------|
+| Event list page header | "Create Event" |
 | Event list (no events) empty state | "Create Event" |
 | Event detail — add racing class | "Add Class" |
 | Event detail — combine classes | "Combine into Shared Race" |
+| Championship list page header | "Create Championship" |
 | Championship list (no championships) empty state | "Create Championship" |
 | Championship detail — add event | "Add Event" |
-| Track list | "Add Track" |
-| Format template list | "Create Format" |
-| Club profile | "Save Club Profile" |
-| Car tag categories | "Add Category" |
-| All edit forms | "Save Changes" |
+| Track list page header | "Add Track" |
+| Format template list page header | "Create Format" |
+| Event details edit form | "Save Event Details" |
+| Race format template create/edit form | "Save Format Template" |
+| Track create/edit form | "Save Track" |
+| Club profile form | "Save Club Profile" |
+| Car tag category create/rename form | "Save Category" |
+| Championship settings form | "Save Championship Settings" |
 
 ### Event State Transition Button Labels (D-04)
 
