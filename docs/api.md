@@ -366,6 +366,304 @@ qualifyingType: BEST_LAP
 
 ---
 
+---
+
+## Racer — Profile
+
+All racer endpoints require `Authorization: Bearer <token>` and the `RACER` role.
+
+### Get profile
+
+```http
+GET /racer/profile
+Authorization: Bearer <token>
+```
+
+```json
+{
+  "id": 1,
+  "firstName": "David",
+  "lastName": "Anderson",
+  "email": "david@example.com",
+  "phoneNumber": "07700 900000",
+  "emergencyContactName": "Jane Anderson",
+  "emergencyContactPhone": "07700 900001",
+  "phoneticName": "DAY-vid",
+  "memberships": [
+    { "governingBodyCode": "BRCA", "membershipNumber": "12345" }
+  ],
+  "classRatings": [
+    { "racingClassName": "1:10 Electric Touring Car", "rating": "CLUB" }
+  ]
+}
+```
+
+---
+
+### Update profile
+
+```http
+PATCH /racer/profile
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "phoneNumber": "07700 900000",
+  "emergencyContactName": "Jane Anderson",
+  "emergencyContactPhone": "07700 900001",
+  "phoneticName": "DAY-vid"
+}
+```
+
+All fields are optional — only provided fields are updated. Email and roles cannot be changed via this endpoint.
+
+---
+
+### Governing body memberships
+
+```http
+GET    /racer/memberships
+POST   /racer/memberships       # 201; 409 if already registered with this body
+DELETE /racer/memberships/{code}  # 204
+```
+
+POST body:
+```json
+{ "governingBodyCode": "BRCA", "membershipNumber": "12345" }
+```
+
+---
+
+## Racer — Cars
+
+### List cars
+
+```http
+GET /racer/cars
+Authorization: Bearer <token>
+```
+
+Returns the authenticated racer's non-archived cars with their tag values.
+
+---
+
+### Create car
+
+```http
+POST /racer/cars
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "name": "Serpent 411", "notes": "17.5T blinky spec" }
+```
+
+**201 Created**
+
+---
+
+### Update car
+
+```http
+PATCH /racer/cars/{id}
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "name": "Serpent 411 v2", "notes": "Updated notes" }
+```
+
+**404** if the car does not belong to the authenticated racer.
+
+---
+
+### Archive car
+
+```http
+DELETE /racer/cars/{id}
+Authorization: Bearer <token>
+```
+
+**204** — sets `archived = true`. Archived cars are excluded from list responses.
+
+---
+
+### Set tag value on a car
+
+```http
+POST /racer/cars/{id}/tags
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "categoryId": 1, "value": "Yokomo YD-2" }
+```
+
+Upserts the tag value for the given category. One value per category per car.
+
+---
+
+### Remove tag value from a car
+
+```http
+DELETE /racer/cars/{id}/tags/{categoryId}
+Authorization: Bearer <token>
+```
+
+**204**
+
+---
+
+## Admin — Car tag categories
+
+Requires `ADMIN`, `RACE_DIRECTOR`, or `REFEREE` role.
+
+```http
+GET    /admin/car-tag-categories
+POST   /admin/car-tag-categories          # 201
+PUT    /admin/car-tag-categories/{id}
+DELETE /admin/car-tag-categories/{id}     # 204
+```
+
+POST/PUT body:
+```json
+{ "name": "Chassis", "sortOrder": 1 }
+```
+
+Seven default categories are seeded: Chassis, ESC, Motor, Servo, Battery, Body, Tyres.
+
+---
+
+## Racer — Transponders
+
+### List transponders
+
+```http
+GET /racer/transponders
+Authorization: Bearer <token>
+```
+
+---
+
+### Register transponder
+
+```http
+POST /racer/transponders
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "transponderNumber": "12345" }
+```
+
+**201 Created** — **409** if that transponder number is already registered by any racer in the system.
+
+---
+
+### Delete transponder
+
+```http
+DELETE /racer/transponders/{id}
+Authorization: Bearer <token>
+```
+
+**204** — **404** if the transponder does not belong to the authenticated racer.
+
+---
+
+## Events — Public schedule
+
+No authentication required.
+
+```http
+GET /events
+GET /events/{id}
+```
+
+Returns published events with their classes, entry availability, and entry window dates.
+
+---
+
+## Racer — Entries
+
+### List entry history
+
+```http
+GET /racer/entries
+Authorization: Bearer <token>
+```
+
+Returns the racer's full entry history across all events, joined with event details.
+
+---
+
+### Submit entry
+
+```http
+POST /racer/entries
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "eventClassId": 1,
+  "carId": 42,
+  "transponderNumber": "12345"
+}
+```
+
+**201 Created** — entry is auto-confirmed in the same transaction.
+
+**Response:**
+```json
+{
+  "entry": { "id": 99, "status": "CONFIRMED", ... },
+  "warnings": ["Transponder 12345 is already registered to another entry in this event"]
+}
+```
+
+**422 Unprocessable Entity** — if the event class requires a governing body membership and the racer has no matching number (and no admin override).
+
+---
+
+### Withdraw entry
+
+```http
+DELETE /racer/entries/{id}
+Authorization: Bearer <token>
+```
+
+**204** — transitions entry to `WITHDRAWN`. **404** if the entry does not belong to the authenticated racer.
+
+---
+
+## Admin — Entry management
+
+Requires `ADMIN` or `RACE_DIRECTOR` role.
+
+### Swap transponder on an entry
+
+```http
+PATCH /admin/entries/{id}/transponder
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "newTransponderNumber": "99999" }
+```
+
+Updates the transponder snapshot on the entry and writes an audit log row (`TRANSPONDER_SWAP`).
+
+---
+
+### Apply membership override
+
+```http
+POST /admin/entries/{id}/membership-override
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "reason": "Membership card verified in person" }
+```
+
+Requires `ADMIN` or `RACE_DIRECTOR` role (not available to `REFEREE`). Sets `membershipOverride = true` on the entry and writes an audit log row (`MEMBERSHIP_OVERRIDE`). Confirms a previously blocked entry.
+
+---
+
 ## Error responses
 
 All errors use [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457):

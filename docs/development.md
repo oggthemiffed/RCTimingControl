@@ -27,12 +27,25 @@ This starts:
 ./gradlew :app:bootRun --args='--spring.profiles.active=dev'
 ```
 
-On first run, Flyway applies 5 migrations:
+On first run, Flyway applies all migrations automatically:
+
+**Phase 1 (V1–V5):**
 - `V1` — users and roles
 - `V2` — club profile and governing body affiliations
 - `V3` — tracks, decoder loops, lap thresholds
 - `V4` — racing classes
 - `V5` — race format templates and event classes (JSONB)
+
+**Phase 2 (V6–V14):**
+- `V6` — user profile fields (phone, emergency contact, phonetic name)
+- `V7` — governing body memberships (unique per user+code)
+- `V8` — user class ratings (read-only, set by officials)
+- `V9` — cars
+- `V10` — car tag categories + values (7 default categories seeded)
+- `V11` — transponders (system-wide unique transponder numbers)
+- `V12` — events + event classes (JSONB config snapshot)
+- `V13` — entries (transponder snapshot, partial unique index)
+- `V14` — entry audit log
 
 The dev profile connects to `localhost:5432/rctiming_dev`. No additional setup needed.
 
@@ -72,16 +85,26 @@ The dev JWT secret is baked into `application.yml` as a fallback default — fin
 app/src/main/java/dev/monkeypatch/rctiming/
 ├── api/
 │   ├── auth/            # Register, login, refresh, password reset
-│   ├── admin/           # Admin CRUD controllers
-│   │   └── dto/         # Request/response records
+│   ├── admin/           # Admin CRUD controllers (club, tracks, formats, car tags, entry overrides)
+│   │   └── dto/
+│   ├── racer/           # Racer-scoped controllers (profile, cars, transponders, entries, events)
+│   │   └── dto/
 │   └── GlobalExceptionHandler.java
 ├── domain/
-│   ├── user/            # User entity, UserService, UserRepository
+│   ├── user/            # User entity + RacerProfileService, memberships, class ratings
 │   ├── auth/            # RefreshToken, PasswordResetToken, PasswordResetService
 │   ├── club/            # ClubProfile, GoverningBodyAffiliation, ClubProfileService
 │   ├── track/           # Track, DecoderLoop, TrackLapThreshold, TrackService
 │   ├── raceclass/       # RacingClass, RacingClassService
-│   └── format/          # RaceFormatConfig (sealed), RaceFormatTemplate, RaceFormatService
+│   ├── format/          # RaceFormatConfig (sealed), RaceFormatTemplate, RaceFormatService
+│   ├── car/             # Car, CarTagCategory, CarTagValue, CarService, CarTagCategoryService
+│   ├── transponder/     # Transponder, TransponderService
+│   ├── event/           # Event, EventStatus, EventRepository
+│   └── entry/           # Entry, EntryStatus, EntryAuditLog, EntryService
+├── query/               # jOOQ read-side (never uses Hibernate)
+│   ├── car/             # CarQueryService, CarWithTagsDto
+│   ├── event/           # EventScheduleQuery, EventScheduleDto
+│   └── entry/           # EntryQueryService, RacerEntryHistoryDto
 ├── security/
 │   ├── JwtTokenService.java
 │   ├── JwtAuthenticationFilter.java
@@ -106,15 +129,26 @@ Covers format config serialization round-trips and service merge logic.
 ./gradlew :app:test
 ```
 
-Uses Testcontainers with `@ServiceConnection` — spins up a real PostgreSQL container. 57 tests covering all Phase 1 endpoints.
+Uses Testcontainers with `@ServiceConnection` — spins up a real PostgreSQL container. Tests cover all implemented endpoints.
 
-Test classes:
+**Phase 1 test classes:**
 - `AuthControllerIT` — register, login, refresh, password reset
 - `SecurityIT` — unauthenticated access, role enforcement
 - `ClubControllerIT` — club profile and affiliation CRUD
 - `TrackControllerIT` — track + nested loop/threshold management
 - `RacingClassControllerIT` — class CRUD
 - `FormatControllerIT` — format CRUD, JSON/YAML export+import
+
+**Phase 2 test classes:**
+- `CarControllerIT` — car CRUD, ownership isolation, tag management (8 tests)
+- `CarTagCategoryIT` — admin tag category CRUD, role enforcement (4 tests)
+- `RacerProfileControllerIT` — profile get/patch, membership add/remove/duplicate (8 tests)
+- `TransponderControllerIT` — transponder CRUD, system-wide uniqueness, cross-user isolation (6 tests)
+- `EntryControllerIT` — submit, withdraw, membership block, duplicate transponder warning, ownership (12 tests)
+- `EventScheduleControllerIT` — public schedule access, anonymous access (3 tests)
+- `AdminEntryControllerIT` — transponder swap, membership override, audit log writes (4 tests)
+
+See [Testing guide](testing.md) for the full manual UAT checklist.
 
 ## Useful commands
 
