@@ -22,10 +22,12 @@ Requires Docker (Testcontainers spins up a real PostgreSQL container automatical
 
 ### Frontend
 
+No unit test suite is set up yet. Use the type-checker and linter to catch issues:
+
 ```bash
 cd frontend
-npm test          # Vitest unit tests
-npm run build     # Type-check + bundle (catches TS errors)
+npm run build     # Type-check + bundle (tsc -b && vite build)
+npm run lint      # ESLint
 ```
 
 ---
