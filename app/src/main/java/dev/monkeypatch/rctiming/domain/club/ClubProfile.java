@@ -40,6 +40,9 @@ public class ClubProfile {
     @Column(name = "logo_type", length = 10)
     private String logoType;
 
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -78,6 +81,9 @@ public class ClubProfile {
 
     public String getLogoType() { return logoType; }
     public void setLogoType(String logoType) { this.logoType = logoType; }
+
+    public String getLogoUrl() { return logoUrl; }
+    public void setLogoUrl(String logoUrl) { this.logoUrl = logoUrl; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

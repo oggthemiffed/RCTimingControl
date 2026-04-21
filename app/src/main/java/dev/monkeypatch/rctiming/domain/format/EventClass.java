@@ -47,6 +47,12 @@ public class EventClass {
     @Column(name = "required_governing_body_code", length = 50)
     private String requiredGoverningBodyCode;
 
+    @Column(name = "racing_class_id")
+    private Long racingClassId;
+
+    @Column(name = "combined_race_group")
+    private Long combinedRaceGroup;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -70,4 +76,10 @@ public class EventClass {
 
     public String getRequiredGoverningBodyCode() { return requiredGoverningBodyCode; }
     public void setRequiredGoverningBodyCode(String requiredGoverningBodyCode) { this.requiredGoverningBodyCode = requiredGoverningBodyCode; }
+
+    public Long getRacingClassId() { return racingClassId; }
+    public void setRacingClassId(Long racingClassId) { this.racingClassId = racingClassId; }
+
+    public Long getCombinedRaceGroup() { return combinedRaceGroup; }
+    public void setCombinedRaceGroup(Long combinedRaceGroup) { this.combinedRaceGroup = combinedRaceGroup; }
 }

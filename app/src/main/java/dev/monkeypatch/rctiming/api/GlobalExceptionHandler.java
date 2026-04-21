@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api;
 
+import dev.monkeypatch.rctiming.domain.event.IllegalStateTransitionException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ProblemDetail handleConflict(DataIntegrityViolationException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Resource already exists");
+    }
+
+    @ExceptionHandler(IllegalStateTransitionException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handleStateTransition(IllegalStateTransitionException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)

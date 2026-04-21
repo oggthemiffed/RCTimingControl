@@ -36,6 +36,9 @@ public class Event {
     @Column(name = "entry_closes_at")
     private Instant entryClosesAt;
 
+    @Column(name = "track_id")
+    private Long trackId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -59,6 +62,9 @@ public class Event {
 
     public Instant getEntryClosesAt() { return entryClosesAt; }
     public void setEntryClosesAt(Instant entryClosesAt) { this.entryClosesAt = entryClosesAt; }
+
+    public Long getTrackId() { return trackId; }
+    public void setTrackId(Long trackId) { this.trackId = trackId; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

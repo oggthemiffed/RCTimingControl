@@ -23,6 +23,9 @@ public class CarTagCategory {
     @Column(name = "sort_order", nullable = false, columnDefinition = "smallint")
     private short sortOrder;
 
+    @Column(nullable = false)
+    private boolean archived = false;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -34,6 +37,9 @@ public class CarTagCategory {
 
     public short getSortOrder() { return sortOrder; }
     public void setSortOrder(short sortOrder) { this.sortOrder = sortOrder; }
+
+    public boolean isArchived() { return archived; }
+    public void setArchived(boolean archived) { this.archived = archived; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
