@@ -9,38 +9,43 @@ Web-based RC club management and race timing system. Replaces RCResults with a m
 | `app/` | Spring Boot 3.4 backend — REST API, JWT auth, WebSocket timing hub |
 | `frontend/` | React 18 + Vite + Tailwind + shadcn/ui |
 | `forwarder/` | Separate module — connects to AMB/MyLaps decoder hardware |
-| `docker-compose.yml` | PostgreSQL 16 + Mailpit (dev email) |
+| `docker-compose.yml` | PostgreSQL 16 + Mailpit (dev email) + MinIO (object storage) |
 
 ## Quick start
 
-**Prerequisites:** Java 21, Docker, Node 20+
+**Prerequisites:** Java 21, Docker, Node 20+, `make`
 
 ```bash
-# 1. Start dev infrastructure
-docker compose up -d
-
-# 2. Run the backend (auto-runs Flyway migrations)
-./gradlew :app:bootRun --args='--spring.profiles.active=dev'
-
-# 3. Run the frontend (separate terminal)
-cd frontend && npm install && npm run dev
+make dev-start
 ```
 
-Backend: `http://localhost:8080`  
-Frontend: `http://localhost:5173`  
-Mailpit (catch-all email): `http://localhost:8025`
+That's it. Starts PostgreSQL + Mailpit, the Spring Boot backend (dev profile), and the Vite frontend — all in the background.
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:5173 |
+| Backend API | http://localhost:8080 |
+| Mailpit (dev email) | http://localhost:8025 |
+| MinIO S3 API | http://localhost:9000 |
+| MinIO Console | http://localhost:9001 (user: `minioadmin`, pass: `minioadmin`) |
+
+```bash
+make stop       # shut everything down
+make clean-db   # wipe the database and start fresh
+```
+
+Two racer accounts are seeded automatically in dev mode — see [docs/testing.md](docs/testing.md) for credentials.
+
+For manual setup or individual service control see the [Development guide](docs/development.md).
 
 ## Running tests
 
 ```bash
-# Unit tests only (no Docker needed)
-./gradlew :app:test --tests "dev.monkeypatch.rctiming.domain.*"
-
-# Full integration tests (requires Docker for Testcontainers)
-./gradlew :app:test
+make test       # full integration suite (requires Docker)
+make test-fast  # skip jOOQ codegen for faster reruns
 ```
 
-## Current state — Phase 2 complete
+## Current state — Phase 3 in progress
 
 ### Phase 1 — Domain Foundation
 - Flyway schema: users, auth tokens, club, tracks, racing classes, race formats (JSONB)
@@ -56,7 +61,14 @@ Mailpit (catch-all email): `http://localhost:8025`
 - **Events + Entries API**: public event schedule at `/api/v1/events` (no auth); entry submit/withdraw at `/api/v1/racer/entries`; transponder snapshot at submission time; duplicate transponder warning; membership hard block (422) with admin override; full entry audit log; jOOQ entry history projection
 - **Racer Portal UI**: React portal shell under `/racer/*` with responsive nav (desktop top nav / mobile bottom nav); `ProfilePage` (load, patch, membership CRUD); `CarsPage` (grid, `CarEditSheet` sheet, archive); TanStack Query v5 hooks
 
-Phases 3–7 (Admin Panel → Results & Championship) are planned. See `.planning/ROADMAP.md`.
+### Phase 3 — Admin Panel (in progress)
+- **Schema**: Flyway migrations V15–V16 — event state/track/class columns, championship tables (5 tables)
+- **Event backend**: event CRUD + state machine (`DRAFT→PUBLISHED→OPEN→CLOSED→COMPLETED`, HTTP 409 on invalid transition); event-class assignment with config snapshot, overrides, and class combining; admin entry view/withdraw
+- **Championship backend**: championship CRUD with best-X-from-Y scoring, TQ/A-final bonuses, scoring source selection; racing-class membership with per-class overrides; event linking with round numbers; points-scale editing; audited exclusions; standings scaffold for Phase 7
+- **Storage**: MinIO/S3 object storage wired via `ObjectStorageService` abstraction; club logo upload at `PUT /api/v1/admin/club/logo`; `CarTagCategory` soft-delete via `archived` flag
+- **Admin Panel UI** (partial): React shell under `/admin/*` — role-gated layout with sidebar/mobile drawer; Events list + detail + class management + entry withdraw (Plan 05 complete, awaiting UAT); Championships/Club/Tracks/Formats/Categories pages (Plan 06 pending)
+
+Phases 4–7 (Race Control → Results & Championship) are planned. See `.planning/ROADMAP.md`.
 
 ## Docs
 
