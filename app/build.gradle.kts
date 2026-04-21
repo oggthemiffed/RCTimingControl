@@ -53,6 +53,12 @@ dependencies {
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.testcontainers:minio")
+
+    // D-22: MinIO-backed object storage via AWS S3 SDK v2 (also works against AWS S3)
+    implementation(platform("software.amazon.awssdk:bom:2.25.60"))
+    implementation("software.amazon.awssdk:s3")
+    implementation("software.amazon.awssdk:auth")
 
     jooqGenerator("org.postgresql:postgresql")
     jooqGenerator("org.flywaydb:flyway-core")

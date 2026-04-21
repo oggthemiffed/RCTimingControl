@@ -12,3 +12,11 @@ app:
     secret: ${JWT_SECRET:dGhpcyBpcyBhIGRldmVsb3BtZW50IHNlY3JldCBrZXkgdGhhdCBtdXN0IGJlIGF0IGxlYXN0IDI1NiBiaXRz}
     access-token-ttl-ms: 900000
     refresh-token-ttl-ms: 604800000
+
+storage:
+  endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}
+  accessKey: ${STORAGE_ACCESS_KEY:minioadmin}
+  secretKey: ${STORAGE_SECRET_KEY:minioadmin}
+  region: ${STORAGE_REGION:us-east-1}
+  bucket: ${STORAGE_BUCKET:rctiming}
+  publicBaseUrl: ${STORAGE_PUBLIC_BASE_URL:http://localhost:9000/rctiming}
