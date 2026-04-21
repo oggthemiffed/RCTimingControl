@@ -1,0 +1,191 @@
+import { useState } from 'react';
+import { Outlet, NavLink } from 'react-router-dom';
+import {
+  Calendar,
+  Trophy,
+  Building2,
+  MapPin,
+  Sliders,
+  Tags,
+  LogOut,
+  Menu,
+} from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+
+// ── Nav definition ─────────────────────────────────────────────────────────
+
+const eventsGroup = [
+  { to: '/admin/events', label: 'Events', Icon: Calendar },
+  { to: '/admin/championships', label: 'Championships', Icon: Trophy },
+] as const;
+
+const configGroup = [
+  { to: '/admin/tracks', label: 'Tracks', Icon: MapPin },
+  { to: '/admin/formats', label: 'Formats', Icon: Sliders },
+  { to: '/admin/club', label: 'Club Profile', Icon: Building2 },
+  { to: '/admin/categories', label: 'Car Tags', Icon: Tags },
+] as const;
+
+// ── Shared nav link style ──────────────────────────────────────────────────
+
+function NavItem({
+  to,
+  label,
+  Icon,
+  onClick,
+}: {
+  to: string;
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  onClick?: () => void;
+}) {
+  return (
+    <NavLink
+      to={to}
+      end={to === '/admin'}
+      onClick={onClick}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+          isActive
+            ? 'bg-primary/10 text-primary font-semibold border-l-[3px] border-primary pl-[calc(0.75rem-3px)]'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+        }`
+      }
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      {label}
+    </NavLink>
+  );
+}
+
+// ── Sidebar content (reused for desktop + sheet) ───────────────────────────
+
+function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
+  const { user, logout } = useAuth();
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Brand */}
+      <div className="px-4 py-5">
+        <span className="font-semibold text-base">RC Timing — Admin</span>
+      </div>
+      <Separator />
+
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {/* Group 1: Events & Competitions */}
+        <p className="px-3 mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Events &amp; Competitions
+        </p>
+        {eventsGroup.map(({ to, label, Icon }) => (
+          <NavItem key={to} to={to} label={label} Icon={Icon} onClick={onNavClick} />
+        ))}
+
+        <div className="pt-4">
+          <Separator />
+        </div>
+
+        {/* Group 2: Configuration */}
+        <p className="px-3 pt-4 mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Configuration
+        </p>
+        {configGroup.map(({ to, label, Icon }) => (
+          <NavItem key={to} to={to} label={label} Icon={Icon} onClick={onNavClick} />
+        ))}
+      </nav>
+
+      <Separator />
+
+      {/* User + logout */}
+      <div className="px-4 py-4 flex items-center justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium truncate">
+            {user ? `${user.firstName} ${user.lastName}` : 'Admin'}
+          </p>
+          <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={logout}
+          aria-label="Log out"
+          className="shrink-0"
+        >
+          <LogOut className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ── Layout ─────────────────────────────────────────────────────────────────
+
+export default function AdminPanelLayout() {
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Desktop: fixed left sidebar */}
+      <aside className="hidden md:flex fixed inset-y-0 left-0 w-60 border-r bg-card flex-col z-10">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile: top bar with hamburger */}
+      <header className="md:hidden flex items-center border-b h-14 px-4 sticky top-0 bg-background z-10">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setSheetOpen(true)}
+          aria-label="Open navigation"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        <span className="ml-3 font-semibold text-sm">RC Timing — Admin</span>
+      </header>
+
+      {/* Mobile: Sheet drawer */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent side="left" showCloseButton className="w-72 p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation</SheetTitle>
+          </SheetHeader>
+          <SidebarContent onNavClick={() => setSheetOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      {/* Main content */}
+      <main className="md:pl-60">
+        <div className="px-6 pt-6 pb-10 min-h-screen">
+          <Outlet />
+        </div>
+      </main>
+
+      {/* Mobile bottom nav */}
+      <nav className="fixed bottom-0 inset-x-0 flex md:hidden border-t bg-background z-10 h-14">
+        {[...eventsGroup, ...configGroup].slice(0, 5).map(({ to, label, Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={false}
+            aria-label={label}
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center justify-center py-2 text-xs gap-1 ${
+                isActive ? 'text-primary' : 'text-muted-foreground'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Icon className="h-5 w-5" aria-hidden="true" />
+                <span aria-current={isActive ? 'page' : undefined}>{label}</span>
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+    </div>
+  );
+}
