@@ -249,7 +249,7 @@ export default function EventDetailPage() {
                 {transitionMutation.isPending && (
                   <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                 )}
-                {transitionLabel[target]}
+                {transitionLabel[data.status]}
               </Button>
             ))}
           </div>
