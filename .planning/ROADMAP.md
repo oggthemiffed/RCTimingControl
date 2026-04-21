@@ -60,8 +60,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 6 plans
 Plans:
 - [x] 03-01-PLAN.md — Schema foundation: V15/V16 migrations, entity column additions, IllegalStateTransitionException + GlobalExceptionHandler
-- [ ] 03-02-PLAN.md — Event backend: EventService, state machine, EventController, EventClass override/combine, admin entry management (EVENT-01/02/05/06/07, ENTRY-02)
-- [ ] 03-03-PLAN.md — Championship backend: entities, ChampionshipService, points scale, exclusions, standings query scaffold (CHAMP-01..04, CHAMP-06..10)
+- [x] 03-02-PLAN.md — Event backend: EventService, state machine, EventController, EventClass override/combine, admin entry management (EVENT-01/02/05/06/07, ENTRY-02)
+- [x] 03-03-PLAN.md — Championship backend: entities, ChampionshipService, points scale, exclusions, standings query scaffold (CHAMP-01..04, CHAMP-06..10)
 - [ ] 03-04-PLAN.md — Infrastructure + config services: MinIO + S3 client, ObjectStorageService, logo upload endpoint, CarTagCategory archive pattern
 - [ ] 03-05-PLAN.md — Admin panel frontend shell + events/entries UI: layout, routes, adminApi/adminQueryKeys scaffolding, event CRUD + state transitions + classes + entries
 - [ ] 03-06-PLAN.md — Championships + config forms UI: championship detail (6 tabs), points scale editor (ROAR/BRCA presets), club/tracks/formats/car-tag-categories admin pages (CHAMP-01..04, CHAMP-06..10)
