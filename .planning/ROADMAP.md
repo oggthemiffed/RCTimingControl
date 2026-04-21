@@ -57,7 +57,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Admin can add racing classes to an event, assign race format templates (with override capability), and combine low-turnout classes into a single combined race
   3. Admin can view and manage all entries per event and per class
   4. Admin can create a championship, configure best-X-from-Y scoring, a custom points scale, and bonus points for TQ and A-final winner; standings display correctly with drops and tiebreaks
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+- [ ] 03-01-PLAN.md — Schema foundation: V15/V16 migrations, entity column additions, IllegalStateTransitionException + GlobalExceptionHandler
+- [ ] 03-02-PLAN.md — Event backend: EventService, state machine, EventController, EventClass override/combine, admin entry management (EVENT-01/02/05/06/07, ENTRY-02)
+- [ ] 03-03-PLAN.md — Championship backend: entities, ChampionshipService, points scale, exclusions, standings query scaffold (CHAMP-01..04, CHAMP-06..10)
+- [ ] 03-04-PLAN.md — Infrastructure + config services: MinIO + S3 client, ObjectStorageService, logo upload endpoint, CarTagCategory archive pattern
+- [ ] 03-05-PLAN.md — Admin panel frontend shell + events/entries UI: layout, routes, adminApi/adminQueryKeys scaffolding, event CRUD + state transitions + classes + entries
+- [ ] 03-06-PLAN.md — Championships + config forms UI: championship detail (6 tabs), points scale editor (ROAR/BRCA presets), club/tracks/formats/car-tag-categories admin pages (CHAMP-01..04, CHAMP-06..10)
 **UI hint**: yes
 
 ### Phase 4: Race Control
@@ -117,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Domain Foundation | 0/TBD | Not started | - |
 | 2. Racer Portal | 0/TBD | Not started | - |
-| 3. Admin Panel & Event Management | 0/TBD | Not started | - |
+| 3. Admin Panel & Event Management | 0/6 | Not started | - |
 | 4. Race Control | 0/TBD | Not started | - |
 | 5. Live Timing & Forwarder | 0/TBD | Not started | - |
 | 6. Audio & Practice | 0/TBD | Not started | - |
