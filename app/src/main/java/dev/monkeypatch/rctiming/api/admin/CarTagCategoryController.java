@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,8 +31,11 @@ public class CarTagCategoryController {
     }
 
     @GetMapping
-    public List<CarTagCategoryDto> listCategories() {
-        return carTagCategoryService.findAll();
+    public List<CarTagCategoryDto> listCategories(
+            @RequestParam(name = "includeArchived", defaultValue = "false") boolean includeArchived) {
+        return carTagCategoryService.listCategories(includeArchived).stream()
+                .map(CarTagCategoryDto::from)
+                .toList();
     }
 
     @GetMapping("/{id}")
@@ -55,5 +59,11 @@ public class CarTagCategoryController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCategory(@PathVariable Long id) {
         carTagCategoryService.delete(id);
+    }
+
+    @PostMapping("/{id}/unarchive")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unarchiveCategory(@PathVariable Long id) {
+        carTagCategoryService.unarchiveCategory(id);
     }
 }

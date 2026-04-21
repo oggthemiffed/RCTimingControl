@@ -27,6 +27,18 @@ public class CarTagCategoryService {
     }
 
     @Transactional(readOnly = true)
+    public List<CarTagCategory> listCategories(boolean includeArchived) {
+        return includeArchived
+                ? carTagCategoryRepository.findAllByOrderBySortOrderAsc()
+                : carTagCategoryRepository.findByArchivedFalseOrderBySortOrderAsc();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CarTagCategory> listCategories() {
+        return listCategories(false);
+    }
+
+    @Transactional(readOnly = true)
     public CarTagCategoryDto findById(Long id) {
         return CarTagCategoryDto.from(getCategoryOrThrow(id));
     }
@@ -49,10 +61,21 @@ public class CarTagCategoryService {
     }
 
     public void delete(Long id) {
-        if (!carTagCategoryRepository.existsById(id)) {
-            throw new EntityNotFoundException("Car tag category not found: " + id);
-        }
-        carTagCategoryRepository.deleteById(id);
+        archiveCategory(id);
+    }
+
+    public void archiveCategory(Long id) {
+        CarTagCategory cat = carTagCategoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Car tag category not found: " + id));
+        cat.setArchived(true);
+        carTagCategoryRepository.save(cat);
+    }
+
+    public void unarchiveCategory(Long id) {
+        CarTagCategory cat = carTagCategoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Car tag category not found: " + id));
+        cat.setArchived(false);
+        carTagCategoryRepository.save(cat);
     }
 
     private CarTagCategory getCategoryOrThrow(Long id) {

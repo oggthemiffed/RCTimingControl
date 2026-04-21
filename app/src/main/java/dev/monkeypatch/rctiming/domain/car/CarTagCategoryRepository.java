@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface CarTagCategoryRepository extends JpaRepository<CarTagCategory, Long> {
     List<CarTagCategory> findAllByOrderBySortOrderAsc();
+    List<CarTagCategory> findByArchivedFalseOrderBySortOrderAsc();
 }
