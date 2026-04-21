@@ -7,6 +7,7 @@ import RegisterPage from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import { Toaster } from '@/components/ui/sonner';
 import RacerPortalLayout from '@/pages/racer/RacerPortalLayout';
 import ProfilePage from '@/pages/racer/ProfilePage';
@@ -81,6 +82,7 @@ const router = createBrowserRouter([
         ],
       },
       { path: '/events', element: <EventSchedulePage /> },
+      { path: '/unauthorized', element: <UnauthorizedPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
