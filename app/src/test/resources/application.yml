@@ -16,3 +16,14 @@ app:
     secret: dGhpcyBpcyBhIHRlc3Qgc2VjcmV0IGtleSBmb3IgdGVzdHMgdGhhdCBpcyBsb25nIGVub3VnaA==
     access-token-ttl-ms: 900000
     refresh-token-ttl-ms: 604800000
+
+# Storage defaults for tests that don't spin up a real MinIO container.
+# MinioConfig.ensureBucket() catches startup exceptions and logs a warning —
+# tests that exercise logo upload (ClubLogoUploadIT) override these via @DynamicPropertySource.
+storage:
+  endpoint: http://localhost:9000
+  accessKey: minioadmin
+  secretKey: minioadmin
+  region: us-east-1
+  bucket: rctiming-test
+  publicBaseUrl: http://localhost:9000/rctiming-test

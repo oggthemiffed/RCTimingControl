@@ -27,6 +27,12 @@ configurations.named("jooqGenerator") {
     }
 }
 
+// Docker Engine 29.x raised the minimum client API version to 1.40.
+// Testcontainers 1.20.6 (shaded docker-java) negotiates at v1.32 — rejected by Docker 29.x.
+// Testcontainers 1.21.0+ fixes this (shaded docker-java 3.4.2+ uses 1.40 as minimum).
+// Override the Spring Boot BOM managed testcontainers version.
+ext["testcontainers.version"] = "1.21.3"
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -74,6 +80,11 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // Docker Engine 29.x requires API version >= 1.40.
+    // Testcontainers hardcodes VERSION_1_32 as the default when no api.version is configured.
+    // The docker-java shaded code in testcontainers reads "api.version" from JVM system properties
+    // via overrideDockerPropertiesWithSystemProperties — setting it here bypasses the 1.32 fallback.
+    jvmArgs("-Dapi.version=1.47")
 }
 
 // ---------------------------------------------------------------------------

@@ -1,9 +1,9 @@
 package dev.monkeypatch.rctiming.config;
 
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -53,22 +53,31 @@ public class MinioConfig {
                 .build();
     }
 
-    /** Auto-create the configured bucket at startup if it does not exist. */
-    @PostConstruct
-    public void ensureBucket() {
-        try {
-            s3Client().headBucket(HeadBucketRequest.builder().bucket(bucket).build());
-            log.info("Object storage bucket '{}' exists", bucket);
-        } catch (NoSuchBucketException nsb) {
-            log.info("Creating object storage bucket '{}'", bucket);
+    /**
+     * Auto-create the configured bucket at startup if it does not exist.
+     *
+     * Using ApplicationRunner instead of @PostConstruct avoids a circular reference:
+     * a @PostConstruct on a @Configuration class that calls its own @Bean method
+     * triggers "bean currently in creation" because Spring hasn't finished registering
+     * the bean yet. ApplicationRunner receives the fully-wired S3Client singleton.
+     */
+    @Bean
+    public ApplicationRunner ensureBucketRunner(S3Client s3) {
+        return args -> {
             try {
-                s3Client().createBucket(CreateBucketRequest.builder().bucket(bucket).build());
-            } catch (BucketAlreadyOwnedByYouException ignored) {
-                // race condition, bucket was created between head and create
+                s3.headBucket(HeadBucketRequest.builder().bucket(bucket).build());
+                log.info("Object storage bucket '{}' exists", bucket);
+            } catch (NoSuchBucketException nsb) {
+                log.info("Creating object storage bucket '{}'", bucket);
+                try {
+                    s3.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
+                } catch (BucketAlreadyOwnedByYouException ignored) {
+                    // race condition, bucket was created between head and create
+                }
+            } catch (Exception e) {
+                log.warn("Could not verify object storage bucket '{}' — startup continues (bucket will be created on first write): {}",
+                        bucket, e.getMessage());
             }
-        } catch (Exception e) {
-            log.warn("Could not verify object storage bucket '{}' — startup continues (bucket will be created on first write): {}",
-                    bucket, e.getMessage());
-        }
+        };
     }
 }
