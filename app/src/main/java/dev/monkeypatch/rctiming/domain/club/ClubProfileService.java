@@ -33,6 +33,14 @@ public class ClubProfileService {
                 .orElseThrow(() -> new EntityNotFoundException("Club profile not found"));
     }
 
+    @Transactional(readOnly = true)
+    public Long getSingletonProfileId() {
+        return clubProfileRepository.findAll().stream()
+                .findFirst()
+                .map(ClubProfile::getId)
+                .orElseThrow(() -> new EntityNotFoundException("Club profile not found"));
+    }
+
     public ClubProfileDto createOrUpdateProfile(CreateClubProfileRequest request) {
         // Validate timezone — throws DateTimeException on invalid
         ZoneId.of(request.timezone());

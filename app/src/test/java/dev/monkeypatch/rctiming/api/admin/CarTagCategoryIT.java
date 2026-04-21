@@ -97,17 +97,24 @@ class CarTagCategoryIT extends AbstractIntegrationTest {
         assertThat(updated.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(updated.getBody().name()).isEqualTo(catName + "-Updated");
 
-        // Delete
+        // Delete (now archives instead of hard-deletes — D-21)
         ResponseEntity<Void> deleted = restTemplate.exchange(
                 BASE_URL + "/" + catId, HttpMethod.DELETE,
                 new HttpEntity<>(adminHeaders()), Void.class);
         assertThat(deleted.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
 
-        // Verify gone — expect 404; use Map to avoid deserialization of problem+json as DTO
-        ResponseEntity<Map> getResp = restTemplate.exchange(
+        // Verify still accessible by id (archived, not deleted)
+        ResponseEntity<CarTagCategoryDto> getResp = restTemplate.exchange(
                 BASE_URL + "/" + catId, HttpMethod.GET,
-                new HttpEntity<>(adminHeaders()), Map.class);
-        assertThat(getResp.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+                new HttpEntity<>(adminHeaders()), CarTagCategoryDto.class);
+        assertThat(getResp.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // Verify hidden from default list (excludes archived)
+        ResponseEntity<List<CarTagCategoryDto>> listResp = restTemplate.exchange(
+                BASE_URL, HttpMethod.GET,
+                new HttpEntity<>(adminHeaders()),
+                new ParameterizedTypeReference<List<CarTagCategoryDto>>() {});
+        assertThat(listResp.getBody()).noneMatch(c -> c.id().equals(catId));
     }
 
     @Test
