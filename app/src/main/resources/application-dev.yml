@@ -12,6 +12,8 @@ spring:
     properties:
       mail.smtp.auth: false
       mail.smtp.starttls.enable: false
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed
   jpa:
     hibernate:
       ddl-auto: validate

@@ -53,7 +53,7 @@ function TrackFormDialog({
     formState: { errors, isSubmitting },
   } = useForm<TrackFormValues>({
     resolver: zodResolver(trackSchema),
-    defaultValues: {
+    values: {
       name: initialValue?.name ?? '',
       venueNotes: initialValue?.venueNotes ?? '',
       trackLength: initialValue?.trackLength ?? null,

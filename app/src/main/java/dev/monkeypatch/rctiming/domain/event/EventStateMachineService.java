@@ -15,7 +15,7 @@ public class EventStateMachineService {
     static {
         Map<EventStatus, Set<EventStatus>> m = new EnumMap<>(EventStatus.class);
         m.put(EventStatus.DRAFT,          EnumSet.of(EventStatus.PUBLISHED));
-        m.put(EventStatus.PUBLISHED,      EnumSet.of(EventStatus.OPEN));
+        m.put(EventStatus.PUBLISHED,      EnumSet.of(EventStatus.OPEN, EventStatus.DRAFT));
         m.put(EventStatus.OPEN,           EnumSet.of(EventStatus.ENTRIES_CLOSED));
         m.put(EventStatus.ENTRIES_CLOSED, EnumSet.of(EventStatus.IN_PROGRESS));
         m.put(EventStatus.IN_PROGRESS,    EnumSet.of(EventStatus.COMPLETED));

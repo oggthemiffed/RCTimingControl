@@ -21,6 +21,19 @@ export interface AuthContextValue {
   isLoading: boolean;
 }
 
+interface AuthResponse {
+  accessToken: string;
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  roles: AuthUser['roles'];
+}
+
+function authResponseToUser(data: AuthResponse): AuthUser {
+  return { id: data.id, email: data.email, firstName: data.firstName, lastName: data.lastName, roles: data.roles };
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -33,15 +46,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Attempt silent session restore via HttpOnly refresh cookie
     axios
-      .post<{ accessToken: string; user: AuthUser }>(
-        '/api/v1/auth/refresh',
-        {},
-        { withCredentials: true }
-      )
+      .post<AuthResponse>('/api/v1/auth/refresh', {}, { withCredentials: true })
       .then(({ data }) => {
         setAccessToken(data.accessToken);
         setAccessTokenState(data.accessToken);
-        setUser(data.user);
+        setUser(authResponseToUser(data));
       })
       .catch(() => {
         // No valid refresh cookie — user remains unauthenticated
@@ -52,16 +61,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
-    const { data } = await api.post<{ accessToken: string; user: AuthUser }>(
-      '/api/v1/auth/login',
-      { email, password }
-    );
+    const { data } = await api.post<AuthResponse>('/api/v1/auth/login', { email, password });
+    const authUser = authResponseToUser(data);
     setAccessToken(data.accessToken);
     setAccessTokenState(data.accessToken);
-    setUser(data.user);
+    setUser(authUser);
 
     const staffRoles: AuthUser['roles'][number][] = ['ADMIN', 'RACE_DIRECTOR', 'REFEREE'];
-    const isStaff = data.user.roles.some((r) => staffRoles.includes(r));
+    const isStaff = authUser.roles.some((r) => staffRoles.includes(r));
     navigate(isStaff ? '/admin' : '/racer');
   };
 

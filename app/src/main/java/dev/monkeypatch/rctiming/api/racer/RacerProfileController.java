@@ -1,9 +1,11 @@
 package dev.monkeypatch.rctiming.api.racer;
 
+import dev.monkeypatch.rctiming.api.admin.dto.GoverningBodyAffiliationDto;
 import dev.monkeypatch.rctiming.api.racer.dto.MembershipDto;
 import dev.monkeypatch.rctiming.api.racer.dto.RacerProfileDto;
 import dev.monkeypatch.rctiming.api.racer.dto.UpdateRacerProfileRequest;
 import dev.monkeypatch.rctiming.api.racer.dto.UpsertMembershipRequest;
+import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.domain.user.RacerProfileService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,9 +30,17 @@ import java.util.List;
 public class RacerProfileController {
 
     private final RacerProfileService profileService;
+    private final ClubProfileService clubProfileService;
 
-    public RacerProfileController(RacerProfileService profileService) {
+    public RacerProfileController(RacerProfileService profileService,
+                                   ClubProfileService clubProfileService) {
         this.profileService = profileService;
+        this.clubProfileService = clubProfileService;
+    }
+
+    @GetMapping("/affiliations")
+    public List<GoverningBodyAffiliationDto> listAffiliations() {
+        return clubProfileService.listAffiliations();
     }
 
     @GetMapping("/profile")

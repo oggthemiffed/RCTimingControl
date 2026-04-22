@@ -9,13 +9,35 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { ChampionshipDto, ScoringSource } from '@/lib/adminApi';
 
+const optionalPositiveInt = z.preprocess(
+  (v) => (v === '' || v == null) ? null : Number(v),
+  z.number().int().positive().nullable()
+);
+
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   scoringSource: z.enum(['QUALIFYING', 'FINALS', 'BOTH']),
-  bestXFromYX: z.coerce.number().int().positive().nullable(),
-  bestXFromYY: z.coerce.number().int().positive().nullable(),
+  bestXFromYX: optionalPositiveInt,
+  bestXFromYY: optionalPositiveInt,
   tqBonusPoints: z.coerce.number().int().min(0),
   afinalWinnerBonusPoints: z.coerce.number().int().min(0),
+}).superRefine((data, ctx) => {
+  const bothSet = data.bestXFromYX !== null && data.bestXFromYY !== null;
+  const neitherSet = data.bestXFromYX === null && data.bestXFromYY === null;
+  if (!bothSet && !neitherSet) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Set both fields or leave both empty',
+      path: ['bestXFromYX'],
+    });
+  }
+  if (bothSet && data.bestXFromYX! > data.bestXFromYY!) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Rounds to count cannot exceed total rounds',
+      path: ['bestXFromYX'],
+    });
+  }
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -88,25 +110,28 @@ export function ChampionshipConfigForm({ initialValue, onSubmit, submitLabel }: 
       </div>
 
       <div className="space-y-1.5">
-        <Label>Best X from Y (optional)</Label>
+        <Label>Rounds scoring (optional)</Label>
         <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">Count best</span>
           <Input
             type="number"
-            className="w-24"
-            placeholder="X"
+            className="w-20"
+            placeholder="e.g. 8"
             {...register('bestXFromYX')}
           />
           <span className="text-muted-foreground text-sm">from</span>
           <Input
             type="number"
-            className="w-24"
-            placeholder="Y"
+            className="w-20"
+            placeholder="e.g. 10"
             {...register('bestXFromYY')}
           />
           <span className="text-sm text-muted-foreground">rounds</span>
         </div>
         {(errors.bestXFromYX || errors.bestXFromYY) && (
-          <p className="text-xs text-destructive">Must be positive integers if set</p>
+          <p className="text-xs text-destructive">
+            {errors.bestXFromYX?.message ?? errors.bestXFromYY?.message ?? 'Must be positive integers if set'}
+          </p>
         )}
       </div>
 

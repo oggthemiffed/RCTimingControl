@@ -388,8 +388,14 @@ benefit for a club system that has no third-party API consumers.
 ### Persistence
 - PostgreSQL in production. H2 in-memory for developer and CI environments.
 - Flyway for schema migrations — never rely on Hibernate `ddl-auto: update` in production.
-- Use `spring-boot-starter-data-jpa` with explicit SQL for complex queries (positions,
-  championship calculations). Do not attempt to express championship scoring as JPQL.
+- **Write side (domain module):** Spring Data JPA + Hibernate 6. Entity lifecycle,
+  associations, repositories. Hibernate sessions must not cross into the query module.
+- **Read side (query module):** jOOQ 3.19.x. Type-safe SQL DSL (generated from schema)
+  for all projections and aggregations — championship scoring, standings, lap aggregates,
+  results views. Do not attempt to express these as JPQL or Criteria API.
+- **Race format config:** JSONB column with a `type` discriminator. Sealed Java class
+  hierarchy + Jackson for validation on write. Override patch (FORMAT-07) stored as a
+  second JSONB column, merged at read time. Use `jsonb_pretty(config)` for diagnostics.
 
 ### Configuration
 - Decoder TCP host/port, reconnect behaviour, and session parameters in `application.yml`

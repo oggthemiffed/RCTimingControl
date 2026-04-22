@@ -137,7 +137,7 @@ export function FormatConfigFields({ value, onChange }: Props) {
       </div>
 
       {value.type === 'TIMED' && (
-        <div className="grid grid-cols-2 gap-3 animate-in fade-in">
+        <div className="grid grid-cols-2 gap-3 animate-in fade-in duration-200">
           <NumField label="Duration (min)" value={value.durationMinutes} onChange={v => patch('durationMinutes', v)} />
           <NumField label="Race Padding (min)" value={value.racePaddingMinutes} onChange={v => patch('racePaddingMinutes', v)} />
           <NumField label="Stagger Interval (s)" value={value.staggerIntervalSeconds} onChange={v => patch('staggerIntervalSeconds', v)} />
@@ -147,7 +147,7 @@ export function FormatConfigFields({ value, onChange }: Props) {
       )}
 
       {value.type === 'BUMP_UP' && (
-        <div className="grid grid-cols-2 gap-3 animate-in fade-in">
+        <div className="grid grid-cols-2 gap-3 animate-in fade-in duration-200">
           <NumField label="Qualifying Heats" value={value.qualifyingHeats} onChange={v => patch('qualifyingHeats', v)} />
           <NumField label="Heat Duration (min)" value={value.heatDurationMinutes} onChange={v => patch('heatDurationMinutes', v)} />
           <NumField label="Best Heats Count" value={value.bestHeatsCount} onChange={v => patch('bestHeatsCount', v)} />
@@ -161,7 +161,7 @@ export function FormatConfigFields({ value, onChange }: Props) {
       )}
 
       {value.type === 'POINTS_FINALS' && (
-        <div className="grid grid-cols-2 gap-3 animate-in fade-in">
+        <div className="grid grid-cols-2 gap-3 animate-in fade-in duration-200">
           <NumField label="Qualifying Heats" value={value.qualifyingHeats} onChange={v => patch('qualifyingHeats', v)} />
           <NumField label="Finals Count" value={value.finalsCount} onChange={v => patch('finalsCount', v)} />
           <NumField label="Final Duration (min)" value={value.finalDurationMinutes} onChange={v => patch('finalDurationMinutes', v)} />

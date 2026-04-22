@@ -8,13 +8,16 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import {
   Form, FormField, FormItem, FormLabel, FormControl, FormMessage,
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
-  useProfile, useUpdateProfile, useAddMembership, useRemoveMembership,
+  useProfile, useUpdateProfile, useAddMembership, useRemoveMembership, useAffiliations,
 } from '@/hooks/racer/useProfile';
 
 const profileSchema = z.object({
@@ -35,6 +38,7 @@ type MembershipForm = z.infer<typeof membershipSchema>;
 
 export default function ProfilePage() {
   const { data: profile, isPending, error } = useProfile();
+  const { data: affiliations = [] } = useAffiliations();
   const updateProfile = useUpdateProfile();
   const addMembership = useAddMembership();
   const removeMembership = useRemoveMembership();
@@ -87,8 +91,17 @@ export default function ProfilePage() {
 
   const membershipForm = useForm<MembershipForm>({
     resolver: zodResolver(membershipSchema),
-    defaultValues: { governingBodyCode: '', membershipNumber: '' },
+    defaultValues: {
+      governingBodyCode: affiliations[0]?.code ?? '',
+      membershipNumber: '',
+    },
   });
+
+  useEffect(() => {
+    if (affiliations.length > 0 && !membershipForm.getValues('governingBodyCode')) {
+      membershipForm.setValue('governingBodyCode', affiliations[0].code);
+    }
+  }, [affiliations, membershipForm]);
 
   async function onAddMembership(values: MembershipForm) {
     try {
@@ -232,7 +245,24 @@ export default function ProfilePage() {
               <FormField control={membershipForm.control} name="governingBodyCode" render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormLabel>Body</FormLabel>
-                  <FormControl><Input placeholder="BRCA" {...field} /></FormControl>
+                  <FormControl>
+                    {affiliations.length > 0 ? (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select body" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {affiliations.map((a) => (
+                            <SelectItem key={a.code} value={a.code}>
+                              {a.displayName} ({a.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input placeholder="e.g. BRCA" {...field} />
+                    )}
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />

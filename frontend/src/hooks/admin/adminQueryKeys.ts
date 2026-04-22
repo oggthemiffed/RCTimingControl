@@ -22,8 +22,14 @@ export const adminQueryKeys = {
   formats: {
     all: () => ['admin', 'formats'] as const,
   },
+  racingClasses: {
+    all: () => ['admin', 'racing-classes'] as const,
+  },
   carTagCategories: {
     all: (includeArchived: boolean) =>
       ['admin', 'car-tag-categories', { includeArchived }] as const,
+  },
+  users: {
+    all: () => ['admin', 'users'] as const,
   },
 };

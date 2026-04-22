@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -48,17 +48,104 @@ import {
   useDeleteExclusion,
 } from '@/hooks/admin/useAdminChampionships';
 import { useAdminEventsList } from '@/hooks/admin/useAdminEvents';
-import type { ChampionshipDto } from '@/lib/adminApi';
+import { useAdminUsersList } from '@/hooks/admin/useAdminUsers';
+import type { ChampionshipDto, UserSummaryDto } from '@/lib/adminApi';
 import { adminApi } from '@/lib/adminApi';
 import { useQuery } from '@tanstack/react-query';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 
+// ── Driver combobox ────────────────────────────────────────────────────────
+
+function DriverCombobox({
+  value,
+  onChange,
+}: {
+  value: number | '';
+  onChange: (id: number) => void;
+}) {
+  const { data: users = [] } = useAdminUsersList();
+  const [search, setSearch] = useState(() => {
+    const u = users.find(u => u.id === Number(value));
+    return u ? `${u.firstName} ${u.lastName}` : '';
+  });
+  const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = search.length >= 1
+    ? users.filter(u => {
+        const name = `${u.firstName} ${u.lastName}`.toLowerCase();
+        const memberNums = u.memberships.map(m => m.number.toLowerCase()).join(' ');
+        const q = search.toLowerCase();
+        return name.includes(q) || memberNums.includes(q);
+      })
+    : users;
+
+  function handleSelect(u: UserSummaryDto) {
+    onChange(u.id);
+    setSearch(`${u.firstName} ${u.lastName}`);
+    setOpen(false);
+  }
+
+  return (
+    <div className="relative">
+      <Input
+        ref={inputRef}
+        value={search}
+        onChange={e => { setSearch(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        placeholder="Search driver name…"
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
+          {filtered.slice(0, 30).map(u => {
+            const badges = u.memberships.map(m => `${m.code}: ${m.number}`).join(' · ');
+            return (
+              <button
+                key={u.id}
+                type="button"
+                className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-baseline gap-2"
+                onMouseDown={e => { e.preventDefault(); handleSelect(u); }}
+              >
+                <span>{u.firstName} {u.lastName}</span>
+                {badges && <span className="text-xs text-muted-foreground">{badges}</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Add class dialog ───────────────────────────────────────────────────────
+
+const optionalPositiveInt = z.preprocess(
+  (v) => (v === '' || v == null) ? null : Number(v),
+  z.number().int().positive().nullable()
+);
 
 const addClassSchema = z.object({
   racingClassId: z.coerce.number().int().positive('Racing class is required'),
-  bestXFromYX: z.coerce.number().int().positive().nullable(),
-  bestXFromYY: z.coerce.number().int().positive().nullable(),
+  bestXFromYX: optionalPositiveInt,
+  bestXFromYY: optionalPositiveInt,
+}).superRefine((data, ctx) => {
+  const bothSet = data.bestXFromYX !== null && data.bestXFromYY !== null;
+  const neitherSet = data.bestXFromYX === null && data.bestXFromYY === null;
+  if (!bothSet && !neitherSet) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Set both fields or leave both empty',
+      path: ['bestXFromYX'],
+    });
+  }
+  if (bothSet && data.bestXFromYX! > data.bestXFromYY!) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Rounds to count cannot exceed total rounds',
+      path: ['bestXFromYX'],
+    });
+  }
 });
 type AddClassFormValues = z.infer<typeof addClassSchema>;
 
@@ -122,12 +209,17 @@ function AddClassDialog({
             {errors.racingClassId && <p className="text-xs text-destructive">{errors.racingClassId.message}</p>}
           </div>
           <div className="space-y-1.5">
-            <Label>Per-class Best X/Y override (optional)</Label>
+            <Label>Per-class rounds override (optional)</Label>
             <div className="flex items-center gap-2">
-              <Input type="number" className="w-20" placeholder="X" {...register('bestXFromYX')} />
+              <span className="text-sm text-muted-foreground whitespace-nowrap">Count best</span>
+              <Input type="number" className="w-20" placeholder="e.g. 8" {...register('bestXFromYX')} />
               <span className="text-sm text-muted-foreground">from</span>
-              <Input type="number" className="w-20" placeholder="Y" {...register('bestXFromYY')} />
+              <Input type="number" className="w-20" placeholder="e.g. 10" {...register('bestXFromYY')} />
+              <span className="text-sm text-muted-foreground">rounds</span>
             </div>
+            {errors.bestXFromYX && (
+              <p className="text-xs text-destructive">{errors.bestXFromYX.message}</p>
+            )}
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting || addMutation.isPending}>
@@ -223,7 +315,7 @@ function LinkEventDialog({
 // ── Create exclusion dialog ────────────────────────────────────────────────
 
 const exclusionSchema = z.object({
-  driverId: z.coerce.number().int().positive('Driver ID is required'),
+  driverId: z.number({ required_error: 'Driver is required' }).int().positive('Driver is required'),
   eventId: z.coerce.number().int().positive('Event is required'),
   reason: z.string().min(1, 'Reason is required'),
 });
@@ -260,8 +352,17 @@ function CreateExclusionDialog({
         <DialogHeader><DialogTitle>Add Exclusion</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="exc-driver">Driver ID</Label>
-            <Input id="exc-driver" type="number" min={1} {...register('driverId')} />
+            <Label>Driver</Label>
+            <Controller
+              name="driverId"
+              control={control}
+              render={({ field }) => (
+                <DriverCombobox
+                  value={field.value ?? ''}
+                  onChange={id => field.onChange(id)}
+                />
+              )}
+            />
             {errors.driverId && <p className="text-xs text-destructive">{errors.driverId.message}</p>}
           </div>
           <div className="space-y-1.5">
@@ -326,6 +427,14 @@ export default function ChampionshipDetailPage() {
     queryFn: adminApi.listRacingClasses,
   });
   const { data: events = [] } = useAdminEventsList();
+  const { data: users = [] } = useAdminUsersList();
+
+  const driverName = (driverId: number) => {
+    const u = users.find(u => u.id === driverId);
+    if (!u) return `Driver ${driverId}`;
+    const badges = u.memberships.map(m => `${m.code}: ${m.number}`).join(', ');
+    return badges ? `${u.firstName} ${u.lastName} (${badges})` : `${u.firstName} ${u.lastName}`;
+  };
 
   const [addClassOpen, setAddClassOpen] = useState(false);
   const [linkEventOpen, setLinkEventOpen] = useState(false);
@@ -402,7 +511,7 @@ export default function ChampionshipDetailPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Class</TableHead>
-                    <TableHead>Best X/Y Override</TableHead>
+                    <TableHead>Rounds Override</TableHead>
                     <TableHead className="w-16" />
                   </TableRow>
                 </TableHeader>
@@ -415,7 +524,7 @@ export default function ChampionshipDetailPage() {
                         <TableCell>{rcName}</TableCell>
                         <TableCell>
                           {cls.bestXFromYX != null && cls.bestXFromYY != null
-                            ? `${cls.bestXFromYX}/${cls.bestXFromYY}`
+                            ? `Best ${cls.bestXFromYX} from ${cls.bestXFromYY}`
                             : <span className="text-muted-foreground text-sm">Inherit</span>}
                         </TableCell>
                         <TableCell>
@@ -555,13 +664,13 @@ export default function ChampionshipDetailPage() {
                       ?? `Event ${exc.eventId}`;
                     return (
                       <TableRow key={exc.id}>
-                        <TableCell>Driver {exc.driverId}</TableCell>
+                        <TableCell>{driverName(exc.driverId)}</TableCell>
                         <TableCell>{eventName}</TableCell>
                         <TableCell className="max-w-xs truncate">{exc.reason}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(exc.createdAt))}
                           <br />
-                          by admin {exc.createdBy}
+                          by {driverName(exc.createdBy)}
                         </TableCell>
                         <TableCell>
                           <Button

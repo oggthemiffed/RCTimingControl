@@ -89,21 +89,6 @@ export default function EventListPage() {
   });
 
   const columns = [
-    columnHelper.accessor('id', {
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          ID
-          <ArrowUpDown className="ml-2 h-3 w-3" />
-        </Button>
-      ),
-      cell: info => <span className="text-muted-foreground text-xs">#{info.getValue()}</span>,
-      size: 64,
-    }),
     columnHelper.accessor('name', {
       header: 'Name',
       cell: info => (

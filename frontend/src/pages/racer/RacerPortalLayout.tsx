@@ -1,5 +1,6 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { User, Car, Radio, FileText } from 'lucide-react';
+import { User, Car, Radio, FileText, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const navItems = [
   { to: '/racer/profile', label: 'Profile', Icon: User },
@@ -9,6 +10,8 @@ const navItems = [
 ] as const;
 
 export default function RacerPortalLayout() {
+  const { logout } = useAuth();
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Desktop top nav — md+ */}
@@ -28,6 +31,14 @@ export default function RacerPortalLayout() {
             {label}
           </NavLink>
         ))}
+        <button
+          onClick={logout}
+          aria-label="Log out"
+          className="ml-auto flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm"
+        >
+          <LogOut className="h-4 w-4" aria-hidden="true" />
+          Log out
+        </button>
       </nav>
 
       {/* Content — pb-16 reserves room for mobile bottom nav */}
@@ -56,6 +67,14 @@ export default function RacerPortalLayout() {
             )}
           </NavLink>
         ))}
+        <button
+          onClick={logout}
+          aria-label="Log out"
+          className="flex-1 flex flex-col items-center justify-center py-2 text-xs gap-1 text-muted-foreground"
+        >
+          <LogOut className="h-5 w-5" aria-hidden="true" />
+          <span>Log out</span>
+        </button>
       </nav>
     </div>
   );

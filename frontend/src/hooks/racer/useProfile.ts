@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  fetchProfile, patchProfile, addMembership, removeMembership,
+  fetchProfile, patchProfile, addMembership, removeMembership, fetchAffiliations,
   type RacerProfileDto, type UpdateRacerProfileRequest, type UpsertMembershipRequest,
+  type GoverningBodyAffiliationDto,
 } from '@/lib/racerApi';
 import { racerQueryKeys } from './racerQueryKeys';
 
@@ -33,5 +34,13 @@ export function useRemoveMembership() {
   return useMutation({
     mutationFn: (code: string) => removeMembership(code),
     onSettled: () => queryClient.invalidateQueries({ queryKey: racerQueryKeys.profile }),
+  });
+}
+
+export function useAffiliations() {
+  return useQuery<GoverningBodyAffiliationDto[]>({
+    queryKey: racerQueryKeys.affiliations,
+    queryFn: fetchAffiliations,
+    staleTime: 5 * 60 * 1000,
   });
 }

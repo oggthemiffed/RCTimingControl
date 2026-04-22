@@ -127,3 +127,7 @@ The AMB/MyLaps decoder TCP protocol is proprietary. The forwarder must implement
 5. WebSocket Live Timing Infrastructure — STOMP config, domain event → broadcast (use synthetic events)
 6. Forwarder + AMB TCP Receiver — Netty parser, gRPC streaming, simulator for testing
 7. Results & Championship Standings — result snapshots, best-X-from-Y scoring, PDF export
+
+## General Good Developer Rules
+
+1. If you raise any processes, start services or ui services, you MUST stop them after you are finished.

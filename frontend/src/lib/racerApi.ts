@@ -81,3 +81,13 @@ export const updateCar = (id: number, req: UpdateCarRequest) =>
 
 export const archiveCar = (id: number) =>
   api.delete(`/api/v1/racer/cars/${id}`);
+
+export interface GoverningBodyAffiliationDto {
+  id: number;
+  code: string;
+  displayName: string;
+  membershipRequired: boolean;
+}
+
+export const fetchAffiliations = () =>
+  api.get<GoverningBodyAffiliationDto[]>('/api/v1/racer/affiliations').then(r => r.data);

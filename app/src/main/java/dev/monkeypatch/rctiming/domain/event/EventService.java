@@ -36,6 +36,10 @@ public class EventService {
 
     public EventDto update(Long id, UpdateEventRequest request) {
         Event event = getEventOrThrow(id);
+        if (event.getStatus() != EventStatus.DRAFT) {
+            throw new IllegalStateTransitionException(
+                "Event details can only be updated while in DRAFT status");
+        }
         event.setName(request.name());
         event.setEventDate(request.eventDate());
         event.setTrackId(request.trackId());

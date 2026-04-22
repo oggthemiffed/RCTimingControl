@@ -9,12 +9,37 @@
 | Node.js | 20+ |
 | Gradle | via wrapper (`./gradlew`) |
 
-## Environment setup
+## Quick start (Makefile)
+
+A `Makefile` at the repo root wraps all common tasks. Run `make` (or `make help`) to see the full list.
+
+**Start the full dev environment in one command:**
+
+```bash
+make dev-start
+```
+
+This runs `docker compose up -d`, starts the backend with `--spring.profiles.active=dev`, and starts the Vite dev server — all in the background. Logs are written to `/tmp/rc-backend.log` and `/tmp/rc-frontend.log`.
+
+```bash
+make stop       # kill backend + frontend
+make clean-db   # wipe the database volume and restart fresh
+make test-fast  # run integration tests skipping jOOQ codegen
+```
+
+See [Makefile targets](#makefile-targets) below for the full reference.
+
+---
+
+## Manual environment setup
+
+If you prefer to run services individually (e.g. in separate terminal tabs):
 
 ### 1. Start dev infrastructure
 
 ```bash
-docker compose up -d
+make up
+# or: docker compose up -d
 ```
 
 This starts:
@@ -24,10 +49,11 @@ This starts:
 ### 2. Backend
 
 ```bash
-./gradlew :app:bootRun --args='--spring.profiles.active=dev'
+make dev
+# or: ./gradlew :app:bootRun --args='--spring.profiles.active=dev'
 ```
 
-On first run, Flyway applies all migrations automatically:
+On first run, Flyway applies all migrations and dev seed data automatically:
 
 **Phase 1 (V1–V5):**
 - `V1` — users and roles
@@ -52,9 +78,8 @@ The dev profile connects to `localhost:5432/rctiming_dev`. No additional setup n
 ### 3. Frontend
 
 ```bash
-cd frontend
-npm install
-npm run dev
+make ui
+# or: cd frontend && npm run dev
 ```
 
 Vite dev server starts on `http://localhost:5173` with API proxy to `localhost:8080`.
@@ -150,23 +175,34 @@ Uses Testcontainers with `@ServiceConnection` — spins up a real PostgreSQL con
 
 See [Testing guide](testing.md) for the full manual UAT checklist.
 
+## Makefile targets
+
+Run `make help` to see all targets. Quick reference:
+
+| Target | What it does |
+|--------|-------------|
+| `make dev-start` | Start everything: Docker + backend (dev) + frontend (background) |
+| `make stop` | Kill backend and frontend processes |
+| `make up` | `docker compose up -d` |
+| `make down` | `docker compose down` |
+| `make clean-db` | Drop pgdata volume and restart fresh (re-runs seed) |
+| `make dev` | Backend only, foreground |
+| `make ui` | Frontend only, foreground |
+| `make build` | Compile backend (no tests, no jOOQ codegen) |
+| `make test` | Full integration test suite |
+| `make test-fast` | Tests skipping jOOQ codegen |
+| `make ui-build` | TypeScript check + production bundle |
+| `make ui-lint` | ESLint |
+| `make clean` | Stop everything, `./gradlew clean`, remove `frontend/dist` |
+
 ## Useful commands
 
 ```bash
-# Build without tests
-./gradlew :app:build -x test
-
 # Compile check only
 ./gradlew :app:compileJava
 
 # View Flyway migration state
 ./gradlew :app:flywayInfo
-
-# Stop dev infrastructure
-docker compose down
-
-# Wipe database (destructive)
-docker compose down -v
 ```
 
 ## Email in development

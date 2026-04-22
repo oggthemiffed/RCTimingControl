@@ -19,7 +19,9 @@
 | Frontend state/real-time | Zustand + native WebSocket | Zustand 4.x | MEDIUM — lightweight, no Redux overhead; pairs well with WS event dispatch |
 | Admin UI components | shadcn/ui (Tailwind CSS) | shadcn/ui current, Tailwind 3.x | MEDIUM — composable, no bundle bloat from unused components |
 | Persistence | PostgreSQL | 16.x | HIGH — relational model fits race/event/racer/lap data; strong JSON support for flexible scoring configs |
-| ORM / data access | Spring Data JPA + Hibernate | via spring-boot-starter-data-jpa | HIGH — standard Spring Boot persistence; Hibernate 6 ships with Boot 3.x |
+| ORM / data access (write side) | Spring Data JPA + Hibernate | via spring-boot-starter-data-jpa | HIGH — entity lifecycle, associations, repositories; write-side domain module only |
+| ORM / data access (read side) | jOOQ | 3.19.x (verify at jooq.org) | HIGH — type-safe SQL for scoring queries, standings, lap aggregates; generates query DSL from schema |
+| Race format config storage | PostgreSQL JSONB | — | HIGH — type-discriminated format configs stored as JSONB with a `type` discriminator column; override patch merged at read time; supports JSON import/export (FORMAT-14) |
 | Database migrations | Flyway | 10.x | HIGH — SQL-first, deterministic; preferred over Liquibase for teams comfortable with SQL |
 | Auth | Spring Security + JWT (stateless API) | via spring-boot-starter-security | HIGH — fits SPA + WebSocket architecture; JWT issued at login, sent in WS handshake header |
 | JWT library | jjwt (JJWT) | 0.12.x | MEDIUM — well-maintained, widely used; verify 0.12 is still current at github.com/jwtk/jjwt |

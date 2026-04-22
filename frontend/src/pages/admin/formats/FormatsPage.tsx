@@ -227,6 +227,7 @@ export default function FormatsPage() {
         title="Create Format Template"
       />
       <FormatDialog
+        key={editTarget?.id ?? 'edit'}
         open={!!editTarget}
         onOpenChange={v => { if (!v) setEditTarget(null); }}
         initialName={editTarget?.name}

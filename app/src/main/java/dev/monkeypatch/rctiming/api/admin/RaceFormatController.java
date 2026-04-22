@@ -1,12 +1,12 @@
 package dev.monkeypatch.rctiming.api.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateRaceFormatTemplateRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.RaceFormatTemplateDto;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatConfig;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,16 +30,16 @@ import java.util.List;
 @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR', 'REFEREE')")
 public class RaceFormatController {
 
+    private static final ObjectMapper YAML_MAPPER =
+            new ObjectMapper(new YAMLFactory()).findAndRegisterModules();
+
     private final RaceFormatService raceFormatService;
     private final ObjectMapper jsonObjectMapper;
-    private final ObjectMapper yamlObjectMapper;
 
     public RaceFormatController(RaceFormatService raceFormatService,
-                                 ObjectMapper jsonObjectMapper,
-                                 @Qualifier("yamlObjectMapper") ObjectMapper yamlObjectMapper) {
+                                 ObjectMapper jsonObjectMapper) {
         this.raceFormatService = raceFormatService;
         this.jsonObjectMapper = jsonObjectMapper;
-        this.yamlObjectMapper = yamlObjectMapper;
     }
 
     @GetMapping
@@ -81,7 +81,7 @@ public class RaceFormatController {
             @RequestHeader(value = "Accept", defaultValue = MediaType.APPLICATION_JSON_VALUE) String accept) {
         try {
             RaceFormatConfig config = raceFormatService.exportConfig(id);
-            ObjectMapper mapper = accept.contains("yaml") ? yamlObjectMapper : jsonObjectMapper;
+            ObjectMapper mapper = accept.contains("yaml") ? YAML_MAPPER : jsonObjectMapper;
             String output = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(config);
             String contentType = accept.contains("yaml") ? "application/yaml" : MediaType.APPLICATION_JSON_VALUE;
             return ResponseEntity.ok()
@@ -100,7 +100,7 @@ public class RaceFormatController {
             @RequestBody String body,
             @RequestHeader("Content-Type") String contentType) {
         try {
-            ObjectMapper mapper = contentType.contains("yaml") ? yamlObjectMapper : jsonObjectMapper;
+            ObjectMapper mapper = contentType.contains("yaml") ? YAML_MAPPER : jsonObjectMapper;
             RaceFormatConfig config = mapper.readValue(body, RaceFormatConfig.class);
             return RaceFormatTemplateDto.from(raceFormatService.importConfig(name, config));
         } catch (Exception e) {

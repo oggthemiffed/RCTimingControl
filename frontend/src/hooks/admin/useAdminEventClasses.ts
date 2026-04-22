@@ -1,7 +1,21 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/adminApi';
 import type { AddEventClassRequest } from '@/lib/adminApi';
 import { adminQueryKeys } from './adminQueryKeys';
+
+export function useRacingClasses() {
+  return useQuery({
+    queryKey: adminQueryKeys.racingClasses.all(),
+    queryFn: () => adminApi.listRacingClasses(),
+  });
+}
+
+export function useFormatTemplates() {
+  return useQuery({
+    queryKey: adminQueryKeys.formats.all(),
+    queryFn: () => adminApi.listFormatTemplates(),
+  });
+}
 
 export function useAddEventClass(eventId: number) {
   const qc = useQueryClient();

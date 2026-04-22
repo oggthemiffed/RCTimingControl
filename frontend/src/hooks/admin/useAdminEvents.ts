@@ -3,6 +3,13 @@ import { adminApi } from '@/lib/adminApi';
 import type { EventStatus, UpdateEventRequest, CreateEventRequest } from '@/lib/adminApi';
 import { adminQueryKeys } from './adminQueryKeys';
 
+export function useTracks() {
+  return useQuery({
+    queryKey: adminQueryKeys.tracks.all(),
+    queryFn: () => adminApi.listTracks(),
+  });
+}
+
 export function useAdminEventsList() {
   return useQuery({
     queryKey: adminQueryKeys.events.all(),

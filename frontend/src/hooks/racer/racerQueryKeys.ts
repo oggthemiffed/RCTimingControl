@@ -4,5 +4,6 @@ export const racerQueryKeys = {
   cars:          ['racer', 'cars'] as const,
   transponders:  ['racer', 'transponders'] as const,
   entries:       ['racer', 'entries'] as const,
-  eventSchedule: ['events', 'schedule'] as const,
+  eventSchedule:  ['events', 'schedule'] as const,
+  affiliations:   ['racer', 'affiliations'] as const,
 };

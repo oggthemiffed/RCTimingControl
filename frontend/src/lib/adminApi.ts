@@ -213,6 +213,13 @@ export interface StandingsRowDto {
   rounds: RoundResultDto[];
 }
 
+export interface UserSummaryDto {
+  id: number;
+  firstName: string;
+  lastName: string;
+  memberships: { code: string; number: string }[];
+}
+
 export interface ClubProfileDto {
   id: number;
   name: string;
@@ -388,6 +395,12 @@ export const adminApi = {
       api.put<RaceFormatTemplateDto>(`/api/v1/admin/formats/${id}`, body).then(r => r.data),
     delete: (id: number) =>
       api.delete(`/api/v1/admin/formats/${id}`),
+  },
+
+  // Users (for driver search in exclusions etc.)
+  users: {
+    list: () =>
+      api.get<UserSummaryDto[]>('/api/v1/admin/users').then(r => r.data),
   },
 
   // Car tag categories
