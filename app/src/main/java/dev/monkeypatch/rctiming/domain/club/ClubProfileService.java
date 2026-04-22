@@ -30,15 +30,22 @@ public class ClubProfileService {
         return clubProfileRepository.findAll().stream()
                 .findFirst()
                 .map(ClubProfileDto::from)
-                .orElseThrow(() -> new EntityNotFoundException("Club profile not found"));
+                .orElseGet(() -> new ClubProfileDto(null, "", null, null, null, null, null, "UTC", null, null));
     }
 
-    @Transactional(readOnly = true)
     public Long getSingletonProfileId() {
         return clubProfileRepository.findAll().stream()
                 .findFirst()
                 .map(ClubProfile::getId)
-                .orElseThrow(() -> new EntityNotFoundException("Club profile not found"));
+                .orElseGet(() -> {
+                    Instant now = Instant.now();
+                    ClubProfile blank = new ClubProfile();
+                    blank.setName("");
+                    blank.setTimezone("UTC");
+                    blank.setCreatedAt(now);
+                    blank.setUpdatedAt(now);
+                    return clubProfileRepository.save(blank).getId();
+                });
     }
 
     public ClubProfileDto createOrUpdateProfile(CreateClubProfileRequest request) {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus, Pencil, Archive, ArchiveRestore } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -57,6 +57,7 @@ function CategoryFormDialog({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
@@ -84,8 +85,26 @@ function CategoryFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="cat-color">Colour (hex)</Label>
-              <Input id="cat-color" {...register('color')} placeholder="#3b82f6" />
+              <Label>Colour</Label>
+              <Controller
+                name="color"
+                control={control}
+                render={({ field }) => (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={field.value || '#000000'}
+                      onChange={e => field.onChange(e.target.value)}
+                      className="h-9 w-9 cursor-pointer rounded border p-0.5 bg-background"
+                    />
+                    <Input
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      placeholder="#3b82f6"
+                    />
+                  </div>
+                )}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cat-sort">Sort Order</Label>

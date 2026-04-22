@@ -71,13 +71,24 @@ Plans:
 **Goal**: A race director can run a complete race meeting from any browser — calling the grid, starting and stopping races, applying marshal laps, and handling incidents — with all commands enforced server-side
 **Depends on**: Phase 3
 **Requirements**: CTRL-01, CTRL-02, CTRL-03, CTRL-04, CTRL-05, CTRL-06, CTRL-07, CTRL-08, CTRL-09, OFFICIAL-01, OFFICIAL-02, OFFICIAL-03, OFFICIAL-04
+**Pre-requisite schema work (must be first plan in this phase)**:
+  - `EventClass` gains finals config fields: `finalsCount`, `carsPerFinal`, `bumpCount` (admin UI in Event → Classes tab)
+  - New `Round` entity: type (PRACTICE/QUALIFIER/FINAL), roundNumber, sequenceInEvent, status
+  - New `Race` entity: round, eventClass, heatNumber, sequenceInRound, finalLetter, startType (STAGGER/GRID), formatId override, status
+  - New `RaceEntry` entity: race, entry, gridPosition, bumped flag
+  - Round generator: admin wizard that creates all Round + Race records once entries close, splitting drivers into fixed heats
+  - See `.planning/phases/04-race-state-machine/04-HEAT-STRUCTURE-SPEC.md` for full design
 **Success Criteria** (what must be TRUE):
-  1. Race director can start and stop a race; conflicting commands from a second browser window are rejected with HTTP 409; the race follows PENDING → GRID → RUNNING → FINISHED state machine
-  2. Race control displays the marshal list (drivers from previous race) and the grid call (cars due on track next) for the current race
-  3. Race director can add or remove marshal laps with a full audit trail; results update immediately
-  4. Race director can abandon a race in progress (results saved to that point), skip to a specific race/round, and link an unknown transponder passing to an entry retroactively
-  5. Race referee can raise incident reports and apply lap or time penalties that immediately update live standings; steward view highlights proximity alerts and backmarker situations
-  6. Race results can be exported as a printable PDF sheet at the venue
+  1. Admin can configure finals per class (finalsCount, carsPerFinal, bumpCount) and trigger the round generator after entries close; all rounds and heats appear in correct run order
+  2. Race director can start and stop a race; conflicting commands from a second browser window are rejected with HTTP 409; the race follows PENDING → GRID → RUNNING → FINISHED state machine
+  3. Stagger start heats use finishing order from previous round as start order (best finisher goes first); round 1 uses entry order
+  4. After qualifying closes, finals grids are auto-seeded from qualifying standings; admin can override any grid position
+  5. After each bump-up final completes, the top N finishers are automatically appended to the back of the next final's grid; race director is alerted before starting the next final
+  6. Race control displays the marshal list (drivers from previous race) and the grid call (cars due on track next) for the current race
+  7. Race director can add or remove marshal laps with a full audit trail; results update immediately
+  8. Race director can abandon a race in progress, skip to a specific race/round, and link an unknown transponder passing to an entry retroactively
+  9. Race referee can raise incident reports and apply lap or time penalties that immediately update live standings
+  10. Race results can be exported as a printable PDF sheet at the venue
 **Plans**: TBD
 **UI hint**: yes
 
