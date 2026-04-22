@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -15,8 +15,14 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 
@@ -24,6 +30,8 @@ import {
   useAddEventClass,
   useCombineClasses,
   useUpdateEventClassOverrides,
+  useRacingClasses,
+  useFormatTemplates,
 } from '@/hooks/admin/useAdminEventClasses';
 import type { EventClassDto } from '@/lib/adminApi';
 
@@ -40,14 +48,12 @@ type AddClassFormValues = z.infer<typeof addClassSchema>;
 function ConfigSummary({ config }: { config: EventClassDto['configSnapshot'] }) {
   if (!config) return <span className="text-muted-foreground text-xs">No config</span>;
 
-  const entries: string[] = [];
-  if (typeof config.type === 'string') entries.push(`Type: ${config.type}`);
-  if (typeof config.durationMinutes === 'number')
-    entries.push(`${config.durationMinutes} min`);
-  if (typeof config.laps === 'number') entries.push(`${config.laps} laps`);
-  if (typeof config.heats === 'number') entries.push(`${config.heats} heats`);
+  const entries: string[] = [config.type];
+  if (config.type === 'TIMED') entries.push(`${config.durationMinutes} min`);
+  if (config.type === 'BUMP_UP') entries.push(`${config.qualifyingHeats} heats`);
+  if (config.type === 'POINTS_FINALS') entries.push(`${config.qualifyingHeats} heats · ${config.finalsCount} finals`);
 
-  return <span className="text-xs text-muted-foreground">{entries.join(' · ') || 'Custom'}</span>;
+  return <span className="text-xs text-muted-foreground">{entries.join(' · ')}</span>;
 }
 
 // ── Override editor dialog ─────────────────────────────────────────────────
@@ -167,6 +173,103 @@ function CombineConfirmDialog({
   );
 }
 
+// ── Add class dialog ───────────────────────────────────────────────────────
+
+function AddClassDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+  control,
+  errors,
+  isSubmitting,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
+  control: ReturnType<typeof useForm<AddClassFormValues>>['control'];
+  errors: ReturnType<typeof useForm<AddClassFormValues>>['formState']['errors'];
+  isSubmitting: boolean;
+}) {
+  const { data: racingClasses = [], isLoading: classesLoading } = useRacingClasses();
+  const { data: templates = [], isLoading: templatesLoading } = useFormatTemplates();
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Class</DialogTitle>
+          <DialogDescription>
+            Select a racing class and the format template to use for this event.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="racingClassId">Racing Class</Label>
+            <Controller
+              name="racingClassId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  disabled={classesLoading}
+                  value={field.value ? String(field.value) : ''}
+                  onValueChange={val => field.onChange(Number(val))}
+                >
+                  <SelectTrigger id="racingClassId">
+                    <SelectValue placeholder={classesLoading ? 'Loading…' : 'Select a class'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {racingClasses.map(rc => (
+                      <SelectItem key={rc.id} value={String(rc.id)}>
+                        {rc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.racingClassId && (
+              <p className="text-xs text-destructive">{errors.racingClassId.message}</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="templateId">Format Template</Label>
+            <Controller
+              name="templateId"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  disabled={templatesLoading}
+                  value={field.value ? String(field.value) : ''}
+                  onValueChange={val => field.onChange(Number(val))}
+                >
+                  <SelectTrigger id="templateId">
+                    <SelectValue placeholder={templatesLoading ? 'Loading…' : 'Select a template'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {templates.map(t => (
+                      <SelectItem key={t.id} value={String(t.id)}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.templateId && (
+              <p className="text-xs text-destructive">{errors.templateId.message}</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Adding…' : 'Add Class'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 
 interface EventClassSectionProps {
@@ -176,6 +279,7 @@ interface EventClassSectionProps {
 
 export default function EventClassSection({ eventId, classes }: EventClassSectionProps) {
   const addEventClass = useAddEventClass(eventId);
+  const { data: racingClasses = [] } = useRacingClasses();
 
   const [addOpen, setAddOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -187,11 +291,16 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
   }>({ open: false, classId: 0, currentOverride: null });
 
   const {
-    register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<AddClassFormValues>({ resolver: zodResolver(addClassSchema) });
+
+  function resolveClassName(racingClassId: number | null): string {
+    if (!racingClassId) return 'Unknown class';
+    return racingClasses.find(rc => rc.id === racingClassId)?.name ?? `Class ${racingClassId}`;
+  }
 
   async function onAddClass(values: AddClassFormValues) {
     try {
@@ -216,6 +325,17 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
     });
   }
 
+  const addDialog = (
+    <AddClassDialog
+      open={addOpen}
+      onOpenChange={open => { setAddOpen(open); if (!open) reset(); }}
+      onSubmit={handleSubmit(onAddClass)}
+      control={control}
+      errors={errors}
+      isSubmitting={isSubmitting || addEventClass.isPending}
+    />
+  );
+
   if (classes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -227,14 +347,7 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
           <Plus className="h-4 w-4 mr-1" />
           Add Class
         </Button>
-        <AddClassDialog
-          open={addOpen}
-          onOpenChange={setAddOpen}
-          onSubmit={handleSubmit(onAddClass)}
-          register={register}
-          errors={errors}
-          isSubmitting={isSubmitting || addEventClass.isPending}
-        />
+        {addDialog}
       </div>
     );
   }
@@ -272,14 +385,13 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
               id={`cls-${cls.id}`}
               checked={selectedIds.has(cls.id)}
               onCheckedChange={() => toggleSelect(cls.id)}
-              aria-label={`Select class ${cls.id} for combining`}
+              aria-label={`Select ${resolveClassName(cls.racingClassId)} for combining`}
               className="mt-0.5"
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-sm">
-                  {/* Racing class name would be resolved via a query — using ID for now */}
-                  Class {cls.racingClassId ?? cls.id}
+                  {resolveClassName(cls.racingClassId)}
                 </span>
                 {cls.configOverride && Object.keys(cls.configOverride).length > 0 && (
                   <Badge className="bg-amber-100 text-amber-700 text-xs">
@@ -315,15 +427,7 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
 
       <Separator />
 
-      {/* Dialogs */}
-      <AddClassDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        onSubmit={handleSubmit(onAddClass)}
-        register={register}
-        errors={errors}
-        isSubmitting={isSubmitting || addEventClass.isPending}
-      />
+      {addDialog}
 
       <OverrideEditorDialog
         eventId={eventId}
@@ -343,68 +447,5 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
         }}
       />
     </div>
-  );
-}
-
-// ── Add class dialog (extracted to avoid inline JSX with hook form) ────────
-
-function AddClassDialog({
-  open,
-  onOpenChange,
-  onSubmit,
-  register,
-  errors,
-  isSubmitting,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
-  register: ReturnType<typeof useForm<AddClassFormValues>>['register'];
-  errors: ReturnType<typeof useForm<AddClassFormValues>>['formState']['errors'];
-  isSubmitting: boolean;
-}) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Class</DialogTitle>
-          <DialogDescription>
-            {/* TODO Plan 06: populate racing class and template selects from API */}
-            Enter the racing class ID and format template ID.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="racingClassId">Racing Class ID</Label>
-            <Input
-              id="racingClassId"
-              type="number"
-              {...register('racingClassId')}
-              placeholder="e.g. 1"
-            />
-            {errors.racingClassId && (
-              <p className="text-xs text-destructive">{errors.racingClassId.message}</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="templateId">Format Template ID</Label>
-            <Input
-              id="templateId"
-              type="number"
-              {...register('templateId')}
-              placeholder="e.g. 1"
-            />
-            {errors.templateId && (
-              <p className="text-xs text-destructive">{errors.templateId.message}</p>
-            )}
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding…' : 'Add Class'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   );
 }

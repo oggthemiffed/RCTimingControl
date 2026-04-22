@@ -18,15 +18,12 @@ import EventSchedulePage from '@/pages/events/EventSchedulePage';
 import AdminPanelLayout from '@/pages/admin/AdminPanelLayout';
 import EventListPage from '@/pages/admin/events/EventListPage';
 import EventDetailPage from '@/pages/admin/events/EventDetailPage';
-
-// Placeholder for Plan 06 routes (championships, club, tracks, formats, categories)
-function AdminComingSoonPage() {
-  return (
-    <div className="flex items-center justify-center py-20">
-      <p className="text-muted-foreground text-sm">Coming in Plan 06.</p>
-    </div>
-  );
-}
+import ChampionshipListPage from '@/pages/admin/championships/ChampionshipListPage';
+import ChampionshipDetailPage from '@/pages/admin/championships/ChampionshipDetailPage';
+import ClubProfilePage from '@/pages/admin/club/ClubProfilePage';
+import TracksPage from '@/pages/admin/tracks/TracksPage';
+import FormatsPage from '@/pages/admin/formats/FormatsPage';
+import CarTagCategoriesPage from '@/pages/admin/categories/CarTagCategoriesPage';
 
 function RootLayout() {
   return (
@@ -57,13 +54,12 @@ const router = createBrowserRouter([
           { index: true, element: <Navigate to="/admin/events" replace /> },
           { path: 'events', element: <EventListPage /> },
           { path: 'events/:id', element: <EventDetailPage /> },
-          // Plan 06 will replace these placeholders with full pages
-          { path: 'championships', element: <AdminComingSoonPage /> },
-          { path: 'championships/:id', element: <AdminComingSoonPage /> },
-          { path: 'tracks', element: <AdminComingSoonPage /> },
-          { path: 'formats', element: <AdminComingSoonPage /> },
-          { path: 'club', element: <AdminComingSoonPage /> },
-          { path: 'categories', element: <AdminComingSoonPage /> },
+          { path: 'championships', element: <ChampionshipListPage /> },
+          { path: 'championships/:id', element: <ChampionshipDetailPage /> },
+          { path: 'club', element: <ClubProfilePage /> },
+          { path: 'tracks', element: <TracksPage /> },
+          { path: 'formats', element: <FormatsPage /> },
+          { path: 'categories', element: <CarTagCategoriesPage /> },
         ],
       },
       {
