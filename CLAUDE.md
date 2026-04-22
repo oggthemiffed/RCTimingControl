@@ -131,3 +131,4 @@ The AMB/MyLaps decoder TCP protocol is proprietary. The forwarder must implement
 ## General Good Developer Rules
 
 1. If you raise any processes, start services or ui services, you MUST stop them after you are finished.
+2. Use the `gh` CLI for all GitHub operations (push, PR creation, issue management). The repo uses HTTPS via `gh auth` — do not use SSH git remotes. Remote URL: `https://github.com/oggthemiffed/RCTimingControl.git`.
