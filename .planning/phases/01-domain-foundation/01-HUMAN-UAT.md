@@ -1,39 +1,42 @@
 ---
-status: partial
+status: complete
 phase: 01-domain-foundation
 source: [01-VERIFICATION.md]
-started: 2026-04-16T00:00:00Z
-updated: 2026-04-16T00:00:00Z
+started: 2026-04-16
+updated: 2026-04-22
 ---
 
-## Current Test
+## Setup
 
-[awaiting human testing]
+```bash
+make up
+./gradlew :app:bootRun --args='--spring.profiles.active=dev'
+```
 
 ## Tests
 
 ### 1. Integration test suite passes
-expected: `./gradlew :app:test` completes with 57 tests, 0 failures (requires Docker for Testcontainers)
-result: [pending]
+expected: `./gradlew :app:test` completes with 0 failures (requires Docker for Testcontainers)
+result: Pass
 
 ### 2. Spring Boot startup + Flyway
-expected: App starts with `ddl-auto: validate` against a live PostgreSQL instance; all 5 migrations applied cleanly
-result: [pending]
+expected: App starts with `ddl-auto: validate` against a live PostgreSQL instance; all migrations applied cleanly; no schema validation errors in logs
+result: Pass
 
 ### 3. Frontend auth flows
 expected: All 4 auth screens render correctly (login, register, forgot password, reset password); dark mode works; JWT token is NOT stored in localStorage
-result: [pending]
+result: Pass
 
 ### 4. YAML import round-trip
 expected: `POST /api/v1/admin/formats/import` with `Content-Type: application/yaml` accepts a valid YAML body and returns 201 with the created template
-result: [pending]
+result: Pass
 
 ## Summary
 
 total: 4
-passed: 0
+passed: 4
 issues: 0
-pending: 4
+pending: 0
 skipped: 0
 blocked: 0
 
