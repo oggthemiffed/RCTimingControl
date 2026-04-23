@@ -1,7 +1,8 @@
 ---
 phase: 4
 slug: race-state-machine
-status: draft
+status: approved
+reviewed_at: 2026-04-23
 shadcn_initialized: true
 preset: "radix-luma / taupe / bold-accent / remixicon"
 created: 2026-04-23
