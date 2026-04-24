@@ -46,8 +46,10 @@ created: 2026-04-23
 | 04-03-02 | 03 | 1 | CTRL-06 | — | Unknown transponder link creates record | integration | `./gradlew :app:test --tests "*.RaceControlControllerIT"` | ❌ W0 | ⬜ pending |
 | 04-04-01 | 04 | 2 | CTRL-08 | — | Abandon race saves result snapshot | integration | `./gradlew :app:test --tests "*.RaceControlControllerIT.abandon*"` | ❌ W0 | ⬜ pending |
 | 04-04-02 | 04 | 2 | CTRL-04 | — | GET /results/{id}/print returns 200 with correct data | integration | `./gradlew :app:test --tests "*.RaceControlControllerIT"` | ❌ W0 | ⬜ pending |
-| 04-05-01 | 05 | 2 | OFFICIAL-03 | T-04-04 | Incident report creates record linked to race | integration | `./gradlew :app:test --tests "*.RefereeControllerIT"` | ❌ W0 | ⬜ pending |
-| 04-05-02 | 05 | 2 | OFFICIAL-04 | T-04-04 | Penalty application recalculates positions | integration | `./gradlew :app:test --tests "*.RefereeControllerIT"` | ❌ W0 | ⬜ pending |
+| 04-05-01 | 05 | 2 | OFFICIAL-01 | — | Proximity alert highlights closing cars (client-side per D-08) | unit (vitest) | `cd frontend && npx vitest run src/pages/race-control/referee/alerts.test.ts` | ❌ W0 | ⬜ pending |
+| 04-05-02 | 05 | 2 | OFFICIAL-02 | — | Backmarker detection flags lapped cars (client-side per D-08) | unit (vitest) | `cd frontend && npx vitest run src/pages/race-control/referee/alerts.test.ts` | ❌ W0 | ⬜ pending |
+| 04-05-03 | 05 | 2 | OFFICIAL-03 | T-04-04 | Incident report creates record linked to race | integration | `./gradlew :app:test --tests "*.RefereeControllerIT"` | ❌ W0 | ⬜ pending |
+| 04-05-04 | 05 | 2 | OFFICIAL-04 | T-04-04 | Penalty application recalculates positions | integration | `./gradlew :app:test --tests "*.RefereeControllerIT"` | ❌ W0 | ⬜ pending |
 | 04-06-01 | 06 | 1 | — | — | Heat splitting: 15 drivers, max 8/heat → 2 heats | unit | `./gradlew :app:test --tests "*.RoundGeneratorServiceTest"` | ❌ W0 | ⬜ pending |
 | 04-06-02 | 06 | 1 | — | — | Bump-up seeding: top N of B-Final appended to A-Final | unit | `./gradlew :app:test --tests "*.RoundGeneratorServiceTest"` | ❌ W0 | ⬜ pending |
 
@@ -61,6 +63,7 @@ created: 2026-04-23
 - [ ] `app/src/test/.../api/racecontrol/RaceControlControllerIT.java` — stubs for CTRL-01, CTRL-03, CTRL-06, CTRL-08, CTRL-04
 - [ ] `app/src/test/.../api/racecontrol/RefereeControllerIT.java` — stubs for OFFICIAL-03, OFFICIAL-04
 - [ ] `app/src/test/.../service/RoundGeneratorServiceTest.java` — stubs for round generator algorithm
+- [ ] `frontend/src/pages/race-control/referee/alerts.test.ts` — Vitest stubs for OFFICIAL-01 (proximity) and OFFICIAL-02 (backmarker), client-side per D-08
 
 ---
 
