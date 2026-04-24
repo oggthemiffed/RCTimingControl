@@ -1,0 +1,66 @@
+package dev.monkeypatch.rctiming.query.racecontrol;
+
+import dev.monkeypatch.rctiming.api.racecontrol.dto.RunOrderItemDto;
+import org.jooq.DSLContext;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACING_CLASSES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Races.RACES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
+
+/**
+ * jOOQ read-side query for the run-order list (D-04).
+ * Joins Round → Race → EventClass → RacingClass to produce an ordered run list
+ * for the cockpit left panel.
+ */
+@Component
+@Transactional(readOnly = true)
+public class RunOrderQuery {
+
+    private final DSLContext dsl;
+
+    public RunOrderQuery(DSLContext dsl) {
+        this.dsl = dsl;
+    }
+
+    /**
+     * Returns all races for the given event in run order (sequenceInEvent ASC, heatNumber ASC).
+     *
+     * @param eventId the event to load the run order for
+     * @return ordered list of RunOrderItemDto
+     */
+    public List<RunOrderItemDto> findForEvent(long eventId) {
+        return dsl
+                .select(
+                        RACES.ID,
+                        ROUNDS.SEQUENCE_IN_EVENT,
+                        ROUNDS.ROUND_NUMBER,
+                        ROUNDS.TYPE,
+                        RACING_CLASSES.NAME.as("className"),
+                        RACES.HEAT_NUMBER,
+                        RACES.FINAL_LETTER,
+                        RACES.STATUS,
+                        RACES.SEQUENCE_IN_ROUND)
+                .from(ROUNDS)
+                .join(RACES).on(RACES.ROUND_ID.eq(ROUNDS.ID))
+                .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
+                .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
+                .where(ROUNDS.EVENT_ID.eq(eventId))
+                .orderBy(ROUNDS.SEQUENCE_IN_EVENT.asc(), RACES.HEAT_NUMBER.asc())
+                .fetch(r -> new RunOrderItemDto(
+                        r.get(RACES.ID),
+                        r.get(ROUNDS.SEQUENCE_IN_EVENT),
+                        r.get(ROUNDS.ROUND_NUMBER),
+                        r.get(ROUNDS.TYPE),
+                        r.get("className", String.class),
+                        r.get(RACES.HEAT_NUMBER),
+                        r.get(RACES.FINAL_LETTER),
+                        r.get(RACES.STATUS),
+                        r.get(RACES.SEQUENCE_IN_ROUND)
+                ));
+    }
+}
