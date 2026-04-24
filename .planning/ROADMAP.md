@@ -89,7 +89,15 @@ Plans:
   8. Race director can abandon a race in progress, skip to a specific race/round, and link an unknown transponder passing to an entry retroactively
   9. Race referee can raise incident reports and apply lap or time penalties that immediately update live standings
   10. Race results can be exported as a printable PDF sheet at the venue
-**Plans**: TBD
+**Plans:** 7 plans
+Plans:
+- [ ] 04-01-PLAN.md — Wave 0 test scaffolding (@Disabled stubs for state machine + race control + referee + round generator)
+- [ ] 04-02-PLAN.md — V17/V18 schema migrations + race domain entities + RaceStateMachineService (CTRL-05)
+- [ ] 04-03-PLAN.md — RoundGeneratorService + BumpUpSeedingService + QualifyingStandingsService (heat structure, supports phase success criteria 1/3/4/5)
+- [ ] 04-04-PLAN.md — PreRaceReadinessQuery + controller (CTRL-02, CTRL-07)
+- [ ] 04-05-PLAN.md — Frontend PreRaceReadinessPanel + referee alert algorithms (CTRL-02, CTRL-07, OFFICIAL-01, OFFICIAL-02)
+- [ ] 04-06-PLAN.md — WebSocket/STOMP infrastructure + LiveRaceState + RaceControlController + SyntheticTimingService (CTRL-01, CTRL-03, CTRL-06, CTRL-08, CTRL-09)
+- [ ] 04-07-PLAN.md — RefereeController + ResultSnapshotService (V19) + cockpit React shell + PrintResultsPage (CTRL-04, OFFICIAL-03, OFFICIAL-04)
 **UI hint**: yes
 
 ### Phase 5: Live Timing & Forwarder
