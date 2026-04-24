@@ -53,6 +53,15 @@ public class EventClass {
     @Column(name = "combined_race_group")
     private Long combinedRaceGroup;
 
+    @Column(name = "finals_count")
+    private Integer finalsCount;
+
+    @Column(name = "cars_per_final")
+    private Integer carsPerFinal;
+
+    @Column(name = "bump_count")
+    private Integer bumpCount;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -82,4 +91,13 @@ public class EventClass {
 
     public Long getCombinedRaceGroup() { return combinedRaceGroup; }
     public void setCombinedRaceGroup(Long combinedRaceGroup) { this.combinedRaceGroup = combinedRaceGroup; }
+
+    public Integer getFinalsCount() { return finalsCount; }
+    public void setFinalsCount(Integer finalsCount) { this.finalsCount = finalsCount; }
+
+    public Integer getCarsPerFinal() { return carsPerFinal; }
+    public void setCarsPerFinal(Integer carsPerFinal) { this.carsPerFinal = carsPerFinal; }
+
+    public Integer getBumpCount() { return bumpCount; }
+    public void setBumpCount(Integer bumpCount) { this.bumpCount = bumpCount; }
 }
