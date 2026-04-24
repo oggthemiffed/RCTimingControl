@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-04-24T08:01:22.749Z"
-last_activity: 2026-04-24 -- Phase 04 execution started
+stopped_at: Completed 04-06-PLAN.md
+last_updated: "2026-04-24T18:32:29.241Z"
+last_activity: 2026-04-24
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 18
-  percent: 72
+  completed_plans: 23
+  percent: 92
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 ## Current Position
 
 Phase: 04 (race-state-machine) — EXECUTING
-Plan: 1 of 7
-Status: Executing Phase 04
-Last activity: 2026-04-24 -- Phase 04 execution started
+Plan: 2 of 7
+Status: Ready to execute
+Last activity: 2026-04-24
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 04 P06 | 75 | 3 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -63,6 +64,8 @@ Recent decisions affecting current work:
 - Roadmap: 7 phases derived from 91 v1 requirements at standard granularity
 - Architecture: Modular monolith — single Spring Boot JAR, single PostgreSQL database
 - AMB Protocol: Highest-risk unknown — must register at mylaps.com/developers or capture Wireshark traces before Phase 5
+- [Phase 04]: LapTimingService uses EntryRepository for transponder resolution via Entry.transponderNumberSnapshot snapshot field
+- [Phase 04]: CTRL-09 skip-to is process-local ConcurrentHashMap on RaceControlController — cross-session persistence deferred
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-23T20:23:37.835Z
-Stopped at: Phase 4 UI-SPEC approved
-Resume file: .planning/phases/04-race-state-machine/04-UI-SPEC.md
+Last session: 2026-04-24T18:32:29.233Z
+Stopped at: Completed 04-06-PLAN.md
+Resume file: None

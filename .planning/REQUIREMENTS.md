@@ -96,15 +96,15 @@
 
 ### Race Control
 
-- [ ] **CTRL-01**: Race director can start and stop a race from the browser race control client
+- [x] **CTRL-01**: Race director can start and stop a race from the browser race control client
 - [ ] **CTRL-02**: Race control displays the grid call — which cars are due on track next
-- [ ] **CTRL-03**: Race director can add or remove marshal laps for on-track incidents, with a full audit trail
+- [x] **CTRL-03**: Race director can add or remove marshal laps for on-track incidents, with a full audit trail
 - [ ] **CTRL-04**: Race results can be exported as a printable/PDF sheet at the venue
 - [ ] **CTRL-05**: Server enforces race state machine (PENDING → GRID → RUNNING → FINISHED); conflicting commands from multiple browser sessions are rejected
-- [ ] **CTRL-06**: Unknown transponder passings can be retrospectively linked to an entry by the race director, with full audit trail
+- [x] **CTRL-06**: Unknown transponder passings can be retrospectively linked to an entry by the race director, with full audit trail
 - [ ] **CTRL-07**: Race control displays the marshal list for the current race (the drivers who were in the previous race)
-- [ ] **CTRL-08**: Race director can abandon a race in progress; results up to the abandonment point are saved and the meeting advances normally
-- [ ] **CTRL-09**: Race director can skip to or re-run a specific race and round number
+- [x] **CTRL-08**: Race director can abandon a race in progress; results up to the abandonment point are saved and the meeting advances normally
+- [x] **CTRL-09**: Race director can skip to or re-run a specific race and round number
 
 ### Audio Announcements
 
@@ -262,15 +262,15 @@
 | TIMING-06 | Phase 5 | Pending |
 | TIMING-07 | Phase 5 | Pending |
 | TIMING-08 | Phase 5 | Pending |
-| CTRL-01 | Phase 4 | Pending |
+| CTRL-01 | Phase 4 | Complete |
 | CTRL-02 | Phase 4 | Pending |
-| CTRL-03 | Phase 4 | Pending |
+| CTRL-03 | Phase 4 | Complete |
 | CTRL-04 | Phase 4 | Pending |
 | CTRL-05 | Phase 4 | Pending |
-| CTRL-06 | Phase 4 | Pending |
+| CTRL-06 | Phase 4 | Complete |
 | CTRL-07 | Phase 4 | Pending |
-| CTRL-08 | Phase 4 | Pending |
-| CTRL-09 | Phase 4 | Pending |
+| CTRL-08 | Phase 4 | Complete |
+| CTRL-09 | Phase 4 | Complete |
 | AUDIO-01 | Phase 6 | Pending |
 | AUDIO-02 | Phase 6 | Pending |
 | AUDIO-03 | Phase 6 | Pending |
