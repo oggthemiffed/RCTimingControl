@@ -149,11 +149,11 @@ public class PreRaceReadinessQuery {
                         ).as("driverName"),
                         RACING_CLASSES.NAME.as("className"))
                 .from(RACE_ENTRIES)
+                .join(RACES).on(RACES.ID.eq(RACE_ENTRIES.RACE_ID))
                 .join(ENTRIES).on(ENTRIES.ID.eq(RACE_ENTRIES.ENTRY_ID))
                 .join(USERS).on(USERS.ID.eq(ENTRIES.USER_ID))
                 .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
                 .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
-                .join(RACES).on(RACES.ID.eq(RACE_ENTRIES.RACE_ID))
                 .where(RACE_ENTRIES.RACE_ID.eq(raceId))
                 .orderBy(RACE_ENTRIES.GRID_POSITION.asc().nullsLast(), ENTRIES.ID.asc())
                 .fetch(r -> new GridCallSlotDto(
