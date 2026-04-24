@@ -1,33 +1,50 @@
 package dev.monkeypatch.rctiming.domain.race;
 
-import org.junit.jupiter.api.Disabled;
+import dev.monkeypatch.rctiming.domain.event.IllegalStateTransitionException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@Disabled("wave 0 stub — enabled once RaceStateMachineService exists in plan 02")
-@ExtendWith(MockitoExtension.class)
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 class RaceStateMachineServiceTest {
 
-    // private RaceStateMachineService service; // uncomment in plan 02 once production class exists
+    private RaceStateMachineService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new RaceStateMachineService();
+    }
 
     @Test
     void invalidTransition_pendingToFinished_throwsIllegalStateTransitionException() {
-        // TODO: plan 02 implements assertions
+        Race race = new Race();
+        race.setStatus(RaceStatus.PENDING);
+        assertThatThrownBy(() -> service.transition(race, RaceStatus.FINISHED))
+            .isInstanceOf(IllegalStateTransitionException.class);
     }
 
     @Test
     void invalidTransition_finishedToAny_throwsIllegalStateTransitionException() {
-        // TODO: plan 02 implements assertions
+        Race race = new Race();
+        race.setStatus(RaceStatus.FINISHED);
+        assertThatThrownBy(() -> service.transition(race, RaceStatus.PENDING))
+            .isInstanceOf(IllegalStateTransitionException.class);
     }
 
     @Test
     void validTransition_pendingToGrid_updatesStatus() {
-        // TODO: plan 02 implements assertions
+        Race race = new Race();
+        race.setStatus(RaceStatus.PENDING);
+        service.transition(race, RaceStatus.GRID);
+        assertThat(race.getStatus()).isEqualTo(RaceStatus.GRID);
     }
 
     @Test
     void validTransition_gridToRunning_updatesStatus() {
-        // TODO: plan 02 implements assertions
+        Race race = new Race();
+        race.setStatus(RaceStatus.GRID);
+        service.transition(race, RaceStatus.RUNNING);
+        assertThat(race.getStatus()).isEqualTo(RaceStatus.RUNNING);
     }
 }
