@@ -1,15 +1,25 @@
 package dev.monkeypatch.rctiming.domain.race;
 
 import dev.monkeypatch.rctiming.domain.event.IllegalStateTransitionException;
+import dev.monkeypatch.rctiming.service.RoundGeneratorService;
+import dev.monkeypatch.rctiming.timing.LapTimingService;
+import dev.monkeypatch.rctiming.timing.LiveTimingHub;
+import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
 public class RaceStateMachineService {
+
+    private static final Logger log = LoggerFactory.getLogger(RaceStateMachineService.class);
 
     private static final Map<RaceStatus, Set<RaceStatus>> VALID_TRANSITIONS;
 
@@ -23,6 +33,36 @@ public class RaceStateMachineService {
         VALID_TRANSITIONS = Map.copyOf(m);
     }
 
+    private final LiveTimingHub liveTimingHub;
+    private final RoundGeneratorService roundGeneratorService;
+    private final RaceRepository raceRepository;
+    private final LapTimingService lapTimingService;
+    private final RoundRepository roundRepository;
+
+    /**
+     * Full constructor for production use — all collaborators required.
+     */
+    public RaceStateMachineService(LiveTimingHub liveTimingHub,
+                                   RoundGeneratorService roundGeneratorService,
+                                   RaceRepository raceRepository,
+                                   LapTimingService lapTimingService,
+                                   RoundRepository roundRepository) {
+        this.liveTimingHub = liveTimingHub;
+        this.roundGeneratorService = roundGeneratorService;
+        this.raceRepository = raceRepository;
+        this.lapTimingService = lapTimingService;
+        this.roundRepository = roundRepository;
+    }
+
+    /**
+     * Zero-arg convenience constructor for unit tests (plan 02).
+     * Delegates to full constructor with all-null collaborators.
+     * Broadcasts and finishing-order propagation are short-circuited when hub is null.
+     */
+    public RaceStateMachineService() {
+        this(null, null, null, null, null);
+    }
+
     public void transition(Race race, RaceStatus target) {
         Set<RaceStatus> valid = VALID_TRANSITIONS.getOrDefault(race.getStatus(), Set.of());
         if (!valid.contains(target)) {
@@ -31,5 +71,83 @@ public class RaceStateMachineService {
                 + " from " + race.getStatus() + " to " + target);
         }
         race.setStatus(target);
+
+        // Broadcast state change over STOMP
+        if (liveTimingHub != null) {
+            liveTimingHub.broadcastStateChange(race.getId(), target);
+        }
+
+        // On RUNNING → FINISHED: propagate finishing order to the next race in the same heat
+        if (target == RaceStatus.FINISHED && liveTimingHub != null) {
+            applyFinishingOrderToNextRace(race);
+        }
+    }
+
+    /**
+     * When a race finishes, look up the next race in the same heat across the next round
+     * for PRACTICE/QUALIFIER rounds, and apply the finishing order as the starting grid.
+     *
+     * Bump-up finals are handled separately by BumpUpSeedingService — not here.
+     */
+    private void applyFinishingOrderToNextRace(Race finishedRace) {
+        if (lapTimingService == null || roundRepository == null || raceRepository == null) {
+            return;
+        }
+
+        // Only apply for PRACTICE and QUALIFIER rounds
+        Round finishedRound = roundRepository.findById(finishedRace.getRoundId()).orElse(null);
+        if (finishedRound == null) {
+            return;
+        }
+        if (finishedRound.getType() != RoundType.PRACTICE && finishedRound.getType() != RoundType.QUALIFIER) {
+            return;
+        }
+
+        // Find the next round in the same event (next sequenceInEvent)
+        List<Round> allRounds = roundRepository.findByEventIdOrderBySequenceInEvent(finishedRound.getEventId());
+        Round nextRound = null;
+        for (Round r : allRounds) {
+            if (r.getSequenceInEvent() > finishedRound.getSequenceInEvent()) {
+                nextRound = r;
+                break;
+            }
+        }
+        if (nextRound == null) {
+            return;
+        }
+
+        // Find the race in the next round with the same heatNumber and eventClassId
+        List<Race> nextRoundRaces = raceRepository.findByRoundIdOrderBySequenceInRound(nextRound.getId());
+        Optional<Race> nextRace = nextRoundRaces.stream()
+                .filter(r -> r.getHeatNumber() == finishedRace.getHeatNumber()
+                          && r.getEventClassId().equals(finishedRace.getEventClassId()))
+                .findFirst();
+
+        if (nextRace.isEmpty()) {
+            return;
+        }
+
+        // Get finishing order from in-memory state
+        Optional<dev.monkeypatch.rctiming.timing.LiveRaceState> state = lapTimingService.peek(finishedRace.getId());
+        if (state.isEmpty()) {
+            log.info("Race {} finished with no in-memory state — skipping finishing-order propagation", finishedRace.getId());
+            return;
+        }
+
+        List<Long> finishingEntryIds = state.get().calculatePositions().stream()
+                .map(LiveTimingRowDto::entryId)
+                .toList();
+
+        if (finishingEntryIds.isEmpty()) {
+            return;
+        }
+
+        try {
+            roundGeneratorService.applyPreviousRoundFinishingOrder(nextRace.get().getId(), finishingEntryIds);
+            log.info("Applied finishing order from race {} to next race {}", finishedRace.getId(), nextRace.get().getId());
+        } catch (Exception e) {
+            log.warn("Failed to apply finishing order from race {} to next race {}: {}",
+                    finishedRace.getId(), nextRace.get().getId(), e.getMessage());
+        }
     }
 }
