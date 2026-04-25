@@ -146,6 +146,22 @@ public class EntryService {
         entry.setUpdatedAt(now);
     }
 
+    public EntryDto adminWithdraw(Long entryId, Long adminUserId, String reason) {
+        Entry entry = entryRepository.findById(entryId)
+                .orElseThrow(() -> new EntityNotFoundException("Entry not found: " + entryId));
+        if (entry.getStatus() == EntryStatus.WITHDRAWN) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Entry already withdrawn");
+        }
+        String beforeJson = writeJson(java.util.Map.of("status", entry.getStatus().name()));
+        Instant now = Instant.now();
+        entry.setStatus(EntryStatus.WITHDRAWN);
+        entry.setWithdrawnAt(now);
+        entry.setUpdatedAt(now);
+        String afterJson = writeJson(java.util.Map.of("status", EntryStatus.WITHDRAWN.name()));
+        writeAudit(entry.getId(), adminUserId, "ADMIN_WITHDRAW", reason, beforeJson, afterJson);
+        return EntryDto.from(entry);
+    }
+
     public EntryDto adminUpdateTransponder(Long entryId, Long adminUserId, AdminUpdateTransponderRequest req) {
         Entry entry = entryRepository.findById(entryId)
                 .orElseThrow(() -> new EntityNotFoundException("Entry not found: " + entryId));

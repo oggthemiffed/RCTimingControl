@@ -185,6 +185,67 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void listEntriesForClass_returnsEntries() {
+        RacerSession racer = registerRacer("list-entries");
+        Long carId = createCar(racer.token());
+        Long transpId = createTransponder(racer.token(), uniqueNumber());
+
+        var submitBody = Map.of("eventId", OPEN_EVENT_ID, "eventClassId", OPEN_CLASS_ID,
+                                "carId", carId, "transponderId", transpId);
+        restTemplate.exchange("/api/v1/racer/entries", HttpMethod.POST,
+                new HttpEntity<>(submitBody, headersFor(racer.token())), Map.class);
+
+        var resp = restTemplate.exchange(
+                "/api/v1/admin/entries/events/" + OPEN_EVENT_ID + "/classes/" + OPEN_CLASS_ID,
+                HttpMethod.GET, new HttpEntity<>(adminHeaders()), List.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<Map<String, Object>> entries = (List<Map<String, Object>>) resp.getBody();
+        assertThat(entries).isNotEmpty();
+        // Find the entry belonging to our racer (userId match) — other tests may add entries to same class
+        Map<String, Object> ourEntry = entries.stream()
+                .filter(e -> racer.userId().equals(((Number) e.get("userId")).longValue()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Racer's entry not found in list"));
+        assertThat(ourEntry).containsKey("firstName");
+        assertThat(ourEntry).containsKey("transponderNumber");
+        assertThat(ourEntry.get("status")).isEqualTo("CONFIRMED");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void adminWithdraw_setsStatusAndWritesAudit() {
+        RacerSession racer = registerRacer("admin-withdraw");
+        Long carId = createCar(racer.token());
+        Long transpId = createTransponder(racer.token(), uniqueNumber());
+
+        var submitBody = Map.of("eventId", OPEN_EVENT_ID, "eventClassId", OPEN_CLASS_ID,
+                                "carId", carId, "transponderId", transpId);
+        var submitResp = restTemplate.exchange("/api/v1/racer/entries", HttpMethod.POST,
+                new HttpEntity<>(submitBody, headersFor(racer.token())), Map.class);
+        Long entryId = ((Number) ((Map<String, Object>) submitResp.getBody().get("entry")).get("id")).longValue();
+
+        var withdrawBody = Map.of("reason", "admin test withdrawal");
+        var withdrawResp = restTemplate.exchange("/api/v1/admin/entries/" + entryId + "/withdraw",
+                HttpMethod.POST, new HttpEntity<>(withdrawBody, adminHeaders()), Map.class);
+
+        assertThat(withdrawResp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(withdrawResp.getBody().get("status")).isEqualTo("WITHDRAWN");
+
+        List<EntryAuditLog> logs = entryAuditLogRepository.findByEntryIdOrderByCreatedAtAsc(entryId);
+        assertThat(logs).anyMatch(l -> "ADMIN_WITHDRAW".equals(l.getAction()));
+    }
+
+    @Test
+    void adminWithdraw_blankReason_returns400() {
+        var resp = restTemplate.exchange("/api/v1/admin/entries/1/withdraw",
+                HttpMethod.POST, new HttpEntity<>(Map.of("reason", ""), adminHeaders()),
+                String.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void racerOnAdminEndpoint_returns403() {
         RacerSession racer = registerRacer("racer-admin-attempt");
         var resp = restTemplate.exchange("/api/v1/admin/entries/1/transponder",
