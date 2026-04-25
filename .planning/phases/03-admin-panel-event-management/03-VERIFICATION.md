@@ -1,13 +1,13 @@
 ---
 phase: 03-admin-panel-event-management
 verified: 2026-04-25T14:41:01Z
-status: gaps_found
-score: 13/14 must-haves verified
+status: passed
+score: 14/14 must-haves verified
 overrides_applied: 0
 gaps:
   - truth: "Admin can view and manage all entries per event and per class (ENTRY-02)"
-    status: failed
-    reason: "Backend AdminEntryController is missing GET /events/{eventId}/classes/{classId} and POST /{id}/withdraw endpoints. Plan 03-02 SUMMARY claimed these were 'already implemented in Phase 2' — but the Phase 2 AdminEntryController only has PATCH /{id}/transponder and POST /{id}/membership-override. Frontend adminApi.ts calls /api/v1/admin/entries/events/{eventId}/classes/{classId} and /api/v1/admin/entries/{entryId}/withdraw but these backend routes do not exist."
+    status: resolved
+    reason: "Fixed in gap closure commit feat(03-gap): AdminEntryQueryService + GET /events/{eventId}/classes/{classId} + POST /{id}/withdraw + EntryService.adminWithdraw + 3 new IT tests passing."
     artifacts:
       - path: "app/src/main/java/dev/monkeypatch/rctiming/api/admin/AdminEntryController.java"
         issue: "Missing GET /events/{eventId}/classes/{classId} endpoint and POST /{id}/withdraw endpoint"

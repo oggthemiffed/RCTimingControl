@@ -64,7 +64,7 @@ Plans:
 - [x] 03-03-PLAN.md — Championship backend: entities, ChampionshipService, points scale, exclusions, standings query scaffold (CHAMP-01..04, CHAMP-06..10)
 - [x] 03-04-PLAN.md — Infrastructure + config services: MinIO + S3 client, ObjectStorageService, logo upload endpoint, CarTagCategory archive pattern
 - [x] 03-05-PLAN.md — Admin panel frontend shell + events/entries UI: layout, routes, adminApi/adminQueryKeys scaffolding, event CRUD + state transitions + classes + entries
-- [ ] 03-06-PLAN.md — Championships + config forms UI: championship detail (6 tabs), points scale editor (ROAR/BRCA presets), club/tracks/formats/car-tag-categories admin pages (CHAMP-01..04, CHAMP-06..10)
+- [x] 03-06-PLAN.md — Championships + config forms UI: championship detail (6 tabs), points scale editor (ROAR/BRCA presets), club/tracks/formats/car-tag-categories admin pages (CHAMP-01..04, CHAMP-06..10)
 **UI hint**: yes
 
 ### Phase 4: Race Control
