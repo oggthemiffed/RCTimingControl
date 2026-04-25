@@ -95,9 +95,9 @@ Plans:
 - [x] 04-02-PLAN.md — V17/V18 schema migrations + race domain entities + RaceStateMachineService (CTRL-05)
 - [x] 04-03-PLAN.md — RoundGeneratorService + BumpUpSeedingService + QualifyingStandingsService (heat structure, supports phase success criteria 1/3/4/5)
 - [x] 04-04-PLAN.md — PreRaceReadinessQuery + controller (CTRL-02, CTRL-07)
-- [ ] 04-05-PLAN.md — Frontend PreRaceReadinessPanel + referee alert algorithms (CTRL-02, CTRL-07, OFFICIAL-01, OFFICIAL-02)
+- [x] 04-05-PLAN.md — Frontend PreRaceReadinessPanel + referee alert algorithms (CTRL-02, CTRL-07, OFFICIAL-01, OFFICIAL-02)
 - [x] 04-06-PLAN.md — WebSocket/STOMP infrastructure + LiveRaceState + RaceControlController + SyntheticTimingService (CTRL-01, CTRL-03, CTRL-06, CTRL-08, CTRL-09)
-- [ ] 04-07-PLAN.md — RefereeController + ResultSnapshotService (V19) + cockpit React shell + PrintResultsPage (CTRL-04, OFFICIAL-03, OFFICIAL-04)
+- [x] 04-07-PLAN.md — RefereeController + ResultSnapshotService (V19) + cockpit React shell + PrintResultsPage (CTRL-04, OFFICIAL-03, OFFICIAL-04)
 **UI hint**: yes
 
 ### Phase 5: Live Timing & Forwarder
