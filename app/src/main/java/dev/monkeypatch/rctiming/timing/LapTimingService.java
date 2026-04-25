@@ -92,6 +92,14 @@ public class LapTimingService {
     }
 
     /**
+     * Releases in-memory state for a finished race, freeing memory.
+     * Idempotent — no-op if no state is present.
+     */
+    public void releaseState(long raceId) {
+        states.remove(raceId);
+    }
+
+    /**
      * Resolves a transponder number to an entry ID for the given race.
      * Scans the race's RaceEntry rows, loads each Entry, and matches transponderNumberSnapshot.
      */

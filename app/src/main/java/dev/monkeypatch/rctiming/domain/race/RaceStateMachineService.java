@@ -1,12 +1,14 @@
 package dev.monkeypatch.rctiming.domain.race;
 
 import dev.monkeypatch.rctiming.domain.event.IllegalStateTransitionException;
+import dev.monkeypatch.rctiming.service.ResultSnapshotService;
 import dev.monkeypatch.rctiming.service.RoundGeneratorService;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.LiveTimingHub;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumMap;
@@ -38,20 +40,25 @@ public class RaceStateMachineService {
     private final RaceRepository raceRepository;
     private final LapTimingService lapTimingService;
     private final RoundRepository roundRepository;
+    @Nullable
+    private final ResultSnapshotService resultSnapshotService;
 
     /**
      * Full constructor for production use — all collaborators required.
      */
+    @org.springframework.beans.factory.annotation.Autowired
     public RaceStateMachineService(LiveTimingHub liveTimingHub,
                                    RoundGeneratorService roundGeneratorService,
                                    RaceRepository raceRepository,
                                    LapTimingService lapTimingService,
-                                   RoundRepository roundRepository) {
+                                   RoundRepository roundRepository,
+                                   @Nullable ResultSnapshotService resultSnapshotService) {
         this.liveTimingHub = liveTimingHub;
         this.roundGeneratorService = roundGeneratorService;
         this.raceRepository = raceRepository;
         this.lapTimingService = lapTimingService;
         this.roundRepository = roundRepository;
+        this.resultSnapshotService = resultSnapshotService;
     }
 
     /**
@@ -60,7 +67,28 @@ public class RaceStateMachineService {
      * Broadcasts and finishing-order propagation are short-circuited when hub is null.
      */
     public RaceStateMachineService() {
-        this(null, null, null, null, null);
+        this(null, null, null, null, null, null);
+    }
+
+    /**
+     * Restart a race — resets it to PENDING regardless of current state, clears
+     * in-memory timing state, and deletes any persisted result snapshot.
+     * Intended for false starts or technical issues requiring a full re-run.
+     */
+    public void restart(Race race) {
+        race.setStatus(RaceStatus.PENDING);
+        race.setStartedAt(null);
+        race.setFinishedAt(null);
+
+        if (lapTimingService != null) {
+            lapTimingService.releaseState(race.getId());
+        }
+        if (resultSnapshotService != null) {
+            resultSnapshotService.deleteByRaceId(race.getId());
+        }
+        if (liveTimingHub != null) {
+            liveTimingHub.broadcastStateChange(race.getId(), RaceStatus.PENDING);
+        }
     }
 
     public void transition(Race race, RaceStatus target) {
@@ -77,9 +105,12 @@ public class RaceStateMachineService {
             liveTimingHub.broadcastStateChange(race.getId(), target);
         }
 
-        // On RUNNING → FINISHED: propagate finishing order to the next race in the same heat
+        // On RUNNING/STOPPED → FINISHED: propagate finishing order, then persist result snapshot
         if (target == RaceStatus.FINISHED && liveTimingHub != null) {
             applyFinishingOrderToNextRace(race);
+        }
+        if (target == RaceStatus.FINISHED && resultSnapshotService != null) {
+            resultSnapshotService.snapshot(race.getId());
         }
     }
 

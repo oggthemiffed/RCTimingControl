@@ -38,6 +38,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
@@ -108,15 +109,17 @@ val startJooqDb by tasks.registering(Exec::class) {
     description = "Start a temporary Postgres container for jOOQ codegen"
     onlyIf { !useExternalDb }
     commandLine(
-        "docker", "run", "--rm", "-d",
-        "--name", jooqContainerName,
-        "-e", "POSTGRES_USER=$jooqJdbcUser",
-        "-e", "POSTGRES_PASSWORD=$jooqJdbcPassword",
-        "-e", "POSTGRES_DB=jooq",
-        "-p", "$jooqDbPort:5432",
+        "bash", "-c",
+        "docker rm -f $jooqContainerName 2>/dev/null || true; " +
+        "docker run --rm -d " +
+        "--name $jooqContainerName " +
+        "-e POSTGRES_USER=$jooqJdbcUser " +
+        "-e POSTGRES_PASSWORD=$jooqJdbcPassword " +
+        "-e POSTGRES_DB=jooq " +
+        "-p $jooqDbPort:5432 " +
         "postgres:16-alpine"
     )
-    isIgnoreExitValue = true
+    isIgnoreExitValue = false
 }
 
 val waitForJooqDb by tasks.registering(Exec::class) {

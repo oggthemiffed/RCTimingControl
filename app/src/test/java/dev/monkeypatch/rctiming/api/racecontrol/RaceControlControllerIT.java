@@ -224,9 +224,22 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("implemented in plan 07 — print results page")
     void getPrintResults_returns200WithLapHistory() {
-        // TODO: plan 07 implements assertions — CTRL-04
+        Race race = seedRace(RaceStatus.GRID);
+
+        // Transition GRID → RUNNING → FINISHED via abandon (persists snapshot on FINISHED)
+        restTemplate.exchange("/api/v1/race-control/race/" + race.getId() + "/start",
+                HttpMethod.POST, new HttpEntity<>(directorHeaders()), Void.class);
+        restTemplate.exchange("/api/v1/race-control/race/" + race.getId() + "/abandon",
+                HttpMethod.POST, new HttpEntity<>(directorHeaders()), Void.class);
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/race-control/race/" + race.getId() + "/result-snapshot",
+                HttpMethod.GET, new HttpEntity<>(directorHeaders()), Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp.getBody()).containsKey("positions");
+        assertThat(resp.getBody()).containsKey("lapHistory");
     }
 
     // --- CTRL-09: skip-to ---

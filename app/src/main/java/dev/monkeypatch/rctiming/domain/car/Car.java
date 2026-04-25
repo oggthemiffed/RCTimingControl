@@ -26,6 +26,9 @@ public class Car {
     @Column(name = "primary_class_id")
     private Long primaryClassId;
 
+    @Column(name = "transponder_id")
+    private Long transponderId;
+
     @Column(columnDefinition = "text")
     private String notes;
 
@@ -49,6 +52,9 @@ public class Car {
 
     public Long getPrimaryClassId() { return primaryClassId; }
     public void setPrimaryClassId(Long primaryClassId) { this.primaryClassId = primaryClassId; }
+
+    public Long getTransponderId() { return transponderId; }
+    public void setTransponderId(Long transponderId) { this.transponderId = transponderId; }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }

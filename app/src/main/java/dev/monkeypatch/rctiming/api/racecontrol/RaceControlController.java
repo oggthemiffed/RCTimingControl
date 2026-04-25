@@ -124,6 +124,17 @@ public class RaceControlController {
         return ResponseEntity.ok().build();
     }
 
+    // --- Restart (reset to PENDING from any active state) ---
+
+    @PostMapping("/race/{raceId}/restart")
+    @Transactional
+    public ResponseEntity<Void> restartRace(@PathVariable long raceId) {
+        Race race = loadRace(raceId);
+        stateMachine.restart(race);
+        raceRepository.save(race);
+        return ResponseEntity.ok().build();
+    }
+
     // --- CTRL-08: Abandon ---
 
     @PostMapping("/race/{raceId}/abandon")

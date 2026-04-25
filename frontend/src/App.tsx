@@ -24,6 +24,11 @@ import ClubProfilePage from '@/pages/admin/club/ClubProfilePage';
 import TracksPage from '@/pages/admin/tracks/TracksPage';
 import FormatsPage from '@/pages/admin/formats/FormatsPage';
 import CarTagCategoriesPage from '@/pages/admin/categories/CarTagCategoriesPage';
+import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
+import RaceControlLayout from '@/pages/race-control/RaceControlLayout';
+import CockpitPage from '@/pages/race-control/CockpitPage';
+import RefereePage from '@/pages/race-control/RefereePage';
+import PrintResultsPage from '@/pages/race-control/PrintResultsPage';
 
 function RootLayout() {
   return (
@@ -60,6 +65,7 @@ const router = createBrowserRouter([
           { path: 'tracks', element: <TracksPage /> },
           { path: 'formats', element: <FormatsPage /> },
           { path: 'categories', element: <CarTagCategoriesPage /> },
+          { path: 'race-control', element: <RaceControlSelectPage /> },
         ],
       },
       {
@@ -75,6 +81,19 @@ const router = createBrowserRouter([
           { path: 'cars', element: <CarsPage /> },
           { path: 'transponders', element: <TranspondersPage /> },
           { path: 'entries', element: <EntriesPage /> },
+        ],
+      },
+      {
+        path: '/race-control/event/:eventId',
+        element: (
+          <ProtectedRoute roles={['RACE_DIRECTOR', 'REFEREE', 'ADMIN']}>
+            <RaceControlLayout />
+          </ProtectedRoute>
+        ),
+        children: [
+          { index: true, element: <CockpitPage /> },
+          { path: 'referee', element: <RefereePage /> },
+          { path: 'results/:raceId', element: <PrintResultsPage /> },
         ],
       },
       { path: '/events', element: <EventSchedulePage /> },

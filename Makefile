@@ -17,7 +17,8 @@ help:
 	@printf '\n'
 	@printf '  $(BOLD)Backend$(RESET)\n'
 	@printf '    make dev         Start backend in dev mode (requires: make up)\n'
-	@printf '    make build       Compile the backend (skips jOOQ codegen if schema unchanged)\n'
+	@printf '    make generate-db Regenerate jOOQ sources from live schema (requires: make up)\n'
+	@printf '    make build       Compile the backend (regenerates jOOQ if sources missing)\n'
 	@printf '    make test        Run all backend integration tests\n'
 	@printf '    make test-fast   Run tests skipping jOOQ codegen\n'
 	@printf '\n'
@@ -55,8 +56,18 @@ clean-db:
 dev:
 	./gradlew :app:bootRun --args='--spring.profiles.active=dev'
 
+.PHONY: generate-db
+generate-db:
+	./gradlew :app:generateJooq
+
+JOOQ_GENERATED := app/build/generated-sources/jooq/dev/monkeypatch/rctiming/jooq/generated
+
 .PHONY: build
 build:
+	@if [ ! -d "$(JOOQ_GENERATED)" ]; then \
+		printf 'jOOQ sources missing — running generateJooq first…\n'; \
+		$(MAKE) generate-db; \
+	fi
 	./gradlew :app:build -x test -x generateJooq
 
 .PHONY: test

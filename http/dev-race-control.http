@@ -1,0 +1,70 @@
+### Dev Race Control — synthetic timing & race lifecycle
+### Requires VS Code REST Client extension (humao.rest-client)
+###
+### Seed credentials (all passwords: Racer1Pass!)
+###   director@example.com  — RACE_DIRECTOR + REFEREE
+###   admin@example.com     — ADMIN
+###
+### Seed transponder numbers: 101–106 (racer1–racer6)
+
+@baseUrl = http://localhost:8080/api/v1
+
+# ── 1. Login — run this first, token is captured automatically ───────────────
+
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "director@example.com",
+  "password": "Racer1Pass!"
+}
+
+###
+
+@token = {{login.response.parsedBody.accessToken}}
+
+# ── 2. Fire a synthetic lap passing (random entry in the race) ───────────────
+# Replace 5 with the actual race ID shown in the run order sidebar.
+# Call repeatedly to simulate multiple drivers completing laps.
+
+POST {{baseUrl}}/dev/race/5/synthetic-passing
+Authorization: Bearer {{token}}
+
+###
+
+# ── 3. Race lifecycle commands ───────────────────────────────────────────────
+
+# Call Grid (PENDING → GRID)
+POST {{baseUrl}}/race-control/race/5/call-grid
+Authorization: Bearer {{token}}
+
+###
+
+# Start Race (GRID → RUNNING)
+POST {{baseUrl}}/race-control/race/5/start
+Authorization: Bearer {{token}}
+
+###
+
+# Stop Race (RUNNING → STOPPED)
+POST {{baseUrl}}/race-control/race/5/stop
+Authorization: Bearer {{token}}
+
+###
+
+# Resume Race (STOPPED → RUNNING)
+POST {{baseUrl}}/race-control/race/5/resume
+Authorization: Bearer {{token}}
+
+###
+
+# Finish / Abandon Race (RUNNING or STOPPED → FINISHED)
+POST {{baseUrl}}/race-control/race/5/finish
+Authorization: Bearer {{token}}
+
+###
+
+# ── 4. Run order (GET — no auth required) ───────────────────────────────────
+
+GET {{baseUrl}}/event/1/run-order

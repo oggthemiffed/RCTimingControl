@@ -9,6 +9,7 @@ import {
   Tags,
   LogOut,
   Menu,
+  Flag,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 const eventsGroup = [
   { to: '/admin/events', label: 'Events', Icon: Calendar },
   { to: '/admin/championships', label: 'Championships', Icon: Trophy },
+] as const;
+
+const operationsGroup = [
+  { to: '/admin/race-control', label: 'Race Control', Icon: Flag },
 ] as const;
 
 const configGroup = [
@@ -88,7 +93,19 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
           <Separator />
         </div>
 
-        {/* Group 2: Configuration */}
+        {/* Group 2: Operations */}
+        <p className="px-3 pt-4 mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Operations
+        </p>
+        {operationsGroup.map(({ to, label, Icon }) => (
+          <NavItem key={to} to={to} label={label} Icon={Icon} onClick={onNavClick} />
+        ))}
+
+        <div className="pt-4">
+          <Separator />
+        </div>
+
+        {/* Group 3: Configuration */}
         <p className="px-3 pt-4 mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Configuration
         </p>
@@ -165,7 +182,7 @@ export default function AdminPanelLayout() {
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 inset-x-0 flex md:hidden border-t bg-background z-10 h-14">
-        {[...eventsGroup, ...configGroup].slice(0, 5).map(({ to, label, Icon }) => (
+        {[...eventsGroup, ...operationsGroup, ...configGroup].slice(0, 5).map(({ to, label, Icon }) => (
           <NavLink
             key={to}
             to={to}

@@ -8,7 +8,7 @@ import {
   createColumnHelper,
   type SortingState,
 } from '@tanstack/react-table';
-import { Plus, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { Plus, ArrowUpDown, RefreshCw, Flag } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -133,6 +133,24 @@ export default function EventListPage() {
     columnHelper.accessor('trackName', {
       header: 'Track',
       cell: info => info.getValue() ?? <span className="text-muted-foreground">—</span>,
+    }),
+    columnHelper.display({
+      id: 'actions',
+      cell: info =>
+        info.row.original.status === 'IN_PROGRESS' ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={e => {
+              e.stopPropagation();
+              navigate(`/race-control/event/${info.row.original.id}`);
+            }}
+            className="gap-1.5"
+          >
+            <Flag className="h-3 w-3" />
+            Race Control
+          </Button>
+        ) : null,
     }),
   ];
 
