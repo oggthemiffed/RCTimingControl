@@ -3,10 +3,12 @@ import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useRunOrder } from '@/hooks/race-control/useRunOrder';
 import { useRaceStateMutations } from '@/hooks/race-control/useRaceStateMutations';
+import { useStomp } from '@/hooks/race-control/useStomp';
 import { RunOrderPanel } from './panels/RunOrderPanel';
 import { GridEditorPanel } from './panels/GridEditorPanel';
 import { LiveTimingPanel } from './panels/LiveTimingPanel';
 import { FinishedPanel } from './panels/FinishedPanel';
+import { UnknownTransponderLinkDialog } from './dialogs/UnknownTransponderLinkDialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { RunOrderItemDto } from '@/lib/raceControlApi';
@@ -29,6 +31,11 @@ export default function CockpitPage() {
   const { data: runOrder = [], isLoading } = useRunOrder(eventId || null);
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);
 
+  // Unknown transponder link dialog state
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkTransponderNumber, setLinkTransponderNumber] = useState<string>('');
+  const [unknownTransponders, setUnknownTransponders] = useState<string[]>([]);
+
   // Auto-select first non-FINISHED race on load
   useEffect(() => {
     if (runOrder.length > 0 && selectedRaceId === null) {
@@ -39,7 +46,39 @@ export default function CockpitPage() {
 
   const selectedRace = runOrder.find((r) => r.raceId === selectedRaceId);
 
+  // Subscribe to unknown transponder events when a race is running
+  const unknownTopic =
+    selectedRace?.status === 'RUNNING'
+      ? `/topic/race/${selectedRace.raceId}/unknown-transponder`
+      : null;
+  const { data: unknownTransponderEvent } = useStomp<{ transponderNumber: string }>(unknownTopic);
+
+  // Accumulate unknown transponders
+  useEffect(() => {
+    if (unknownTransponderEvent?.transponderNumber) {
+      setUnknownTransponders((prev) => {
+        if (prev.includes(unknownTransponderEvent.transponderNumber)) return prev;
+        return [...prev, unknownTransponderEvent.transponderNumber];
+      });
+    }
+  }, [unknownTransponderEvent]);
+
+  // Clear unknown transponders when race changes
+  useEffect(() => {
+    setUnknownTransponders([]);
+  }, [selectedRaceId]);
+
   const mutations = useRaceStateMutations(selectedRaceId ?? 0, eventId);
+
+  function handleLinkTransponder(transponderNumber: string) {
+    setLinkTransponderNumber(transponderNumber);
+    setLinkDialogOpen(true);
+  }
+
+  function handleLinked() {
+    setUnknownTransponders((prev) => prev.filter((t) => t !== linkTransponderNumber));
+    setLinkTransponderNumber('');
+  }
 
   function onCallGrid() {
     mutations.callGrid.mutate(undefined, {
@@ -125,6 +164,29 @@ export default function CockpitPage() {
               </div>
             </div>
             <LiveTimingPanel raceId={selectedRace.raceId} status={selectedRace.status} />
+            {unknownTransponders.length > 0 && (
+              <div className="mt-2 space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Unknown Transponders</p>
+                <div className="flex flex-wrap gap-2">
+                  {unknownTransponders.map((t) => (
+                    <div
+                      key={t}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-destructive/10 border border-destructive/20"
+                    >
+                      <span className="font-mono text-sm">{t}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => handleLinkTransponder(t)}
+                      >
+                        Link to entry
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
 
@@ -186,6 +248,15 @@ export default function CockpitPage() {
       <main className="flex-1 overflow-y-auto p-6">
         {renderMainPanel()}
       </main>
+
+      {/* Unknown transponder link dialog */}
+      <UnknownTransponderLinkDialog
+        transponderNumber={linkTransponderNumber}
+        raceId={selectedRace?.raceId ?? 0}
+        open={linkDialogOpen}
+        onOpenChange={setLinkDialogOpen}
+        onLinked={handleLinked}
+      />
     </div>
   );
 }

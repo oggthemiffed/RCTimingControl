@@ -172,3 +172,64 @@ export async function recordMarshalAbsent(
 ): Promise<void> {
   await api.post(`/api/v1/race-control/referee/race/${raceId}/marshal-absent`, req);
 }
+
+// ── Phase 5: Unknown Transponder Linking ─────────────────────────────────────
+
+export type RaceEntryDto = {
+  entryId: number;
+  racerName: string;
+  carNumber: string | null;
+};
+
+export type LinkTransponderRequest = {
+  transponderNumber: string;
+  entryId: number;
+};
+
+export type LinkTransponderResponse = {
+  lapsCredited: number;
+};
+
+export async function getRaceEntries(raceId: number): Promise<RaceEntryDto[]> {
+  const { data } = await api.get<RaceEntryDto[]>(`/api/v1/race-control/races/${raceId}/entries`);
+  return data;
+}
+
+export async function linkUnknownTransponder(
+  raceId: number,
+  transponderNumber: string,
+  entryId: number,
+): Promise<LinkTransponderResponse> {
+  const { data } = await api.post<LinkTransponderResponse>(
+    `/api/v1/race-control/races/${raceId}/transponders/link`,
+    { transponderNumber, entryId },
+  );
+  return data;
+}
+
+// ── Phase 5: Admin Forwarder Token Management ────────────────────────────────
+
+export type ForwarderTokenStatus = 'ACTIVE' | 'REVOKED' | 'NONE';
+
+export type ForwarderTokenStatusResponse = {
+  status: ForwarderTokenStatus;
+  generatedAt: string | null;
+};
+
+export type GenerateTokenResponse = {
+  token: string;
+};
+
+export async function getForwarderTokenStatus(): Promise<ForwarderTokenStatusResponse> {
+  const { data } = await api.get<ForwarderTokenStatusResponse>('/api/v1/admin/forwarder/token');
+  return data;
+}
+
+export async function generateForwarderToken(): Promise<GenerateTokenResponse> {
+  const { data } = await api.post<GenerateTokenResponse>('/api/v1/admin/forwarder/token', {});
+  return data;
+}
+
+export async function revokeForwarderToken(): Promise<void> {
+  await api.delete('/api/v1/admin/forwarder/token');
+}
