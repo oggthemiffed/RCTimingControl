@@ -25,6 +25,7 @@ import TracksPage from '@/pages/admin/tracks/TracksPage';
 import FormatsPage from '@/pages/admin/formats/FormatsPage';
 import CarTagCategoriesPage from '@/pages/admin/categories/CarTagCategoriesPage';
 import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
+import ForwarderTokenPage from '@/pages/admin/race-control/ForwarderTokenPage';
 import RaceControlLayout from '@/pages/race-control/RaceControlLayout';
 import CockpitPage from '@/pages/race-control/CockpitPage';
 import RefereePage from '@/pages/race-control/RefereePage';
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
           { path: 'formats', element: <FormatsPage /> },
           { path: 'categories', element: <CarTagCategoriesPage /> },
           { path: 'race-control', element: <RaceControlSelectPage /> },
+          { path: 'forwarder', element: <ForwarderTokenPage /> },
         ],
       },
       {

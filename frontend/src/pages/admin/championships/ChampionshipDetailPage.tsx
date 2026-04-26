@@ -164,7 +164,8 @@ function AddClassDialog({
   });
   const addMutation = useAddChampionshipClass(championshipId);
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } =
-    useForm<AddClassFormValues>({ resolver: zodResolver(addClassSchema) });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    useForm<AddClassFormValues>({ resolver: zodResolver(addClassSchema) as any });
 
   async function onSubmit(values: AddClassFormValues) {
     try {

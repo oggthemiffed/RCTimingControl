@@ -10,6 +10,7 @@ import {
   LogOut,
   Menu,
   Flag,
+  Radio,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ const eventsGroup = [
 
 const operationsGroup = [
   { to: '/admin/race-control', label: 'Race Control', Icon: Flag },
+  { to: '/admin/forwarder', label: 'Forwarder Token', Icon: Radio },
 ] as const;
 
 const configGroup = [

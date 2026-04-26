@@ -55,7 +55,8 @@ export function ChampionshipConfigForm({ initialValue, onSubmit, submitLabel }: 
     control,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       name: initialValue?.name ?? '',
       scoringSource: (initialValue?.scoringSource as ScoringSource) ?? 'QUALIFYING',
