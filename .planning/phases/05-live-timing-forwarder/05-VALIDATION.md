@@ -44,9 +44,9 @@ created: 2026-04-26
 | 5-01-04 | 01 | 0 | FORWARDER-01, TIMING-02 | — | N/A | integration | `./gradlew :forwarder:test --tests "*.AmbRc4TimingSourceIT"` | ❌ W0 | ⬜ pending |
 | 5-01-05 | 01 | 0 | TIMING-05 | — | N/A | unit | `./gradlew :forwarder:test --tests "*.TimingSourceTest"` | ❌ W0 | ⬜ pending |
 | 5-01-06 | 01 | 0 | TIMING-02 | — | N/A | unit | `./gradlew :forwarder:test --tests "*.ReconnectBehaviourTest"` | ❌ W0 | ⬜ pending |
-| 5-02-01 | 02 | 0 | FORWARDER-05 | Forwarder impersonation | Token validation rejects missing/invalid tokens; BCrypt hash in DB | unit | `./gradlew :app:test --tests "*.ForwarderTokenServiceTest"` | ❌ W0 | ⬜ pending |
-| 5-02-02 | 02 | 1 | FORWARDER-03, TIMING-01 | Token replay | Revoked tokens rejected via DB status check | integration | `./gradlew :app:test --tests "*.ForwarderGrpcServiceIT"` | ❌ W0 | ⬜ pending |
-| 5-03-01 | 03 | 1 | TIMING-08 | Wrong transponder linked | Audit record persisted with actor userId | unit | `./gradlew :app:test --tests "*.LiveRaceStateRetroactiveTest"` | ❌ W0 | ⬜ pending |
+| 5-03-01 | 03 | 1 | FORWARDER-05 | Forwarder impersonation | Token validation rejects missing/invalid tokens; BCrypt hash in DB | unit | `./gradlew :app:test --tests "*.ForwarderTokenServiceTest"` | ❌ W0 | ⬜ pending |
+| 5-04-01 | 04 | 2 | FORWARDER-03, TIMING-01 | Token replay | Revoked tokens rejected via DB status check | integration | `./gradlew :app:test --tests "*.ForwarderGrpcServiceIT"` | ❌ W0 | ⬜ pending |
+| 5-04-02 | 04 | 2 | TIMING-08 | Wrong transponder linked | Audit record persisted with actor userId | unit | `./gradlew :app:test --tests "*.LiveRaceStateRetroactiveTest"` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

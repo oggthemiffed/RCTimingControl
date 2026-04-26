@@ -668,22 +668,16 @@ record ForwarderStatusDto(String decoderState, String forwarderState) {}
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Shared domain classes: project dependency vs extracted JAR**
-   - What we know: `:forwarder` needs `LapPassingEvent` and `ParsedPassing` (new). `LapPassingEvent` is currently in `app/src/.../timing/`.
-   - What's unclear: Can `forwarder` take a `project(":app")` dependency without pulling in Spring Boot, Hibernate, and the full app classpath? Likely not — `:app` declares `spring-boot-starter-*` dependencies.
-   - Recommendation: Extract shared types (`LapPassingEvent`, `ParsedPassing`) into a new `:shared` or `:domain` submodule, OR (simpler for Phase 5) copy/inline the 3 fields of `LapPassingEvent` into a separate `ForwarderLapEvent` record in the forwarder module and map at the gRPC boundary. The gRPC proto message serves as the wire contract; no shared Java class is strictly needed between forwarder and app.
+1. **Shared domain classes: project dependency vs extracted JAR** — **RESOLVED: use proto as wire contract, no shared Java class needed**
+   - `:forwarder` does NOT import `LapPassingEvent` from `:app`. The gRPC proto message (`LapPassing` in `timing.proto`) is the wire contract. The forwarder maps its local `ParsedPassing` → proto fields. The app-side gRPC receiver translates the proto → `LapPassingEvent` (adding `raceId` from the currently RUNNING race). No `:shared` module needed for Phase 5.
 
-2. **gRPC port conflict with app's 8080**
-   - What we know: gRPC server will run on port 9090 (Claude's Discretion). Spring Boot runs on 8080.
-   - What's unclear: Whether the `docker-compose.yml` needs updating to expose port 9090.
-   - Recommendation: Add `9090:9090` mapping to `docker-compose.yml` in the app service, or run gRPC server on a configurable port via `app.grpc.port=9090`.
+2. **gRPC port conflict with app's 8080** — **RESOLVED: add `9090:9090` to docker-compose.yml**
+   - gRPC server runs on port 9090, configured via `app.grpc.port=9090` in `application.properties`. `docker-compose.yml` exposes `9090:9090` on the app service alongside `8080:8080`. Plan 04 includes this change.
 
-3. **Sample capture files location**
-   - What we know: `docs/AMB_DECODER_PROTOCOL.md` references `oggthemiffed/RCTimingForwarder/samples/dump_amb_ip.dump` as the source of real protocol captures.
-   - What's unclear: These files are not present in the current repository (`find` returned nothing). They exist in a separate Go prototype repository.
-   - Recommendation: As part of Wave 0 (simulator setup), either (a) copy the sample `.dump` files into `forwarder/src/main/resources/samples/` or (b) create synthetic `.dump` files that match the known format from the inline examples in `AMB_DECODER_PROTOCOL.md`. The annotated samples in that file provide enough data for simulator playback.
+3. **Sample capture files location** — **RESOLVED: synthesise from AMB_DECODER_PROTOCOL.md annotated examples**
+   - Files from the separate Go prototype repository are not present in this repo. Plan 02 creates `forwarder/src/main/resources/samples/sample-passings.dump` synthetically using the inline annotated examples in `docs/AMB_DECODER_PROTOCOL.md` (~20 lines, alternating STATUS and PASSING records, three distinct transponder IDs). This is sufficient for simulator playback mode.
 
 ---
 
