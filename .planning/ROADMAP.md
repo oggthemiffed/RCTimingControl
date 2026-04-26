@@ -154,3 +154,23 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 5. Live Timing & Forwarder | 5/5 | Complete   | 2026-04-26 |
 | 6. Audio & Practice | 0/TBD | Not started | - |
 | 7. Results & Championship | 0/TBD | Not started | - |
+
+
+## Backlog
+
+### Phase 999.1: TLS/HTTPS Production Deployment — Let's Encrypt (BACKLOG)
+
+**Goal:** Secure the production deployment with TLS everywhere — HTTPS for the app server and TLS for the gRPC forwarder connection — removing accepted risks T-05-11 and T-05-20 from the Phase 5 security register.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+**Context:**
+- T-05-11: Token plaintext intercepted on venue LAN (accepted for v1 — HTTPS not provisioned)
+- T-05-20: gRPC token transmitted without TLS (accepted for v1 — venue LAN)
+- Let's Encrypt is the natural fit for a self-hosted club deployment (free, auto-renewing)
+- Options to explore: Caddy as a reverse proxy (handles cert renewal automatically), Certbot + nginx, or Spring Boot native TLS with cert provisioned externally
+- gRPC TLS: `ManagedChannelBuilder` with TLS (remove `usePlaintext()` in `ForwarderGrpcClient`); server-side requires cert + key in `ForwarderGrpcServer`
+- Consider: venue LAN vs internet-facing deployment — Let's Encrypt requires a public domain for ACME challenge; internal deployments may need a self-signed CA instead
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
