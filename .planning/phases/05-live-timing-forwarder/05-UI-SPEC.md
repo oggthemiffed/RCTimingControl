@@ -62,14 +62,15 @@ Three roles used in Phase 5 surfaces. Display role is not used (status bar and d
 | Role | Size | Weight | Line Height | Font | Usage |
 |------|------|--------|-------------|------|-------|
 | Body | 14px (text-sm) | 400 (regular) | 1.5 | Figtree Variable | Status pill labels, dialog body text, token page body copy |
-| Label | 12px (text-xs) | 500 (medium) | 1.4 | Figtree Variable | Status dot annotations, table column headers, helper text |
+| Label | 12px (text-xs) | 400 (regular) | 1.4 | Figtree Variable | Status dot annotations, table column headers, helper text |
 | Heading | 16px (text-base) | 600 (semibold) | 1.2 | Figtree Variable | Dialog title, page section headings |
-| Mono | 13px (text-xs in .laptime / .mono class) | 400 (regular) | 1.0 | JetBrains Mono Variable | API token value display, transponder IDs in link dialog |
+| Mono | 14px (text-sm in .laptime / .mono class) | 400 (regular) | 1.0 | JetBrains Mono Variable | API token value display, transponder IDs in link dialog |
 
 Rules:
 - Lap times and transponder IDs always use `.mono` / `font-mono` with `tabular-nums` — from existing `index.css` `.laptime` rule.
 - Token string displayed in admin page uses `font-mono text-sm` — legible but monospaced for accurate copy/paste.
-- Two weights in use: 400 (regular) and 600 (semibold). 500 (medium) used only for label/annotation text and is within the two-weight spirit of the system.
+- Two weights in use: 400 (regular) and 600 (semibold). No weight 500 (medium) — use `font-normal` (400) or `font-semibold` (600) only.
+- Label role uses `font-normal` (400): label text achieves visual distinction through size (12px) and color (`text-muted-foreground`), not weight.
 
 ---
 
@@ -145,8 +146,8 @@ New component to create (no existing pattern):
 - A `<span>` dot: `inline-block h-2 w-2 rounded-full` with color from semantic token table above
 - Connected state dot: add `animate-pulse` class (matches existing `LiveTimingPanel` dot pattern)
 - Reconnecting state dot: add `animate-spin` class on a spinner variant — or `animate-pulse` with amber; executor's discretion
-- Label text: `text-xs font-medium` using `text-[var(--flag-*)]` matching dot state
-- Wrapper: shadcn `Badge` with `variant="outline"` and `className="gap-1.5 h-6 px-2.5"`
+- Label text: `text-xs font-normal` using `text-[var(--flag-*)]` matching dot state
+- Wrapper: shadcn `Badge` with `variant="outline"` and `className="gap-2 h-6 px-3"`
 
 **States:**
 
@@ -192,13 +193,14 @@ New component to create (no existing pattern):
   [entries from current race shown as "Car # — Racer Name"]
 
 [Footer]
-  [Cancel]  [Link Entry →]
+  [Keep monitoring]  [Link Entry →]
 ```
 
 **Interaction rules:**
 - Transponder ID field: `<Input readOnly className="font-mono text-sm" />`
 - Entry selector: shadcn `Select` component; options populated from current race entries; labeled `"Car {carNumber} — {racerName}"`; no raw IDs shown (per project memory `feedback_no_ids_in_ui.md`)
 - "Link Entry" button: `variant="default"` (primary/orange), disabled until an entry is selected
+- "Keep monitoring" button: `variant="ghost"` — closes the dialog without taking action
 - On confirm: call `PATCH /api/v1/race-control/race/{raceId}/unknown-transponder/{transponderId}/link` (or equivalent); show loading state on button
 - On success: close dialog, show Sonner toast "Transponder linked. N laps credited to {racerName}."
 - On error: show Sonner toast (error variant) "Failed to link transponder. {message}"
@@ -221,6 +223,8 @@ New component to create (no existing pattern):
 
 **State A — No token generated yet:**
 
+Focal point: "Generate Token" button (primary/orange, `variant="default"`).
+
 ```
 ┌─ Card ──────────────────────────────────────┐
 │  Forwarder API Token                         │
@@ -234,6 +238,8 @@ New component to create (no existing pattern):
 ```
 
 **State B — Token exists (normal view):**
+
+Focal point: "Regenerate Token" button — the most likely next action; placed first in the button row.
 
 ```
 ┌─ Card ──────────────────────────────────────┐
@@ -250,6 +256,8 @@ New component to create (no existing pattern):
 ```
 
 **State C — Token just generated / regenerated (one-time reveal):**
+
+Focal point: the token `<Input>` field with the "Copy" button — the user's only required action in this state.
 
 ```
 ┌─ Card ──────────────────────────────────────┐
@@ -271,6 +279,8 @@ New component to create (no existing pattern):
 
 **State D — Token revoked:**
 
+Focal point: "Generate Token" button — the only recovery action available.
+
 ```
 ┌─ Card ──────────────────────────────────────┐
 │  Forwarder API Token                         │
@@ -287,8 +297,8 @@ New component to create (no existing pattern):
 
 **Interaction rules:**
 - "Copy" icon button next to token field: copies to clipboard, shows Sonner toast "Token copied to clipboard."
-- "Regenerate Token" button: `variant="outline"` — opens inline confirmation (not a separate dialog): replaces button area with `"Regenerating will disconnect the forwarder until you update its config. Continue? [Cancel] [Confirm Regenerate]"` — inline, no modal
-- "Revoke Token" button: `variant="destructive"` — opens same inline confirmation pattern: `"Revoking will disconnect the forwarder immediately. Continue? [Cancel] [Confirm Revoke]"`
+- "Regenerate Token" button: `variant="outline"` — opens inline confirmation (not a separate dialog): replaces button area with `"Regenerating will disconnect the forwarder until you update its config. Continue? [Keep current token] [Confirm Regenerate]"` — inline, no modal
+- "Revoke Token" button: `variant="destructive"` — opens same inline confirmation pattern: `"Revoking will disconnect the forwarder immediately. Continue? [Keep token] [Confirm Revoke]"`
 - "Generate Token" / "Confirm Regenerate" buttons: `variant="default"` (primary/orange)
 - Token display field: `<Input readOnly className="font-mono text-sm" />`, full width
 - No raw database IDs shown anywhere on this page
@@ -302,11 +312,14 @@ New component to create (no existing pattern):
 | Primary CTA — generate new token | "Generate Token" |
 | Primary CTA — after token exists | "Regenerate Token" |
 | Primary CTA — transponder link | "Link Entry" |
+| Dismiss CTA — transponder link dialog | "Keep monitoring" |
 | Empty state — no token generated | "No token has been generated yet. Generate a token to allow the forwarder application to connect to this service." |
 | Empty state — no unknown transponders | (Not a surface in this phase — unknown transponder alerts are transient toasts/alerts, not a list) |
 | One-time reveal warning | "Copy this token now. It will not be shown again." |
 | Regenerate inline confirmation | "Regenerating will disconnect the forwarder until you update its config. Continue?" |
 | Revoke inline confirmation | "Revoking will disconnect the forwarder immediately. Continue?" |
+| Dismiss regenerate confirmation | "Keep current token" |
+| Dismiss revoke confirmation | "Keep token" |
 | Confirm revoke button | "Confirm Revoke" |
 | Confirm regenerate button | "Confirm Regenerate" |
 | Token copied toast | "Token copied to clipboard." |
@@ -337,7 +350,7 @@ No third-party registries declared. Registry vetting gate: not applicable.
 - Status bar pills: each `<Badge>` must have a descriptive `aria-label` — e.g., `aria-label="Decoder connection status: connected"`. The colored dot is `aria-hidden="true"`.
 - Transponder link dialog: focus must move to the dialog on open (`autoFocus` on the entry Select); "Link Entry" button must be `disabled` until selection is made; all form fields have visible labels.
 - Token copy button: `aria-label="Copy token to clipboard"`.
-- Revoke/Regenerate destructive confirmation: inline copy appears in the same card without moving focus; keyboard users can Tab to the Cancel/Confirm buttons naturally.
+- Revoke/Regenerate destructive confirmation: inline copy appears in the same card without moving focus; keyboard users can Tab to the "Keep token" / "Keep current token" / Confirm buttons naturally.
 
 ---
 
