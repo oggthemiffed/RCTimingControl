@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -86,7 +87,7 @@ class RoundGeneratorServiceTest {
         }
         when(entryRepository.findByEventClassIdAndStatus(eventClassId, EntryStatus.CONFIRMED))
                 .thenReturn(entries);
-        when(userClassRatingRepository.findByRacingClassId(any())).thenReturn(List.of());
+        lenient().when(userClassRatingRepository.findByRacingClassId(any())).thenReturn(List.of());
 
         // Act: preview with maxCarsPerHeat=8, 0 practice, 1 qualifying
         RoundGenerationRequest request = new RoundGenerationRequest(
