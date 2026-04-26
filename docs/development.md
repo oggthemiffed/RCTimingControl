@@ -90,6 +90,10 @@ On first run, Flyway applies all migrations and dev seed data automatically:
 - `V18` — marshal_adjustments, marshal_absences, marshal_penalties, incident_reports, penalties, unknown_transponder_links
 - `V19` — result_snapshots (JSONB positions + lap_history)
 
+**Phase 5 (V21–V22):**
+- `V21` — forwarder_token (BCrypt hash, status, timestamps)
+- `V22` — unknown_transponder_link (audit of retroactive transponder→entry links)
+
 **Dev seeds (V1000–V1003):**
 - `V1000` — racer1/racer2/admin1 accounts
 - `V1001/V1002` — racing classes and corrected race format templates
@@ -241,8 +245,13 @@ Run `make help` to see all targets. Quick reference:
 | `make dev` | Backend only, foreground |
 | `make ui` | Frontend only, foreground |
 | `make build` | Compile backend (no tests, no jOOQ codegen) |
-| `make test` | Full integration test suite |
+| `make test` | Full integration test suite — app + forwarder |
 | `make test-fast` | Tests skipping jOOQ codegen |
+| `make forwarder` | Run the forwarder (connect to decoder or simulator) |
+| `make simulator` | Run fake decoder in generative mode on :5100 |
+| `make simulator-playback` | Replay a .dump file through the fake decoder |
+| `make forwarder-build` | Compile forwarder module only |
+| `make forwarder-test` | Run forwarder unit + integration tests |
 | `make ui-build` | TypeScript check + production bundle |
 | `make ui-lint` | ESLint |
 | `make clean` | Stop everything, `./gradlew clean`, remove `frontend/dist` |
