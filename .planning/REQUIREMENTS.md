@@ -87,7 +87,7 @@
 
 - [x] **TIMING-01**: Cloud service receives timing data from the forwarder via gRPC; the forwarder owns the AMB P3 TCP connection and all protocol parsing
 - [x] **TIMING-02**: Forwarder auto-reconnects to the decoder on TCP connection loss; WATCHDOG record absence is the primary lost-connection signal; both forwarder↔decoder and forwarder↔cloud connection status are visible in the race control UI
-- [ ] **TIMING-03**: Live lap times, positions, and gaps are displayed in the browser during a race via WebSocket
+- [x] **TIMING-03**: Live lap times, positions, and gaps are displayed in the browser during a race via WebSocket
 - [x] **TIMING-04**: Lap times use the RTC_TIME field from PASSING records (decoder's embedded hardware timestamp), not server receipt time
 - [x] **TIMING-05**: The decoder integration uses a defined TimingSource interface; switching to a new protocol requires only a new implementation class with no changes to race control or timing logic
 - [x] **TIMING-06**: Forwarder performs the FIRST_CONTACT handshake with the decoder on initial connection before passing data flows
@@ -256,7 +256,7 @@
 | FORWARDER-05 | Phase 5 | Complete |
 | TIMING-01 | Phase 5 | Complete |
 | TIMING-02 | Phase 5 | Complete |
-| TIMING-03 | Phase 5 | Pending |
+| TIMING-03 | Phase 5 | Complete |
 | TIMING-04 | Phase 5 | Complete |
 | TIMING-05 | Phase 5 | Complete |
 | TIMING-06 | Phase 5 | Complete |
