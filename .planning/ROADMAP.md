@@ -113,7 +113,7 @@ Plans:
 **Plans**: 5 plans
 Plans:
 - [x] 05-01-PLAN.md — Wave 0 test scaffolding: @Disabled JUnit 5 stubs for all Phase 5 test targets
-- [ ] 05-02-PLAN.md — Forwarder module: RC-4 TCP client (Netty), Rc4TextParser, AmbRc4TimingSource, EpochAnchor, SeqGapDetector, simulator (playback + generative)
+- [x] 05-02-PLAN.md — Forwarder module: RC-4 TCP client (Netty), Rc4TextParser, AmbRc4TimingSource, EpochAnchor, SeqGapDetector, simulator (playback + generative)
 - [ ] 05-03-PLAN.md — Token management: ForwarderToken entity, V21 migration, ForwarderTokenService, ForwarderTokenController (FORWARDER-05)
 - [ ] 05-04-PLAN.md — gRPC server infrastructure in :app: ForwarderGrpcServer, ForwarderTokenAuthInterceptor, ForwarderGrpcService, ForwarderStatusPublisher, LiveRaceState.retroactiveLinkTransponder, V22 migration, TransponderLinkController
 - [ ] 05-05-PLAN.md — Frontend: ForwarderStatusBar, UnknownTransponderLinkDialog, ForwarderTokenPage, API functions, types

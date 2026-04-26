@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-04-26T19:42:45.231Z"
+stopped_at: Completed 05-02-PLAN.md
+last_updated: "2026-04-26T20:00:24.574Z"
 last_activity: 2026-04-26
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 26
-  percent: 87
+  completed_plans: 27
+  percent: 90
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 ## Current Position
 
 Phase: 05 (live-timing-forwarder) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-04-26
 
@@ -56,6 +56,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 04 P06 | 75 | 3 tasks | 21 files |
 | Phase 05 P01 | 3m | 3 tasks | 10 files |
+| Phase 05 P02 | 14 | 2 tasks | 24 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 04]: LapTimingService uses EntryRepository for transponder resolution via Entry.transponderNumberSnapshot snapshot field
 - [Phase 04]: CTRL-09 skip-to is process-local ConcurrentHashMap on RaceControlController — cross-session persistence deferred
 - [Phase 05]: Wave-0 stubs use class-level @Disabled with Assertions.fail() bodies; forwarder/build.gradle.kts adds only junit-jupiter:5.10.2 — no Netty/gRPC until Plan 02
+- [Phase 05]: protobuf-gradle-plugin 0.9.4 used; AmbRc4TimingSource reuses EpochAnchor/Parser/GapDetector across reconnects to preserve epoch (Pitfall 2)
+- [Phase 05]: FakeDecoderServer.stop() uses CopyOnWriteArrayList<Socket> activeClients; IT test adds 200ms sleep before server.stop() to eliminate accept-loop race condition
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-26T19:42:45.224Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-04-26T20:00:24.568Z
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None
