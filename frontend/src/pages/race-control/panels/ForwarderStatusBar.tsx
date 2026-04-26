@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useStomp } from '@/hooks/race-control/useStomp';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import api from '@/lib/api';
 
 type ConnectionState = 'CONNECTED' | 'RECONNECTING' | 'DISCONNECTED';
 
@@ -9,6 +11,11 @@ type ForwarderStatusDto = {
   decoderState: ConnectionState;
   forwarderState: ConnectionState;
 };
+
+async function fetchForwarderStatus(): Promise<ForwarderStatusDto> {
+  const { data } = await api.get<ForwarderStatusDto>('/api/v1/race-control/forwarder/status');
+  return data;
+}
 
 function getStateColor(state: ConnectionState | null): string {
   if (state === 'CONNECTED') return 'bg-[var(--flag-green)]';
@@ -62,14 +69,29 @@ export function ForwarderStatusBar() {
   const [decoderState, setDecoderState] = useState<ConnectionState | null>(null);
   const [forwarderState, setForwarderState] = useState<ConnectionState | null>(null);
 
-  const { data } = useStomp<ForwarderStatusDto>('/topic/system/forwarder-status');
+  // Seed initial state from REST on mount — STOMP only delivers future changes
+  const { data: initialStatus } = useQuery({
+    queryKey: ['forwarder-status'],
+    queryFn: fetchForwarderStatus,
+    staleTime: 0,
+  });
 
   useEffect(() => {
-    if (data) {
-      setDecoderState(data.decoderState);
-      setForwarderState(data.forwarderState);
+    if (initialStatus) {
+      setDecoderState(initialStatus.decoderState);
+      setForwarderState(initialStatus.forwarderState);
     }
-  }, [data]);
+  }, [initialStatus]);
+
+  // Override with live STOMP pushes on state change
+  const { data: stompData } = useStomp<ForwarderStatusDto>('/topic/system/forwarder-status');
+
+  useEffect(() => {
+    if (stompData) {
+      setDecoderState(stompData.decoderState);
+      setForwarderState(stompData.forwarderState);
+    }
+  }, [stompData]);
 
   return (
     <div className="flex h-8 items-center gap-3 px-4 bg-card border-b shrink-0">
