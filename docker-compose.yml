@@ -21,15 +21,6 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
 
-  app:
-    image: rctiming-app:latest
-    container_name: rctiming-app
-    ports:
-      - "8080:8080"   # HTTP API + WebSocket
-      - "9090:9090"   # gRPC forwarder server (Phase 5)
-    depends_on:
-      - postgres
-
   minio:
     image: minio/minio:latest
     container_name: rctiming-minio
