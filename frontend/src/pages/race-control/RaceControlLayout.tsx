@@ -3,6 +3,7 @@ import { Flag, Shield, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { ForwarderStatusBar } from './panels/ForwarderStatusBar';
 
 export default function RaceControlLayout() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -57,6 +58,8 @@ export default function RaceControlLayout() {
       </header>
 
       <Separator />
+
+      <ForwarderStatusBar />
 
       {/* Page content fills remaining height */}
       <div className="flex-1 overflow-hidden">
