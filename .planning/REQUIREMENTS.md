@@ -77,22 +77,22 @@
 
 ### Local Forwarder
 
-- [ ] **FORWARDER-01**: A separate forwarder application runs on the club's local network, connects to the AMB decoder, and forwards timing data to the cloud service; the cloud service cannot reach the decoder directly
-- [ ] **FORWARDER-02**: Forwarder connects to the decoder via TCP using the AMB P3 binary protocol (0x8E/0x8F frame delimiters, TLV body, 0x8D byte-stuffing); serial transport is not required for v1
-- [ ] **FORWARDER-03**: Forwarder streams decoded timing events to the cloud service via gRPC bidirectional streaming; the cloud can send RESEND requests back to the forwarder over the same stream
+- [x] **FORWARDER-01**: A separate forwarder application runs on the club's local network, connects to the AMB decoder, and forwards timing data to the cloud service; the cloud service cannot reach the decoder directly
+- [x] **FORWARDER-02**: Forwarder connects to the decoder via TCP using the AMB P3 binary protocol (0x8E/0x8F frame delimiters, TLV body, 0x8D byte-stuffing); serial transport is not required for v1
+- [x] **FORWARDER-03**: Forwarder streams decoded timing events to the cloud service via gRPC bidirectional streaming; the cloud can send RESEND requests back to the forwarder over the same stream
 - [ ] **FORWARDER-04**: Forwarder is implemented as a Java Gradle submodule within the same repository, sharing domain model classes with the main application
-- [ ] **FORWARDER-05**: Forwarder authenticates with the cloud service using a pre-configured API token before streaming begins
+- [x] **FORWARDER-05**: Forwarder authenticates with the cloud service using a pre-configured API token before streaming begins
 
 ### Live Timing & AMB/MyLaps Integration
 
-- [ ] **TIMING-01**: Cloud service receives timing data from the forwarder via gRPC; the forwarder owns the AMB P3 TCP connection and all protocol parsing
-- [ ] **TIMING-02**: Forwarder auto-reconnects to the decoder on TCP connection loss; WATCHDOG record absence is the primary lost-connection signal; both forwarder↔decoder and forwarder↔cloud connection status are visible in the race control UI
+- [x] **TIMING-01**: Cloud service receives timing data from the forwarder via gRPC; the forwarder owns the AMB P3 TCP connection and all protocol parsing
+- [x] **TIMING-02**: Forwarder auto-reconnects to the decoder on TCP connection loss; WATCHDOG record absence is the primary lost-connection signal; both forwarder↔decoder and forwarder↔cloud connection status are visible in the race control UI
 - [ ] **TIMING-03**: Live lap times, positions, and gaps are displayed in the browser during a race via WebSocket
-- [ ] **TIMING-04**: Lap times use the RTC_TIME field from PASSING records (decoder's embedded hardware timestamp), not server receipt time
-- [ ] **TIMING-05**: The decoder integration uses a defined TimingSource interface; switching to a new protocol requires only a new implementation class with no changes to race control or timing logic
+- [x] **TIMING-04**: Lap times use the RTC_TIME field from PASSING records (decoder's embedded hardware timestamp), not server receipt time
+- [x] **TIMING-05**: The decoder integration uses a defined TimingSource interface; switching to a new protocol requires only a new implementation class with no changes to race control or timing logic
 - [ ] **TIMING-06**: Forwarder performs the FIRST_CONTACT handshake with the decoder on initial connection before passing data flows
-- [ ] **TIMING-07**: Forwarder monitors PASSING_NUMBER for gaps; detected gaps trigger a RESEND request to the decoder
-- [ ] **TIMING-08**: At race start the system builds an in-memory transponder→entry map for the race; passing events with unregistered transponders are logged and surfaced in the race control UI
+- [x] **TIMING-07**: Forwarder monitors PASSING_NUMBER for gaps; detected gaps trigger a RESEND request to the decoder
+- [x] **TIMING-08**: At race start the system builds an in-memory transponder→entry map for the race; passing events with unregistered transponders are logged and surfaced in the race control UI
 
 ### Race Control
 
@@ -249,19 +249,19 @@
 | FORMAT-12 | Phase 1 | Pending |
 | FORMAT-13 | Phase 1 | Pending |
 | FORMAT-14 | Phase 1 | Pending |
-| FORWARDER-01 | Phase 5 | Pending |
-| FORWARDER-02 | Phase 5 | Pending |
-| FORWARDER-03 | Phase 5 | Pending |
+| FORWARDER-01 | Phase 5 | Complete |
+| FORWARDER-02 | Phase 5 | Complete |
+| FORWARDER-03 | Phase 5 | Complete |
 | FORWARDER-04 | Phase 5 | Pending |
-| FORWARDER-05 | Phase 5 | Pending |
-| TIMING-01 | Phase 5 | Pending |
-| TIMING-02 | Phase 5 | Pending |
+| FORWARDER-05 | Phase 5 | Complete |
+| TIMING-01 | Phase 5 | Complete |
+| TIMING-02 | Phase 5 | Complete |
 | TIMING-03 | Phase 5 | Pending |
-| TIMING-04 | Phase 5 | Pending |
-| TIMING-05 | Phase 5 | Pending |
+| TIMING-04 | Phase 5 | Complete |
+| TIMING-05 | Phase 5 | Complete |
 | TIMING-06 | Phase 5 | Pending |
-| TIMING-07 | Phase 5 | Pending |
-| TIMING-08 | Phase 5 | Pending |
+| TIMING-07 | Phase 5 | Complete |
+| TIMING-08 | Phase 5 | Complete |
 | CTRL-01 | Phase 4 | Complete |
 | CTRL-02 | Phase 4 | Pending |
 | CTRL-03 | Phase 4 | Complete |

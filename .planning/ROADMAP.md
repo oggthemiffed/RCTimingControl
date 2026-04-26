@@ -112,7 +112,7 @@ Plans:
   5. Switching to a new timing protocol requires only a new TimingSource implementation class with no changes to race control or timing logic
 **Plans**: 5 plans
 Plans:
-- [ ] 05-01-PLAN.md — Wave 0 test scaffolding: @Disabled JUnit 5 stubs for all Phase 5 test targets
+- [x] 05-01-PLAN.md — Wave 0 test scaffolding: @Disabled JUnit 5 stubs for all Phase 5 test targets
 - [ ] 05-02-PLAN.md — Forwarder module: RC-4 TCP client (Netty), Rc4TextParser, AmbRc4TimingSource, EpochAnchor, SeqGapDetector, simulator (playback + generative)
 - [ ] 05-03-PLAN.md — Token management: ForwarderToken entity, V21 migration, ForwarderTokenService, ForwarderTokenController (FORWARDER-05)
 - [ ] 05-04-PLAN.md — gRPC server infrastructure in :app: ForwarderGrpcServer, ForwarderTokenAuthInterceptor, ForwarderGrpcService, ForwarderStatusPublisher, LiveRaceState.retroactiveLinkTransponder, V22 migration, TransponderLinkController
@@ -151,6 +151,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. Racer Portal | 0/TBD | Not started | - |
 | 3. Admin Panel & Event Management | 0/6 | Not started | - |
 | 4. Race Control | 5/7 | In Progress|  |
-| 5. Live Timing & Forwarder | 0/5 | Not started | - |
+| 5. Live Timing & Forwarder | 1/5 | In Progress|  |
 | 6. Audio & Practice | 0/TBD | Not started | - |
 | 7. Results & Championship | 0/TBD | Not started | - |
