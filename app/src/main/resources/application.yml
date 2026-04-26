@@ -12,6 +12,8 @@ app:
     secret: ${JWT_SECRET:dGhpcyBpcyBhIGRldmVsb3BtZW50IHNlY3JldCBrZXkgdGhhdCBtdXN0IGJlIGF0IGxlYXN0IDI1NiBiaXRz}
     access-token-ttl-ms: 900000
     refresh-token-ttl-ms: 604800000
+  grpc:
+    port: 9090
 
 storage:
   endpoint: ${STORAGE_ENDPOINT:http://localhost:9000}

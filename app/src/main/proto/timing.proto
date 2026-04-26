@@ -1,0 +1,35 @@
+syntax = "proto3";
+package dev.monkeypatch.timing;
+option java_package = "dev.monkeypatch.rctiming.forwarder.proto";
+option java_multiple_files = true;
+
+message LapPassing {
+    string transponder_number = 1;
+    int64  rtc_time_micros    = 2;
+    int32  decoder_id         = 3;
+    int32  seq_num            = 4;
+    int32  signal_strength    = 5;
+    int32  hit_count          = 6;
+}
+
+message ForwarderCommand {
+    oneof command {
+        AckConnect ack_connect = 1;
+    }
+}
+message AckConnect { bool success = 1; }
+
+message ForwarderStatus {
+    enum ConnectionState {
+        UNKNOWN = 0;
+        CONNECTED = 1;
+        RECONNECTING = 2;
+        DISCONNECTED = 3;
+    }
+    string component = 1;
+    ConnectionState state = 2;
+}
+
+service TimingService {
+    rpc StreamPassings(stream LapPassing) returns (stream ForwarderCommand);
+}

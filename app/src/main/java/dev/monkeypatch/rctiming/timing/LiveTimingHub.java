@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.timing;
 
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
+import dev.monkeypatch.rctiming.forwarder.dto.ForwarderStatusDto;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
 import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import dev.monkeypatch.rctiming.timing.dto.RaceStateChangeDto;
@@ -43,5 +44,13 @@ public class LiveTimingHub {
     public void broadcastUnknownTransponder(long raceId, String transponderNumber) {
         messagingTemplate.convertAndSend("/topic/race/" + raceId + "/unknown-transponder",
                 Map.of("raceId", raceId, "transponderNumber", transponderNumber));
+    }
+
+    /**
+     * Phase 5: broadcasts forwarder/decoder connection state to /topic/system/forwarder-status.
+     * Frontend status bar subscribes to this topic to show connection pills.
+     */
+    public void broadcastForwarderStatus(ForwarderStatusDto dto) {
+        messagingTemplate.convertAndSend("/topic/system/forwarder-status", dto);
     }
 }

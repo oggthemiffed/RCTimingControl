@@ -2,6 +2,7 @@ plugins {
     id("org.springframework.boot")
     id("io.spring.dependency-management")
     id("nu.studer.jooq")
+    id("com.google.protobuf") version "0.9.4"
     java
 }
 
@@ -66,6 +67,13 @@ dependencies {
     implementation(platform("software.amazon.awssdk:bom:2.25.60"))
     implementation("software.amazon.awssdk:s3")
     implementation("software.amazon.awssdk:auth")
+
+    // Phase 5: gRPC server for forwarder connection
+    implementation("io.grpc:grpc-stub:1.73.0")
+    implementation("io.grpc:grpc-protobuf:1.73.0")
+    implementation("io.grpc:grpc-netty-shaded:1.73.0")
+    implementation("com.google.protobuf:protobuf-java:3.25.8")
+    compileOnly("javax.annotation:javax.annotation-api:1.3.2")
 
     jooqGenerator("org.postgresql:postgresql")
     jooqGenerator("org.flywaydb:flyway-core")
@@ -197,4 +205,17 @@ tasks.withType<nu.studer.gradle.jooq.JooqGenerate>().configureEach {
     dependsOn(flywayMigrateForCodegen)
     finalizedBy(stopJooqDb)
     inputs.dir("src/main/resources/db/migration")
+}
+
+// Phase 5: protobuf/gRPC code generation for cloud-side gRPC server
+protobuf {
+    protoc { artifact = "com.google.protobuf:protoc:3.25.8" }
+    plugins {
+        create("grpc") { artifact = "io.grpc:protoc-gen-grpc-java:1.73.0" }
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.plugins { create("grpc") }
+        }
+    }
 }

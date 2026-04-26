@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface RaceRepository extends JpaRepository<Race, Long> {
     List<Race> findByRoundIdOrderBySequenceInRound(Long roundId);
@@ -16,4 +17,7 @@ public interface RaceRepository extends JpaRepository<Race, Long> {
 
     // For BumpUpSeedingService: find a specific final letter race for a class
     List<Race> findByEventClassIdAndFinalLetter(Long eventClassId, String finalLetter);
+
+    // Phase 5: ForwarderGrpcService queries for the currently running race to resolve raceId
+    Optional<Race> findFirstByStatus(RaceStatus status);
 }
