@@ -1,39 +1,62 @@
 package dev.monkeypatch.rctiming.forwarder;
 
-import org.junit.jupiter.api.Disabled;
+import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
-/** Wave 0 stub — implementation in Plan 03. */
-@Disabled("Wave 1 — Plan 03")
-class ForwarderTokenServiceTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+/** Plan 03: ForwarderTokenService integration tests using Testcontainers. */
+class ForwarderTokenServiceTest extends AbstractIntegrationTest {
+
+    @Autowired
+    ForwarderTokenService service;
+
+    @Autowired
+    ForwarderTokenRepository repo;
 
     @Test
     void generateTokenReturnsPlaintextOnce() {
-        org.junit.jupiter.api.Assertions.fail("Wave 1 — implement in Plan 03");
+        var result = service.generate();
+        assertThat(result.plaintext()).hasSizeBetween(40, 50);
+        assertThat(result.persisted().getTokenHash()).isNotEqualTo(result.plaintext());
     }
 
     @Test
     void validateAcceptsActiveToken() {
-        org.junit.jupiter.api.Assertions.fail("Wave 1 — implement in Plan 03");
+        var result = service.generate();
+        var found = service.validate(result.plaintext());
+        assertThat(found).isPresent();
     }
 
     @Test
     void validateRejectsRevokedToken() {
-        org.junit.jupiter.api.Assertions.fail("Wave 1 — implement in Plan 03");
+        var result = service.generate();
+        service.revoke();
+        var found = service.validate(result.plaintext());
+        assertThat(found).isEmpty();
     }
 
     @Test
     void validateRejectsInvalidToken() {
-        org.junit.jupiter.api.Assertions.fail("Wave 1 — implement in Plan 03");
+        var found = service.validate("nonsense");
+        assertThat(found).isEmpty();
     }
 
     @Test
     void regeneratePreviousTokenIsRevoked() {
-        org.junit.jupiter.api.Assertions.fail("Wave 1 — implement in Plan 03");
+        var first = service.generate();
+        Long firstId = first.persisted().getId();
+        service.generate();
+        var firstReloaded = repo.findById(firstId).orElseThrow();
+        assertThat(firstReloaded.getStatus()).isEqualTo(ForwarderTokenStatus.REVOKED);
     }
 
     @Test
     void tokenStoredAsBcryptHashNotPlaintext() {
-        org.junit.jupiter.api.Assertions.fail("Wave 1 — implement in Plan 03");
+        var result = service.generate();
+        var entity = repo.findById(result.persisted().getId()).orElseThrow();
+        assertThat(entity.getTokenHash()).matches("\\$2[ab]\\$.*");
+        assertThat(entity.getTokenHash()).isNotEqualTo(result.plaintext());
     }
 }
