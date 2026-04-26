@@ -102,7 +102,7 @@ forwarder:
 
 .PHONY: simulator
 simulator:
-	./gradlew :forwarder:runSimulator
+	./gradlew :forwarder:runSimulator --args='--mode=generative'
 
 DUMP_FILE ?= forwarder/src/main/resources/samples/sample-passings.dump
 .PHONY: simulator-playback
