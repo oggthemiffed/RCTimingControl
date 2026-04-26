@@ -2,8 +2,8 @@
 phase: 5
 slug: live-timing-forwarder
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-04-26
 ---
 
@@ -41,8 +41,9 @@ created: 2026-04-26
 | 5-01-01 | 01 | 0 | FORWARDER-02 | — | N/A | unit | `./gradlew :forwarder:test --tests "*.Rc4TextParserTest"` | ❌ W0 | ⬜ pending |
 | 5-01-02 | 01 | 0 | TIMING-07 | — | N/A | unit | `./gradlew :forwarder:test --tests "*.GapDetectionTest"` | ❌ W0 | ⬜ pending |
 | 5-01-03 | 01 | 0 | TIMING-04 | — | N/A | unit | `./gradlew :forwarder:test --tests "*.EpochAnchorTest"` | ❌ W0 | ⬜ pending |
-| 5-01-04 | 01 | 1 | FORWARDER-01, TIMING-02 | — | N/A | integration | `./gradlew :forwarder:test --tests "*.AmbRc4TimingSourceIT"` | ❌ W0 | ⬜ pending |
-| 5-01-05 | 01 | 1 | TIMING-05 | — | N/A | unit | `./gradlew :forwarder:test --tests "*.TimingSourceTest"` | ❌ W0 | ⬜ pending |
+| 5-01-04 | 01 | 0 | FORWARDER-01, TIMING-02 | — | N/A | integration | `./gradlew :forwarder:test --tests "*.AmbRc4TimingSourceIT"` | ❌ W0 | ⬜ pending |
+| 5-01-05 | 01 | 0 | TIMING-05 | — | N/A | unit | `./gradlew :forwarder:test --tests "*.TimingSourceTest"` | ❌ W0 | ⬜ pending |
+| 5-01-06 | 01 | 0 | TIMING-02 | — | N/A | unit | `./gradlew :forwarder:test --tests "*.ReconnectBehaviourTest"` | ❌ W0 | ⬜ pending |
 | 5-02-01 | 02 | 0 | FORWARDER-05 | Forwarder impersonation | Token validation rejects missing/invalid tokens; BCrypt hash in DB | unit | `./gradlew :app:test --tests "*.ForwarderTokenServiceTest"` | ❌ W0 | ⬜ pending |
 | 5-02-02 | 02 | 1 | FORWARDER-03, TIMING-01 | Token replay | Revoked tokens rejected via DB status check | integration | `./gradlew :app:test --tests "*.ForwarderGrpcServiceIT"` | ❌ W0 | ⬜ pending |
 | 5-03-01 | 03 | 1 | TIMING-08 | Wrong transponder linked | Audit record persisted with actor userId | unit | `./gradlew :app:test --tests "*.LiveRaceStateRetroactiveTest"` | ❌ W0 | ⬜ pending |
@@ -57,9 +58,12 @@ created: 2026-04-26
 - [ ] `forwarder/src/test/java/dev/monkeypatch/rctiming/forwarder/timing/EpochAnchorTest.java` — stubs for TIMING-04
 - [ ] `forwarder/src/test/java/dev/monkeypatch/rctiming/forwarder/timing/GapDetectionTest.java` — stubs for TIMING-07
 - [ ] `forwarder/src/test/java/dev/monkeypatch/rctiming/forwarder/timing/AmbRc4TimingSourceIT.java` — requires simulator running on loopback
+- [ ] `forwarder/src/test/java/dev/monkeypatch/rctiming/forwarder/timing/ReconnectBehaviourTest.java` — stubs for TIMING-02 reconnect on STATUS absence
 - [ ] `app/src/test/java/dev/monkeypatch/rctiming/forwarder/ForwarderGrpcServiceIT.java` — stubs for FORWARDER-03, TIMING-01
 - [ ] `app/src/test/java/dev/monkeypatch/rctiming/forwarder/ForwarderTokenServiceTest.java` — stubs for FORWARDER-05
 - [ ] `app/src/test/java/dev/monkeypatch/rctiming/timing/LiveRaceStateRetroactiveTest.java` — stubs for TIMING-08, D-12
+
+All Wave 0 stub files are created in Plan 01 scope — all files listed above are in Plan 01's `files_modified` frontmatter.
 
 ---
 
@@ -76,11 +80,11 @@ created: 2026-04-26
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (all 8 stub files in Plan 01 files_modified; ReconnectBehaviourTest.java included)
+- [x] No watch-mode flags
+- [x] Feedback latency < 60s
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
