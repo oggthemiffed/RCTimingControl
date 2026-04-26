@@ -129,4 +129,64 @@ public class LiveRaceState {
     public List<LapPassingEvent> getLapHistory() {
         return lapHistory;
     }
+
+    /**
+     * Phase 5 / D-12: retroactively credit all lapHistory entries for an unknown transponder
+     * to the now-identified entry. Removes the transponder from the unknown set and recalculates
+     * positions. Must be called inside a synchronized context (method is synchronized).
+     *
+     * <p>Uses {@link #applyPositionUpdate} (not {@link #applyLapPassing}) to avoid
+     * re-adding events to lapHistory during iteration, which would cause
+     * ConcurrentModificationException and duplicate history entries.
+     *
+     * @return recalculated position list; empty list if no matching lapHistory entries.
+     */
+    public synchronized List<LiveTimingRowDto> retroactiveLinkTransponder(
+            String transponderNumber, long entryId) {
+        for (LapPassingEvent event : lapHistory) {
+            if (transponderNumber.equals(event.transponderNumber())) {
+                applyPositionUpdate(event, entryId);
+            }
+        }
+        seenUnknownTransponders.remove(transponderNumber);
+        return calculatePositions();
+    }
+
+    /**
+     * Phase 5: counts lapHistory entries for a given transponder number.
+     * Used by TransponderLinkController to report lapsCredited before linking.
+     */
+    public synchronized int countPassingsForTransponder(String transponderNumber) {
+        return (int) lapHistory.stream()
+                .filter(e -> transponderNumber.equals(e.transponderNumber()))
+                .count();
+    }
+
+    /**
+     * Updates the in-memory position state for a passing event WITHOUT adding to lapHistory.
+     * Used by retroactiveLinkTransponder to replay historical events for a newly-linked entry.
+     */
+    private void applyPositionUpdate(LapPassingEvent event, Long entryId) {
+        long passingTimeMs = event.rtcTimeMicros() / 1000L;
+        if (entryId == null) {
+            return;
+        }
+        LiveRacePosition pos = positions.computeIfAbsent(entryId, id -> {
+            LiveRacePosition p = new LiveRacePosition();
+            p.setEntryId(id);
+            return p;
+        });
+        long prevPassingTime = pos.getLastPassingTimeMs();
+        pos.setLapsCompleted(pos.getLapsCompleted() + 1);
+        pos.setLastPassingTimeMs(passingTimeMs);
+        if (prevPassingTime > 0) {
+            long lapMs = passingTimeMs - prevPassingTime;
+            if (lapMs > 0) {
+                Long currentBest = pos.getBestLapMs();
+                if (currentBest == null || lapMs < currentBest) {
+                    pos.setBestLapMs(lapMs);
+                }
+            }
+        }
+    }
 }

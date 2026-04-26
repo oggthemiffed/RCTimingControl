@@ -100,6 +100,29 @@ public class LapTimingService {
     }
 
     /**
+     * Phase 5 / TIMING-08: links an unknown transponder to an entry for the given race.
+     * Retroactively credits all passings from that transponder since race start and
+     * broadcasts updated positions via STOMP.
+     */
+    public List<dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto> linkTransponder(
+            long raceId, String transponderNumber, long entryId) {
+        LiveRaceState state = stateFor(raceId);
+        List<dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto> positions =
+                state.retroactiveLinkTransponder(transponderNumber, entryId);
+        liveTimingHub.broadcastTimingUpdate(raceId, positions);
+        return positions;
+    }
+
+    /**
+     * Phase 5: returns the count of lapHistory entries matching the given transponder number.
+     * Used by TransponderLinkController to report lapsCredited before linking.
+     */
+    public int countPassingsForTransponder(long raceId, String transponderNumber) {
+        LiveRaceState state = stateFor(raceId);
+        return state.countPassingsForTransponder(transponderNumber);
+    }
+
+    /**
      * Resolves a transponder number to an entry ID for the given race.
      * Scans the race's RaceEntry rows, loads each Entry, and matches transponderNumberSnapshot.
      */
