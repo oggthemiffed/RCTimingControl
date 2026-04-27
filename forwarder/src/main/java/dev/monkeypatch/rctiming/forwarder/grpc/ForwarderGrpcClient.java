@@ -2,7 +2,9 @@ package dev.monkeypatch.rctiming.forwarder.grpc;
 
 import dev.monkeypatch.rctiming.forwarder.config.ForwarderConfig;
 import dev.monkeypatch.rctiming.forwarder.proto.ForwarderCommand;
+import dev.monkeypatch.rctiming.forwarder.proto.ForwarderStatus;
 import dev.monkeypatch.rctiming.forwarder.proto.LapPassing;
+import dev.monkeypatch.rctiming.forwarder.proto.StatusAck;
 import dev.monkeypatch.rctiming.forwarder.proto.TimingServiceGrpc;
 import dev.monkeypatch.rctiming.forwarder.timing.EpochCorrectedPassing;
 import io.grpc.CallOptions;
@@ -46,6 +48,7 @@ public class ForwarderGrpcClient {
 
     private ManagedChannel channel;
     private StreamObserver<LapPassing> requestObserver;
+    private TimingServiceGrpc.TimingServiceStub asyncStub;
     private volatile boolean closed = false;
 
     public ForwarderGrpcClient(String host, int port, boolean plaintext, String apiToken) {
@@ -91,6 +94,7 @@ public class ForwarderGrpcClient {
                     }
                 });
 
+        asyncStub = stub;
         requestObserver = stub.streamPassings(new StreamObserver<>() {
             @Override
             public void onNext(ForwarderCommand cmd) {
@@ -132,6 +136,36 @@ public class ForwarderGrpcClient {
         });
         t.setDaemon(true);
         t.start();
+    }
+
+    /**
+     * Reports decoder TCP connection state to the cloud via the unary ReportStatus RPC.
+     * Non-blocking — safe to call from the Netty event loop.
+     *
+     * @param stateLabel one of "CONNECTED", "RECONNECTING", "DISCONNECTED"
+     */
+    public synchronized void sendDecoderStatus(String stateLabel) {
+        if (asyncStub == null || closed) return;
+        ForwarderStatus.ConnectionState protoState;
+        try {
+            protoState = ForwarderStatus.ConnectionState.valueOf(stateLabel);
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown decoder state label '{}' — skipping", stateLabel);
+            return;
+        }
+        asyncStub.reportStatus(
+            ForwarderStatus.newBuilder()
+                .setComponent("DECODER")
+                .setState(protoState)
+                .build(),
+            new StreamObserver<>() {
+                @Override public void onNext(StatusAck v) {}
+                @Override public void onError(Throwable t) {
+                    log.warn("ReportStatus call failed: {}", t.getMessage());
+                }
+                @Override public void onCompleted() {}
+            }
+        );
     }
 
     /**

@@ -29,6 +29,10 @@ public class LiveRaceState {
     final Map<Long, LiveRacePosition> positions = new HashMap<>();
     final List<LapPassingEvent> lapHistory = new ArrayList<>();
     final Set<String> seenUnknownTransponders = new HashSet<>();
+    /** Runtime links: transponderNumber → entryId, populated by retroactiveLinkTransponder. */
+    final Map<String, Long> runtimeLinks = new HashMap<>();
+    /** Entry display names: entryId → "First Last", populated by LapTimingService on state creation. */
+    final Map<Long, String> entryNames = new HashMap<>();
     Instant raceStartTime;
 
     public LiveRaceState(long raceId) {
@@ -37,6 +41,16 @@ public class LiveRaceState {
 
     public long getRaceId() {
         return raceId;
+    }
+
+    /** Returns the runtime-linked entryId for this transponder, or null if not linked. */
+    public synchronized Long getRuntimeLink(String transponderNumber) {
+        return runtimeLinks.get(transponderNumber);
+    }
+
+    /** Stores a display name for an entry. Called by LapTimingService at state creation time. */
+    public void putEntryName(long entryId, String displayName) {
+        entryNames.put(entryId, displayName);
     }
 
     /**
@@ -114,6 +128,7 @@ public class LiveRaceState {
                     : prevLastPassing - pos.getLastPassingTimeMs();
             result.add(new LiveTimingRowDto(
                     pos.getEntryId(),
+                    entryNames.getOrDefault(pos.getEntryId(), "Entry " + pos.getEntryId()),
                     position,
                     pos.getLapsCompleted(),
                     pos.getLastPassingTimeMs(),
@@ -133,7 +148,8 @@ public class LiveRaceState {
     /**
      * Phase 5 / D-12: retroactively credit all lapHistory entries for an unknown transponder
      * to the now-identified entry. Removes the transponder from the unknown set and recalculates
-     * positions. Must be called inside a synchronized context (method is synchronized).
+     * positions. Idempotent — if the transponder is already linked to the same entry, returns
+     * current positions without replaying history (prevents lap doubling on re-submit).
      *
      * <p>Uses {@link #applyPositionUpdate} (not {@link #applyLapPassing}) to avoid
      * re-adding events to lapHistory during iteration, which would cause
@@ -143,11 +159,17 @@ public class LiveRaceState {
      */
     public synchronized List<LiveTimingRowDto> retroactiveLinkTransponder(
             String transponderNumber, long entryId) {
+        // Idempotency guard: if already linked to this entry, skip replay to prevent double-counting
+        Long existingLink = runtimeLinks.get(transponderNumber);
+        if (existingLink != null && existingLink.equals(entryId)) {
+            return calculatePositions();
+        }
         for (LapPassingEvent event : lapHistory) {
             if (transponderNumber.equals(event.transponderNumber())) {
                 applyPositionUpdate(event, entryId);
             }
         }
+        runtimeLinks.put(transponderNumber, entryId);
         seenUnknownTransponders.remove(transponderNumber);
         return calculatePositions();
     }

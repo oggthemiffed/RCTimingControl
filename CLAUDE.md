@@ -29,7 +29,7 @@ See `.planning/PROJECT.md` for the authoritative requirements summary and `.plan
 - `/topic/race/{raceId}/state` — race lifecycle changes
 - `/topic/race/{raceId}/marshal` — marshal lap adjustments
 
-**TCP decoder client:** Netty 4.1.x with a custom `ByteToMessageDecoder` for the AMB P3 binary protocol (0x8E/0x8F frame delimiters, TLV body, 0x8D byte-stuffing)
+**TCP decoder client:** Netty 4.1.x. Two protocols must be supported: (1) **RC-4 text** (`LineBasedFrameDecoder`, port 5100) for firmware < 4.5 decoders — the dominant club hardware; (2) **AMB P3 binary** (`ByteToMessageDecoder`, 0x8E/0x8F delimiters, TLV body, 0x8D byte-stuffing, port 5403) for firmware ≥ 4.5. See `docs/AMB_DECODER_PROTOCOL.md`.
 
 **Forwarder:** Separate Java Gradle submodule. Connects to the AMB decoder via TCP, forwards timing events to the cloud service via gRPC bidirectional streaming. Shares domain model classes with the main application.
 
@@ -60,7 +60,7 @@ See `.planning/PROJECT.md` for the authoritative requirements summary and `.plan
 | **Race Control API** | Race lifecycle commands, marshal laps, grid calls |
 | **Domain Core** | Business logic, aggregates, domain events |
 | **Race State Machine** | Enforces `PENDING → GRID → RUNNING → STOPPED/FINISHED` transitions |
-| **TCP Receiver** | Netty component parsing AMB P3 frames, emits `LapPassingEvent`s |
+| **TCP Receiver** | Netty component parsing AMB decoder frames (RC-4 text or P3 binary), emits `LapPassingEvent`s |
 | **Live Timing Hub** | Broadcasts real-time updates to browsers via STOMP |
 | **Domain module** | Hibernate entities, JPA repositories, write-side business logic |
 | **Query module** | jOOQ read queries — scoring, standings, lap aggregates, results projections |
@@ -99,24 +99,36 @@ Staff roles are **stackable** — a single user account can hold any combination
 
 ### Key Data Design Notes
 
-- Lap timestamps from the `RTC_TIME` field of decoder PASSING records (hardware clock), not server receipt time. Store as UTC `TIMESTAMPTZ` or `BIGINT` microseconds.
+- Lap timestamps: for P3 binary decoders use the `RTC_TIME` field (GPS/NTP-synchronised UTC microseconds). For RC-4 text decoders use server-anchored offset (no absolute timestamp in protocol). Store as UTC `TIMESTAMPTZ` or `BIGINT` microseconds.
 - **Do not store live race positions in the database during a race** — calculate in memory, broadcast over WebSocket, persist only the final result snapshot on `FINISHED`.
 - `MyLapsProtocolParser` must be a pure function (`byte[] → LapPassingEvent`) with no Spring dependencies. Protocol I/O is separate from domain logic.
 - Championship points: calculate on demand from result snapshots; do not increment incrementally.
 - Transponder numbers are unique system-wide. Entry records a transponder snapshot at submission time.
 - Race format config is snapshot-at-assignment — template edits do not affect existing events (FORMAT-06).
 
-## AMB P3 Protocol (Highest-Risk Unknown)
+## AMB Decoder Protocol (Two Protocols — Choose by Firmware)
 
-The AMB/MyLaps decoder TCP protocol is proprietary. The forwarder must implement it:
-- Frame delimiters: `0x8E` (start) / `0x8F` (end)
-- Body: TLV (type-length-value)
-- Byte stuffing: `0x8D` escape byte
-- Requires `FIRST_CONTACT` handshake on initial connection
-- Monitor `PASSING_NUMBER` for gaps; send RESEND requests on gaps
+See `docs/AMB_DECODER_PROTOCOL.md` for the full reference. Summary:
+
+**RC-4 text protocol (firmware < 4.5, port 5100) — implement this first:**
+- SOH-prefixed, tab-separated ASCII lines, CRLF terminated
+- Two record types: `#` (STATUS/heartbeat every 5s) and `@` (PASSING)
+- PASSING fields: `decoderId TAB seqNum TAB transponderId TAB timeSinceStart_s TAB hits TAB strength TAB status TAB crc`
+- `timeSinceStart_s` is float seconds since decoder power-on — NOT a Unix timestamp
+- Convert to wall clock: anchor server time at first record, add offset for each subsequent record
+- No client handshake, no RESEND, no WATCHDOG — just read lines
+- Port 5100 confirmed from club hardware captures
+
+**AMB P3 binary protocol (firmware ≥ 4.5, port 5403) — implement second:**
+- Frame delimiters: `0x8E` (start) / `0x8F` (end), TLV body, `0x8D` byte-stuffing
+- `RTC_TIME` field = uint64 microseconds since Unix epoch (UTC) — absolute timestamp
+- Monitor `PASSING_NUMBER` for gaps; RESEND requests on gaps
 - WATCHDOG record absence = lost decoder connection
+- No client handshake required
 
-**Before starting the forwarder:** Register at mylaps.com/developers for the SDK, or capture Wireshark traces from the club's existing RCResults installation. Build a TCP simulator (fake decoder) for development and testing without physical hardware.
+**Firmware 4.5 boundary:** firmware 4.5 disables MRT transponders (common cheap club transponders). Most clubs stay on firmware ≤ 4.4 and use port 5100 text protocol.
+
+**Before starting the forwarder:** Build a TCP simulator (fake decoder) emitting RC-4 text records for development without physical hardware. Wireshark captures from the club's RCResults installation confirm the port in use.
 
 ## Build Order (Planned)
 

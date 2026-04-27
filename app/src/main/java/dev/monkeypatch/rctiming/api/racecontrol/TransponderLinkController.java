@@ -1,8 +1,10 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
+import dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto;
 import dev.monkeypatch.rctiming.forwarder.UnknownTransponderLinkAudit;
 import dev.monkeypatch.rctiming.forwarder.UnknownTransponderLinkAuditRepository;
 import dev.monkeypatch.rctiming.forwarder.dto.LinkTransponderRequestDto;
+import dev.monkeypatch.rctiming.query.racecontrol.RaceEntriesQuery;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
 import jakarta.validation.Valid;
@@ -10,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,19 +31,37 @@ import java.util.Map;
  * T-05-16: audit record persisted with actor userId, raceId, entryId, linkedAt.
  */
 @RestController
-@RequestMapping("/api/v1/race-control/races/{raceId}/transponders")
+@RequestMapping("/api/v1/race-control/races/{raceId}")
 public class TransponderLinkController {
 
     private final LapTimingService lapTimingService;
     private final UnknownTransponderLinkAuditRepository linkAuditRepository;
+    private final RaceEntriesQuery raceEntriesQuery;
 
     public TransponderLinkController(LapTimingService lapTimingService,
-                                     UnknownTransponderLinkAuditRepository linkAuditRepository) {
+                                     UnknownTransponderLinkAuditRepository linkAuditRepository,
+                                     RaceEntriesQuery raceEntriesQuery) {
         this.lapTimingService = lapTimingService;
         this.linkAuditRepository = linkAuditRepository;
+        this.raceEntriesQuery = raceEntriesQuery;
     }
 
-    @PostMapping("/link")
+    @GetMapping("/entries")
+    @PreAuthorize("hasAnyRole('RACE_DIRECTOR', 'ADMIN')")
+    public ResponseEntity<List<RaceEntryDto>> getEntries(@PathVariable Long raceId) {
+        return ResponseEntity.ok(raceEntriesQuery.findForRace(raceId));
+    }
+
+    @GetMapping("/live-timing")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<LiveTimingRowDto>> getLiveTimingSnapshot(@PathVariable Long raceId) {
+        List<LiveTimingRowDto> rows = lapTimingService.peek(raceId)
+                .map(state -> state.calculatePositions())
+                .orElse(List.of());
+        return ResponseEntity.ok(rows);
+    }
+
+    @PostMapping("/transponders/link")
     @PreAuthorize("hasAnyRole('RACE_DIRECTOR', 'ADMIN')")
     public ResponseEntity<Map<String, Integer>> linkTransponder(
             @PathVariable Long raceId,

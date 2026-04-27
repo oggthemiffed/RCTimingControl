@@ -34,8 +34,10 @@ public class ForwarderApplication {
         AmbRc4TimingSource source = new AmbRc4TimingSource(
             cfg.decoderHost(), cfg.decoderPort(),
             grpcClient::sendPassing,           // EpochCorrectedPassing → gRPC stream
-            state -> log.info("DECODER {}", state)); // Phase 5: decoder status logged only;
-            // RECONNECTING pill state requires a future ReportStatus gRPC RPC (deferred)
+            state -> {
+                log.info("DECODER {}", state);
+                grpcClient.sendDecoderStatus(state.name());
+            });
 
         source.start();
 

@@ -3,7 +3,9 @@ package dev.monkeypatch.rctiming.forwarder;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.forwarder.proto.ForwarderCommand;
+import dev.monkeypatch.rctiming.forwarder.proto.ForwarderStatus;
 import dev.monkeypatch.rctiming.forwarder.proto.LapPassing;
+import dev.monkeypatch.rctiming.forwarder.proto.StatusAck;
 import dev.monkeypatch.rctiming.forwarder.proto.TimingServiceGrpc;
 import dev.monkeypatch.rctiming.timing.LapPassingEvent;
 import io.grpc.stub.StreamObserver;
@@ -38,6 +40,16 @@ public class ForwarderGrpcService extends TimingServiceGrpc.TimingServiceImplBas
         this.eventPublisher = eventPublisher;
         this.raceRepository = raceRepository;
         this.statusPublisher = statusPublisher;
+    }
+
+    @Override
+    public void reportStatus(ForwarderStatus request, StreamObserver<StatusAck> responseObserver) {
+        if ("DECODER".equals(request.getComponent())) {
+            statusPublisher.onDecoderStatus(request.getState().name());
+            log.info("Decoder status reported: {}", request.getState());
+        }
+        responseObserver.onNext(StatusAck.getDefaultInstance());
+        responseObserver.onCompleted();
     }
 
     @Override

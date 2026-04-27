@@ -1,4 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
 import { useStomp } from '@/hooks/race-control/useStomp';
+import { getLiveTimingSnapshot } from '@/lib/raceControlApi';
 import type { LiveTimingRowDto, RunOrderItemDto } from '@/lib/raceControlApi';
 import {
   Table,
@@ -27,7 +29,18 @@ function fmtMs(ms: number | null): string {
 
 export function LiveTimingPanel({ raceId, status }: Props) {
   const topic = raceId ? `/topic/race/${raceId}/timing` : null;
-  const { data: rows, status: wsStatus } = useStomp<LiveTimingRowDto[]>(topic);
+  const { data: stompRows, status: wsStatus } = useStomp<LiveTimingRowDto[]>(topic);
+
+  // Fetch snapshot on mount so navigating away and back restores accumulated laps.
+  // staleTime:0 (default) ensures a remount always refetches the latest server-side positions.
+  const { data: snapshot } = useQuery({
+    queryKey: ['live-timing-snapshot', raceId],
+    queryFn: () => getLiveTimingSnapshot(raceId),
+    enabled: raceId > 0,
+  });
+
+  // STOMP push is authoritative once connected; snapshot fills the gap on remount
+  const rows = stompRows ?? snapshot ?? null;
 
   const sorted = rows ? [...rows].sort((a, b) => a.position - b.position) : [];
 
@@ -72,7 +85,7 @@ export function LiveTimingPanel({ raceId, status }: Props) {
                 <TableRow key={row.entryId}>
                   <TableCell className="font-mono font-semibold">{row.position}</TableCell>
                   <TableCell>
-                    <span>Entry {row.entryId}</span>
+                    <span>{row.driverName}</span>
                     {isLapped && (
                       <Badge variant="outline" className="ml-2 text-[10px] px-1 py-0 border-chart-3 text-chart-3">
                         LAPPED

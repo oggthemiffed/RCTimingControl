@@ -30,6 +30,9 @@ message ForwarderStatus {
     ConnectionState state = 2;
 }
 
+message StatusAck {}
+
 service TimingService {
     rpc StreamPassings(stream LapPassing) returns (stream ForwarderCommand);
+    rpc ReportStatus(ForwarderStatus) returns (StatusAck);
 }

@@ -70,6 +70,7 @@ export type ResultSnapshotDto = {
 
 export type LiveTimingRowDto = {
   entryId: number;
+  driverName: string;
   position: number;
   lapsCompleted: number;
   lastPassingTimeMs: number;
@@ -204,6 +205,11 @@ export async function linkUnknownTransponder(
     `/api/v1/race-control/races/${raceId}/transponders/link`,
     { transponderNumber, entryId },
   );
+  return data;
+}
+
+export async function getLiveTimingSnapshot(raceId: number): Promise<LiveTimingRowDto[]> {
+  const { data } = await api.get<LiveTimingRowDto[]>(`/api/v1/race-control/races/${raceId}/live-timing`);
   return data;
 }
 

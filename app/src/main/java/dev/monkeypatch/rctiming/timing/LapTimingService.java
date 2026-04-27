@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
+import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,20 +32,28 @@ public class LapTimingService {
     private final LiveTimingHub liveTimingHub;
     private final RaceEntryRepository raceEntryRepository;
     private final EntryRepository entryRepository;
+    private final UserRepository userRepository;
 
     public LapTimingService(LiveTimingHub liveTimingHub,
                             RaceEntryRepository raceEntryRepository,
-                            EntryRepository entryRepository) {
+                            EntryRepository entryRepository,
+                            UserRepository userRepository) {
         this.liveTimingHub = liveTimingHub;
         this.raceEntryRepository = raceEntryRepository;
         this.entryRepository = entryRepository;
+        this.userRepository = userRepository;
     }
 
     /**
-     * Returns existing LiveRaceState for this raceId, or creates a new one.
+     * Returns existing LiveRaceState for this raceId, or creates a new one and pre-loads
+     * entry display names so calculatePositions() can include driver names.
      */
     public LiveRaceState stateFor(long raceId) {
-        return states.computeIfAbsent(raceId, LiveRaceState::new);
+        return states.computeIfAbsent(raceId, id -> {
+            LiveRaceState state = new LiveRaceState(id);
+            loadEntryNames(id, state);
+            return state;
+        });
     }
 
     /**
@@ -56,8 +65,8 @@ public class LapTimingService {
 
     /**
      * Handles a LapPassingEvent published by the ApplicationEventPublisher.
-     * Resolves transponder number → entry ID via Entry.transponderNumberSnapshot,
-     * updates in-memory state, and broadcasts over STOMP.
+     * Resolves transponder number → entry ID, first checking runtime links (from retroactive
+     * linking), then falling back to Entry.transponderNumberSnapshot in the DB.
      */
     @EventListener(LapPassingEvent.class)
     @Async
@@ -65,10 +74,14 @@ public class LapTimingService {
         long raceId = event.raceId();
         String transponderNumber = event.transponderNumber();
 
-        // Resolve transponder → entry for this race
-        Long entryId = resolveEntryId(raceId, transponderNumber);
-
         LiveRaceState state = stateFor(raceId);
+
+        // Check runtime links first — these take priority over transponderNumberSnapshot
+        Long entryId = state.getRuntimeLink(transponderNumber);
+        if (entryId == null) {
+            entryId = resolveEntryId(raceId, transponderNumber);
+        }
+
         boolean firstUnknown = state.applyLapPassing(event, entryId);
 
         if (entryId == null && firstUnknown) {
@@ -123,8 +136,26 @@ public class LapTimingService {
     }
 
     /**
-     * Resolves a transponder number to an entry ID for the given race.
-     * Scans the race's RaceEntry rows, loads each Entry, and matches transponderNumberSnapshot.
+     * Pre-loads entry display names (First Last) into the given state so calculatePositions()
+     * can include driver names without hitting the DB on every lap.
+     */
+    private void loadEntryNames(long raceId, LiveRaceState state) {
+        try {
+            List<RaceEntry> raceEntries = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId);
+            for (RaceEntry raceEntry : raceEntries) {
+                entryRepository.findById(raceEntry.getEntryId()).ifPresent(entry ->
+                        userRepository.findById(entry.getUserId()).ifPresent(user ->
+                                state.putEntryName(raceEntry.getEntryId(),
+                                        user.getFirstName() + " " + user.getLastName())));
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load entry names for race {}: {}", raceId, e.getMessage());
+        }
+    }
+
+    /**
+     * Resolves a transponder number to an entry ID for the given race via transponderNumberSnapshot.
+     * Does NOT check runtime links — callers must check state.getRuntimeLink() first.
      */
     private Long resolveEntryId(long raceId, String transponderNumber) {
         try {

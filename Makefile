@@ -102,7 +102,7 @@ forwarder:
 
 .PHONY: simulator
 simulator:
-	./gradlew :forwarder:runSimulator --args='--mode=generative'
+	./gradlew :forwarder:runSimulator --args='--mode=generative --transponders=101,102,103,104,105,106 --interval-ms=20000'
 
 DUMP_FILE ?= forwarder/src/main/resources/samples/sample-passings.dump
 .PHONY: simulator-playback
@@ -132,6 +132,10 @@ dev-start: start
 
 .PHONY: start
 start: up
+	@if [ ! -d "$(JOOQ_GENERATED)" ]; then \
+		printf 'jOOQ sources missing — running generateJooq first…\n'; \
+		$(MAKE) generate-db; \
+	fi
 	@printf 'Starting backend (log: /tmp/rc-backend.log)…\n'
 	@./gradlew :app:bootRun --no-daemon --args='--spring.profiles.active=dev' -x generateJooq \
 		> /tmp/rc-backend.log 2>&1 & echo $$! > /tmp/rc-backend.pid

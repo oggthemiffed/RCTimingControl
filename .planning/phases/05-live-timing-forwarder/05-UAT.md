@@ -54,7 +54,7 @@ status: pending
 9. Restart simulator
 10. [ ] Both pills return to **green** (auto-reconnect)
 
-**Result:** [ ] Pass &nbsp; [ ] Fail &nbsp; [ ] N/A — **needs re-test after fix**
+**Result:** [/] Pass &nbsp; [ ] Fail &nbsp; [ ] N/A — **needs re-test after fix**
 
 **Fix applied 2026-04-26:** Decoder TCP state changes now propagated to server via new `ReportStatus` gRPC RPC. Idle timeout reduced 30 s → 8 s. TCP drop detected immediately; idle fallback within 8 s. ForwarderStatusPublisher now tracks decoder and forwarder states independently.
 
@@ -76,7 +76,16 @@ status: pending
 10. [ ] Positions panel updates to include the newly-linked entry
 11. [ ] The alert for that transponder is no longer shown
 
-**Result:** [ ] Pass &nbsp; [ ] Fail &nbsp; [ ] N/A
+**Result:** [ ] Pass &nbsp; [/] Fail &nbsp; [ ] N/A — **needs re-test after fix**
+
+**Comments** WHile i have race running (see the seed data, with entries) when i new transponder is detected i dont have ANY entries to link it to.
+
+Also if there is a live race running and i move to a race that has been run in the run order list then i loose all of the live results, moving back to the running race displays a message waiting for first transponder pick up. We should be showing all the laps that have been recorded since the starting of the race
+
+**Fix applied 2026-04-27 (issue 1 — empty entries dropdown):** `GET /api/v1/race-control/races/{raceId}/entries` endpoint was missing. Added `RaceEntriesQuery` (jOOQ join of race_entries → entries → users → cars) and wired it into `TransponderLinkController`. Returns `[{ entryId, racerName, carNumber }]` for all entries in the race.
+
+**Fix applied 2026-04-27 (issue 2 — live results lost on navigation):** `LiveTimingPanel` relied purely on STOMP push with no initial data fetch, so remounting after navigation started blank. Added `GET /api/v1/race-control/races/{raceId}/live-timing` which reads current in-memory `LiveRaceState` positions. Panel now fetches this snapshot on mount as seed data; STOMP updates replace it once the next passing arrives.
+
 
 ---
 

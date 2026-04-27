@@ -61,7 +61,7 @@ public class Rc4InboundHandler extends SimpleChannelInboundHandler<String> {
         if (evt instanceof IdleStateEvent idle) {
             switch (idle.state()) {
                 case READER_IDLE -> {
-                    log.warn("READER_IDLE (no STATUS/PASSING for 30 s) — closing channel to trigger reconnect");
+                    log.warn("READER_IDLE (no STATUS/PASSING for 8 s) — closing channel to trigger reconnect");
                     ctx.close();
                 }
                 default -> super.userEventTriggered(ctx, evt);

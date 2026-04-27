@@ -34,15 +34,20 @@ public class GenerativeMode {
         if (transponders.isEmpty()) {
             log.warn("[SIMULATOR] GenerativeMode started with no transponders — emitting STATUS only");
         }
-        long   seqNum       = 0;
-        int    txpIdx       = 0;
+        long   seqNum        = 0;
+        int    txpIdx        = 0;
         double timeSinceStart = 1.0;
-        long   lastStatusMs = System.currentTimeMillis();
+        long   lastStatusMs  = System.currentTimeMillis();
+        long   lastPassingMs = System.currentTimeMillis();
+
+        // Poll interval: short enough that STATUS is never more than ~1 s late,
+        // regardless of how large intervalMs is.
+        final long TICK_MS = Math.min(intervalMs, 1_000);
 
         while (!Thread.currentThread().isInterrupted()) {
             long nowMs = System.currentTimeMillis();
 
-            // Emit STATUS heartbeat every 5 s
+            // Emit STATUS heartbeat every 5 s — always fires on schedule
             if (nowMs - lastStatusMs >= 5_000) {
                 String status = String.format("#\t20\t%d\t72\t0\txDEAD", seqNum++);
                 emit(out, status);
@@ -50,8 +55,8 @@ public class GenerativeMode {
                 log.debug("[SIMULATOR] STATUS emitted: {}", status);
             }
 
-            // Emit PASSING record for next transponder
-            if (!transponders.isEmpty()) {
+            // Emit PASSING record when the configured interval has elapsed
+            if (!transponders.isEmpty() && nowMs - lastPassingMs >= intervalMs) {
                 String transponder = transponders.get(txpIdx % transponders.size());
                 String passing = String.format("@\t20\t%d\t%s\t%.3f\t300\t130\t2\txDEAD",
                                                seqNum++, transponder, timeSinceStart);
@@ -59,9 +64,10 @@ public class GenerativeMode {
                 log.debug("[SIMULATOR] PASSING emitted: {}", passing);
                 timeSinceStart += intervalMs / 1000.0;
                 txpIdx++;
+                lastPassingMs = nowMs;
             }
 
-            sleep(intervalMs);
+            sleep(TICK_MS);
         }
     }
 

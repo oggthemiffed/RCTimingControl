@@ -22,7 +22,7 @@ import java.util.function.Consumer;
  * This class simply opens the TCP connection and starts receiving — no handshake frame is sent.
  * Port 5100 (firmware &lt; 4.5) confirmed from club hardware captures.
  *
- * <p>Auto-reconnects on TCP disconnect or {@code READER_IDLE} (30 s with no STATUS/PASSING)
+ * <p>Auto-reconnects on TCP disconnect or {@code READER_IDLE} (8 s with no STATUS/PASSING)
  * using exponential backoff: 1 s, 2 s, 4 s, 8 s, 16 s, 30 s (capped).
  * Reconnect attempts are prevented once {@link #stop()} has been called.
  *
@@ -104,7 +104,7 @@ public class AmbRc4TimingSource implements TimingSource {
                 @Override
                 protected void initChannel(Channel ch) {
                     ch.pipeline().addLast(
-                        new IdleStateHandler(30, 0, 0, TimeUnit.SECONDS),
+                        new IdleStateHandler(8, 0, 0, TimeUnit.SECONDS),
                         new LineBasedFrameDecoder(1024),
                         new StringDecoder(StandardCharsets.US_ASCII),
                         new Rc4InboundHandler(parser, epochAnchor, gapDetector,
