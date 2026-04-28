@@ -95,7 +95,8 @@ public class AdminAudioController {
                 dto.announceLapBeep(),
                 dto.announceFinish(),
                 dto.announceRunningOrder(),
-                dto.runningOrderDepth()
+                dto.runningOrderDepth(),
+                null  // preserve default intervals
         );
         profile.setAudioSettings(newSettings);
         profile.setDefaultVoiceId(dto.defaultVoiceId());
