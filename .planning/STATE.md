@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 06-04-PLAN.md — Audio pre-generation, AdminAudioController, RunningOrderAnnouncementService, AudioSettingsController"
-last_updated: "2026-04-28T21:35:00Z"
+stopped_at: "Completed 06-05-PLAN.md — Practice timing backend: LivePracticeState, PracticeTimingService, PracticeSessionController"
+last_updated: "2026-04-28T20:44:00Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 36
-  completed_plans: 34
-  percent: 89
+  completed_plans: 35
+  percent: 92
 ---
 
 # Project State
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 ## Current Position
 
 Phase: 06 (audio-practice) — executing
-Plan: 4 of 6
-Status: Plan 04 complete — audio pre-generation service and admin/race-control APIs built
+Plan: 5 of 6
+Status: Plan 05 complete — practice session timing backend built (LivePracticeState, PracticeTimingService, PracticeSessionController)
 Last activity: 2026-04-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -63,6 +63,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P02 | ~4m | 3 tasks | 13 files |
 | Phase 06 P03 | ~20m | 3 tasks | 15 files |
 | Phase 06 P04 | ~25m | 5 tasks | 10 files |
+| Phase 06 P05 | ~6m | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Recent decisions affecting current work:
 - [Phase 06-04]: RaceStatusChangedEvent (new Spring ApplicationEvent) published from RaceStateMachineService.transition() — decouples audio services from state machine via event bus
 - [Phase 06-04]: AudioPreGenerationService uses EntryRepository+UserRepository (not RaceEntry navigation) because RaceEntry is a flat join table without JPA associations
 - [Phase 06-04]: countdownIntervals stored within existing audio_settings JSONB column; no V24 migration column needed
+- [Phase 06-05]: LapPassingEvent is a Java record (raceId, transponderNumber, rtcTimeMicros) — lap time derived from rtcMicros delta / 1000; no getLapTimeMs() method
+- [Phase 06-05]: PracticeTimingService omits @Async to keep @Transactional effective for PracticeLap persistence
 
 ### Pending Todos
 
@@ -108,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-28T21:35:00Z
-Stopped at: Completed 06-04-PLAN.md
+Last session: 2026-04-28T20:44:00Z
+Stopped at: Completed 06-05-PLAN.md — practice session timing backend
 Resume file: None
