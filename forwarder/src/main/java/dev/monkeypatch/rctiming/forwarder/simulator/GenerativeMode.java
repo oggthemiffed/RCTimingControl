@@ -7,14 +7,19 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Emits synthetic RC-4 PASSING records for a configured list of transponder IDs.
  *
- * <p>Each transponder emits a PASSING frame every {@code intervalMs} milliseconds,
- * round-robined. A STATUS (heartbeat) frame is emitted every 5 seconds. Sequence
- * numbers are monotonically increasing across both PASSING and STATUS records,
- * matching real decoder behaviour.
+ * <p>Each transponder has its own independent lap timer. Initial passings are staggered
+ * evenly across one base interval so all drivers don't cross the line simultaneously.
+ * Each subsequent lap interval is {@code intervalMs ± rand(0, jitterMs)} to simulate
+ * realistic lap-time variation between drivers.
+ *
+ * <p>A STATUS (heartbeat) frame is emitted every 5 seconds. Sequence numbers are
+ * monotonically increasing across both PASSING and STATUS records, matching real
+ * decoder behaviour.
  */
 public class GenerativeMode {
 
@@ -27,27 +32,39 @@ public class GenerativeMode {
      *
      * @param out          client output stream
      * @param transponders list of transponder ID strings to simulate
-     * @param intervalMs   milliseconds between PASSING frames per transponder
+     * @param intervalMs   base milliseconds per lap (target lap time)
+     * @param jitterMs     maximum random deviation added to each lap interval;
+     *                     each lap time is {@code intervalMs + rand(-jitterMs, +jitterMs)}
      * @throws IOException if the stream write fails
      */
-    public static void run(OutputStream out, List<String> transponders, long intervalMs) throws IOException {
+    public static void run(OutputStream out, List<String> transponders,
+                           long intervalMs, long jitterMs) throws IOException {
         if (transponders.isEmpty()) {
             log.warn("[SIMULATOR] GenerativeMode started with no transponders — emitting STATUS only");
         }
-        long   seqNum        = 0;
-        int    txpIdx        = 0;
-        double timeSinceStart = 1.0;
-        long   lastStatusMs  = System.currentTimeMillis();
-        long   lastPassingMs = System.currentTimeMillis();
 
-        // Poll interval: short enough that STATUS is never more than ~1 s late,
-        // regardless of how large intervalMs is.
-        final long TICK_MS = Math.min(intervalMs, 1_000);
+        Random rng       = new Random();
+        long   startMs   = System.currentTimeMillis();
+        long   seqNum    = 0;
+        long   lastStatusMs = startMs;
+
+        // Schedule each transponder's first passing, staggered evenly across one base interval
+        // so drivers don't all cross the line at the same moment.
+        int    count        = Math.max(1, transponders.size());
+        long[] nextPassingMs = new long[count];
+        for (int i = 0; i < count; i++) {
+            long stagger = (long)(i * intervalMs / (double) count);
+            nextPassingMs[i] = startMs + intervalMs + stagger;
+        }
+
+        log.info("[SIMULATOR] GenerativeMode: {} transponders, base {}ms, jitter ±{}ms",
+                transponders.size(), intervalMs, jitterMs);
 
         while (!Thread.currentThread().isInterrupted()) {
-            long nowMs = System.currentTimeMillis();
+            long nowMs  = System.currentTimeMillis();
+            double elapsedSec = (nowMs - startMs) / 1000.0;
 
-            // Emit STATUS heartbeat every 5 s — always fires on schedule
+            // Emit STATUS heartbeat every 5 s
             if (nowMs - lastStatusMs >= 5_000) {
                 String status = String.format("#\t20\t%d\t72\t0\txDEAD", seqNum++);
                 emit(out, status);
@@ -55,19 +72,23 @@ public class GenerativeMode {
                 log.debug("[SIMULATOR] STATUS emitted: {}", status);
             }
 
-            // Emit PASSING record when the configured interval has elapsed
-            if (!transponders.isEmpty() && nowMs - lastPassingMs >= intervalMs) {
-                String transponder = transponders.get(txpIdx % transponders.size());
-                String passing = String.format("@\t20\t%d\t%s\t%.3f\t300\t130\t2\txDEAD",
-                                               seqNum++, transponder, timeSinceStart);
-                emit(out, passing);
-                log.debug("[SIMULATOR] PASSING emitted: {}", passing);
-                timeSinceStart += intervalMs / 1000.0;
-                txpIdx++;
-                lastPassingMs = nowMs;
+            // Check each transponder independently
+            for (int i = 0; i < transponders.size(); i++) {
+                if (nowMs >= nextPassingMs[i]) {
+                    String passing = String.format("@\t20\t%d\t%s\t%.3f\t300\t130\t2\txDEAD",
+                            seqNum++, transponders.get(i), elapsedSec);
+                    emit(out, passing);
+                    log.debug("[SIMULATOR] PASSING emitted: {}", passing);
+
+                    // Next lap: base interval + random jitter in [-jitterMs, +jitterMs]
+                    long jitter = jitterMs > 0
+                            ? (long)((rng.nextDouble() * 2.0 - 1.0) * jitterMs)
+                            : 0L;
+                    nextPassingMs[i] = nowMs + intervalMs + jitter;
+                }
             }
 
-            sleep(TICK_MS);
+            sleep(250); // 250 ms tick — tight enough for 10 s laps, light on CPU
         }
     }
 

@@ -15,7 +15,7 @@ import java.util.Map;
  * <h3>Usage</h3>
  * <pre>
  * ./gradlew :forwarder:runSimulator --args="--mode=playback --port=5100 --speed=1.0"
- * ./gradlew :forwarder:runSimulator --args="--mode=generative --port=5100 --transponders=11111,22222,33333 --interval-ms=20000"
+ * ./gradlew :forwarder:runSimulator --args="--mode=generative --port=5100 --transponders=11111,22222,33333 --interval-ms=12500 --jitter-ms=2500"
  * </pre>
  *
  * <h3>Flags</h3>
@@ -24,7 +24,8 @@ import java.util.Map;
  *   <li>{@code --port} — TCP port to listen on (default: 5100)</li>
  *   <li>{@code --speed} — playback speed factor (default: 1.0; playback mode only)</li>
  *   <li>{@code --transponders} — comma-separated transponder IDs (default: 11111,22222; generative mode only)</li>
- *   <li>{@code --interval-ms} — milliseconds between PASSING frames per transponder (default: 20000; generative mode only)</li>
+ *   <li>{@code --interval-ms} — base lap time in milliseconds (default: 12500; generative mode only)</li>
+ *   <li>{@code --jitter-ms} — maximum random lap-time deviation; each lap is intervalMs ± rand(0, jitterMs) (default: 2500; generative only)</li>
  * </ul>
  *
  * <p>Invalid or missing required arguments cause usage to be printed to stderr and exit code 2.
@@ -41,9 +42,10 @@ public class SimulatorMain {
             printUsageAndExit("--mode is required");
         }
 
-        int    port       = parseInt(flags, "--port",        5100);
-        double speed      = parseDouble(flags, "--speed",    1.0);
-        long   intervalMs = parseLong(flags, "--interval-ms", 20_000L);
+        int    port       = parseInt(flags, "--port",         5100);
+        double speed      = parseDouble(flags, "--speed",     1.0);
+        long   intervalMs = parseLong(flags, "--interval-ms", 12_500L);
+        long   jitterMs   = parseLong(flags, "--jitter-ms",   2_500L);
 
         List<String> transponders = new ArrayList<>();
         String txpRaw = flags.getOrDefault("--transponders", "11111,22222");
@@ -54,8 +56,8 @@ public class SimulatorMain {
 
         FakeDecoderServer server;
         switch (mode) {
-            case "playback" -> server = FakeDecoderServer.playback(port, flags.get("--file"), speed);
-            case "generative" -> server = FakeDecoderServer.generative(port, transponders, intervalMs);
+            case "playback"   -> server = FakeDecoderServer.playback(port, flags.get("--file"), speed);
+            case "generative" -> server = FakeDecoderServer.generative(port, transponders, intervalMs, jitterMs);
             default -> { printUsageAndExit("Unknown --mode: " + mode); return; }
         }
 
@@ -111,7 +113,8 @@ public class SimulatorMain {
               --speed=1.0                 Playback speed factor (playback only)
               --file=/path/to/dump        Dump file path (playback only; default: classpath sample)
               --transponders=11111,22222  Transponder IDs (generative only)
-              --interval-ms=20000         PASSING interval per transponder ms (generative only)
+              --interval-ms=12500         Base lap time in ms (default: 12500)
+              --jitter-ms=2500            Max random lap-time deviation ms (default: 2500)
             """);
         System.exit(2);
     }

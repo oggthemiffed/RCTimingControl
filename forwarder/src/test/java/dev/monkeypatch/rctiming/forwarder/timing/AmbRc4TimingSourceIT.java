@@ -29,8 +29,7 @@ class AmbRc4TimingSourceIT {
     @Timeout(15)
     void connectsToLoopbackSimulator() throws Exception {
         int port = freePort();
-        FakeDecoderServer server = FakeDecoderServer.generative(port,
-                List.of("11111", "22222"), 200);
+        FakeDecoderServer server = FakeDecoderServer.generative(port, List.of("11111", "22222"), 200, 0);
         server.start();
 
         List<EpochCorrectedPassing> received = new ArrayList<>();
@@ -56,8 +55,7 @@ class AmbRc4TimingSourceIT {
     void reconnectsAfterStatusAbsenceExceedsThreshold() throws Exception {
         // Start server, connect, then stop server — verify RECONNECTING state fires
         int port = freePort();
-        FakeDecoderServer server = FakeDecoderServer.generative(port,
-                List.of("11111"), 300);
+        FakeDecoderServer server = FakeDecoderServer.generative(port, List.of("11111"), 300, 0);
         server.start();
 
         CountDownLatch connectedLatch  = new CountDownLatch(1);
@@ -91,8 +89,7 @@ class AmbRc4TimingSourceIT {
     @Timeout(15)
     void publishesParsedPassingsToCallback() throws Exception {
         int port = freePort();
-        FakeDecoderServer server = FakeDecoderServer.generative(port,
-                List.of("11111", "22222", "33333"), 100);
+        FakeDecoderServer server = FakeDecoderServer.generative(port, List.of("11111", "22222", "33333"), 100, 0);
         server.start();
 
         List<EpochCorrectedPassing> received = new ArrayList<>();

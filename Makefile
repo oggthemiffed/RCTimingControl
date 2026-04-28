@@ -102,7 +102,7 @@ forwarder:
 
 .PHONY: simulator
 simulator:
-	./gradlew :forwarder:runSimulator --args='--mode=generative --transponders=101,102,103,104,105,106 --interval-ms=20000'
+	./gradlew :forwarder:runSimulator --args='--mode=generative --transponders=101,102,103,104,105,106 --interval-ms=12500 --jitter-ms=2500'
 
 DUMP_FILE ?= forwarder/src/main/resources/samples/sample-passings.dump
 .PHONY: simulator-playback

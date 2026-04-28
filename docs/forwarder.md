@@ -85,6 +85,7 @@ The simulator emulates an AMB decoder. Start it **before** the forwarder — it 
 
 ```bash
 # Generative mode — emits synthetic PASSING records continuously
+# Default: 6 transponders (matching dev seed), ~10–15 s laps with ±2.5 s jitter
 make simulator
 
 # Playback mode — replays a captured .dump file
@@ -93,6 +94,11 @@ make simulator-playback
 # Playback with a custom dump file
 make simulator-playback DUMP_FILE=path/to/capture.dump
 ```
+
+Generative mode options (pass via `--args` directly if needed):
+- `--transponders=101,102,...` — comma-separated transponder IDs (default matches dev seed: 101–106)
+- `--interval-ms=12500` — base lap time in milliseconds
+- `--jitter-ms=2500` — each lap is `intervalMs ± rand(0, jitterMs)` giving realistic variation
 
 The simulator prints each emitted PASSING record to stdout so you can see what the forwarder will receive.
 
