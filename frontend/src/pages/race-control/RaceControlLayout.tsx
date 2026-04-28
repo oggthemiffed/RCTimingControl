@@ -1,5 +1,5 @@
-import { Outlet, Link, useParams, useMatch } from 'react-router-dom';
-import { Flag, Shield, LogOut } from 'lucide-react';
+import { Outlet, Link, useParams, useMatches } from 'react-router-dom';
+import { Flag, Shield, LogOut, ChevronLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -8,10 +8,11 @@ import { ForwarderStatusBar } from './panels/ForwarderStatusBar';
 export default function RaceControlLayout() {
   const { eventId } = useParams<{ eventId: string }>();
   const { user, logout } = useAuth();
-  const refereeMatch = useMatch('/race-control/event/:eventId/referee');
+  const matches = useMatches();
 
   const base = `/race-control/event/${eventId}`;
-  const isReferee = !!refereeMatch;
+  // Check if any matched route ends at the referee path
+  const isReferee = matches.some((m) => m.pathname.endsWith('/referee'));
 
   function navClass(active: boolean) {
     return `flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
@@ -25,7 +26,14 @@ export default function RaceControlLayout() {
     <div className="flex flex-col h-screen overflow-hidden bg-background">
       {/* Top header */}
       <header className="flex items-center h-12 px-4 border-b bg-card shrink-0 gap-4">
-        <span className="font-semibold text-sm">RC Timing — Race Control</span>
+        <Link
+          to="/admin/race-control"
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Back to event select"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span className="text-sm font-semibold">RC Timing</span>
+        </Link>
 
         <nav className="flex items-center gap-1 ml-4">
           <Link to={base} className={navClass(!isReferee)}>
@@ -59,3 +67,4 @@ export default function RaceControlLayout() {
     </div>
   );
 }
+
