@@ -8,6 +8,7 @@ import dev.monkeypatch.rctiming.timing.LiveTimingHub;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,8 @@ public class RaceStateMachineService {
     private final RoundRepository roundRepository;
     @Nullable
     private final ResultSnapshotService resultSnapshotService;
+    @Nullable
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Full constructor for production use — all collaborators required.
@@ -52,13 +55,15 @@ public class RaceStateMachineService {
                                    RaceRepository raceRepository,
                                    LapTimingService lapTimingService,
                                    RoundRepository roundRepository,
-                                   @Nullable ResultSnapshotService resultSnapshotService) {
+                                   @Nullable ResultSnapshotService resultSnapshotService,
+                                   @Nullable ApplicationEventPublisher eventPublisher) {
         this.liveTimingHub = liveTimingHub;
         this.roundGeneratorService = roundGeneratorService;
         this.raceRepository = raceRepository;
         this.lapTimingService = lapTimingService;
         this.roundRepository = roundRepository;
         this.resultSnapshotService = resultSnapshotService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -67,7 +72,7 @@ public class RaceStateMachineService {
      * Broadcasts and finishing-order propagation are short-circuited when hub is null.
      */
     public RaceStateMachineService() {
-        this(null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null);
     }
 
     /**
@@ -99,6 +104,11 @@ public class RaceStateMachineService {
                 + " from " + race.getStatus() + " to " + target);
         }
         race.setStatus(target);
+
+        // Publish domain event for audio/other listeners
+        if (eventPublisher != null && race.getId() != null) {
+            eventPublisher.publishEvent(new RaceStatusChangedEvent(this, race.getId(), target));
+        }
 
         // Broadcast state change over STOMP
         if (liveTimingHub != null) {
