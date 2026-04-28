@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ForwarderStatusBar } from './panels/ForwarderStatusBar';
+import { RaceControlErrorBoundary } from '@/components/RaceControlErrorBoundary';
 
 export default function RaceControlLayout() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -62,7 +63,9 @@ export default function RaceControlLayout() {
 
       {/* Page content fills remaining height */}
       <div className="flex-1 overflow-hidden">
-        <Outlet />
+        <RaceControlErrorBoundary>
+          <Outlet />
+        </RaceControlErrorBoundary>
       </div>
     </div>
   );
