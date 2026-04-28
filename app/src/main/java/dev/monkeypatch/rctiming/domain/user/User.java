@@ -61,6 +61,9 @@ public class User {
     @Column(name = "phonetic_name")
     private String phoneticName;
 
+    @Column(name = "preferred_voice_id", length = 100)
+    private String preferredVoiceId;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -96,4 +99,7 @@ public class User {
 
     public String getPhoneticName() { return phoneticName; }
     public void setPhoneticName(String phoneticName) { this.phoneticName = phoneticName; }
+
+    public String getPreferredVoiceId() { return preferredVoiceId; }
+    public void setPreferredVoiceId(String preferredVoiceId) { this.preferredVoiceId = preferredVoiceId; }
 }

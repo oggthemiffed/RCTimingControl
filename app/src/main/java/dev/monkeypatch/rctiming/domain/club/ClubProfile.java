@@ -7,6 +7,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.time.Instant;
 
 @Entity
@@ -42,6 +45,13 @@ public class ClubProfile {
 
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "audio_settings", columnDefinition = "jsonb")
+    private ClubAudioSettings audioSettings = ClubAudioSettings.defaults();
+
+    @Column(name = "default_voice_id", length = 100)
+    private String defaultVoiceId = "en_GB-alan-medium";
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -90,4 +100,10 @@ public class ClubProfile {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public ClubAudioSettings getAudioSettings() { return audioSettings; }
+    public void setAudioSettings(ClubAudioSettings audioSettings) { this.audioSettings = audioSettings; }
+
+    public String getDefaultVoiceId() { return defaultVoiceId; }
+    public void setDefaultVoiceId(String defaultVoiceId) { this.defaultVoiceId = defaultVoiceId; }
 }

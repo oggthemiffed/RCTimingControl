@@ -39,6 +39,16 @@ services:
       timeout: 5s
       retries: 5
 
+  piper:
+    image: rhasspy/wyoming-piper:latest
+    container_name: rctiming-piper
+    volumes:
+      - piper_data:/data
+    command: --voice en_GB-alan-medium
+    ports:
+      - "10200:10200"
+
 volumes:
   pgdata:
   minio_data:
+  piper_data:

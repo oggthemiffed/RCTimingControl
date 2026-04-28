@@ -22,3 +22,8 @@ storage:
   region: ${STORAGE_REGION:us-east-1}
   bucket: ${STORAGE_BUCKET:rctiming}
   publicBaseUrl: ${STORAGE_PUBLIC_BASE_URL:http://localhost:9000/rctiming}
+
+tts:
+  endpoint: ${TTS_ENDPOINT:piper:10200}
+  defaultVoice: ${TTS_DEFAULT_VOICE:en_GB-alan-medium}
+  enabled: ${TTS_ENABLED:true}
