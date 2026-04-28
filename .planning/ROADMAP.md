@@ -127,7 +127,14 @@ Plans:
   2. Pre-generated TTS audio clips for a race are fetched and cached by the client during grid preparation; if a clip is unavailable at playback time, Web Speech API synthesis is used as a non-blocking fallback
   3. Racer profile includes a phonetic spelling field; the server generates a TTS name clip on profile create/update using a configured TTS provider; racer can preview the clip and select a preferred voice; profanity blocklist screens both display name and phonetic spelling before saving
   4. Admin can run an open practice session using the decoder; live lap times are displayed and each racer's best N consecutive laps are shown; results are printable after the session
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+- [ ] 06-01-PLAN.md — Wave 0 test scaffolding (@Disabled JUnit 5 stubs, Vitest describe.skip blocks)
+- [ ] 06-02-PLAN.md — Schema + domain foundation: V23 migration, PracticeSession/PracticeLap entities, User.preferredVoiceId, ClubProfile audio settings, profanity blocklist, Piper docker-compose
+- [ ] 06-03-PLAN.md — Piper TTS infrastructure: PiperTtsClient (Wyoming TCP), TtsClipService, ProfanityFilter, AudioController, name clip generation on profile save
+- [ ] 06-04-PLAN.md — Race audio pre-generation: AudioPreGenerationService (GRID listener), AudioClipController, AdminAudioController (settings + blocklist)
+- [ ] 06-05-PLAN.md — Practice session backend: PracticeTimingService, LivePracticeState, PracticeTimingHub, PracticeSessionController, best-N consecutive algorithm
+- [ ] 06-06-PLAN.md — Frontend: AudioSettingsPanel, ProfilePage voice section, AdminAudioSettingsPage, PracticeSessionPage, PracticeLiveTable, hooks, routes
 **UI hint**: yes
 
 ### Phase 7: Results & Championship
