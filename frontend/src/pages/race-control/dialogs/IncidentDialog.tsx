@@ -30,7 +30,7 @@ import type { IncidentReportRequest } from '@/lib/raceControlApi';
 const INCIDENT_TYPES = ['JUMP_START', 'COLLISION', 'SHORTCUT', 'DANGEROUS_DRIVING', 'OTHER'] as const;
 
 const schema = z.object({
-  entryId: z.coerce.number().int().positive(),
+  entryId: z.coerce.number().int().positive('Select a driver'),
   incidentType: z.enum(INCIDENT_TYPES),
   description: z.string().min(3, 'Description required'),
 });
@@ -42,9 +42,10 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   onSubmit: (req: IncidentReportRequest) => void;
   isPending: boolean;
+  drivers: { entryId: number; driverName: string }[];
 };
 
-export function IncidentDialog({ open, onOpenChange, onSubmit, isPending }: Props) {
+export function IncidentDialog({ open, onOpenChange, onSubmit, isPending, drivers }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { entryId: 0, incidentType: 'OTHER', description: '' },
@@ -68,10 +69,24 @@ export function IncidentDialog({ open, onOpenChange, onSubmit, isPending }: Prop
               name="entryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Entry ID</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="Entry ID" {...field} />
-                  </FormControl>
+                  <FormLabel>Driver</FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(Number(v))}
+                    value={field.value > 0 ? String(field.value) : ''}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select driver…" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {drivers.map((d) => (
+                        <SelectItem key={d.entryId} value={String(d.entryId)}>
+                          {d.driverName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

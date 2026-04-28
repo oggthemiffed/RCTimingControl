@@ -19,10 +19,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { PenaltyRequest } from '@/lib/raceControlApi';
 
 const schema = z.object({
-  entryId: z.coerce.number().int().positive(),
+  entryId: z.coerce.number().int().positive('Select a driver'),
   penaltyType: z.enum(['LAP', 'TIME']),
   value: z.coerce.number().positive(),
   reason: z.string().min(3, 'Reason required'),
@@ -35,9 +42,10 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   onSubmit: (req: PenaltyRequest) => void;
   isPending: boolean;
+  drivers: { entryId: number; driverName: string }[];
 };
 
-export function PenaltyDialog({ open, onOpenChange, onSubmit, isPending }: Props) {
+export function PenaltyDialog({ open, onOpenChange, onSubmit, isPending, drivers }: Props) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { entryId: 0, penaltyType: 'LAP', value: 1, reason: '' },
@@ -63,10 +71,24 @@ export function PenaltyDialog({ open, onOpenChange, onSubmit, isPending }: Props
               name="entryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Entry ID</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="Entry ID" {...field} />
-                  </FormControl>
+                  <FormLabel>Driver</FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(Number(v))}
+                    value={field.value > 0 ? String(field.value) : ''}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select driver…" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {drivers.map((d) => (
+                        <SelectItem key={d.entryId} value={String(d.entryId)}>
+                          {d.driverName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

@@ -124,12 +124,14 @@ export default function RefereePage() {
         onOpenChange={setIncidentOpen}
         onSubmit={onIncident}
         isPending={mutations.incident.isPending}
+        drivers={current.map((r) => ({ entryId: r.entryId, driverName: r.driverName }))}
       />
       <PenaltyDialog
         open={penaltyOpen}
         onOpenChange={setPenaltyOpen}
         onSubmit={onPenalty}
         isPending={mutations.penalty.isPending}
+        drivers={current.map((r) => ({ entryId: r.entryId, driverName: r.driverName }))}
       />
     </div>
   );
