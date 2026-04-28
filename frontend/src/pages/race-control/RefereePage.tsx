@@ -1,29 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useRunOrder } from '@/hooks/race-control/useRunOrder';
 import { useRaceStateMutations } from '@/hooks/race-control/useRaceStateMutations';
-import { useStomp } from '@/hooks/race-control/useStomp';
-import { RefereeTimingTable } from './referee/RefereeTimingTable';
+import { useLiveTiming } from '@/hooks/race-control/useLiveTiming';
+import { LiveTimingPanel } from './panels/LiveTimingPanel';
 import { IncidentDialog } from './dialogs/IncidentDialog';
 import { PenaltyDialog } from './dialogs/PenaltyDialog';
 import { RunOrderPanel } from './panels/RunOrderPanel';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { computeProximityAlerts } from './referee/alerts';
 import type { LiveTimingRowDto, IncidentReportRequest, PenaltyRequest } from '@/lib/raceControlApi';
-import type { LiveRacePositionDto } from './referee/alerts';
-
-function toPositionDto(row: LiveTimingRowDto): LiveRacePositionDto {
-  return {
-    entryId: row.entryId,
-    position: row.position,
-    lapsCompleted: row.lapsCompleted,
-    lastPassingTimeMs: row.lastPassingTimeMs,
-    bestLapMs: row.bestLapMs,
-    gapToLeaderMs: row.gapToLeaderMs,
-    gapToAheadMs: row.gapToAheadMs,
-  };
-}
 
 export default function RefereePage() {
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
@@ -44,16 +32,24 @@ export default function RefereePage() {
     }
   }, [runOrder, selectedRaceId]);
 
-  const topic = selectedRaceId ? `/topic/race/${selectedRaceId}/timing` : null;
-  const { data: timingRows } = useStomp<LiveTimingRowDto[]>(topic);
+  const { rows: current } = useLiveTiming(selectedRaceId);
 
-  const current = (timingRows ?? []).map(toPositionDto);
-  const previousRef = useRef<LiveRacePositionDto[] | null>(null);
-  const previous = previousRef.current;
-  if (current.length > 0) previousRef.current = current;
+  // Track previous rows for proximity alert calculation (closing gaps between updates)
+  const previousRef = useRef<LiveTimingRowDto[]>([]);
+  const highlightEntryIds = useMemo(
+    () => computeProximityAlerts(current, previousRef.current.length > 0 ? previousRef.current : null),
+    [current],
+  );
+  useEffect(() => {
+    if (current.length > 0) previousRef.current = current;
+  }, [current]);
 
-  const driverNameByEntryId = new Map<number, string>();
+  // Reset previous when race changes so stale highlights don't bleed across races
+  useEffect(() => {
+    previousRef.current = [];
+  }, [selectedRaceId]);
 
+  const selectedRace = runOrder.find((r) => r.raceId === selectedRaceId);
   const mutations = useRaceStateMutations(selectedRaceId ?? 0, eventId);
 
   function onIncident(req: IncidentReportRequest) {
@@ -112,15 +108,13 @@ export default function RefereePage() {
           </div>
         </div>
 
-        {current.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {selectedRaceId ? 'Waiting for timing data…' : 'Select a race from the run order.'}
-          </p>
+        {!selectedRaceId ? (
+          <p className="text-sm text-muted-foreground">Select a race from the run order.</p>
         ) : (
-          <RefereeTimingTable
-            current={current}
-            previous={previous}
-            driverNameByEntryId={driverNameByEntryId}
+          <LiveTimingPanel
+            raceId={selectedRaceId}
+            status={selectedRace?.status ?? 'PENDING'}
+            highlightEntryIds={highlightEntryIds}
           />
         )}
       </main>

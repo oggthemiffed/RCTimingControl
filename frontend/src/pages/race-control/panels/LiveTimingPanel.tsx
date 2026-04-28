@@ -1,7 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
-import { useStomp } from '@/hooks/race-control/useStomp';
-import { getLiveTimingSnapshot } from '@/lib/raceControlApi';
-import type { LiveTimingRowDto, RunOrderItemDto } from '@/lib/raceControlApi';
+import { useLiveTiming } from '@/hooks/race-control/useLiveTiming';
+import { useLappedBadge } from '@/hooks/race-control/useLappedBadge';
+import type { RunOrderItemDto } from '@/lib/raceControlApi';
 import {
   Table,
   TableBody,
@@ -16,6 +15,8 @@ import { cn } from '@/lib/utils';
 type Props = {
   raceId: number;
   status: RunOrderItemDto['status'];
+  /** Entry IDs to highlight (e.g. proximity alerts from referee view). */
+  highlightEntryIds?: Set<number>;
 };
 
 function fmtMs(ms: number | null): string {
@@ -27,24 +28,9 @@ function fmtMs(ms: number | null): string {
   return `${Math.floor(ms / 1000)}.${String(ms % 1000).padStart(3, '0')}`;
 }
 
-export function LiveTimingPanel({ raceId, status }: Props) {
-  const topic = raceId ? `/topic/race/${raceId}/timing` : null;
-  const { data: stompRows, status: wsStatus } = useStomp<LiveTimingRowDto[]>(topic);
-
-  // Fetch snapshot on mount so navigating away and back restores accumulated laps.
-  // staleTime:0 (default) ensures a remount always refetches the latest server-side positions.
-  const { data: snapshot } = useQuery({
-    queryKey: ['live-timing-snapshot', raceId],
-    queryFn: () => getLiveTimingSnapshot(raceId),
-    enabled: raceId > 0,
-  });
-
-  // STOMP push is authoritative once connected; snapshot fills the gap on remount
-  const rows = stompRows ?? snapshot ?? null;
-
-  const sorted = rows ? [...rows].sort((a, b) => a.position - b.position) : [];
-
-  const leaderLaps = sorted.length > 0 ? sorted[0].lapsCompleted : 0;
+export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
+  const { rows: sorted, wsStatus } = useLiveTiming(raceId);
+  const lappedEntryIds = useLappedBadge(sorted);
 
   return (
     <div className="flex flex-col gap-3">
@@ -79,28 +65,28 @@ export function LiveTimingPanel({ raceId, status }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((row) => {
-              const isLapped = row.lapsCompleted < leaderLaps;
-              return (
-                <TableRow key={row.entryId}>
-                  <TableCell className="font-mono font-semibold">{row.position}</TableCell>
-                  <TableCell>
-                    <span>{row.driverName}</span>
-                    {isLapped && (
-                      <Badge variant="outline" className="ml-2 text-[10px] px-1 py-0 border-chart-3 text-chart-3">
-                        LAPPED
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right font-mono">{row.lapsCompleted}</TableCell>
-                  <TableCell className="text-right font-mono">{fmtMs(row.lastLapMs)}</TableCell>
-                  <TableCell className="text-right font-mono">{fmtMs(row.bestLapMs)}</TableCell>
-                  <TableCell className="text-right font-mono text-muted-foreground">
-                    {row.position === 1 ? '—' : fmtMs(row.gapToLeaderMs)}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {sorted.map((row) => (
+              <TableRow
+                key={row.entryId}
+                className={cn(highlightEntryIds?.has(row.entryId) && 'bg-chart-3/20')}
+              >
+                <TableCell className="font-mono font-semibold">{row.position}</TableCell>
+                <TableCell>
+                  <span>{row.driverName}</span>
+                  {lappedEntryIds.has(row.entryId) && (
+                    <Badge variant="outline" className="ml-2 text-[10px] px-1 py-0 border-chart-3 text-chart-3">
+                      LAPPED
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell className="text-right font-mono">{row.lapsCompleted}</TableCell>
+                <TableCell className="text-right font-mono">{fmtMs(row.lastLapMs)}</TableCell>
+                <TableCell className="text-right font-mono">{fmtMs(row.bestLapMs)}</TableCell>
+                <TableCell className="text-right font-mono text-muted-foreground">
+                  {row.position === 1 ? '—' : fmtMs(row.gapToLeaderMs)}
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       )}

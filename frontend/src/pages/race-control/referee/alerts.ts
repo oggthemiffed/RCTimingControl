@@ -1,20 +1,20 @@
 export const PROXIMITY_CLOSING_DELTA_MS = 500;
 export const PROXIMITY_ABSOLUTE_MAX_MS = 3000;
 
-export type LiveRacePositionDto = {
+export interface ProximityRow {
   entryId: number;
-  position: number;
-  lapsCompleted: number;
-  lastPassingTimeMs: number;
-  bestLapMs: number | null;
-  gapToLeaderMs: number | null;
   gapToAheadMs: number | null;
-};
+}
+
+export interface LapRow {
+  entryId: number;
+  lapsCompleted: number;
+}
 
 /** OFFICIAL-01: entryIds whose gapToAheadMs has shrunk by >= PROXIMITY_CLOSING_DELTA_MS since previous. */
 export function computeProximityAlerts(
-  current: LiveRacePositionDto[],
-  previous: LiveRacePositionDto[] | null,
+  current: ProximityRow[],
+  previous: ProximityRow[] | null,
 ): Set<number> {
   if (!previous || previous.length === 0) return new Set<number>();
 
@@ -40,7 +40,7 @@ export function computeProximityAlerts(
 }
 
 /** OFFICIAL-02: entryIds whose lapsCompleted < leader's lapsCompleted. */
-export function computeBackmarkers(current: LiveRacePositionDto[]): Set<number> {
+export function computeBackmarkers(current: LapRow[]): Set<number> {
   if (current.length === 0) return new Set<number>();
 
   const leaderLaps = Math.max(...current.map((c) => c.lapsCompleted));
