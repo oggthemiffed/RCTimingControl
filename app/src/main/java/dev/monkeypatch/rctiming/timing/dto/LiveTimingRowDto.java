@@ -6,6 +6,7 @@ public record LiveTimingRowDto(
         int position,
         int lapsCompleted,
         long lastPassingTimeMs,
+        Long lastLapMs,
         Long bestLapMs,
         Long gapToLeaderMs,
         Long gapToAheadMs

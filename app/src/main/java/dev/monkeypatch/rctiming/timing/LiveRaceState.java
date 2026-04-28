@@ -77,10 +77,11 @@ public class LiveRaceState {
         pos.setLapsCompleted(pos.getLapsCompleted() + 1);
         pos.setLastPassingTimeMs(passingTimeMs);
 
-        // Update best lap if we have a previous passing time
+        // Update best lap and last lap duration if we have a previous passing time
         if (prevPassingTime > 0) {
             long lapMs = passingTimeMs - prevPassingTime;
             if (lapMs > 0) {
+                pos.setLastLapMs(lapMs);
                 Long currentBest = pos.getBestLapMs();
                 if (currentBest == null || lapMs < currentBest) {
                     pos.setBestLapMs(lapMs);
@@ -106,7 +107,9 @@ public class LiveRaceState {
     /**
      * Calculate current positions and return a sorted snapshot.
      * Sorted by: lapsCompleted DESC, lastPassingTimeMs ASC (earlier finish = better position on same lap).
-     * Gap to leader = leaderLastPassingMs - myLastPassingMs (same-logical-clock approximation).
+     * Gap to leader = |leaderLastPassingMs - myLastPassingMs| (same-logical-clock approximation).
+     * Absolute value handles both cases: same-lap drivers (leader has an earlier/smaller timestamp,
+     * so subtraction would be negative) and lapped drivers (leader has a later/larger timestamp).
      */
     public synchronized List<LiveTimingRowDto> calculatePositions() {
         List<LiveRacePosition> sorted = positions.values().stream()
@@ -123,15 +126,16 @@ public class LiveRaceState {
             LiveRacePosition pos = sorted.get(i);
             int position = i + 1;
             Long gapToLeader = (i == 0 || leaderLastPassing == null) ? null
-                    : leaderLastPassing - pos.getLastPassingTimeMs();
+                    : Math.abs(leaderLastPassing - pos.getLastPassingTimeMs());
             Long gapToAhead = (i == 0 || prevLastPassing == null) ? null
-                    : prevLastPassing - pos.getLastPassingTimeMs();
+                    : Math.abs(prevLastPassing - pos.getLastPassingTimeMs());
             result.add(new LiveTimingRowDto(
                     pos.getEntryId(),
                     entryNames.getOrDefault(pos.getEntryId(), "Entry " + pos.getEntryId()),
                     position,
                     pos.getLapsCompleted(),
                     pos.getLastPassingTimeMs(),
+                    pos.getLastLapMs(),
                     pos.getBestLapMs(),
                     gapToLeader,
                     gapToAhead
@@ -204,6 +208,7 @@ public class LiveRaceState {
         if (prevPassingTime > 0) {
             long lapMs = passingTimeMs - prevPassingTime;
             if (lapMs > 0) {
+                pos.setLastLapMs(lapMs);
                 Long currentBest = pos.getBestLapMs();
                 if (currentBest == null || lapMs < currentBest) {
                     pos.setBestLapMs(lapMs);

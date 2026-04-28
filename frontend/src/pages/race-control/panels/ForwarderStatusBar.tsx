@@ -69,11 +69,12 @@ export function ForwarderStatusBar() {
   const [decoderState, setDecoderState] = useState<ConnectionState | null>(null);
   const [forwarderState, setForwarderState] = useState<ConnectionState | null>(null);
 
-  // Seed initial state from REST on mount — STOMP only delivers future changes
+  // Seed initial state from REST on mount and re-poll every 5s to catch missed STOMP disconnects
   const { data: initialStatus } = useQuery({
     queryKey: ['forwarder-status'],
     queryFn: fetchForwarderStatus,
     staleTime: 0,
+    refetchInterval: 5000,
   });
 
   useEffect(() => {

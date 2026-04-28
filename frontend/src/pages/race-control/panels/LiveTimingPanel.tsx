@@ -93,7 +93,7 @@ export function LiveTimingPanel({ raceId, status }: Props) {
                     )}
                   </TableCell>
                   <TableCell className="text-right font-mono">{row.lapsCompleted}</TableCell>
-                  <TableCell className="text-right font-mono">{fmtMs(row.lastPassingTimeMs)}</TableCell>
+                  <TableCell className="text-right font-mono">{fmtMs(row.lastLapMs)}</TableCell>
                   <TableCell className="text-right font-mono">{fmtMs(row.bestLapMs)}</TableCell>
                   <TableCell className="text-right font-mono text-muted-foreground">
                     {row.position === 1 ? '—' : fmtMs(row.gapToLeaderMs)}

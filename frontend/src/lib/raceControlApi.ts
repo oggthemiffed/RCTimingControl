@@ -74,6 +74,7 @@ export type LiveTimingRowDto = {
   position: number;
   lapsCompleted: number;
   lastPassingTimeMs: number;
+  lastLapMs: number | null;
   bestLapMs: number | null;
   gapToLeaderMs: number | null;
   gapToAheadMs: number | null;

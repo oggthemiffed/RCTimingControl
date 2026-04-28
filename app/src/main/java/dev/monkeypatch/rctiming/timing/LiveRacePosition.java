@@ -9,6 +9,7 @@ public class LiveRacePosition {
     long entryId;
     int lapsCompleted;
     long lastPassingTimeMs;
+    Long lastLapMs;
     Long bestLapMs;
 
     public long getEntryId() { return entryId; }
@@ -19,6 +20,9 @@ public class LiveRacePosition {
 
     public long getLastPassingTimeMs() { return lastPassingTimeMs; }
     public void setLastPassingTimeMs(long lastPassingTimeMs) { this.lastPassingTimeMs = lastPassingTimeMs; }
+
+    public Long getLastLapMs() { return lastLapMs; }
+    public void setLastLapMs(Long lastLapMs) { this.lastLapMs = lastLapMs; }
 
     public Long getBestLapMs() { return bestLapMs; }
     public void setBestLapMs(Long bestLapMs) { this.bestLapMs = bestLapMs; }
