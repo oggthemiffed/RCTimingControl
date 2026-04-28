@@ -159,7 +159,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Admin Panel & Event Management | 6/6 | Complete | 2026-04-20 |
 | 4. Race Control | 7/7 | Complete | 2026-04-24 |
 | 5. Live Timing & Forwarder | 5/5 | Complete | 2026-04-26 |
-| 6. Audio & Practice | 0/TBD | Not started | - |
+| 6. Audio & Practice | 0/6 | Planning complete | - |
 | 7. Results & Championship | 0/TBD | Not started | - |
 
 
