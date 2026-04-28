@@ -24,13 +24,13 @@ Phase 6 delivers two capabilities on top of the running live-timing system:
 - Image: `rhasspy/wyoming-piper` — Spring calls it via HTTP to generate `.wav` clips.
 - Generated clips stored in MinIO (already in stack). Served via HTTP to the race control browser (AUDIO-10).
 - **Fallback**: Web Speech API (`window.speechSynthesis`) used if a clip is unavailable at playback time (AUDIO-11). Non-blocking — never prevents a race from running.
-- AUDIO-08: When a racer profile is saved, Spring calls Piper to generate a name clip and stores it in MinIO. Regenerated on display name or phonetic spelling change.
+- AUDIO-08: When a racer profile is saved, Spring calls Piper via Wyoming TCP protocol to generate a name clip and stores it in MinIO. Regenerated on display name or phonetic spelling change.
 - AUDIO-09: When race transitions to `GRID`, server pre-generates all predictable clips (countdown intervals, stagger car-number calls, finish announcements) and caches in MinIO.
 - AUDIO-10: Race control client fetches and locally caches all clips for the current race during grid preparation.
-- AUDIO-13: Voice selection from Piper's available voice models. Admin configures system default voice (e.g. `en_GB-alan-medium`). Racer can select a preferred voice from available models. Voice preference stored per racer server-side.
-- **Preview flow**: Racer profile page has a "Preview" button. When clicked, the browser calls a backend endpoint (`GET /api/racer/me/name-clip?voice={voiceId}`) which returns (or generates on demand) the `.wav` clip for that voice. The browser plays it via HTML5 `<audio>`. This lets the racer hear each voice option before saving their preference.
-- **Clip regeneration on voice change**: When a racer saves a new voice preference, the existing name clip is invalidated and Piper regenerates it immediately for the new voice. The clip is stored under a voice-scoped key (see Specifics).
-- Voice model: English voices from Rhasspy HuggingFace repository (~50MB model file, bundled with Docker image config). `en_GB-alan-medium` as the default for a UK club.
+- AUDIO-13: Voice selection from Piper's available voice models. Admin configures system default voice (e.g. `en_GB-alan-medium`, ~63MB). Racer can select a preferred voice from 11 available en_GB models. Voice preference (`preferredVoiceId`) stored per racer (new column, V23 migration).
+- **Preview flow**: Racer profile page has a "Preview" button. When clicked, the browser calls `GET /api/racer/me/name-clip?voice={voiceId}` — server generates on demand via Wyoming protocol if not cached, returns `.wav`. Browser plays via HTML5 `<audio>`.
+- **Clip regeneration on voice change**: Saving a new voice preference invalidates the existing name clip and regenerates immediately via Piper. Stored under voice-scoped key.
+- Voice model: `en_GB-alan-medium` as default (~63MB). 11 en_GB voices available via rhasspy/wyoming-piper.
 
 ### Phonetic Spelling Field
 - Optional field on racer profile (AUDIO-12). Stored server-side.
@@ -114,7 +114,7 @@ Phase 6 delivers two capabilities on top of the running live-timing system:
 <specifics>
 ## Specific Implementation Notes
 
-- **Piper Docker image**: Use `rhasspy/wyoming-piper`. Mount voice model files as a volume. Expose HTTP port. Spring `RestTemplate`/`WebClient` calls it synchronously for clip generation.
+- **Piper Docker image**: Use `rhasspy/wyoming-piper`. Mount voice model files as a volume. Expose TCP port 10200 (Wyoming protocol — NOT HTTP). Spring calls it via a `PiperTtsClient` using `java.net.Socket`: send JSONL `synthesize` event, read `audio-start`/`audio-chunk`/`audio-stop` frames, assemble WAV header + PCM bytes.
 - **Clip naming in MinIO**: Include voice ID in the key to avoid stale clips after voice changes, e.g. `audio/racer/{racerId}/name-{voiceId}.wav` and `audio/race/{raceId}/countdown-{seconds}-{voiceId}.wav`. On-demand generation for preview: if the clip for the requested voice doesn't exist yet, generate it synchronously and cache it.
 - **Web Speech API fallback**: Add a user-visible "Test audio" button in race control settings to verify browser synthesis works (Chrome on Linux can be silent until first user interaction).
 - **Practice vs Race in STOMP**: Practice session will need its own STOMP topic pattern, e.g. `/topic/practice/{sessionId}/timing`. Do NOT reuse the race topic — different entity lifecycle.
