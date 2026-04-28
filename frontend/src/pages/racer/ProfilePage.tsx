@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { isAxiosError } from 'axios';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, Play } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,10 +15,13 @@ import {
 } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   useProfile, useUpdateProfile, useAddMembership, useRemoveMembership, useAffiliations,
 } from '@/hooks/racer/useProfile';
+import { useQuery } from '@tanstack/react-query';
+import { listVoices, previewNameClip, saveVoicePreference } from '@/lib/audioApi';
 
 const profileSchema = z.object({
   firstName: z.string().min(1, 'Required').max(100),
@@ -42,6 +45,40 @@ export default function ProfilePage() {
   const updateProfile = useUpdateProfile();
   const addMembership = useAddMembership();
   const removeMembership = useRemoveMembership();
+
+  // ── Voice preference state ─────────────────────────────────────────────────
+  const { data: voices, isLoading: voicesLoading } = useQuery({
+    queryKey: ['voices'],
+    queryFn: () => listVoices().then((r) => r.data),
+  });
+  const [selectedVoice, setSelectedVoice] = useState<string>('');
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
+
+  const handlePreview = async () => {
+    setIsPreviewPlaying(true);
+    try {
+      const response = await previewNameClip(selectedVoice || undefined);
+      const url = URL.createObjectURL(response.data);
+      const audio = new Audio(url);
+      audio.onended = () => {
+        setIsPreviewPlaying(false);
+        URL.revokeObjectURL(url);
+      };
+      await audio.play();
+    } catch {
+      toast.error('Could not generate preview. Please try again.');
+      setIsPreviewPlaying(false);
+    }
+  };
+
+  const handleSaveVoice = async () => {
+    try {
+      await saveVoicePreference(selectedVoice || null);
+      toast.success('Voice preference saved.');
+    } catch {
+      toast.error('Failed to save voice preference.');
+    }
+  };
 
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -301,6 +338,53 @@ export default function ProfilePage() {
                   </li>
                 ))}
               </ul>}
+        </CardContent>
+      </Card>
+
+      {/* Announcement Voice */}
+      <Card>
+        <CardHeader><CardTitle>Announcement Voice</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="voice-select">Voice</Label>
+            <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+              <SelectTrigger id="voice-select">
+                <SelectValue
+                  placeholder={voicesLoading ? 'Loading voices…' : 'Select voice'}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {voices?.map((v) => (
+                  <SelectItem key={v.voiceId} value={v.voiceId}>
+                    {v.label}{v.isDefault ? ' — club default' : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Your chosen voice will be used when announcing your name during races.
+            </p>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreview}
+              disabled={isPreviewPlaying}
+              aria-label="Preview voice"
+            >
+              {isPreviewPlaying ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Play className="mr-2 h-4 w-4" aria-hidden="true" />
+              )}
+              Preview
+            </Button>
+            <Button size="sm" onClick={handleSaveVoice}>
+              Save Voice Preferences
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

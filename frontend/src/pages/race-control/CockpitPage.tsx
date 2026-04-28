@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useRunOrder } from '@/hooks/race-control/useRunOrder';
 import { useRaceStateMutations } from '@/hooks/race-control/useRaceStateMutations';
 import { useStomp } from '@/hooks/race-control/useStomp';
+import { useLiveTiming } from '@/hooks/race-control/useLiveTiming';
+import { useAnnouncements } from '@/hooks/race-control/useAnnouncements';
 import { RunOrderPanel } from './panels/RunOrderPanel';
 import { GridEditorPanel } from './panels/GridEditorPanel';
 import { LiveTimingPanel } from './panels/LiveTimingPanel';
 import { FinishedPanel } from './panels/FinishedPanel';
+import { AudioSettingsPanel } from './panels/AudioSettingsPanel';
 import { UnknownTransponderLinkDialog } from './dialogs/UnknownTransponderLinkDialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -45,6 +48,44 @@ export default function CockpitPage() {
   }, [runOrder, selectedRaceId]);
 
   const selectedRace = runOrder.find((r) => r.raceId === selectedRaceId);
+
+  // Live timing rows (for AUDIO-04 beep detection)
+  const { rows: liveRows } = useLiveTiming(selectedRaceId);
+
+  // Audio announcements hook (AUDIO-04, AUDIO-06, AUDIO-11)
+  const audioVolume = (() => {
+    const stored = localStorage.getItem('rc-audio-volume');
+    return stored ? parseInt(stored, 10) / 100 : 0.8;
+  })();
+  const { playBeep } = useAnnouncements({
+    raceId: selectedRaceId,
+    settings: null, // settings fetched inside AudioSettingsPanel; pass null here so hook uses ref
+    volume: audioVolume,
+  });
+
+  // Track previous last-lap timestamps to detect new laps (AUDIO-04 beep wiring)
+  const prevPassingRef = useRef<Map<number, number>>(new Map());
+
+  useEffect(() => {
+    if (selectedRace?.status !== 'RUNNING') return;
+    const prev = prevPassingRef.current;
+    liveRows.forEach((row) => {
+      const prevTime = prev.get(row.entryId);
+      if (
+        row.lastPassingTimeMs &&
+        row.lastPassingTimeMs !== prevTime
+      ) {
+        const improving =
+          row.lastLapMs !== null &&
+          row.bestLapMs !== null &&
+          row.lastLapMs <= row.bestLapMs;
+        playBeep(improving);
+      }
+      if (row.lastPassingTimeMs) {
+        prev.set(row.entryId, row.lastPassingTimeMs);
+      }
+    });
+  }, [liveRows, playBeep, selectedRace?.status]);
 
   // Subscribe to unknown transponder events when a race is running
   const unknownTopic =
@@ -240,6 +281,9 @@ export default function CockpitPage() {
             onSelect={setSelectedRaceId}
           />
         )}
+
+        {/* Audio settings collapsible panel */}
+        <AudioSettingsPanel raceId={selectedRaceId} />
       </aside>
 
       <Separator orientation="vertical" />
