@@ -1,4 +1,4 @@
-import { Outlet, Link, useParams, useLocation } from 'react-router-dom';
+import { Outlet, Link, useParams, useMatch } from 'react-router-dom';
 import { Flag, Shield, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -8,10 +8,10 @@ import { ForwarderStatusBar } from './panels/ForwarderStatusBar';
 export default function RaceControlLayout() {
   const { eventId } = useParams<{ eventId: string }>();
   const { user, logout } = useAuth();
-  const location = useLocation();
+  const refereeMatch = useMatch('/race-control/event/:eventId/referee');
 
   const base = `/race-control/event/${eventId}`;
-  const isReferee = location.pathname === `${base}/referee`;
+  const isReferee = !!refereeMatch;
 
   function navClass(active: boolean) {
     return `flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
