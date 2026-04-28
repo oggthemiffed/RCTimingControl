@@ -75,9 +75,10 @@ export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
                 key={row.entryId}
                 className={cn(
                   'transition-colors duration-500',
-                  flash === 'best'     && 'bg-purple-500/30',
-                  flash === 'on-pace'  && 'bg-green-500/30',
-                  flash === 'slow'     && 'bg-red-500/30',
+                  flash === 'race-best'      && 'bg-purple-500/30',
+                  flash === 'personal-best'  && 'bg-blue-500/30',
+                  flash === 'improving'      && 'bg-green-500/30',
+                  flash === 'slow'           && 'bg-red-500/30',
                   !flash && highlightEntryIds?.has(row.entryId) && 'bg-chart-3/20',
                 )}
               >

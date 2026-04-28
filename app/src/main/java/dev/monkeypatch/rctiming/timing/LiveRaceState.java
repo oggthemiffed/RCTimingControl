@@ -33,7 +33,8 @@ public class LiveRaceState {
     final Map<String, Long> runtimeLinks = new HashMap<>();
     /** Entry display names: entryId → "First Last", populated by LapTimingService on state creation. */
     final Map<Long, String> entryNames = new HashMap<>();
-    Instant raceStartTime;
+    /** Fastest lap recorded across ALL entries this race session. */
+    Long overallBestLapMs = null;
 
     public LiveRaceState(long raceId) {
         this.raceId = raceId;
@@ -77,7 +78,7 @@ public class LiveRaceState {
         pos.setLapsCompleted(pos.getLapsCompleted() + 1);
         pos.setLastPassingTimeMs(passingTimeMs);
 
-        // Update best lap, last lap duration, and running average if we have a previous passing time
+        // Update best lap, last lap duration, running average, and race overall best
         if (prevPassingTime > 0) {
             long lapMs = passingTimeMs - prevPassingTime;
             if (lapMs > 0) {
@@ -86,6 +87,9 @@ public class LiveRaceState {
                 Long currentBest = pos.getBestLapMs();
                 if (currentBest == null || lapMs < currentBest) {
                     pos.setBestLapMs(lapMs);
+                }
+                if (overallBestLapMs == null || lapMs < overallBestLapMs) {
+                    overallBestLapMs = lapMs;
                 }
             }
         }
@@ -146,6 +150,7 @@ public class LiveRaceState {
                     pos.getLastLapMs(),
                     pos.getBestLapMs(),
                     pos.getAvgLapMs(),
+                    overallBestLapMs,
                     lapsDown,
                     intervalLapsDown,
                     gapToLeader,
@@ -225,6 +230,9 @@ public class LiveRaceState {
                 Long currentBest = pos.getBestLapMs();
                 if (currentBest == null || lapMs < currentBest) {
                     pos.setBestLapMs(lapMs);
+                }
+                if (overallBestLapMs == null || lapMs < overallBestLapMs) {
+                    overallBestLapMs = lapMs;
                 }
             }
         }

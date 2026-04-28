@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useParams } from 'react-router-dom';
+import { Outlet, Link, useParams, useLocation } from 'react-router-dom';
 import { Flag, Shield, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,18 @@ import { ForwarderStatusBar } from './panels/ForwarderStatusBar';
 export default function RaceControlLayout() {
   const { eventId } = useParams<{ eventId: string }>();
   const { user, logout } = useAuth();
+  const location = useLocation();
 
   const base = `/race-control/event/${eventId}`;
+  const isReferee = location.pathname === `${base}/referee`;
+
+  function navClass(active: boolean) {
+    return `flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
+      active
+        ? 'bg-primary text-primary-foreground font-medium'
+        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+    }`;
+  }
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
@@ -18,33 +28,14 @@ export default function RaceControlLayout() {
         <span className="font-semibold text-sm">RC Timing — Race Control</span>
 
         <nav className="flex items-center gap-1 ml-4">
-          <NavLink
-            to={base}
-            end
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
-                isActive
-                  ? 'bg-primary text-primary-foreground font-medium'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`
-            }
-          >
+          <Link to={base} className={navClass(!isReferee)}>
             <Flag className="h-3.5 w-3.5" />
             Cockpit
-          </NavLink>
-          <NavLink
-            to={`${base}/referee`}
-            className={({ isActive }) =>
-              `flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors ${
-                isActive
-                  ? 'bg-primary text-primary-foreground font-medium'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-              }`
-            }
-          >
+          </Link>
+          <Link to={`${base}/referee`} className={navClass(isReferee)}>
             <Shield className="h-3.5 w-3.5" />
             Referee
-          </NavLink>
+          </Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-3">

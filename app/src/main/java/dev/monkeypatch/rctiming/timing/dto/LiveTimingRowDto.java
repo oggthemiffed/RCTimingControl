@@ -9,6 +9,7 @@ public record LiveTimingRowDto(
         Long lastLapMs,
         Long bestLapMs,
         Long avgLapMs,
+        Long overallFastestLapMs,
         int lapsDown,
         int intervalLapsDown,
         Long gapToLeaderMs,

@@ -77,6 +77,7 @@ export type LiveTimingRowDto = {
   lastLapMs: number | null;
   bestLapMs: number | null;
   avgLapMs: number | null;
+  overallFastestLapMs: number | null;
   lapsDown: number;
   intervalLapsDown: number;
   gapToLeaderMs: number | null;
