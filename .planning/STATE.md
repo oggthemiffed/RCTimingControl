@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: "Completed 06-03-PLAN.md — Piper TTS infrastructure complete"
-last_updated: "2026-04-28T20:16:24Z"
+stopped_at: "Completed 06-04-PLAN.md — Audio pre-generation, AdminAudioController, RunningOrderAnnouncementService, AudioSettingsController"
+last_updated: "2026-04-28T21:35:00Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 36
-  completed_plans: 33
-  percent: 86
+  completed_plans: 34
+  percent: 89
 ---
 
 # Project State
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 ## Current Position
 
 Phase: 06 (audio-practice) — executing
-Plan: 3 of 6
-Status: Plan 03 complete — Piper TTS infrastructure built
+Plan: 4 of 6
+Status: Plan 04 complete — audio pre-generation service and admin/race-control APIs built
 Last activity: 2026-04-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -36,7 +36,7 @@ Progress: [░░░░░░░░░░] 0%
 
 **Velocity:**
 
-- Total plans completed: 20
+- Total plans completed: 21
 - Average duration: —
 - Total execution time: —
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 06 P01 | ~5m | 1 task | 3 files |
 | Phase 06 P02 | ~4m | 3 tasks | 13 files |
 | Phase 06 P03 | ~20m | 3 tasks | 15 files |
+| Phase 06 P04 | ~25m | 5 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 06-03]: assembleWav() made public (not package-private) because audio test package differs from infrastructure.tts production package
 - [Phase 06-03]: Wyoming protocol uses byte-by-byte readJsonLine() + readNBytes(N) to avoid BufferedReader consuming binary PCM payloads after JSONL headers
 - [Phase 06-03]: Profanity filter checks firstName/lastName/phoneticName individually in RacerProfileService.updateProfile() (no displayName field on User entity)
+- [Phase 06-04]: RaceStatusChangedEvent (new Spring ApplicationEvent) published from RaceStateMachineService.transition() — decouples audio services from state machine via event bus
+- [Phase 06-04]: AudioPreGenerationService uses EntryRepository+UserRepository (not RaceEntry navigation) because RaceEntry is a flat join table without JPA associations
+- [Phase 06-04]: countdownIntervals stored within existing audio_settings JSONB column; no V24 migration column needed
 
 ### Pending Todos
 
@@ -104,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-26T20:56:29.442Z
-Stopped at: Completed 05-05-PLAN.md
+Last session: 2026-04-28T21:35:00Z
+Stopped at: Completed 06-04-PLAN.md
 Resume file: None
