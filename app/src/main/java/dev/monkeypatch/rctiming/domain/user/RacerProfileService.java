@@ -1,10 +1,13 @@
 package dev.monkeypatch.rctiming.domain.user;
 
+import dev.monkeypatch.rctiming.api.racer.UserProfileUpdatedEvent;
 import dev.monkeypatch.rctiming.api.racer.dto.ClassRatingDto;
 import dev.monkeypatch.rctiming.api.racer.dto.MembershipDto;
 import dev.monkeypatch.rctiming.api.racer.dto.RacerProfileDto;
 import dev.monkeypatch.rctiming.api.racer.dto.UpdateRacerProfileRequest;
+import dev.monkeypatch.rctiming.infrastructure.profanity.ProfanityFilter;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,13 +21,19 @@ public class RacerProfileService {
     private final UserRepository userRepository;
     private final UserGoverningBodyMembershipRepository membershipRepository;
     private final UserClassRatingRepository classRatingRepository;
+    private final ProfanityFilter profanityFilter;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RacerProfileService(UserRepository userRepository,
                                 UserGoverningBodyMembershipRepository membershipRepository,
-                                UserClassRatingRepository classRatingRepository) {
+                                UserClassRatingRepository classRatingRepository,
+                                ProfanityFilter profanityFilter,
+                                ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.membershipRepository = membershipRepository;
         this.classRatingRepository = classRatingRepository;
+        this.profanityFilter = profanityFilter;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -43,6 +52,18 @@ public class RacerProfileService {
     public RacerProfileDto updateProfile(Long userId, UpdateRacerProfileRequest req) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
+
+        // Profanity check before applying changes (AUDIO-14)
+        if (req.firstName() != null && profanityFilter.isBlocked(req.firstName())) {
+            throw new IllegalArgumentException("First name contains inappropriate content");
+        }
+        if (req.lastName() != null && profanityFilter.isBlocked(req.lastName())) {
+            throw new IllegalArgumentException("Last name contains inappropriate content");
+        }
+        if (req.phoneticName() != null && profanityFilter.isBlocked(req.phoneticName())) {
+            throw new IllegalArgumentException("Phonetic name contains inappropriate content");
+        }
+
         if (req.firstName() != null) user.setFirstName(req.firstName());
         if (req.lastName() != null) user.setLastName(req.lastName());
         if (req.phoneNumber() != null) user.setPhoneNumber(req.phoneNumber());
@@ -51,6 +72,12 @@ public class RacerProfileService {
         if (req.phoneticName() != null) user.setPhoneticName(req.phoneticName());
         user.setUpdatedAt(Instant.now());
         userRepository.save(user);
+
+        // Publish event for async name clip regeneration (AUDIO-08)
+        String displayName = user.getFirstName() + " " + user.getLastName();
+        eventPublisher.publishEvent(new UserProfileUpdatedEvent(
+                this, user.getId(), displayName, user.getPhoneticName(), user.getPreferredVoiceId()));
+
         List<MembershipDto> memberships = membershipRepository.findByUserId(userId).stream()
                 .map(MembershipDto::from)
                 .toList();
