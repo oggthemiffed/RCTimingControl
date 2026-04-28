@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning_complete
-stopped_at: Phase 06 planning complete — 6 plans approved, ready for execution
-last_updated: "2026-04-28T19:30:00.000Z"
+status: executing
+stopped_at: "Completed 06-03-PLAN.md — Piper TTS infrastructure complete"
+last_updated: "2026-04-28T20:16:24Z"
 last_activity: 2026-04-28
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 36
-  completed_plans: 30
-  percent: 83
+  completed_plans: 33
+  percent: 86
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-15)
 
 **Core value:** Racers can enter events online and manage their own car/transponder details, while officials run a full race meeting from any Windows or Linux machine — with live timing fed directly from AMB/MyLaps hardware via a local forwarder agent to a cloud-hosted service.
-**Current focus:** Phase 05 — live-timing-forwarder
+**Current focus:** Phase 06 — audio-practice
 
 ## Current Position
 
-Phase: 05 (live-timing-forwarder) — VERIFIED (human UAT pending)
-Plan: 5 of 5
-Status: Phase complete — ready for verification
-Last activity: 2026-04-26
+Phase: 06 (audio-practice) — executing
+Plan: 3 of 6
+Status: Plan 03 complete — Piper TTS infrastructure built
+Last activity: 2026-04-28
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -59,7 +59,9 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05 P02 | 14 | 2 tasks | 24 files |
 | Phase 05 P03 | 12m | 2 tasks | 10 files |
 | Phase 05 P04 | 27m | 3 tasks | 21 files |
-| Phase 05 P05 | 14m | 3 tasks | 13 files |
+| Phase 06 P01 | ~5m | 1 task | 3 files |
+| Phase 06 P02 | ~4m | 3 tasks | 13 files |
+| Phase 06 P03 | ~20m | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -80,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 05]: UnknownTransponderLinkAudit in forwarder package (singular table) separate from domain.race.UnknownTransponderLink (plural table from V18); preserves CTRL-06 vs TIMING-08 separation
 - [Phase 05]: AbstractIntegrationTest uses app.grpc.port=0 to prevent port conflicts when multiple Spring test contexts start ForwarderGrpcServer simultaneously
 - [Phase 05]: Radix UI Select mocked with native <select> in tests to avoid jsdom portal issues; vitest setup file added; zodResolver type cast applied to pre-existing championship form TypeScript errors
+- [Phase 06-03]: assembleWav() made public (not package-private) because audio test package differs from infrastructure.tts production package
+- [Phase 06-03]: Wyoming protocol uses byte-by-byte readJsonLine() + readNBytes(N) to avoid BufferedReader consuming binary PCM payloads after JSONL headers
+- [Phase 06-03]: Profanity filter checks firstName/lastName/phoneticName individually in RacerProfileService.updateProfile() (no displayName field on User entity)
 
 ### Pending Todos
 
