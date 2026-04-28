@@ -63,7 +63,8 @@ export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
               <TableHead className="text-right">Laps</TableHead>
               <TableHead className="text-right">Last Lap</TableHead>
               <TableHead className="text-right">Best Lap</TableHead>
-              <TableHead className="text-right">Gap</TableHead>
+              <TableHead className="text-right">Interval</TableHead>
+              <TableHead className="text-right">Leader</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -92,6 +93,9 @@ export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
                 <TableCell className="text-right font-mono">{row.lapsCompleted}</TableCell>
                 <TableCell className="text-right font-mono">{fmtMs(row.lastLapMs)}</TableCell>
                 <TableCell className="text-right font-mono">{fmtMs(row.bestLapMs)}</TableCell>
+                <TableCell className="text-right font-mono text-muted-foreground">
+                  {row.position === 1 ? '—' : fmtMs(row.gapToAheadMs)}
+                </TableCell>
                 <TableCell className="text-right font-mono text-muted-foreground">
                   {row.position === 1 ? '—' : fmtMs(row.gapToLeaderMs)}
                 </TableCell>
