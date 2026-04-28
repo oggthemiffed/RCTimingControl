@@ -1,0 +1,248 @@
+package dev.monkeypatch.rctiming.infrastructure.tts;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import java.io.*;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+/**
+ * Client for Piper TTS via Wyoming TCP protocol (port 10200).
+ * <p>
+ * Protocol exchange:
+ * <pre>
+ *   → {"type":"synthesize","data":{"text":"...","voice":{"name":"..."}}}\n
+ *   ← {"type":"audio-start","data":{"rate":22050,"width":2,"channels":1}}\n
+ *   ← {"type":"audio-chunk","data":{...},"payload_length":N}\n  [N bytes raw PCM]
+ *   ← ... (repeated)
+ *   ← {"type":"audio-stop"}\n
+ * </pre>
+ */
+@Component
+public class PiperTtsClient {
+
+    private static final Logger log = LoggerFactory.getLogger(PiperTtsClient.class);
+
+    private final TtsProperties properties;
+    private final ObjectMapper objectMapper;
+
+    public PiperTtsClient(TtsProperties properties, ObjectMapper objectMapper) {
+        this.properties = properties;
+        this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Synthesize text to WAV bytes using Piper Wyoming protocol.
+     *
+     * @param text      text to synthesize
+     * @param voiceName Piper voice model name (e.g. "en_GB-alan-medium"), or null to use default
+     * @return WAV bytes (44-byte header + PCM data)
+     * @throws TtsUnavailableException if TTS is disabled or connection fails
+     * @throws IllegalArgumentException if text is null or blank
+     */
+    public byte[] synthesize(String text, String voiceName) {
+        if (!properties.enabled()) {
+            throw new TtsUnavailableException("TTS is disabled");
+        }
+        if (text == null || text.isBlank()) {
+            throw new IllegalArgumentException("Text cannot be empty");
+        }
+
+        String[] hostPort = splitHostPort(properties.endpoint());
+        String host = hostPort[0];
+        int port = Integer.parseInt(hostPort[1]);
+
+        String effectiveVoice = (voiceName != null && !voiceName.isBlank())
+                ? voiceName
+                : properties.defaultVoice();
+
+        try (Socket socket = new Socket(host, port)) {
+            OutputStream rawOut = socket.getOutputStream();
+            InputStream rawIn = socket.getInputStream();
+
+            // Send synthesize event as JSONL
+            Map<String, Object> event = Map.of(
+                    "type", "synthesize",
+                    "data", Map.of(
+                            "text", text,
+                            "voice", Map.of("name", effectiveVoice)
+                    )
+            );
+            String json = objectMapper.writeValueAsString(event) + "\n";
+            rawOut.write(json.getBytes(StandardCharsets.UTF_8));
+            rawOut.flush();
+
+            // Read response frames
+            ByteArrayOutputStream pcmBuffer = new ByteArrayOutputStream();
+            int sampleRate = 22050;
+            int sampleWidth = 2;
+            int channels = 1;
+
+            while (true) {
+                String line = readJsonLine(rawIn);
+                if (line == null || line.isBlank()) {
+                    break;
+                }
+
+                JsonNode node = objectMapper.readTree(line);
+                String type = node.get("type").asText();
+
+                switch (type) {
+                    case "audio-start" -> {
+                        JsonNode data = node.path("data");
+                        sampleRate = data.path("rate").asInt(22050);
+                        sampleWidth = data.path("width").asInt(2);
+                        channels = data.path("channels").asInt(1);
+                    }
+                    case "audio-chunk" -> {
+                        int payloadLength = node.path("payload_length").asInt(0);
+                        if (payloadLength > 0) {
+                            byte[] payload = rawIn.readNBytes(payloadLength);
+                            pcmBuffer.write(payload);
+                        }
+                    }
+                    case "audio-stop" -> {
+                        // Done
+                    }
+                    default -> log.debug("Ignoring unknown Wyoming event type: {}", type);
+                }
+
+                if ("audio-stop".equals(type)) {
+                    break;
+                }
+            }
+
+            return assembleWav(pcmBuffer.toByteArray(), sampleRate, sampleWidth, channels);
+
+        } catch (IOException e) {
+            throw new TtsUnavailableException("Failed to connect to Piper TTS at " + properties.endpoint()
+                    + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * List available voices by sending a describe event to Piper.
+     * Returns empty list if Piper is unavailable.
+     */
+    public List<VoiceInfo> listVoices() {
+        if (!properties.enabled()) {
+            return Collections.emptyList();
+        }
+
+        String[] hostPort = splitHostPort(properties.endpoint());
+        String host = hostPort[0];
+        int port = Integer.parseInt(hostPort[1]);
+
+        try (Socket socket = new Socket(host, port)) {
+            OutputStream rawOut = socket.getOutputStream();
+            InputStream rawIn = socket.getInputStream();
+
+            // Send describe event
+            String json = objectMapper.writeValueAsString(Map.of("type", "describe")) + "\n";
+            rawOut.write(json.getBytes(StandardCharsets.UTF_8));
+            rawOut.flush();
+
+            // Read info response
+            String line = readJsonLine(rawIn);
+            if (line != null && !line.isBlank()) {
+                JsonNode node = objectMapper.readTree(line);
+                if ("info".equals(node.path("type").asText())) {
+                    List<VoiceInfo> voices = new ArrayList<>();
+                    JsonNode voicesNode = node.path("data").path("voices");
+                    if (voicesNode.isArray()) {
+                        for (JsonNode v : voicesNode) {
+                            String name = v.path("name").asText();
+                            boolean isDefault = name.equals(properties.defaultVoice());
+                            voices.add(new VoiceInfo(name, formatVoiceLabel(name), isDefault));
+                        }
+                    }
+                    return voices;
+                }
+            }
+            return Collections.emptyList();
+
+        } catch (IOException e) {
+            log.warn("Failed to list Piper voices from {}: {}", properties.endpoint(), e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Assemble a WAV file from raw PCM data.
+     * Visible for testing.
+     */
+    public byte[] assembleWav(byte[] pcmData, int sampleRate, int sampleWidth, int channels) {
+        int byteRate = sampleRate * channels * sampleWidth;
+        int blockAlign = channels * sampleWidth;
+        int dataSize = pcmData.length;
+        int chunkSize = 36 + dataSize;
+
+        ByteBuffer header = ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN);
+        header.put("RIFF".getBytes(StandardCharsets.US_ASCII));
+        header.putInt(chunkSize);
+        header.put("WAVE".getBytes(StandardCharsets.US_ASCII));
+        header.put("fmt ".getBytes(StandardCharsets.US_ASCII));
+        header.putInt(16);                          // PCM subchunk1 size
+        header.putShort((short) 1);                 // audio format: PCM
+        header.putShort((short) channels);
+        header.putInt(sampleRate);
+        header.putInt(byteRate);
+        header.putShort((short) blockAlign);
+        header.putShort((short) (sampleWidth * 8)); // bits per sample
+        header.put("data".getBytes(StandardCharsets.US_ASCII));
+        header.putInt(dataSize);
+
+        byte[] result = new byte[44 + dataSize];
+        System.arraycopy(header.array(), 0, result, 0, 44);
+        System.arraycopy(pcmData, 0, result, 44, dataSize);
+        return result;
+    }
+
+    /**
+     * Read a single newline-terminated UTF-8 line from the stream.
+     * Does NOT consume binary payload bytes — caller must do that separately
+     * when payload_length > 0.
+     */
+    private String readJsonLine(InputStream is) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(256);
+        int b;
+        while ((b = is.read()) != -1) {
+            if (b == '\n') {
+                break;
+            }
+            bos.write(b);
+        }
+        return bos.toString(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Split "host:port" string into [host, port].
+     * Defaults to port 10200 if not specified.
+     */
+    private String[] splitHostPort(String endpoint) {
+        int lastColon = endpoint.lastIndexOf(':');
+        if (lastColon > 0) {
+            return new String[]{endpoint.substring(0, lastColon), endpoint.substring(lastColon + 1)};
+        }
+        return new String[]{endpoint, "10200"};
+    }
+
+    private String formatVoiceLabel(String voiceId) {
+        // Convert "en_GB-alan-medium" → "Alan (en-GB, medium)"
+        String[] parts = voiceId.split("-");
+        if (parts.length >= 2) {
+            String lang = parts[0].replace("_", "-");
+            String name = Character.toUpperCase(parts[1].charAt(0)) + parts[1].substring(1);
+            String quality = parts.length >= 3 ? ", " + parts[2] : "";
+            return name + " (" + lang + quality + ")";
+        }
+        return voiceId;
+    }
+}

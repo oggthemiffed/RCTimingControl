@@ -1,15 +1,194 @@
 package dev.monkeypatch.rctiming.audio;
 
-import org.junit.jupiter.api.Disabled;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.infrastructure.tts.PiperTtsClient;
+import dev.monkeypatch.rctiming.infrastructure.tts.TtsProperties;
+import dev.monkeypatch.rctiming.infrastructure.tts.TtsUnavailableException;
+import dev.monkeypatch.rctiming.infrastructure.tts.VoiceInfo;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.fail;
 
-@Disabled("Wave 1 — implement in Plan 03")
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 class PiperTtsClientTest {
-    @Test void synthesize_validText_returnsWavBytes() { fail("Plan 03"); }
-    @Test void synthesize_emptyText_throwsIllegalArgumentException() { fail("Plan 03"); }
-    @Test void synthesize_piperUnavailable_throwsTtsUnavailableException() { fail("Plan 03"); }
-    @Test void synthesize_correctVoiceName_sendsInWyomingEvent() { fail("Plan 03"); }
-    @Test void assembleWav_validPcm_returns44ByteHeaderPlusPcm() { fail("Plan 03"); }
-    @Test void describe_returnsList_ofAvailableVoices() { fail("Plan 03"); }
+
+    private ServerSocket serverSocket;
+    private ExecutorService executor;
+    private int port;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @BeforeEach
+    void setUp() throws IOException {
+        serverSocket = new ServerSocket(0); // bind to any free port
+        port = serverSocket.getLocalPort();
+        executor = Executors.newSingleThreadExecutor();
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        serverSocket.close();
+        executor.shutdownNow();
+    }
+
+    private PiperTtsClient clientFor(boolean enabled) {
+        TtsProperties props = new TtsProperties("localhost:" + port, "en_GB-alan-medium", enabled);
+        return new PiperTtsClient(props, objectMapper);
+    }
+
+    /** Serve a minimal Wyoming synthesize response in a background thread. */
+    private void serveSynthesizeResponse(byte[] pcmData) {
+        executor.submit(() -> {
+            try (Socket client = serverSocket.accept()) {
+                // Discard the incoming JSON line
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
+                reader.readLine();
+
+                PrintWriter writer = new PrintWriter(
+                        new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8), false);
+                OutputStream rawOut = client.getOutputStream();
+
+                // audio-start
+                writer.print("{\"type\":\"audio-start\",\"data\":{\"rate\":22050,\"width\":2,\"channels\":1}}\n");
+                writer.flush();
+
+                // audio-chunk with binary payload
+                String chunkHeader = "{\"type\":\"audio-chunk\",\"data\":{},\"payload_length\":" + pcmData.length + "}\n";
+                rawOut.write(chunkHeader.getBytes(StandardCharsets.UTF_8));
+                rawOut.write(pcmData);
+                rawOut.flush();
+
+                // audio-stop
+                rawOut.write("{\"type\":\"audio-stop\"}\n".getBytes(StandardCharsets.UTF_8));
+                rawOut.flush();
+            } catch (IOException e) {
+                // test server closed — expected
+            }
+        });
+    }
+
+    @Test
+    void synthesize_validText_returnsWavBytes() throws Exception {
+        byte[] fakePcm = new byte[]{0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+        serveSynthesizeResponse(fakePcm);
+
+        PiperTtsClient client = clientFor(true);
+        byte[] wav = client.synthesize("Hello", "en_GB-alan-medium");
+
+        assertNotNull(wav);
+        assertEquals(44 + fakePcm.length, wav.length, "WAV = 44-byte header + PCM data");
+        // Verify RIFF marker
+        assertEquals('R', wav[0]);
+        assertEquals('I', wav[1]);
+        assertEquals('F', wav[2]);
+        assertEquals('F', wav[3]);
+        // Verify WAVE marker at offset 8
+        assertEquals('W', wav[8]);
+        assertEquals('A', wav[9]);
+        assertEquals('V', wav[10]);
+        assertEquals('E', wav[11]);
+    }
+
+    @Test
+    void synthesize_emptyText_throwsIllegalArgumentException() {
+        PiperTtsClient client = clientFor(true);
+        assertThrows(IllegalArgumentException.class, () -> client.synthesize("", "en_GB-alan-medium"));
+        assertThrows(IllegalArgumentException.class, () -> client.synthesize("   ", "en_GB-alan-medium"));
+        assertThrows(IllegalArgumentException.class, () -> client.synthesize(null, "en_GB-alan-medium"));
+    }
+
+    @Test
+    void synthesize_piperUnavailable_throwsTtsUnavailableException() {
+        // Close the server so no connection can be made
+        try { serverSocket.close(); } catch (IOException ignored) {}
+        PiperTtsClient client = clientFor(true);
+        assertThrows(TtsUnavailableException.class, () -> client.synthesize("Hello", null));
+    }
+
+    @Test
+    void synthesize_whenDisabled_throwsTtsUnavailableException() {
+        PiperTtsClient client = clientFor(false);
+        assertThrows(TtsUnavailableException.class, () -> client.synthesize("Hello", "en_GB-alan-medium"));
+    }
+
+    @Test
+    void synthesize_correctVoiceName_sendsInWyomingEvent() throws Exception {
+        byte[] fakePcm = new byte[]{0x10, 0x20};
+        // Capture request in background thread
+        final String[] captured = {null};
+        executor.submit(() -> {
+            try (Socket client = serverSocket.accept()) {
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
+                captured[0] = reader.readLine();
+
+                OutputStream rawOut = client.getOutputStream();
+                rawOut.write("{\"type\":\"audio-start\",\"data\":{\"rate\":22050,\"width\":2,\"channels\":1}}\n".getBytes(StandardCharsets.UTF_8));
+                String chunkHeader = "{\"type\":\"audio-chunk\",\"data\":{},\"payload_length\":" + fakePcm.length + "}\n";
+                rawOut.write(chunkHeader.getBytes(StandardCharsets.UTF_8));
+                rawOut.write(fakePcm);
+                rawOut.write("{\"type\":\"audio-stop\"}\n".getBytes(StandardCharsets.UTF_8));
+                rawOut.flush();
+            } catch (IOException ignored) {}
+        });
+
+        PiperTtsClient client = clientFor(true);
+        client.synthesize("Test racer", "en_GB-cori-medium");
+
+        // Give thread time to capture
+        Thread.sleep(100);
+        assertNotNull(captured[0], "Should have captured the synthesize request");
+        assertTrue(captured[0].contains("en_GB-cori-medium"), "Voice name should appear in request");
+        assertTrue(captured[0].contains("synthesize"), "Event type should be 'synthesize'");
+    }
+
+    @Test
+    void assembleWav_validPcm_returns44ByteHeaderPlusPcm() {
+        PiperTtsClient client = clientFor(true);
+        byte[] pcm = new byte[100];
+        byte[] wav = client.assembleWav(pcm, 22050, 2, 1);
+
+        assertEquals(144, wav.length, "Expected 44 header bytes + 100 PCM bytes");
+
+        // Check RIFF/WAVE markers
+        assertArrayEquals(new byte[]{'R', 'I', 'F', 'F'}, new byte[]{wav[0], wav[1], wav[2], wav[3]});
+        assertArrayEquals(new byte[]{'W', 'A', 'V', 'E'}, new byte[]{wav[8], wav[9], wav[10], wav[11]});
+        assertArrayEquals(new byte[]{'f', 'm', 't', ' '}, new byte[]{wav[12], wav[13], wav[14], wav[15]});
+        assertArrayEquals(new byte[]{'d', 'a', 't', 'a'}, new byte[]{wav[36], wav[37], wav[38], wav[39]});
+    }
+
+    @Test
+    void describe_returnsList_ofAvailableVoices() throws Exception {
+        executor.submit(() -> {
+            try (Socket client = serverSocket.accept()) {
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
+                reader.readLine(); // consume describe request
+
+                String infoResponse = "{\"type\":\"info\",\"data\":{\"voices\":[" +
+                        "{\"name\":\"en_GB-alan-medium\"}," +
+                        "{\"name\":\"en_GB-cori-high\"}" +
+                        "]}}\n";
+                client.getOutputStream().write(infoResponse.getBytes(StandardCharsets.UTF_8));
+                client.getOutputStream().flush();
+            } catch (IOException ignored) {}
+        });
+
+        PiperTtsClient client = clientFor(true);
+        List<VoiceInfo> voices = client.listVoices();
+
+        assertEquals(2, voices.size());
+        assertEquals("en_GB-alan-medium", voices.get(0).voiceId());
+        assertTrue(voices.get(0).isDefault(), "en_GB-alan-medium should be the default");
+        assertFalse(voices.get(1).isDefault());
+    }
 }
