@@ -1,0 +1,33 @@
+# Base profanity blocklist for RCTiming
+# One word per line — case-insensitive substring match
+# Lines starting with # are comments
+# Admin can add club-specific terms via the admin panel (profanity_blocklist table)
+
+ass
+asshole
+bastard
+bitch
+bollocks
+bullshit
+cock
+crap
+cunt
+dick
+douchebag
+fag
+faggot
+fuck
+goddamn
+jackass
+motherfucker
+nigger
+piss
+prick
+pussy
+shit
+shite
+slut
+twat
+wank
+wanker
+whore
