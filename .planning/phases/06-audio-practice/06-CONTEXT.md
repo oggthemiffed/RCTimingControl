@@ -28,6 +28,8 @@ Phase 6 delivers two capabilities on top of the running live-timing system:
 - AUDIO-09: When race transitions to `GRID`, server pre-generates all predictable clips (countdown intervals, stagger car-number calls, finish announcements) and caches in MinIO.
 - AUDIO-10: Race control client fetches and locally caches all clips for the current race during grid preparation.
 - AUDIO-13: Voice selection from Piper's available voice models. Admin configures system default voice (e.g. `en_GB-alan-medium`). Racer can select a preferred voice from available models. Voice preference stored per racer server-side.
+- **Preview flow**: Racer profile page has a "Preview" button. When clicked, the browser calls a backend endpoint (`GET /api/racer/me/name-clip?voice={voiceId}`) which returns (or generates on demand) the `.wav` clip for that voice. The browser plays it via HTML5 `<audio>`. This lets the racer hear each voice option before saving their preference.
+- **Clip regeneration on voice change**: When a racer saves a new voice preference, the existing name clip is invalidated and Piper regenerates it immediately for the new voice. The clip is stored under a voice-scoped key (see Specifics).
 - Voice model: English voices from Rhasspy HuggingFace repository (~50MB model file, bundled with Docker image config). `en_GB-alan-medium` as the default for a UK club.
 
 ### Phonetic Spelling Field
@@ -113,7 +115,7 @@ Phase 6 delivers two capabilities on top of the running live-timing system:
 ## Specific Implementation Notes
 
 - **Piper Docker image**: Use `rhasspy/wyoming-piper`. Mount voice model files as a volume. Expose HTTP port. Spring `RestTemplate`/`WebClient` calls it synchronously for clip generation.
-- **Clip naming in MinIO**: Use a deterministic key scheme, e.g. `audio/racer/{racerId}/name.wav` and `audio/race/{raceId}/countdown-{seconds}.wav` so clips can be checked for existence before regenerating.
+- **Clip naming in MinIO**: Include voice ID in the key to avoid stale clips after voice changes, e.g. `audio/racer/{racerId}/name-{voiceId}.wav` and `audio/race/{raceId}/countdown-{seconds}-{voiceId}.wav`. On-demand generation for preview: if the clip for the requested voice doesn't exist yet, generate it synchronously and cache it.
 - **Web Speech API fallback**: Add a user-visible "Test audio" button in race control settings to verify browser synthesis works (Chrome on Linux can be silent until first user interaction).
 - **Practice vs Race in STOMP**: Practice session will need its own STOMP topic pattern, e.g. `/topic/practice/{sessionId}/timing`. Do NOT reuse the race topic — different entity lifecycle.
 - **Profanity library**: backend profanity check — use a simple Java word-list + regex matcher. A plain word-list is sufficient for a club tool. No heavy dependency needed.
