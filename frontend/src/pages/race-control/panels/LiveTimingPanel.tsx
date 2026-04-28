@@ -1,5 +1,6 @@
 import { useLiveTiming } from '@/hooks/race-control/useLiveTiming';
 import { useLappedBadge } from '@/hooks/race-control/useLappedBadge';
+import { useLapFlash } from '@/hooks/race-control/useLapFlash';
 import type { RunOrderItemDto } from '@/lib/raceControlApi';
 import {
   Table,
@@ -31,6 +32,7 @@ function fmtMs(ms: number | null): string {
 export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
   const { rows: sorted, wsStatus } = useLiveTiming(raceId);
   const lappedEntryIds = useLappedBadge(sorted);
+  const lapFlash = useLapFlash(sorted);
 
   return (
     <div className="flex flex-col gap-3">
@@ -65,10 +67,18 @@ export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((row) => (
+            {sorted.map((row) => {
+              const flash = lapFlash.get(row.entryId);
+              return (
               <TableRow
                 key={row.entryId}
-                className={cn(highlightEntryIds?.has(row.entryId) && 'bg-chart-3/20')}
+                className={cn(
+                  'transition-colors duration-500',
+                  flash === 'best'     && 'bg-purple-500/30',
+                  flash === 'on-pace'  && 'bg-green-500/30',
+                  flash === 'slow'     && 'bg-red-500/30',
+                  !flash && highlightEntryIds?.has(row.entryId) && 'bg-chart-3/20',
+                )}
               >
                 <TableCell className="font-mono font-semibold">{row.position}</TableCell>
                 <TableCell>
@@ -86,7 +96,8 @@ export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
                   {row.position === 1 ? '—' : fmtMs(row.gapToLeaderMs)}
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       )}

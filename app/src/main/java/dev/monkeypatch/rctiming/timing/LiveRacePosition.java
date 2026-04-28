@@ -11,6 +11,8 @@ public class LiveRacePosition {
     long lastPassingTimeMs;
     Long lastLapMs;
     Long bestLapMs;
+    int lapCount;
+    long lapSumMs;
 
     public long getEntryId() { return entryId; }
     public void setEntryId(long entryId) { this.entryId = entryId; }
@@ -26,4 +28,17 @@ public class LiveRacePosition {
 
     public Long getBestLapMs() { return bestLapMs; }
     public void setBestLapMs(Long bestLapMs) { this.bestLapMs = bestLapMs; }
+
+    public int getLapCount() { return lapCount; }
+    public long getLapSumMs() { return lapSumMs; }
+
+    public void accumulateLap(long lapMs) {
+        lapCount++;
+        lapSumMs += lapMs;
+    }
+
+    /** Running average of all valid lap times, or null if no laps recorded yet. */
+    public Long getAvgLapMs() {
+        return lapCount > 0 ? lapSumMs / lapCount : null;
+    }
 }

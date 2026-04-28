@@ -77,11 +77,12 @@ public class LiveRaceState {
         pos.setLapsCompleted(pos.getLapsCompleted() + 1);
         pos.setLastPassingTimeMs(passingTimeMs);
 
-        // Update best lap and last lap duration if we have a previous passing time
+        // Update best lap, last lap duration, and running average if we have a previous passing time
         if (prevPassingTime > 0) {
             long lapMs = passingTimeMs - prevPassingTime;
             if (lapMs > 0) {
                 pos.setLastLapMs(lapMs);
+                pos.accumulateLap(lapMs);
                 Long currentBest = pos.getBestLapMs();
                 if (currentBest == null || lapMs < currentBest) {
                     pos.setBestLapMs(lapMs);
@@ -137,6 +138,7 @@ public class LiveRaceState {
                     pos.getLastPassingTimeMs(),
                     pos.getLastLapMs(),
                     pos.getBestLapMs(),
+                    pos.getAvgLapMs(),
                     gapToLeader,
                     gapToAhead
             ));
@@ -209,6 +211,7 @@ public class LiveRaceState {
             long lapMs = passingTimeMs - prevPassingTime;
             if (lapMs > 0) {
                 pos.setLastLapMs(lapMs);
+                pos.accumulateLap(lapMs);
                 Long currentBest = pos.getBestLapMs();
                 if (currentBest == null || lapMs < currentBest) {
                     pos.setBestLapMs(lapMs);

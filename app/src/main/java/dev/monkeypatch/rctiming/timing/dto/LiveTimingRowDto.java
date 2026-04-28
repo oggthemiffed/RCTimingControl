@@ -8,6 +8,7 @@ public record LiveTimingRowDto(
         long lastPassingTimeMs,
         Long lastLapMs,
         Long bestLapMs,
+        Long avgLapMs,
         Long gapToLeaderMs,
         Long gapToAheadMs
 ) {

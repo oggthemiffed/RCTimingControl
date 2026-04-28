@@ -76,6 +76,7 @@ export type LiveTimingRowDto = {
   lastPassingTimeMs: number;
   lastLapMs: number | null;
   bestLapMs: number | null;
+  avgLapMs: number | null;
   gapToLeaderMs: number | null;
   gapToAheadMs: number | null;
 };
