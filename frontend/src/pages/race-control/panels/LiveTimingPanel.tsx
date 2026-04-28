@@ -94,10 +94,14 @@ export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
                 <TableCell className="text-right font-mono">{fmtMs(row.lastLapMs)}</TableCell>
                 <TableCell className="text-right font-mono">{fmtMs(row.bestLapMs)}</TableCell>
                 <TableCell className="text-right font-mono text-muted-foreground">
-                  {row.position === 1 ? '—' : fmtMs(row.gapToAheadMs)}
+                  {row.position === 1 ? '—'
+                    : row.intervalLapsDown > 0 ? `+${row.intervalLapsDown} Lap${row.intervalLapsDown > 1 ? 's' : ''}`
+                    : fmtMs(row.gapToAheadMs)}
                 </TableCell>
                 <TableCell className="text-right font-mono text-muted-foreground">
-                  {row.position === 1 ? '—' : fmtMs(row.gapToLeaderMs)}
+                  {row.position === 1 ? '—'
+                    : row.lapsDown > 0 ? `+${row.lapsDown} Lap${row.lapsDown > 1 ? 's' : ''}`
+                    : fmtMs(row.gapToLeaderMs)}
                 </TableCell>
               </TableRow>
               );
