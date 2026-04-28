@@ -19,14 +19,16 @@ Phase 6 delivers two capabilities on top of the running live-timing system:
 <decisions>
 ## Implementation Decisions
 
-### TTS Architecture — BROWSER ONLY (LOCKED)
-- **Web Speech API only** — zero server-side TTS provider. No Google Cloud, AWS Polly, Azure, or OpenAI TTS integration.
-- All speech synthesis happens in the race control browser via `window.speechSynthesis`.
-- AUDIO-08 interpretation: the server stores the phonetic spelling field; the browser performs synthesis using it. No audio clip files are generated or stored server-side.
-- AUDIO-09 interpretation: "pre-generate" means the browser pre-warms synthesis for all race entries during GRID state (pre-issue synthesis calls with volume=0 or cache `SpeechSynthesisUtterance` objects). No server clip generation.
-- AUDIO-10 interpretation: no HTTP clip serving needed. Client-side caching of utterance objects.
-- AUDIO-13 interpretation: voice preference is a stored racer preference. Browser enumerates available voices via `speechSynthesis.getVoices()`; racer selects preferred voice name; preference is persisted server-side and sent to the client with the race grid data.
-- MinIO (already in stack) is available if a future phase adds server-side TTS; no audio files stored in Phase 6.
+### TTS Architecture — PIPER TTS (LOCAL, FREE) + WEB SPEECH API FALLBACK (LOCKED)
+- **Piper TTS** as a Docker sidecar (added to `docker-compose.yml`). Free, fully offline, zero running cost.
+- Image: `rhasspy/wyoming-piper` — Spring calls it via HTTP to generate `.wav` clips.
+- Generated clips stored in MinIO (already in stack). Served via HTTP to the race control browser (AUDIO-10).
+- **Fallback**: Web Speech API (`window.speechSynthesis`) used if a clip is unavailable at playback time (AUDIO-11). Non-blocking — never prevents a race from running.
+- AUDIO-08: When a racer profile is saved, Spring calls Piper to generate a name clip and stores it in MinIO. Regenerated on display name or phonetic spelling change.
+- AUDIO-09: When race transitions to `GRID`, server pre-generates all predictable clips (countdown intervals, stagger car-number calls, finish announcements) and caches in MinIO.
+- AUDIO-10: Race control client fetches and locally caches all clips for the current race during grid preparation.
+- AUDIO-13: Voice selection from Piper's available voice models. Admin configures system default voice (e.g. `en_GB-alan-medium`). Racer can select a preferred voice from available models. Voice preference stored per racer server-side.
+- Voice model: English voices from Rhasspy HuggingFace repository (~50MB model file, bundled with Docker image config). `en_GB-alan-medium` as the default for a UK club.
 
 ### Phonetic Spelling Field
 - Optional field on racer profile (AUDIO-12). Stored server-side.
@@ -110,17 +112,18 @@ Phase 6 delivers two capabilities on top of the running live-timing system:
 <specifics>
 ## Specific Implementation Notes
 
-- **Web Speech API reliability**: `speechSynthesis` has known issues in some browsers (Chrome on Linux can be silent until interacted with). The plan should include a user-visible "Test audio" button to verify synthesis works before a race starts.
-- **Voice enumeration timing**: `speechSynthesis.getVoices()` is async on first call in Chrome. Use `voiceschanged` event. Factor this into the voice selection UI.
+- **Piper Docker image**: Use `rhasspy/wyoming-piper`. Mount voice model files as a volume. Expose HTTP port. Spring `RestTemplate`/`WebClient` calls it synchronously for clip generation.
+- **Clip naming in MinIO**: Use a deterministic key scheme, e.g. `audio/racer/{racerId}/name.wav` and `audio/race/{raceId}/countdown-{seconds}.wav` so clips can be checked for existence before regenerating.
+- **Web Speech API fallback**: Add a user-visible "Test audio" button in race control settings to verify browser synthesis works (Chrome on Linux can be silent until first user interaction).
 - **Practice vs Race in STOMP**: Practice session will need its own STOMP topic pattern, e.g. `/topic/practice/{sessionId}/timing`. Do NOT reuse the race topic — different entity lifecycle.
-- **Profanity library**: backend profanity check via a Java library (e.g. `com.vdurmont:emoji-java` is not right — look for a dedicated Java profanity/content filter, or a simple word-list implementation). Keep it simple — a plain word-list + regex matcher is sufficient for a club tool.
+- **Profanity library**: backend profanity check — use a simple Java word-list + regex matcher. A plain word-list is sufficient for a club tool. No heavy dependency needed.
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-- Full server-side TTS integration (Google Cloud TTS, AWS Polly, etc.) — the MinIO storage is ready if this is added in a future phase. Out of scope for Phase 6.
+- Paid cloud TTS providers (Google Cloud TTS, AWS Polly, etc.) — Piper covers quality needs at zero cost. Could be added as an alternative `TtsProvider` implementation in a future phase.
 - Audio playback logging / analytics — out of scope.
 - Practice session history/archive beyond the current session — out of scope for Phase 6.
 
