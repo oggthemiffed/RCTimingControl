@@ -12,10 +12,10 @@ Seven phases deliver a complete RC club management and race timing system. The b
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Domain Foundation** - Core entities, database schema, auth, club/track/class/format config APIs
-- [ ] **Phase 2: Racer Portal** - Racer self-service (profile, cars, transponders), online event entry, public schedule
-- [ ] **Phase 3: Admin Panel & Event Management** - Admin event/class/entry management, event state machine, championship setup
-- [ ] **Phase 4: Race Control** - Browser-based race control client, race state machine, marshal laps, referee tools
+- [x] **Phase 1: Domain Foundation** - Core entities, database schema, auth, club/track/class/format config APIs (completed 2026-04-15)
+- [x] **Phase 2: Racer Portal** - Racer self-service (profile, cars, transponders), online event entry, public schedule (completed 2026-04-15)
+- [x] **Phase 3: Admin Panel & Event Management** - Admin event/class/entry management, event state machine, championship setup (completed 2026-04-20)
+- [x] **Phase 4: Race Control** - Browser-based race control client, race state machine, marshal laps, referee tools (completed 2026-04-24)
 - [x] **Phase 5: Live Timing & Forwarder** - AMB P3 forwarder, gRPC streaming, WebSocket live timing display (completed 2026-04-26)
 - [ ] **Phase 6: Audio & Practice** - Voice announcements (Web Speech API + TTS), open practice sessions
 - [ ] **Phase 7: Results & Championship** - Post-race result snapshots, championship standings, PDF export
@@ -147,11 +147,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Domain Foundation | 0/TBD | Not started | - |
-| 2. Racer Portal | 0/TBD | Not started | - |
-| 3. Admin Panel & Event Management | 0/6 | Not started | - |
-| 4. Race Control | 5/7 | In Progress|  |
-| 5. Live Timing & Forwarder | 5/5 | Complete   | 2026-04-26 |
+| 1. Domain Foundation | 7/7 | Complete | 2026-04-15 |
+| 2. Racer Portal | 5/5 | Complete | 2026-04-15 |
+| 3. Admin Panel & Event Management | 6/6 | Complete | 2026-04-20 |
+| 4. Race Control | 7/7 | Complete | 2026-04-24 |
+| 5. Live Timing & Forwarder | 5/5 | Complete | 2026-04-26 |
 | 6. Audio & Practice | 0/TBD | Not started | - |
 | 7. Results & Championship | 0/TBD | Not started | - |
 
