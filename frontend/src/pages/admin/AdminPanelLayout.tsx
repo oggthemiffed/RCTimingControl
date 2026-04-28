@@ -11,6 +11,7 @@ import {
   Menu,
   Flag,
   Radio,
+  Volume2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ const configGroup = [
   { to: '/admin/formats', label: 'Formats', Icon: Sliders },
   { to: '/admin/club', label: 'Club Profile', Icon: Building2 },
   { to: '/admin/categories', label: 'Car Tags', Icon: Tags },
+  { to: '/admin/audio', label: 'Audio Settings', Icon: Volume2 },
 ] as const;
 
 // ── Shared nav link style ──────────────────────────────────────────────────

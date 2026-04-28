@@ -21,15 +21,19 @@ import EventDetailPage from '@/pages/admin/events/EventDetailPage';
 import ChampionshipListPage from '@/pages/admin/championships/ChampionshipListPage';
 import ChampionshipDetailPage from '@/pages/admin/championships/ChampionshipDetailPage';
 import ClubProfilePage from '@/pages/admin/club/ClubProfilePage';
+import AdminAudioSettingsPage from '@/pages/admin/club/AdminAudioSettingsPage';
 import TracksPage from '@/pages/admin/tracks/TracksPage';
 import FormatsPage from '@/pages/admin/formats/FormatsPage';
 import CarTagCategoriesPage from '@/pages/admin/categories/CarTagCategoriesPage';
 import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
 import ForwarderTokenPage from '@/pages/admin/race-control/ForwarderTokenPage';
+import AdminRacerDetailPage from '@/pages/admin/racers/AdminRacerDetailPage';
 import RaceControlLayout from '@/pages/race-control/RaceControlLayout';
 import CockpitPage from '@/pages/race-control/CockpitPage';
 import RefereePage from '@/pages/race-control/RefereePage';
 import PrintResultsPage from '@/pages/race-control/PrintResultsPage';
+import { PracticeSessionPage } from '@/pages/race-control/PracticeSessionPage';
+import PrintPracticeResultsPage from '@/pages/race-control/PrintPracticeResultsPage';
 
 function RootLayout() {
   return (
@@ -68,6 +72,8 @@ const router = createBrowserRouter([
           { path: 'categories', element: <CarTagCategoriesPage /> },
           { path: 'race-control', element: <RaceControlSelectPage /> },
           { path: 'forwarder', element: <ForwarderTokenPage /> },
+          { path: 'audio', element: <AdminAudioSettingsPage /> },
+          { path: 'racers/:userId', element: <AdminRacerDetailPage /> },
         ],
       },
       {
@@ -97,6 +103,22 @@ const router = createBrowserRouter([
           { path: 'referee', element: <RefereePage /> },
           { path: 'results/:raceId', element: <PrintResultsPage /> },
         ],
+      },
+      {
+        path: '/race-control/practice/:sessionId',
+        element: (
+          <ProtectedRoute roles={['RACE_DIRECTOR', 'ADMIN']}>
+            <PracticeSessionPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/race-control/practice/:sessionId/print',
+        element: (
+          <ProtectedRoute roles={['RACE_DIRECTOR', 'ADMIN']}>
+            <PrintPracticeResultsPage />
+          </ProtectedRoute>
+        ),
       },
       { path: '/events', element: <EventSchedulePage /> },
       { path: '/unauthorized', element: <UnauthorizedPage /> },
