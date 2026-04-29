@@ -1,66 +1,32 @@
 ---
 phase: 04-race-state-machine
-verified: 2026-04-29T16:10:00Z
-status: gaps_found
-score: 7/10
+verified: 2026-05-02T10:30:00Z
+status: human_needed
+score: 10/10
 overrides_applied: 0
-gaps:
-  - truth: "Admin can trigger the round generator; all rounds and heats appear in correct run order"
-    status: failed
-    reason: "RoundGeneratorService.generate() is fully implemented and unit-tested but has NO HTTP API endpoint. RoundGeneratorWizard.tsx is a stub dialog saying 'rounds are generated automatically' with no actual API call."
-    artifacts:
-      - path: "app/src/main/java/dev/monkeypatch/rctiming/service/RoundGeneratorService.java"
-        issue: "generate() method exists (line 89) but no controller imports or calls it"
-      - path: "frontend/src/pages/race-control/RoundGeneratorWizard.tsx"
-        issue: "Stub dialog, no API call, no mutation — 29 lines of static UI"
-    missing:
-      - "POST /api/v1/admin/events/{eventId}/generate-rounds endpoint wired to RoundGeneratorService.generate()"
-      - "Frontend RoundGeneratorWizard must call the endpoint and show generated rounds"
-
-  - truth: "After qualifying closes, finals grids are auto-seeded from qualifying standings"
-    status: failed
-    reason: "BumpUpSeedingService.seedFinals() is implemented and unit-tested but is never called from any API controller or event handler. QualifyingStandingsService also has no HTTP endpoint."
-    artifacts:
-      - path: "app/src/main/java/dev/monkeypatch/rctiming/service/BumpUpSeedingService.java"
-        issue: "seedFinals() (line 55) only invoked from unit tests — no HTTP trigger"
-      - path: "app/src/main/java/dev/monkeypatch/rctiming/service/QualifyingStandingsService.java"
-        issue: "No controller exposes standings or triggers seeding"
-    missing:
-      - "POST /api/v1/admin/events/{eventId}/seed-finals endpoint or admin panel trigger"
-      - "QualifyingStandingsService must be called to derive the standings list before seeding"
-
-  - truth: "After each bump-up final completes, top N finishers are appended to the next final's grid; race director is alerted"
-    status: failed
-    reason: "BumpUpSeedingService.applyBumpUpResults() exists but is never called when a FINAL race transitions to FINISHED. RaceStateMachineService.applyFinishingOrderToNextRace() explicitly skips non-PRACTICE/QUALIFIER rounds (line 143). No alert mechanism exists."
-    artifacts:
-      - path: "app/src/main/java/dev/monkeypatch/rctiming/domain/race/RaceStateMachineService.java"
-        issue: "applyFinishingOrderToNextRace() returns early for non-PRACTICE/QUALIFIER rounds (line 143) — finals are never handled"
-      - path: "app/src/main/java/dev/monkeypatch/rctiming/service/BumpUpSeedingService.java"
-        issue: "applyBumpUpResults() (line 138) only called from unit tests"
-    missing:
-      - "Wire applyBumpUpResults() into state machine FINISHED transition when round type is FINAL"
-      - "Broadcast bump-up alert (e.g. STOMP or REST) so race director sees it before starting next final"
-
-  - truth: "Race director can skip to a specific race/round number from the browser"
-    status: partial
-    reason: "POST /api/v1/race-control/race/{raceId}/skip-to endpoint exists with process-local ConcurrentHashMap override, but there is no frontend client function in raceControlApi.ts, no mutation in useRaceStateMutations.ts, and no skip-to UI button in CockpitPage.tsx. The feature is backend-only and inaccessible from any browser."
-    artifacts:
-      - path: "frontend/src/lib/raceControlApi.ts"
-        issue: "No skipTo function or SkipToRaceRequest type defined"
-      - path: "frontend/src/pages/race-control/CockpitPage.tsx"
-        issue: "No skip-to button rendered in any race state branch"
-    missing:
-      - "skipTo() API function in raceControlApi.ts calling POST /api/v1/race-control/race/{raceId}/skip-to"
-      - "skipTo mutation in useRaceStateMutations and skip-to UI in CockpitPage"
+re_verification:
+  previous_status: gaps_found
+  previous_score: 7/10
+  gaps_closed:
+    - "SC-1: POST /api/v1/admin/events/{id}/generate-rounds added to EventController; RoundGeneratorWizard.tsx replaced with 204-line form wizard calling adminApi.generateRounds()"
+    - "SC-4: POST /api/v1/admin/events/{id}/seed-finals added to EventController, wired to QualifyingStandingsService.recalculateStandings() then BumpUpSeedingService.seedFinals()"
+    - "SC-5: RaceStateMachineService now handles RoundType.FINAL — new applyBumpUpPromotion() calls applyBumpUpResults() and LiveTimingHub.broadcastBumpUpAlert() on every non-A-Final completion"
+    - "CTRL-09/SC-8: skipToRace() added to raceControlApi.ts; skipTo mutation added to useRaceStateMutations.ts; 'Jump to this race' button added to CockpitPage.tsx"
+  gaps_remaining: []
+  regressions: []
+human_verification:
+  - test: "Confirm bump-up alert UX is acceptable without a frontend toast"
+    expected: "After a B/C-final completes, the race director should see some indication that bump-up promotion has occurred before they start the next final. The backend broadcasts /topic/race/{nextFinalRaceId}/bump-up-alert but no frontend component subscribes to this topic — no toast, banner, or notification is displayed. Confirm this is intentionally deferred (the plan-08 success criteria only required the STOMP send side), or raise a new gap to add the subscription."
+    why_human: "The STOMP broadcast is verifiable in code (LiveTimingHub.broadcastBumpUpAlert at line 61-62). Whether the absence of a frontend subscriber is an acceptable UX gap or a missed requirement cannot be determined programmatically — it needs a product decision."
 ---
 
 # Phase 4: Race State Machine — Verification Report
 
 **Phase Goal:** A race director can run a complete race meeting from any browser — calling the grid, starting and stopping races, applying marshal laps, and handling incidents — with all commands enforced server-side.
 
-**Verified:** 2026-04-29T16:10:00Z
-**Status:** gaps_found
-**Re-verification:** No — initial verification
+**Verified:** 2026-05-02T10:30:00Z
+**Status:** human_needed
+**Re-verification:** Yes — after gap closure plan 04-08
 
 ---
 
@@ -70,24 +36,24 @@ gaps:
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| SC-1 | Admin can configure finals per class and trigger round generator | ✗ FAILED | `RoundGeneratorService.generate()` (l.89) unreachable via HTTP; `RoundGeneratorWizard.tsx` is a stub dialog with no API call |
+| SC-1 | Admin can configure finals per class and trigger round generator | ✓ VERIFIED | `POST /api/v1/admin/events/{id}/generate-rounds` in `EventController.java` (l.90-106) calls `roundGeneratorService.generate()`; `GenerateRoundsRequest.java` DTO with `@Valid` constraints; `RoundGeneratorWizard.tsx` (204 lines) — real `useMutation` calling `adminApi.generateRounds()`, toast on success/error, invalidates `runOrder` query |
 | SC-2 | Race director can start/stop; conflicting commands rejected with HTTP 409; PENDING→GRID→RUNNING→FINISHED enforced | ✓ VERIFIED | `RaceStateMachineService` (VALID_TRANSITIONS map l.30-36); `GlobalExceptionHandler.handleStateTransition()` (l.47-50 → HTTP 409); `RaceControlControllerIT.conflictingTransitionFromSecondSession_returns409()` |
 | SC-3 | Stagger start heats use finishing order from previous round; round 1 uses entry order | ✓ VERIFIED | `RaceStateMachineService.applyFinishingOrderToNextRace()` (l.133-193) applies finishing order from PRACTICE/QUALIFIER to next race; `RoundGeneratorService.applyPreviousRoundFinishingOrder()` (l.108) |
-| SC-4 | After qualifying closes, finals grids auto-seeded from qualifying standings | ✗ FAILED | `BumpUpSeedingService.seedFinals()` implemented; no HTTP endpoint, no frontend trigger |
-| SC-5 | After bump-up final completes, top N finishers appended to next final; race director alerted | ✗ FAILED | `BumpUpSeedingService.applyBumpUpResults()` implemented but never called on FINISHED transition; state machine explicitly skips non-PRACTICE/QUALIFIER rounds (l.143) |
+| SC-4 | After qualifying closes, finals grids auto-seeded from qualifying standings | ✓ VERIFIED | `POST /api/v1/admin/events/{id}/seed-finals` in `EventController.java` (l.108-120) calls `qualifyingStandingsService.recalculateStandings()` then `bumpUpSeedingService.seedFinals()`; `SeedFinalsRequest.java` DTO with `@Valid` constraints; both services already unit-tested |
+| SC-5 | After bump-up final completes, top N finishers appended to next final; race director alerted | ✓ VERIFIED | `applyBumpUpPromotion()` method added (l.225-256); called when `finishedRound.getType() == RoundType.FINAL` (l.160-162); calls `bumpUpSeedingService.applyBumpUpResults()` (l.248) then `liveTimingHub.broadcastBumpUpAlert()` (l.251) to `/topic/race/{nextFinalRaceId}/bump-up-alert`; A-Final correctly skipped (l.227-229). ⚠️ See human verification — no frontend subscriber for the alert topic |
 | SC-6 | Race control displays marshal list and grid call for current race | ✓ VERIFIED | `PreRaceReadinessQuery.load()` returns `gridCall` + `marshalDuty` from DB; `PreRaceReadinessController` + `PreRaceReadinessPanel` render both columns; jOOQ SQL (l.117-168) uses real DB joins |
 | SC-7 | Race director can add/remove marshal laps with full audit trail; results update immediately | ✓ VERIFIED | `MarshalAdjustment` entity with `actingUserId`, `actingUserName`, `raceStateAtTime`, `adjustedAt`; `RaceControlController.marshalAdjustment()` persists + calls `lapTimingService.applyMarshalAdjustment()`; `RaceControlControllerIT.marshalAdjustment_persistsAllAuditFields()` asserts all fields |
-| SC-8 | Race director can abandon a race, skip to a specific race/round, and link unknown transponder | ⚠️ PARTIAL | Abandon ✓ (`/race/{id}/abandon` + `FinishedPanel`); Unknown transponder link ✓ (`TransponderLinkController` + `UnknownTransponderLinkDialog`); Skip-to ✗ (backend endpoint exists, no frontend UI) |
+| SC-8 | Race director can abandon a race, skip to a specific race/round, and link unknown transponder | ✓ VERIFIED | Abandon ✓ (`/race/{id}/abandon` + `FinishedPanel`); Unknown transponder link ✓ (`TransponderLinkController` + `UnknownTransponderLinkDialog`); Skip-to ✓ — `skipToRace()` in `raceControlApi.ts` (l.160-161), `skipTo` mutation in `useRaceStateMutations.ts` (l.62-64), "Jump to this race" button in `CockpitPage.tsx` (l.319-326) |
 | SC-9 | Race referee can raise incident reports and apply lap or time penalties that immediately update live standings | ✓ VERIFIED | `RefereeController.raiseIncident()` + `applyPenalty()` (LAP type: `lapTimingService.applyLapDelta()` + `liveTimingHub.broadcastTimingUpdate()`); `RefereeControllerIT` tests all three; `RefereePage` wires `IncidentDialog` + `PenaltyDialog` |
 | SC-10 | Race results can be exported as a printable PDF sheet at the venue | ✓ VERIFIED | `PrintResultsPage.tsx` uses `useResultSnapshot()` → `GET /api/v1/race-control/race/{id}/result-snapshot`; `window.print()` on l.98; `ResultSnapshotService` snapshots live timing into DB; `FinishedPanel` links to print page |
 
-**Score: 7/10 truths verified** (3 failed, 1 partial counted in partial column)
+**Score: 10/10 truths verified**
 
 ---
 
 ### Deferred Items
 
-No items addressed in later phases — all failures are in-scope gaps for Phase 4.
+No items addressed in later phases — all gaps were closed in plan 04-08.
 
 ---
 
@@ -95,49 +61,31 @@ No items addressed in later phases — all failures are in-scope gaps for Phase 
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `domain/race/RaceStateMachineService.java` | State machine PENDING→GRID→RUNNING→STOPPED→FINISHED | ✓ VERIFIED | VALID_TRANSITIONS EnumMap (l.30-36); `transition()` + `restart()` |
+| `domain/race/RaceStateMachineService.java` | State machine PENDING→GRID→RUNNING→STOPPED→FINISHED + FINAL bump-up wiring | ✓ VERIFIED | VALID_TRANSITIONS EnumMap (l.30-36); `transition()` + `restart()`; new `applyBumpUpPromotion()` (l.225-256) for FINAL completion |
 | `domain/race/RaceStatus.java` | Enum with all states | ✓ VERIFIED | PENDING, GRID, RUNNING, STOPPED, FINISHED |
+| `api/admin/EventController.java` | generateRounds + seedFinals endpoints | ✓ VERIFIED | `POST /{id}/generate-rounds` (l.90-106); `POST /{id}/seed-finals` (l.108-120); role-gated `ADMIN/RACE_DIRECTOR` |
+| `api/admin/dto/GenerateRoundsRequest.java` | DTO with practice/qualifying/finals config | ✓ VERIFIED | `@Valid` constraints; `ClassFinalsConfigDto` inner record with finalsCount/carsPerFinal/bumpCount |
+| `api/admin/dto/SeedFinalsRequest.java` | DTO with qualifying results for seeding | ✓ VERIFIED | `@Valid` constraints; `QualifyingResultDto` inner record with entryId/bestLapMs/lapsCompleted |
 | `api/racecontrol/RaceControlController.java` | callGrid, start, stop, abandon, marshalAdjustment, skipTo, unknownTransponderLink | ✓ VERIFIED | All 7 endpoints present; role-gated to RACE_DIRECTOR/ADMIN |
 | `api/racecontrol/RefereeController.java` | raiseIncident, applyPenalty (LAP + TIME) | ✓ VERIFIED | Both endpoints; LAP penalty live-broadcasts via STOMP |
 | `api/racecontrol/PreRaceReadinessController.java` | GET pre-race-readiness | ✓ VERIFIED | Delegates to `PreRaceReadinessQuery.load()` |
 | `api/racecontrol/TransponderLinkController.java` | Retroactive transponder link with audit | ✓ VERIFIED | Persists `UnknownTransponderLinkAudit`, retroactively credits laps |
 | `api/racecontrol/ResultSnapshotController.java` | GET result-snapshot | ✓ VERIFIED | Returns `ResultSnapshotQuery.load()` |
 | `query/racecontrol/PreRaceReadinessQuery.java` | Grid call + marshal duty from DB | ✓ VERIFIED | Full jOOQ joins to entries/users/absences |
-| `service/RoundGeneratorService.java` | generate() callable via HTTP | ✗ STUB/ORPHANED | Service exists; `generate()` only called in unit tests, no API endpoint |
-| `service/BumpUpSeedingService.java` | seedFinals() + applyBumpUpResults() | ✗ ORPHANED | Both methods exist and tested; no production call site |
+| `service/RoundGeneratorService.java` | generate() callable via HTTP | ✓ VERIFIED | Called from `EventController.generateRounds()` (l.104); previously orphaned |
+| `service/BumpUpSeedingService.java` | seedFinals() + applyBumpUpResults() | ✓ VERIFIED | `seedFinals()` called from `EventController.seedFinals()` (l.117); `applyBumpUpResults()` called from `RaceStateMachineService.applyBumpUpPromotion()` (l.248) |
 | `service/ResultSnapshotService.java` | Snapshot on FINISHED | ✓ VERIFIED | Called from `RaceStateMachineService.transition()` (l.122-124) |
-| `timing/LiveTimingHub.java` | STOMP broadcast on state change + timing update | ✓ VERIFIED | `broadcastStateChange()` + `broadcastTimingUpdate()` + `broadcastMarshalAdjustment()` |
+| `timing/LiveTimingHub.java` | STOMP broadcast on state change + timing update + bump-up alert | ✓ VERIFIED | `broadcastStateChange()` + `broadcastTimingUpdate()` + `broadcastMarshalAdjustment()` + new `broadcastBumpUpAlert()` (l.61-62) |
 | `db/migration/V17__phase4_race_schema.sql` | rounds + races + race_entries + EventClass finals config | ✓ VERIFIED | All 4 tables + `finals_count`, `cars_per_final`, `bump_count` columns |
 | `db/migration/V18__phase4_marshal_referee_schema.sql` | marshal_adjustments, incident_reports, penalties, marshal_absences | ✓ VERIFIED | 69-line migration covering all referee/marshal tables |
 | `db/migration/V19__phase4_result_snapshots.sql` | result_snapshots table | ✓ VERIFIED | 10-line migration |
-| `frontend/src/pages/race-control/CockpitPage.tsx` | Full race director UI: run order, state transitions, live timing, abandon, link transponder | ✓ VERIFIED | 326 lines; PENDING/GRID/RUNNING/STOPPED/FINISHED state handlers; STOMP subscription for unknown transponder |
+| `frontend/src/pages/race-control/CockpitPage.tsx` | Full race director UI: run order, state transitions, live timing, abandon, skip-to, link transponder | ✓ VERIFIED | "Jump to this race" button (l.319-326) added; `mutations.skipTo.mutate()` wired; STOMP subscription for unknown transponder |
 | `frontend/src/pages/race-control/RefereePage.tsx` | Proximity alerts, incident + penalty UI | ✓ VERIFIED | `computeProximityAlerts` wired via `useMemo`; `IncidentDialog` + `PenaltyDialog` buttons |
 | `frontend/src/pages/race-control/PrintResultsPage.tsx` | Printable results page | ✓ VERIFIED | Full results table + `window.print()` + print:hidden CSS class |
 | `frontend/src/pages/race-control/panels/PreRaceReadinessPanel.tsx` | Grid call + marshal duty panels | ✓ VERIFIED | Two-column layout; marshal absence highlighting |
 | `frontend/src/pages/race-control/referee/alerts.ts` | computeProximityAlerts (OFFICIAL-01) + computeBackmarkers (OFFICIAL-02) | ✓ VERIFIED | Both algorithms implemented and Vitest-tested |
 | `frontend/src/hooks/race-control/useLappedBadge.ts` | Backmarker badge with debounce | ✓ VERIFIED | Debounced 5s; used in LiveTimingPanel (shown in RefereePage) |
-| `frontend/src/pages/race-control/RoundGeneratorWizard.tsx` | Admin trigger for round generation | ✗ STUB | 29 lines; static dialog with no API call |
-
----
-
-## Key Link Verification
-
-| From | To | Via | Status | Details |
-|------|----|-----|--------|---------|
-| `CockpitPage` → `callGrid` | `POST /race/{id}/call-grid` | `useRaceStateMutations.callGrid` | ✓ WIRED | `raceControlApi.callGrid()` → `RaceControlController` |
-| `CockpitPage` → `startRace` | `POST /race/{id}/start` | `useRaceStateMutations.start` | ✓ WIRED | `raceControlApi.startRace()` → `RaceControlController` |
-| `CockpitPage` → `abandonRace` | `POST /race/{id}/abandon` | `useRaceStateMutations.abandon` | ✓ WIRED | `raceControlApi.abandonRace()` → `RaceControlController` |
-| `CockpitPage` → unknown transponder link | `POST /races/{id}/transponders/link` | `UnknownTransponderLinkDialog` → `linkUnknownTransponder()` | ✓ WIRED | `TransponderLinkController` retroactively credits laps + audit |
-| `CockpitPage` → skip-to | `POST /race/{id}/skip-to` | — | ✗ NOT WIRED | No `skipTo()` in raceControlApi.ts; no mutation or UI button |
-| `RaceStateMachineService.transition(FINISHED)` → `ResultSnapshotService.snapshot()` | persisted DB snapshot | direct call (l.122-124) | ✓ WIRED | Triggered on every FINISHED transition |
-| `RaceStateMachineService.transition(FINISHED)` → `BumpUpSeedingService.applyBumpUpResults()` | finals seeding | — | ✗ NOT WIRED | State machine returns early for FINAL rounds (l.143); applyBumpUpResults never called |
-| `RefereePage` → `applyPenalty` | `POST /referee/race/{id}/penalty` | `useRaceStateMutations.penalty` | ✓ WIRED | `RefereeController` applies LAP delta + live broadcasts |
-| `RefereePage` → `raiseIncident` | `POST /referee/race/{id}/incident-report` | `useRaceStateMutations.incident` | ✓ WIRED | `RefereeController` persists `IncidentReport` |
-| `RefereePage` → proximity highlight | `highlightEntryIds` prop on `LiveTimingPanel` | `computeProximityAlerts` in `useMemo` | ✓ WIRED | Computed from current vs previous STOMP rows |
-| `RefereePage` → backmarker badge | LAPPED badge in `LiveTimingPanel` | `useLappedBadge(sorted)` in panel | ✓ WIRED | Debounced 5s; shown in referee view via LiveTimingPanel |
-| `GlobalExceptionHandler` → HTTP 409 | `IllegalStateTransitionException` | `@ExceptionHandler` (l.47-50) | ✓ WIRED | Invalid state transitions return 409 Conflict |
-| `RoundGeneratorService.generate()` | POST admin endpoint | — | ✗ NOT WIRED | No controller calls generate(); no HTTP endpoint |
-| `BumpUpSeedingService.seedFinals()` | POST admin endpoint | — | ✗ NOT WIRED | No controller calls seedFinals(); no HTTP endpoint |
+| `frontend/src/pages/race-control/RoundGeneratorWizard.tsx` | Admin trigger for round generation | ✓ VERIFIED | 204-line form wizard; `useMutation` calling `adminApi.generateRounds()`; per-class finals config table; success/error toasts; `runOrder` cache invalidated on success |
 
 ---
 
@@ -150,6 +98,29 @@ No items addressed in later phases — all failures are in-scope gaps for Phase 
 | `PrintResultsPage` | `data.positions` | `ResultSnapshotQuery.load()` → reads `result_snapshots.payload` JSON from DB | ✓ | ✓ FLOWING |
 | `FinishedPanel` | `data` from `useResultSnapshot` | `GET /race/{id}/result-snapshot` → `ResultSnapshotController` → `ResultSnapshotQuery` | ✓ | ✓ FLOWING |
 | `RunOrderPanel` | `items` from `useRunOrder` | `GET /event/{id}/run-order` → `RunOrderQuery.findForEvent()` → jOOQ select on races+rounds | ✓ | ✓ FLOWING |
+| `RoundGeneratorWizard` | form fields → `generate` mutation | `adminApi.generateRounds()` → `POST /events/{id}/generate-rounds` → `RoundGeneratorService.generate()` | ✓ | ✓ FLOWING |
+
+---
+
+## Key Link Verification
+
+| From | To | Via | Status | Details |
+|------|----|-----|--------|---------|
+| `CockpitPage` → `callGrid` | `POST /race/{id}/call-grid` | `useRaceStateMutations.callGrid` | ✓ WIRED | `raceControlApi.callGrid()` → `RaceControlController` |
+| `CockpitPage` → `startRace` | `POST /race/{id}/start` | `useRaceStateMutations.start` | ✓ WIRED | `raceControlApi.startRace()` → `RaceControlController` |
+| `CockpitPage` → `abandonRace` | `POST /race/{id}/abandon` | `useRaceStateMutations.abandon` | ✓ WIRED | `raceControlApi.abandonRace()` → `RaceControlController` |
+| `CockpitPage` → unknown transponder link | `POST /races/{id}/transponders/link` | `UnknownTransponderLinkDialog` → `linkUnknownTransponder()` | ✓ WIRED | `TransponderLinkController` retroactively credits laps + audit |
+| `CockpitPage` → skip-to | `POST /race/{id}/skip-to` | `useRaceStateMutations.skipTo` → `raceControlApi.skipToRace()` | ✓ WIRED | `skipToRace()` in `raceControlApi.ts` (l.160-161); `skipTo` mutation in `useRaceStateMutations.ts` (l.62-64); "Jump to this race" button in `CockpitPage.tsx` (l.319-326) |
+| `RaceStateMachineService.transition(FINISHED)` → `ResultSnapshotService.snapshot()` | persisted DB snapshot | direct call (l.122-124) | ✓ WIRED | Triggered on every FINISHED transition |
+| `RaceStateMachineService.transition(FINISHED, FINAL)` → `BumpUpSeedingService.applyBumpUpResults()` | finals bump-up promotion | `applyBumpUpPromotion()` (l.225-256) | ✓ WIRED | Called when `finishedRound.getType() == RoundType.FINAL` (l.160); A-Final correctly skipped (l.227-229) |
+| `RaceStateMachineService.applyBumpUpPromotion()` → `LiveTimingHub.broadcastBumpUpAlert()` | STOMP `/topic/race/{id}/bump-up-alert` | direct call (l.251) | ✓ WIRED | Backend sends message; ⚠️ no frontend subscription found — see human verification |
+| `EventController.generateRounds()` → `RoundGeneratorService.generate()` | `POST /events/{id}/generate-rounds` | direct call (l.104) | ✓ WIRED | `RoundGeneratorWizard` → `adminApi.generateRounds()` → `EventController` → `roundGeneratorService.generate()` |
+| `EventController.seedFinals()` → `BumpUpSeedingService.seedFinals()` | `POST /events/{id}/seed-finals` | direct call (l.117) | ✓ WIRED | Via `qualifyingStandingsService.recalculateStandings()` for ordering |
+| `RefereePage` → `applyPenalty` | `POST /referee/race/{id}/penalty` | `useRaceStateMutations.penalty` | ✓ WIRED | `RefereeController` applies LAP delta + live broadcasts |
+| `RefereePage` → `raiseIncident` | `POST /referee/race/{id}/incident-report` | `useRaceStateMutations.incident` | ✓ WIRED | `RefereeController` persists `IncidentReport` |
+| `RefereePage` → proximity highlight | `highlightEntryIds` prop on `LiveTimingPanel` | `computeProximityAlerts` in `useMemo` | ✓ WIRED | Computed from current vs previous STOMP rows |
+| `RefereePage` → backmarker badge | LAPPED badge in `LiveTimingPanel` | `useLappedBadge(sorted)` in panel | ✓ WIRED | Debounced 5s; shown in referee view via LiveTimingPanel |
+| `GlobalExceptionHandler` → HTTP 409 | `IllegalStateTransitionException` | `@ExceptionHandler` (l.47-50) | ✓ WIRED | Invalid state transitions return 409 Conflict |
 
 ---
 
@@ -183,7 +154,7 @@ Runnable checks skipped — integration tests provide equivalent coverage:
 | CTRL-06 | Unknown transponder retrospectively linked with audit | ✓ SATISFIED | `TransponderLinkController.linkTransponder()` persists `UnknownTransponderLinkAudit` + retroactive lap credit |
 | CTRL-07 | Marshal list for current race | ✓ SATISFIED | `PreRaceReadinessQuery.marshalDuty` from previous race; `PreRaceReadinessPanel` marshal column |
 | CTRL-08 | Abandon in progress; results saved | ✓ SATISFIED | `abandonRace()` transitions to FINISHED (triggers snapshot); `FinishedPanel` shows results |
-| CTRL-09 | Skip to specific race/round; link unknown transponder | ⚠️ PARTIAL | Skip-to backend exists (`/race/{id}/skip-to`), process-local only, NO frontend UI. Transponder link ✓. |
+| CTRL-09 | Skip to specific race/round; link unknown transponder | ✓ SATISFIED | `skipToRace()` in `raceControlApi.ts` (l.160-161); `skipTo` mutation (l.62-64); "Jump to this race" button in `CockpitPage.tsx` (l.319-326); transponder link ✓ |
 | OFFICIAL-01 | Live proximity alerts (closing cars) | ✓ SATISFIED | `computeProximityAlerts()` in `alerts.ts`; wired in `RefereePage` via `useMemo`; `highlightEntryIds` passed to `LiveTimingPanel` |
 | OFFICIAL-02 | Backmarker highlight (lapped cars) | ✓ SATISFIED | `useLappedBadge()` in `LiveTimingPanel` (debounced 5s); LAPPED badge shown in referee view; `computeBackmarkers()` separately implemented + tested |
 | OFFICIAL-03 | Raise incident report | ✓ SATISFIED | `RefereeController.raiseIncident()` + `IncidentDialog`; IT confirmed |
@@ -195,9 +166,10 @@ Runnable checks skipped — integration tests provide equivalent coverage:
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `frontend/src/pages/race-control/RoundGeneratorWizard.tsx` | 15-29 | Stub dialog — no API call, no mutation | 🛑 Blocker | SC-1 fails: admin cannot trigger round generation from the browser |
 | `domain/race/RaceControlController.java` | 147 | `// TODO: add abandoned flag in Phase 7 results plan` | ℹ️ Info | Abandon doesn't distinguish from normal FINISHED; tracked for later phase |
 | `api/racecontrol/RaceControlController.java` | 66 | `activeRaceByEvent` is `ConcurrentHashMap` (process-local, not DB-persisted) | ⚠️ Warning | Skip-to state is lost on server restart and not visible to other sessions; by design for Phase 4 per code comment |
+
+The previous SC-1 blocker (`RoundGeneratorWizard.tsx` stub, 29 lines) is resolved — replaced with a 204-line form wizard with real `useMutation`.
 
 ---
 
@@ -207,31 +179,38 @@ Runnable checks skipped — integration tests provide equivalent coverage:
 
 **Test:** Seed an event where an entry has missed ≥2 marshal duties. Navigate to a race in GRID state. Inspect `PreRaceReadinessPanel`.
 **Expected:** Drivers with `missedThisEvent >= 2` should show red/destructive text in the "Absences this event" cell.
-**Why human:** UAT test 5 was skipped due to no seeded data; requires live DB seed to verify visual highlight.
+**Why human:** Requires live DB seed to verify visual highlight; cannot be confirmed from static code inspection.
 
-### 2. Bump-up seeding workflow (when fixed)
+### 2. Bump-Up Alert — Frontend Display Confirmation
 
-**Test:** After implementing the missing seedFinals API trigger (gap SC-4), run qualifying for an event with 2+ finals configured, close qualifying, trigger seeding, then verify final grids are populated in the correct order.
-**Expected:** A-Final positions 1–N from top qualifiers; B-Final from lower-ranked qualifiers. Bump slots in A-Final show as empty until B-Final completes.
-**Why human:** Requires multi-race event setup and is blocked until the HTTP trigger is implemented.
+**Test:** Run a B-Final to completion. Observe the race director's browser (CockpitPage) immediately after the final finishes.
+**Expected:** The race director should receive a visible notification (toast, banner, or similar) indicating that bump-up promotion has occurred and the A-Final grid has been updated, so they know to check the grid before starting the A-Final.
+**Why human:** `LiveTimingHub.broadcastBumpUpAlert()` (l.61-62) sends a STOMP message to `/topic/race/{nextFinalRaceId}/bump-up-alert`. Code inspection of all frontend STOMP subscriptions (`CockpitPage`, `useAnnouncements.ts`, `useLiveTiming.ts`) finds **no subscriber for this topic**. The backend alert fires, but nothing in the browser displays it. Confirm whether: (a) the alert is intentionally deferred to a later phase — no action needed; or (b) a subscription + toast should be added as a follow-up.
 
----
+### 3. RoundGeneratorWizard End-to-End Flow
 
-## Gaps Summary
-
-Four gaps block complete goal achievement. They fall into two concern groups:
-
-**Group A — Service-layer orphans (SC-1, SC-4, SC-5):** `RoundGeneratorService.generate()`, `BumpUpSeedingService.seedFinals()`, and `BumpUpSeedingService.applyBumpUpResults()` are all fully implemented, unit-tested, and correct. The root cause is the same: no HTTP controller exposes these services. Plans 04-03 delivered the service layer but no corresponding REST endpoints or lifecycle wiring were added. One focused plan could resolve all three gaps:
-- Add `POST /api/v1/admin/events/{eventId}/generate-rounds` calling `RoundGeneratorService.generate()`
-- Add `POST /api/v1/admin/events/{eventId}/seed-finals` calling `BumpUpSeedingService.seedFinals()`
-- Wire `applyBumpUpResults()` into `RaceStateMachineService.transition()` when target is FINISHED and round type is FINAL
-- Add a RoundGeneratorWizard frontend form that calls the generate endpoint
-
-**Group B — Frontend-only gap (CTRL-09 skip-to):** The `POST /race/{raceId}/skip-to` backend endpoint is implemented but the frontend has no client function, no mutation hook, and no UI. Adding `skipTo()` to `raceControlApi.ts`, a mutation to `useRaceStateMutations`, and a button/dialog in `CockpitPage` would close this gap.
-
-The core race director flow (CTRL-01 through CTRL-08, CTRL-09 partial, all OFFICIAL requirements) is fully operational and UAT-confirmed. The gaps are all in the event setup path (round generation, finals seeding) and a secondary navigation feature (skip-to).
+**Test:** Open the event admin page, open the "Generate Rounds" wizard, configure 2 practice + 3 qualifying + 2 finals per class, and submit.
+**Expected:** The wizard populates class rows from the event's configured classes, the submit calls `adminApi.generateRounds()`, a success toast appears, and the run order panel refreshes.
+**Why human:** Mutation and data flow are correct in code; the per-class defaults logic (`defaultsFromConfig`) and multi-step form UX need a real browser to confirm no rendering edge cases.
 
 ---
 
-_Verified: 2026-04-29T16:10:00Z_
-_Verifier: gsd-verifier (automated code inspection)_
+## Re-Verification Summary
+
+All 4 previously failing gaps are closed:
+
+| Gap | Previous Status | Current Status | Evidence |
+|-----|----------------|----------------|---------|
+| SC-1: Round generator no HTTP endpoint; stub wizard | ✗ FAILED | ✓ VERIFIED | `EventController.generateRounds()` (l.90-106); `RoundGeneratorWizard.tsx` 204-line real form |
+| SC-4: Finals seeding no HTTP endpoint | ✗ FAILED | ✓ VERIFIED | `EventController.seedFinals()` (l.108-120); wired via `QualifyingStandingsService` + `BumpUpSeedingService` |
+| SC-5: applyBumpUpResults() never called on FINAL | ✗ FAILED | ✓ VERIFIED | `applyBumpUpPromotion()` at l.225-256 handles FINAL; `applyBumpUpResults()` + `broadcastBumpUpAlert()` called |
+| CTRL-09/SC-8: Skip-to frontend missing | ⚠️ PARTIAL | ✓ VERIFIED | `skipToRace()` in api layer; `skipTo` mutation; "Jump to this race" button in CockpitPage |
+
+No regressions in the 7 previously-passing SCs.
+
+One human verification item newly raised (item 2): the STOMP alert topic has no frontend subscriber. The backend mechanism is complete per plan-08 success criteria; confirm whether a frontend toast is needed or intentionally deferred.
+
+---
+
+_Verified: 2026-05-02T10:30:00Z_
+_Verifier: gsd-verifier (automated code inspection) — re-verification after plan 04-08 gap closure_
