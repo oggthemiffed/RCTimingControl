@@ -1,7 +1,7 @@
 ---
 phase: 04-race-state-machine
 verified: 2026-05-02T10:30:00Z
-status: human_needed
+status: verified
 score: 10/10
 overrides_applied: 0
 re_verification:
@@ -15,9 +15,9 @@ re_verification:
   gaps_remaining: []
   regressions: []
 human_verification:
-  - test: "Confirm bump-up alert UX is acceptable without a frontend toast"
-    expected: "After a B/C-final completes, the race director should see some indication that bump-up promotion has occurred before they start the next final. The backend broadcasts /topic/race/{nextFinalRaceId}/bump-up-alert but no frontend component subscribes to this topic — no toast, banner, or notification is displayed. Confirm this is intentionally deferred (the plan-08 success criteria only required the STOMP send side), or raise a new gap to add the subscription."
-    why_human: "The STOMP broadcast is verifiable in code (LiveTimingHub.broadcastBumpUpAlert at line 61-62). Whether the absence of a frontend subscriber is an acceptable UX gap or a missed requirement cannot be determined programmatically — it needs a product decision."
+  - test: "Bump-up alert frontend toast"
+    result: resolved
+    resolution: "Added useStomp subscription to /topic/race/{id}/bump-up-alert in CockpitPage.tsx; toast.success() fires with promotion count when B/C-final finishes. Commit f60dd7b."
 ---
 
 # Phase 4: Race State Machine — Verification Report
@@ -25,7 +25,7 @@ human_verification:
 **Phase Goal:** A race director can run a complete race meeting from any browser — calling the grid, starting and stopping races, applying marshal laps, and handling incidents — with all commands enforced server-side.
 
 **Verified:** 2026-05-02T10:30:00Z
-**Status:** human_needed
+**Status:** verified
 **Re-verification:** Yes — after gap closure plan 04-08
 
 ---
@@ -40,7 +40,7 @@ human_verification:
 | SC-2 | Race director can start/stop; conflicting commands rejected with HTTP 409; PENDING→GRID→RUNNING→FINISHED enforced | ✓ VERIFIED | `RaceStateMachineService` (VALID_TRANSITIONS map l.30-36); `GlobalExceptionHandler.handleStateTransition()` (l.47-50 → HTTP 409); `RaceControlControllerIT.conflictingTransitionFromSecondSession_returns409()` |
 | SC-3 | Stagger start heats use finishing order from previous round; round 1 uses entry order | ✓ VERIFIED | `RaceStateMachineService.applyFinishingOrderToNextRace()` (l.133-193) applies finishing order from PRACTICE/QUALIFIER to next race; `RoundGeneratorService.applyPreviousRoundFinishingOrder()` (l.108) |
 | SC-4 | After qualifying closes, finals grids auto-seeded from qualifying standings | ✓ VERIFIED | `POST /api/v1/admin/events/{id}/seed-finals` in `EventController.java` (l.108-120) calls `qualifyingStandingsService.recalculateStandings()` then `bumpUpSeedingService.seedFinals()`; `SeedFinalsRequest.java` DTO with `@Valid` constraints; both services already unit-tested |
-| SC-5 | After bump-up final completes, top N finishers appended to next final; race director alerted | ✓ VERIFIED | `applyBumpUpPromotion()` method added (l.225-256); called when `finishedRound.getType() == RoundType.FINAL` (l.160-162); calls `bumpUpSeedingService.applyBumpUpResults()` (l.248) then `liveTimingHub.broadcastBumpUpAlert()` (l.251) to `/topic/race/{nextFinalRaceId}/bump-up-alert`; A-Final correctly skipped (l.227-229). ⚠️ See human verification — no frontend subscriber for the alert topic |
+| SC-5 | After bump-up final completes, top N finishers appended to next final; race director alerted | ✓ VERIFIED | `applyBumpUpPromotion()` method added (l.225-256); called when `finishedRound.getType() == RoundType.FINAL` (l.160-162); calls `bumpUpSeedingService.applyBumpUpResults()` (l.248) then `liveTimingHub.broadcastBumpUpAlert()` (l.251) to `/topic/race/{nextFinalRaceId}/bump-up-alert`; A-Final correctly skipped (l.227-229). Frontend: `CockpitPage.tsx` subscribes to the STOMP topic and shows a sonner toast with promotion count when a B/C-final finishes. |
 | SC-6 | Race control displays marshal list and grid call for current race | ✓ VERIFIED | `PreRaceReadinessQuery.load()` returns `gridCall` + `marshalDuty` from DB; `PreRaceReadinessController` + `PreRaceReadinessPanel` render both columns; jOOQ SQL (l.117-168) uses real DB joins |
 | SC-7 | Race director can add/remove marshal laps with full audit trail; results update immediately | ✓ VERIFIED | `MarshalAdjustment` entity with `actingUserId`, `actingUserName`, `raceStateAtTime`, `adjustedAt`; `RaceControlController.marshalAdjustment()` persists + calls `lapTimingService.applyMarshalAdjustment()`; `RaceControlControllerIT.marshalAdjustment_persistsAllAuditFields()` asserts all fields |
 | SC-8 | Race director can abandon a race, skip to a specific race/round, and link unknown transponder | ✓ VERIFIED | Abandon ✓ (`/race/{id}/abandon` + `FinishedPanel`); Unknown transponder link ✓ (`TransponderLinkController` + `UnknownTransponderLinkDialog`); Skip-to ✓ — `skipToRace()` in `raceControlApi.ts` (l.160-161), `skipTo` mutation in `useRaceStateMutations.ts` (l.62-64), "Jump to this race" button in `CockpitPage.tsx` (l.319-326) |
@@ -113,7 +113,7 @@ No items addressed in later phases — all gaps were closed in plan 04-08.
 | `CockpitPage` → skip-to | `POST /race/{id}/skip-to` | `useRaceStateMutations.skipTo` → `raceControlApi.skipToRace()` | ✓ WIRED | `skipToRace()` in `raceControlApi.ts` (l.160-161); `skipTo` mutation in `useRaceStateMutations.ts` (l.62-64); "Jump to this race" button in `CockpitPage.tsx` (l.319-326) |
 | `RaceStateMachineService.transition(FINISHED)` → `ResultSnapshotService.snapshot()` | persisted DB snapshot | direct call (l.122-124) | ✓ WIRED | Triggered on every FINISHED transition |
 | `RaceStateMachineService.transition(FINISHED, FINAL)` → `BumpUpSeedingService.applyBumpUpResults()` | finals bump-up promotion | `applyBumpUpPromotion()` (l.225-256) | ✓ WIRED | Called when `finishedRound.getType() == RoundType.FINAL` (l.160); A-Final correctly skipped (l.227-229) |
-| `RaceStateMachineService.applyBumpUpPromotion()` → `LiveTimingHub.broadcastBumpUpAlert()` | STOMP `/topic/race/{id}/bump-up-alert` | direct call (l.251) | ✓ WIRED | Backend sends message; ⚠️ no frontend subscription found — see human verification |
+| `RaceStateMachineService.applyBumpUpPromotion()` → `LiveTimingHub.broadcastBumpUpAlert()` | STOMP `/topic/race/{id}/bump-up-alert` | direct call (l.251) | ✓ WIRED | Backend sends message; `CockpitPage.tsx` subscribes and shows sonner toast with promotion count |
 | `EventController.generateRounds()` → `RoundGeneratorService.generate()` | `POST /events/{id}/generate-rounds` | direct call (l.104) | ✓ WIRED | `RoundGeneratorWizard` → `adminApi.generateRounds()` → `EventController` → `roundGeneratorService.generate()` |
 | `EventController.seedFinals()` → `BumpUpSeedingService.seedFinals()` | `POST /events/{id}/seed-finals` | direct call (l.117) | ✓ WIRED | Via `qualifyingStandingsService.recalculateStandings()` for ordering |
 | `RefereePage` → `applyPenalty` | `POST /referee/race/{id}/penalty` | `useRaceStateMutations.penalty` | ✓ WIRED | `RefereeController` applies LAP delta + live broadcasts |
@@ -181,13 +181,15 @@ The previous SC-1 blocker (`RoundGeneratorWizard.tsx` stub, 29 lines) is resolve
 **Expected:** Drivers with `missedThisEvent >= 2` should show red/destructive text in the "Absences this event" cell.
 **Why human:** Requires live DB seed to verify visual highlight; cannot be confirmed from static code inspection.
 
-### 2. Bump-Up Alert — Frontend Display Confirmation
+### 2. Bump-Up Alert — Frontend Toast ✅ RESOLVED
 
-**Test:** Run a B-Final to completion. Observe the race director's browser (CockpitPage) immediately after the final finishes.
-**Expected:** The race director should receive a visible notification (toast, banner, or similar) indicating that bump-up promotion has occurred and the A-Final grid has been updated, so they know to check the grid before starting the A-Final.
-**Why human:** `LiveTimingHub.broadcastBumpUpAlert()` (l.61-62) sends a STOMP message to `/topic/race/{nextFinalRaceId}/bump-up-alert`. Code inspection of all frontend STOMP subscriptions (`CockpitPage`, `useAnnouncements.ts`, `useLiveTiming.ts`) finds **no subscriber for this topic**. The backend alert fires, but nothing in the browser displays it. Confirm whether: (a) the alert is intentionally deferred to a later phase — no action needed; or (b) a subscription + toast should be added as a follow-up.
+**Resolution (commit f60dd7b):** `CockpitPage.tsx` now subscribes to `/topic/race/{id}/bump-up-alert` via `useStomp`. When a B/C-final finishes and promotion fires, a `toast.success()` with the promoted driver count appears in the race director's browser. No further action needed.
 
 ### 3. RoundGeneratorWizard End-to-End Flow
+
+**Test:** Open the event admin page, open the "Generate Rounds" wizard, configure 2 practice + 3 qualifying + 2 finals per class, and submit.
+**Expected:** The wizard populates class rows from the event's configured classes, the submit calls `adminApi.generateRounds()`, a success toast appears, and the run order panel refreshes.
+**Why human:** Mutation and data flow are correct in code; the per-class defaults logic (`defaultsFromConfig`) and multi-step form UX need a real browser to confirm no rendering edge cases.
 
 **Test:** Open the event admin page, open the "Generate Rounds" wizard, configure 2 practice + 3 qualifying + 2 finals per class, and submit.
 **Expected:** The wizard populates class rows from the event's configured classes, the submit calls `adminApi.generateRounds()`, a success toast appears, and the run order panel refreshes.
@@ -208,9 +210,9 @@ All 4 previously failing gaps are closed:
 
 No regressions in the 7 previously-passing SCs.
 
-One human verification item newly raised (item 2): the STOMP alert topic has no frontend subscriber. The backend mechanism is complete per plan-08 success criteria; confirm whether a frontend toast is needed or intentionally deferred.
+Human verification item 2 (bump-up alert UX) resolved in commit f60dd7b — frontend toast added.
 
 ---
 
-_Verified: 2026-05-02T10:30:00Z_
+_Verified: 2026-05-02T10:30:00Z | Updated: 2026-05-02T_
 _Verifier: gsd-verifier (automated code inspection) — re-verification after plan 04-08 gap closure_
