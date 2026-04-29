@@ -6,6 +6,8 @@ import { useRaceStateMutations } from '@/hooks/race-control/useRaceStateMutation
 import { useStomp } from '@/hooks/race-control/useStomp';
 import { useLiveTiming } from '@/hooks/race-control/useLiveTiming';
 import { useAnnouncements } from '@/hooks/race-control/useAnnouncements';
+import { usePreRaceReadiness } from '@/hooks/race-control/usePreRaceReadiness';
+import { usePregeneratedClips } from '@/hooks/race-control/usePregeneratedClips';
 import { RunOrderPanel } from './panels/RunOrderPanel';
 import { GridEditorPanel } from './panels/GridEditorPanel';
 import { LiveTimingPanel } from './panels/LiveTimingPanel';
@@ -52,15 +54,33 @@ export default function CockpitPage() {
   // Live timing rows (for AUDIO-04 beep detection)
   const { rows: liveRows } = useLiveTiming(selectedRaceId);
 
-  // Audio announcements hook (AUDIO-04, AUDIO-06, AUDIO-11)
+  // Audio announcements hook (AUDIO-02, AUDIO-03, AUDIO-04, AUDIO-05, AUDIO-06, AUDIO-11)
   const audioVolume = (() => {
     const stored = localStorage.getItem('rc-audio-volume');
     return stored ? parseInt(stored, 10) / 100 : 0.8;
   })();
-  const { playBeep } = useAnnouncements({
+
+  // Fetch grid entries for stagger sequencer when race is at GRID state
+  const { data: preRaceReadiness } = usePreRaceReadiness(
+    selectedRace?.status === 'GRID' ? selectedRaceId : null,
+  );
+  const gridEntries = preRaceReadiness?.gridCall;
+
+  const { playBeep, setClipMap } = useAnnouncements({
     raceId: selectedRaceId,
     settings: null, // settings fetched inside AudioSettingsPanel; pass null here so hook uses ref
     volume: audioVolume,
+    raceState: selectedRace?.status,
+    raceStartedAt: null,    // RunOrderItemDto does not expose startedAt
+    raceDurationSecs: null, // RunOrderItemDto does not expose durationSecs
+    gridEntries,
+  });
+
+  // Fetch and cache pre-generated clips when race enters GRID (AUDIO-10)
+  usePregeneratedClips({
+    raceId: selectedRaceId,
+    raceState: selectedRace?.status,
+    setClipMap,
   });
 
   // Track previous last-lap timestamps to detect new laps (AUDIO-04 beep wiring)

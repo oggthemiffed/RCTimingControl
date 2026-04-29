@@ -16,6 +16,7 @@ export interface AudioSettingsDto {
   announceRunningOrder: boolean;
   runningOrderDepth: number;
   defaultVoiceId: string;
+  countdownIntervals?: number[];
 }
 
 export interface BlocklistTermDto {
