@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Admin Panel & Event Management** - Admin event/class/entry management, event state machine, championship setup (completed 2026-04-20)
 - [x] **Phase 4: Race Control** - Browser-based race control client, race state machine, marshal laps, referee tools (completed 2026-04-24)
 - [x] **Phase 5: Live Timing & Forwarder** - AMB P3 forwarder, gRPC streaming, WebSocket live timing display (completed 2026-04-26)
-- [ ] **Phase 6: Audio & Practice** - Voice announcements (Web Speech API + TTS), open practice sessions
+- [x] **Phase 6: Audio & Practice** - Voice announcements (Web Speech API + TTS), open practice sessions
 - [ ] **Phase 7: Results & Championship** - Post-race result snapshots, championship standings, PDF export
 
 ## Phase Details
@@ -129,12 +129,12 @@ Plans:
   4. Admin can run an open practice session using the decoder; live lap times are displayed and each racer's best N consecutive laps are shown; results are printable after the session
 **Plans**: 6 plans
 Plans:
-- [ ] 06-01-PLAN.md — Wave 0 test scaffolding (@Disabled JUnit 5 stubs, Vitest describe.skip blocks)
-- [ ] 06-02-PLAN.md — Schema + domain foundation: V23 migration, PracticeSession/PracticeLap entities, User.preferredVoiceId, ClubProfile audio settings, profanity blocklist, Piper docker-compose
-- [ ] 06-03-PLAN.md — Piper TTS infrastructure: PiperTtsClient (Wyoming TCP), TtsClipService, ProfanityFilter, AudioController, name clip generation on profile save
-- [ ] 06-04-PLAN.md — Race audio pre-generation: AudioPreGenerationService (GRID listener), AudioClipController, AdminAudioController (settings + blocklist)
-- [ ] 06-05-PLAN.md — Practice session backend: PracticeTimingService, LivePracticeState, PracticeTimingHub, PracticeSessionController, best-N consecutive algorithm
-- [ ] 06-06-PLAN.md — Frontend: AudioSettingsPanel, ProfilePage voice section, AdminAudioSettingsPage, PracticeSessionPage, PracticeLiveTable, hooks, routes
+- [x] 06-01-PLAN.md — Wave 0 test scaffolding (@Disabled JUnit 5 stubs, Vitest describe.skip blocks)
+- [x] 06-02-PLAN.md — Schema + domain foundation: V23 migration, PracticeSession/PracticeLap entities, User.preferredVoiceId, ClubProfile audio settings, profanity blocklist, Piper docker-compose
+- [x] 06-03-PLAN.md — Piper TTS infrastructure: PiperTtsClient (Wyoming TCP), TtsClipService, ProfanityFilter, AudioController, name clip generation on profile save
+- [x] 06-04-PLAN.md — Race audio pre-generation: AudioPreGenerationService (GRID listener), AudioClipController, AdminAudioController (settings + blocklist)
+- [x] 06-05-PLAN.md — Practice session backend: PracticeTimingService, LivePracticeState, PracticeTimingHub, PracticeSessionController, best-N consecutive algorithm
+- [x] 06-06-PLAN.md — Frontend: AudioSettingsPanel, ProfilePage voice section, AdminAudioSettingsPage, PracticeSessionPage, PracticeLiveTable, hooks, routes
 **UI hint**: yes
 
 ### Phase 7: Results & Championship
