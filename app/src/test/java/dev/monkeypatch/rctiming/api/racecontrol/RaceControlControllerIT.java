@@ -23,8 +23,6 @@ import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundStatus;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
-import dev.monkeypatch.rctiming.domain.race.UnknownTransponderLink;
-import dev.monkeypatch.rctiming.domain.race.UnknownTransponderLinkRepository;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
@@ -64,7 +62,6 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
     @Autowired RaceEntryRepository raceEntryRepository;
     @Autowired EntryRepository entryRepository;
     @Autowired MarshalAdjustmentRepository marshalAdjustmentRepository;
-    @Autowired UnknownTransponderLinkRepository unknownTransponderLinkRepository;
     @Autowired RacingClassRepository racingClassRepository;
     @Autowired EventClassRepository eventClassRepository;
     @Autowired EventRepository eventRepository;
@@ -168,43 +165,6 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
         assertThat(adj.getActingUserId()).isNotNull();
         assertThat(adj.getActingUserName()).isNotBlank();
         assertThat(adj.getAdjustedAt()).isNotNull();
-    }
-
-    // --- CTRL-06: unknown transponder link ---
-
-    @Test
-    void unknownTransponderLink_createsRecord() {
-        Race race = seedRace(RaceStatus.RUNNING);
-        String transponder = "UT-" + UUID.randomUUID().toString().substring(0, 8);
-
-        // First POST — creates record
-        ResponseEntity<Void> resp = restTemplate.exchange(
-                "/api/v1/race-control/race/" + race.getId() + "/unknown-transponder-link",
-                HttpMethod.POST,
-                new HttpEntity<>(Map.of("transponderNumber", transponder), directorHeaders()),
-                Void.class);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-        List<UnknownTransponderLink> links = unknownTransponderLinkRepository.findAll().stream()
-                .filter(l -> l.getRaceId().equals(race.getId()) && transponder.equals(l.getTransponderNumber()))
-                .toList();
-        assertThat(links).hasSize(1);
-        assertThat(links.get(0).getLinkedEntryId()).isNull();
-
-        // Second POST with same transponder + entryId — upsert, still one row
-        Entry entry = seedEntry(race);
-        restTemplate.exchange(
-                "/api/v1/race-control/race/" + race.getId() + "/unknown-transponder-link",
-                HttpMethod.POST,
-                new HttpEntity<>(Map.of("transponderNumber", transponder, "linkedEntryId", entry.getId()),
-                        directorHeaders()),
-                Void.class);
-
-        List<UnknownTransponderLink> afterUpsert = unknownTransponderLinkRepository.findAll().stream()
-                .filter(l -> l.getRaceId().equals(race.getId()) && transponder.equals(l.getTransponderNumber()))
-                .toList();
-        assertThat(afterUpsert).hasSize(1);
-        assertThat(afterUpsert.get(0).getLinkedEntryId()).isEqualTo(entry.getId());
     }
 
     // --- CTRL-08: abandon ---

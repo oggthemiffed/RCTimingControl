@@ -59,12 +59,14 @@ public class ForwarderGrpcService extends TimingServiceGrpc.TimingServiceImplBas
 
             @Override
             public void onNext(LapPassing msg) {
-                raceRepository.findFirstByStatus(RaceStatus.RUNNING).ifPresentOrElse(
-                        race -> eventPublisher.publishEvent(
-                                new LapPassingEvent(race.getId(), msg.getTransponderNumber(), msg.getRtcTimeMicros())),
-                        () -> log.debug("No running race — discarding passing for transponder {}",
-                                msg.getTransponderNumber())
-                );
+                // Publish with the active race ID, or 0L when no race is running.
+                // LapTimingService ignores raceId=0 (no live state). PracticeTimingService
+                // ignores raceId entirely — it queries practiceSessionRepository directly.
+                long raceId = raceRepository.findFirstByStatus(RaceStatus.RUNNING)
+                        .map(race -> race.getId())
+                        .orElse(0L);
+                eventPublisher.publishEvent(
+                        new LapPassingEvent(raceId, msg.getTransponderNumber(), msg.getRtcTimeMicros()));
             }
 
             @Override

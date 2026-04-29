@@ -79,6 +79,10 @@ public class AudioPreGenerationService {
     @Async
     @EventListener
     public void onRaceStatusChanged(RaceStatusChangedEvent event) {
+        if (event.getNewStatus() == RaceStatus.FINISHED) {
+            clearClips(event.getRaceId());
+            return;
+        }
         if (event.getNewStatus() != RaceStatus.GRID) {
             return;
         }

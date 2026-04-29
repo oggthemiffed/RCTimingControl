@@ -3,7 +3,6 @@ package dev.monkeypatch.rctiming.api.racecontrol;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalAdjustmentRequest;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.RunOrderItemDto;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.SkipToRaceRequest;
-import dev.monkeypatch.rctiming.api.racecontrol.dto.UnknownTransponderLinkRequest;
 import dev.monkeypatch.rctiming.domain.race.MarshalAdjustment;
 import dev.monkeypatch.rctiming.domain.race.MarshalAdjustmentRepository;
 import dev.monkeypatch.rctiming.domain.race.Race;
@@ -12,8 +11,6 @@ import dev.monkeypatch.rctiming.domain.race.RaceStateMachineService;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
-import dev.monkeypatch.rctiming.domain.race.UnknownTransponderLink;
-import dev.monkeypatch.rctiming.domain.race.UnknownTransponderLinkRepository;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.query.racecontrol.RunOrderQuery;
@@ -52,7 +49,6 @@ public class RaceControlController {
     private final RaceRepository raceRepository;
     private final RaceStateMachineService stateMachine;
     private final MarshalAdjustmentRepository marshalAdjustmentRepository;
-    private final UnknownTransponderLinkRepository unknownTransponderLinkRepository;
     private final LapTimingService lapTimingService;
     private final LiveTimingHub liveTimingHub;
     private final UserRepository userRepository;
@@ -69,7 +65,6 @@ public class RaceControlController {
                                   RaceRepository raceRepository,
                                   RaceStateMachineService stateMachine,
                                   MarshalAdjustmentRepository marshalAdjustmentRepository,
-                                  UnknownTransponderLinkRepository unknownTransponderLinkRepository,
                                   LapTimingService lapTimingService,
                                   LiveTimingHub liveTimingHub,
                                   UserRepository userRepository,
@@ -78,7 +73,6 @@ public class RaceControlController {
         this.raceRepository = raceRepository;
         this.stateMachine = stateMachine;
         this.marshalAdjustmentRepository = marshalAdjustmentRepository;
-        this.unknownTransponderLinkRepository = unknownTransponderLinkRepository;
         this.lapTimingService = lapTimingService;
         this.liveTimingHub = liveTimingHub;
         this.userRepository = userRepository;
@@ -179,32 +173,6 @@ public class RaceControlController {
                 adjustment.getAdjustedAt().toEpochMilli()
         );
         lapTimingService.applyMarshalAdjustment(raceId, req.entryId(), req.lapDelta(), dto);
-        return ResponseEntity.ok().build();
-    }
-
-    // --- CTRL-06: Unknown transponder link ---
-
-    @PostMapping("/race/{raceId}/unknown-transponder-link")
-    @Transactional
-    public ResponseEntity<Void> unknownTransponderLink(@PathVariable long raceId,
-                                                        @Valid @RequestBody UnknownTransponderLinkRequest req) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long actingUserId = Long.parseLong(auth.getName());
-
-        // Upsert by (raceId, transponderNumber)
-        UnknownTransponderLink link = unknownTransponderLinkRepository
-                .findByRaceIdAndTransponderNumber(raceId, req.transponderNumber())
-                .orElseGet(() -> {
-                    UnknownTransponderLink newLink = new UnknownTransponderLink();
-                    newLink.setRaceId(raceId);
-                    newLink.setTransponderNumber(req.transponderNumber());
-                    newLink.setLinkedAt(Instant.now());
-                    return newLink;
-                });
-
-        link.setLinkedEntryId(req.linkedEntryId());
-        link.setLinkedBy(actingUserId);
-        unknownTransponderLinkRepository.save(link);
         return ResponseEntity.ok().build();
     }
 

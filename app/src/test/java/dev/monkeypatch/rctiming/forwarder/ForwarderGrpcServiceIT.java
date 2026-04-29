@@ -178,7 +178,7 @@ class ForwarderGrpcServiceIT {
     // -----------------------------------------------------------------------
 
     @Test
-    void lapPassingMessagePublishedAsApplicationEvent() throws Exception {
+    void lapPassingPublishedWithSentinelRaceIdWhenNoRunningRace() throws Exception {
         when(raceRepository.findFirstByStatus(RaceStatus.RUNNING))
                 .thenReturn(Optional.empty());
 
@@ -186,31 +186,21 @@ class ForwarderGrpcServiceIT {
         TimingServiceGrpc.TimingServiceStub stub = stubWithToken(generated.plaintext());
 
         eventCaptor.expectOne();
-        // no running race — event is NOT published; test passes trivially if no exception
         StreamObserver<LapPassing> requestObserver = stub.streamPassings(noopResponseObserver());
         requestObserver.onNext(samplePassing());
-        // Give server time to process
-        Thread.sleep(300);
+
+        boolean received = eventCaptor.awaitOne(2, TimeUnit.SECONDS);
+        assertThat(received).as("LapPassingEvent should be published with sentinel raceId=0 for practice").isTrue();
+        assertThat(eventCaptor.getEvents()).hasSize(1);
+        LapPassingEvent event = eventCaptor.getEvents().get(0);
+        assertThat(event.raceId()).as("raceId sentinel value when no running race").isEqualTo(0L);
+        assertThat(event.transponderNumber()).isEqualTo("12345");
+
         requestObserver.onCompleted();
-        // With no running race, no event published — verify no crash
-        assertThat(eventCaptor.getEvents()).isEmpty();
     }
 
-    @Test
-    void lapPassingDroppedWhenNoRunningRace() throws Exception {
-        when(raceRepository.findFirstByStatus(RaceStatus.RUNNING))
-                .thenReturn(Optional.empty());
-
-        ForwarderTokenService.GenerateResult generated = tokenService.generate();
-        TimingServiceGrpc.TimingServiceStub stub = stubWithToken(generated.plaintext());
-
-        StreamObserver<LapPassing> requestObserver = stub.streamPassings(noopResponseObserver());
-        requestObserver.onNext(samplePassing());
-        Thread.sleep(300);
-        requestObserver.onCompleted();
-
-        assertThat(eventCaptor.getEvents()).isEmpty();
-    }
+    // lapPassingDroppedWhenNoRunningRace removed: passings are now always published (raceId=0 sentinel)
+    // so PracticeTimingService receives them during practice sessions.
 
     @Test
     void lapPassingResolvesRaceIdFromCurrentlyRunningRace() throws Exception {
