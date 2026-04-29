@@ -129,6 +129,22 @@ export default function CockpitPage() {
     setUnknownTransponders([]);
   }, [selectedRaceId]);
 
+  // Subscribe to bump-up alert — fires when a B/C-final finishes and promotes drivers to the next final
+  const bumpUpTopic =
+    selectedRace?.status === 'FINISHED' && selectedRace.roundType === 'FINAL'
+      ? `/topic/race/${selectedRace.raceId}/bump-up-alert`
+      : null;
+  const { data: bumpUpAlert } = useStomp<{ finishedRaceId: number; promotedEntryIds: number[] }>(bumpUpTopic);
+
+  useEffect(() => {
+    if (bumpUpAlert) {
+      toast.success(
+        `Bump-up applied — ${bumpUpAlert.promotedEntryIds.length} driver(s) promoted to next final. Check the grid before starting.`,
+        { duration: 8000 },
+      );
+    }
+  }, [bumpUpAlert]);
+
   const mutations = useRaceStateMutations(selectedRaceId ?? 0, eventId);
 
   function handleLinkTransponder(transponderNumber: string) {
