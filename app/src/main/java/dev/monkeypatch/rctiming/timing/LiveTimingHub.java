@@ -53,4 +53,13 @@ public class LiveTimingHub {
     public void broadcastForwarderStatus(ForwarderStatusDto dto) {
         messagingTemplate.convertAndSend("/topic/system/forwarder-status", dto);
     }
+
+    /**
+     * Phase 4: broadcasts bump-up promotion alert when a lower final finishes.
+     * Race director UI subscribes to be notified before starting the next final.
+     */
+    public void broadcastBumpUpAlert(long finishedRaceId, List<Long> promotedEntryIds) {
+        messagingTemplate.convertAndSend("/topic/race/" + finishedRaceId + "/bump-up-alert",
+                Map.of("finishedRaceId", finishedRaceId, "promotedEntryIds", promotedEntryIds));
+    }
 }

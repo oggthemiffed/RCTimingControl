@@ -279,6 +279,10 @@ export default function CockpitPage() {
     }
   }
 
+  const activeRace = runOrder.find(
+    (r) => r.status === 'GRID' || r.status === 'RUNNING' || r.status === 'STOPPED',
+  );
+
   return (
     <div className="flex h-full gap-0">
       {/* Run order sidebar */}
@@ -301,6 +305,28 @@ export default function CockpitPage() {
             onSelect={setSelectedRaceId}
           />
         )}
+
+        {/* Skip-to button: shown when user selects a PENDING race different from the active race */}
+        {selectedRace?.status === 'PENDING' &&
+          activeRace &&
+          activeRace.raceId !== selectedRace.raceId && (
+            <div className="px-3 pb-3">
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full text-xs"
+                onClick={() =>
+                  mutations.skipTo.mutate({
+                    sourceRaceId: activeRace.raceId,
+                    targetRaceId: selectedRace.raceId,
+                  })
+                }
+                disabled={mutations.skipTo.isPending}
+              >
+                {mutations.skipTo.isPending ? 'Jumping…' : 'Jump to this race'}
+              </Button>
+            </div>
+          )}
 
         {/* Audio settings collapsible panel */}
         <AudioSettingsPanel raceId={selectedRaceId} />

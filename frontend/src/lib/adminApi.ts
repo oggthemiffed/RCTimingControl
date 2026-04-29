@@ -105,6 +105,34 @@ export interface TransitionEventRequest {
   targetStatus: EventStatus;
 }
 
+export interface ClassFinalsConfigDto {
+  eventClassId: number;
+  finalsCount: number | null;
+  carsPerFinal: number | null;
+  bumpCount: number | null;
+}
+
+export interface GenerateRoundsRequest {
+  practiceRoundsCount: number;
+  qualifyingRoundsCount: number;
+  maxCarsPerHeat: number;
+  classFinalsConfigs: ClassFinalsConfigDto[];
+}
+
+export interface QualifyingResultDto {
+  entryId: number;
+  bestLapMs: number;
+  lapsCompleted: number;
+}
+
+export interface SeedFinalsRequest {
+  eventClassId: number;
+  finalsCount: number;
+  carsPerFinal: number;
+  bumpCount: number;
+  qualifyingResults: QualifyingResultDto[];
+}
+
 export interface AddEventClassRequest {
   racingClassId: number;
   templateId: number;
@@ -271,6 +299,16 @@ export const adminApi = {
   transitionEvent: (id: number, targetStatus: EventStatus) =>
     api
       .post<EventDetailDto>(`/api/v1/admin/events/${id}/transition`, { targetStatus })
+      .then(r => r.data),
+
+  generateRounds: (id: number, body: GenerateRoundsRequest) =>
+    api
+      .post<void>(`/api/v1/admin/events/${id}/generate-rounds`, body)
+      .then(r => r.data),
+
+  seedFinals: (id: number, body: SeedFinalsRequest) =>
+    api
+      .post<void>(`/api/v1/admin/events/${id}/seed-finals`, body)
       .then(r => r.data),
 
   // Event classes

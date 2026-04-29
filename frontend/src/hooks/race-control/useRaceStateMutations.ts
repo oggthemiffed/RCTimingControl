@@ -5,6 +5,7 @@ import {
   stopRace,
   abandonRace,
   restartRace,
+  skipToRace,
   marshalAdjustment,
   raiseIncident,
   applyPenalty,
@@ -57,6 +58,11 @@ export function useRaceStateMutations(raceId: number, eventId: number) {
     }),
     marshalAbsent: useMutation({
       mutationFn: (req: MarshalAbsenceRequest) => recordMarshalAbsent(raceId, req),
+    }),
+    skipTo: useMutation({
+      mutationFn: ({ sourceRaceId, targetRaceId }: { sourceRaceId: number; targetRaceId: number }) =>
+        skipToRace(sourceRaceId, targetRaceId),
+      onSuccess: invalidateRunOrder,
     }),
   };
 }

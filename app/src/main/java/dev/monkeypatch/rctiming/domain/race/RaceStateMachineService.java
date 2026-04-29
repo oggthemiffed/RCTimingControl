@@ -45,11 +45,12 @@ public class RaceStateMachineService {
     private final ResultSnapshotService resultSnapshotService;
     @Nullable
     private final ApplicationEventPublisher eventPublisher;
+    @Nullable
+    private final dev.monkeypatch.rctiming.service.BumpUpSeedingService bumpUpSeedingService;
 
     /**
      * Full constructor for production use — all collaborators required.
      */
-    @org.springframework.beans.factory.annotation.Autowired
     public RaceStateMachineService(LiveTimingHub liveTimingHub,
                                    RoundGeneratorService roundGeneratorService,
                                    RaceRepository raceRepository,
@@ -57,6 +58,19 @@ public class RaceStateMachineService {
                                    RoundRepository roundRepository,
                                    @Nullable ResultSnapshotService resultSnapshotService,
                                    @Nullable ApplicationEventPublisher eventPublisher) {
+        this(liveTimingHub, roundGeneratorService, raceRepository, lapTimingService,
+                roundRepository, resultSnapshotService, eventPublisher, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public RaceStateMachineService(LiveTimingHub liveTimingHub,
+                                   RoundGeneratorService roundGeneratorService,
+                                   RaceRepository raceRepository,
+                                   LapTimingService lapTimingService,
+                                   RoundRepository roundRepository,
+                                   @Nullable ResultSnapshotService resultSnapshotService,
+                                   @Nullable ApplicationEventPublisher eventPublisher,
+                                   @Nullable dev.monkeypatch.rctiming.service.BumpUpSeedingService bumpUpSeedingService) {
         this.liveTimingHub = liveTimingHub;
         this.roundGeneratorService = roundGeneratorService;
         this.raceRepository = raceRepository;
@@ -64,6 +78,7 @@ public class RaceStateMachineService {
         this.roundRepository = roundRepository;
         this.resultSnapshotService = resultSnapshotService;
         this.eventPublisher = eventPublisher;
+        this.bumpUpSeedingService = bumpUpSeedingService;
     }
 
     /**
@@ -140,6 +155,14 @@ public class RaceStateMachineService {
         if (finishedRound == null) {
             return;
         }
+
+        // Handle FINAL rounds: apply bump-up promotion to the next-higher final
+        if (finishedRound.getType() == RoundType.FINAL) {
+            applyBumpUpPromotion(finishedRace);
+            return;
+        }
+
+        // Only continue for PRACTICE and QUALIFIER rounds
         if (finishedRound.getType() != RoundType.PRACTICE && finishedRound.getType() != RoundType.QUALIFIER) {
             return;
         }
@@ -189,6 +212,46 @@ public class RaceStateMachineService {
         } catch (Exception e) {
             log.warn("Failed to apply finishing order from race {} to next race {}: {}",
                     finishedRace.getId(), nextRace.get().getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * When a lower final (B, C, ...) finishes, apply bump-up promotion to fill
+     * the bump slots in the next-higher final. Broadcasts a STOMP alert after promotion
+     * so the race director knows before starting the next final.
+     *
+     * A-Finals are skipped (no higher final above A).
+     */
+    private void applyBumpUpPromotion(Race finishedFinalRace) {
+        String letter = finishedFinalRace.getFinalLetter();
+        if (letter == null || letter.isEmpty() || letter.charAt(0) <= 'A') {
+            // A-Final or no letter — nothing to promote
+            return;
+        }
+
+        if (bumpUpSeedingService == null) {
+            log.warn("Bump-up: BumpUpSeedingService unavailable, skipping promotion for race {}", finishedFinalRace.getId());
+            return;
+        }
+
+        Optional<dev.monkeypatch.rctiming.timing.LiveRaceState> state = lapTimingService.peek(finishedFinalRace.getId());
+        if (state.isEmpty()) {
+            log.warn("Bump-up: no live state for finished final race {}", finishedFinalRace.getId());
+            return;
+        }
+
+        List<Long> finishers = state.get().calculatePositions().stream()
+                .map(LiveTimingRowDto::entryId)
+                .toList();
+
+        try {
+            bumpUpSeedingService.applyBumpUpResults(finishedFinalRace.getId(), finishers);
+            log.info("Bump-up: applied promotion from {}-final race {}", letter, finishedFinalRace.getId());
+            if (liveTimingHub != null) {
+                liveTimingHub.broadcastBumpUpAlert(finishedFinalRace.getId(), finishers);
+            }
+        } catch (Exception e) {
+            log.warn("Bump-up promotion failed for final race {}: {}", finishedFinalRace.getId(), e.getMessage());
         }
     }
 }

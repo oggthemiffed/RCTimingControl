@@ -157,6 +157,10 @@ export async function restartRace(raceId: number): Promise<void> {
   await api.post(`/api/v1/race-control/race/${raceId}/restart`);
 }
 
+export async function skipToRace(raceId: number, targetRaceId: number): Promise<void> {
+  await api.post(`/api/v1/race-control/race/${raceId}/skip-to`, { targetRaceId });
+}
+
 export async function marshalAdjustment(
   raceId: number,
   req: MarshalAdjustmentRequest,

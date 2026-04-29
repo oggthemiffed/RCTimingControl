@@ -76,7 +76,7 @@ status: pending
 10. [ ] Positions panel updates to include the newly-linked entry
 11. [ ] The alert for that transponder is no longer shown
 
-**Result:** [ ] Pass &nbsp; [/] Fail &nbsp; [ ] N/A — **needs re-test after fix**
+**Result:** [/] Pass &nbsp; [] Fail &nbsp; [ ] N/A — **needs re-test after fix**
 
 **Comments** WHile i have race running (see the seed data, with entries) when i new transponder is detected i dont have ANY entries to link it to.
 
@@ -105,7 +105,7 @@ Also if there is a live race running and i move to a race that has been run in t
 10. Let the race run until auto-finish (if configured) or manually finish
 11. [ ] Final results snapshot is persisted — navigate away and back; results still shown
 
-**Result:** [ ] Pass &nbsp; [ ] Fail &nbsp; [ ] N/A
+**Result:** [/] Pass &nbsp; [ ] Fail &nbsp; [ ] N/A
 
 ---
 
