@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.api.admin;
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.infrastructure.profanity.ProfanityBlocklistEntry;
@@ -35,17 +36,20 @@ import java.util.List;
 public class AdminAudioController {
 
     private final ClubProfileRepository clubProfileRepository;
+    private final ClubProfileService clubProfileService;
     private final ProfanityBlocklistRepository blocklistRepository;
     private final ProfanityFilter profanityFilter;
     private final UserRepository userRepository;
     private final TtsClipService clipService;
 
     public AdminAudioController(ClubProfileRepository clubProfileRepository,
+                                ClubProfileService clubProfileService,
                                 ProfanityBlocklistRepository blocklistRepository,
                                 ProfanityFilter profanityFilter,
                                 UserRepository userRepository,
                                 TtsClipService clipService) {
         this.clubProfileRepository = clubProfileRepository;
+        this.clubProfileService = clubProfileService;
         this.blocklistRepository = blocklistRepository;
         this.profanityFilter = profanityFilter;
         this.userRepository = userRepository;
@@ -67,10 +71,8 @@ public class AdminAudioController {
 
     @GetMapping("/settings")
     public ResponseEntity<AudioSettingsDto> getAudioSettings() {
-        ClubProfile profile = clubProfileRepository.findAll().stream().findFirst().orElse(null);
-        if (profile == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Long profileId = clubProfileService.getSingletonProfileId();
+        ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
         ClubAudioSettings s = profile.getAudioSettings();
         return ResponseEntity.ok(new AudioSettingsDto(
                 s.announceCountdown(),
@@ -85,10 +87,8 @@ public class AdminAudioController {
 
     @PostMapping("/settings")
     public ResponseEntity<AudioSettingsDto> saveAudioSettings(@RequestBody AudioSettingsDto dto) {
-        ClubProfile profile = clubProfileRepository.findAll().stream().findFirst().orElse(null);
-        if (profile == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Long profileId = clubProfileService.getSingletonProfileId();
+        ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
         ClubAudioSettings newSettings = new ClubAudioSettings(
                 dto.announceCountdown(),
                 dto.announceStagger(),
@@ -109,6 +109,9 @@ public class AdminAudioController {
     /** DTO for a single blocklist term */
     public record BlocklistTermDto(Long id, String word, String addedAt) {}
 
+    /** Request body for adding a blocklist term */
+    public record AddTermRequest(String word) {}
+
     @GetMapping("/blocklist")
     public List<BlocklistTermDto> getBlocklist() {
         return blocklistRepository.findAll().stream()
@@ -118,9 +121,9 @@ public class AdminAudioController {
 
     @PostMapping("/blocklist")
     public ResponseEntity<BlocklistTermDto> addTerm(
-            @RequestBody String word,
+            @RequestBody AddTermRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        word = word.trim().toLowerCase();
+        String word = request.word() == null ? "" : request.word().trim().toLowerCase();
         if (word.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }

@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.api.racecontrol.dto;
 
+import java.time.OffsetDateTime;
+
 public record RunOrderItemDto(
         long raceId,
         int sequenceInEvent,
@@ -9,6 +11,7 @@ public record RunOrderItemDto(
         int heatNumber,
         String finalLetter,     // null for practice/qualifier
         String status,
-        int sequenceInRound
+        int sequenceInRound,
+        OffsetDateTime startedAt  // null until race starts
 ) {
 }

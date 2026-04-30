@@ -44,7 +44,8 @@ public class RunOrderQuery {
                         RACES.HEAT_NUMBER,
                         RACES.FINAL_LETTER,
                         RACES.STATUS,
-                        RACES.SEQUENCE_IN_ROUND)
+                        RACES.SEQUENCE_IN_ROUND,
+                        RACES.STARTED_AT)
                 .from(ROUNDS)
                 .join(RACES).on(RACES.ROUND_ID.eq(ROUNDS.ID))
                 .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
@@ -60,7 +61,8 @@ public class RunOrderQuery {
                         r.get(RACES.HEAT_NUMBER),
                         r.get(RACES.FINAL_LETTER),
                         r.get(RACES.STATUS),
-                        r.get(RACES.SEQUENCE_IN_ROUND)
+                        r.get(RACES.SEQUENCE_IN_ROUND),
+                        r.get(RACES.STARTED_AT)
                 ));
     }
 }

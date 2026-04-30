@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.api.racecontrol;
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,9 +25,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AudioSettingsController {
 
     private final ClubProfileRepository clubProfileRepository;
+    private final ClubProfileService clubProfileService;
 
-    public AudioSettingsController(ClubProfileRepository clubProfileRepository) {
+    public AudioSettingsController(ClubProfileRepository clubProfileRepository,
+                                   ClubProfileService clubProfileService) {
         this.clubProfileRepository = clubProfileRepository;
+        this.clubProfileService = clubProfileService;
     }
 
     /** DTO for race-control audio settings view/update */
@@ -45,10 +49,8 @@ public class AudioSettingsController {
      */
     @GetMapping
     public ResponseEntity<AudioSettingsDto> getSettings() {
-        ClubProfile profile = clubProfileRepository.findAll().stream().findFirst().orElse(null);
-        if (profile == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Long profileId = clubProfileService.getSingletonProfileId();
+        ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
         ClubAudioSettings s = profile.getAudioSettings();
         return ResponseEntity.ok(new AudioSettingsDto(
                 s.announceCountdown(),
@@ -67,10 +69,8 @@ public class AudioSettingsController {
      */
     @PatchMapping
     public ResponseEntity<AudioSettingsDto> updateSettings(@RequestBody AudioSettingsDto dto) {
-        ClubProfile profile = clubProfileRepository.findAll().stream().findFirst().orElse(null);
-        if (profile == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Long profileId = clubProfileService.getSingletonProfileId();
+        ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
         ClubAudioSettings newSettings = new ClubAudioSettings(
                 dto.announceCountdown(),
                 dto.announceStagger(),

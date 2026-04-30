@@ -27,12 +27,14 @@ import FormatsPage from '@/pages/admin/formats/FormatsPage';
 import CarTagCategoriesPage from '@/pages/admin/categories/CarTagCategoriesPage';
 import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
 import ForwarderTokenPage from '@/pages/admin/race-control/ForwarderTokenPage';
+import AdminRacersListPage from '@/pages/admin/racers/AdminRacersListPage';
 import AdminRacerDetailPage from '@/pages/admin/racers/AdminRacerDetailPage';
 import RaceControlLayout from '@/pages/race-control/RaceControlLayout';
 import CockpitPage from '@/pages/race-control/CockpitPage';
 import RefereePage from '@/pages/race-control/RefereePage';
 import PrintResultsPage from '@/pages/race-control/PrintResultsPage';
 import { PracticeSessionPage } from '@/pages/race-control/PracticeSessionPage';
+import { PracticeLandingPage } from '@/pages/race-control/PracticeLandingPage';
 import PrintPracticeResultsPage from '@/pages/race-control/PrintPracticeResultsPage';
 
 function RootLayout() {
@@ -73,6 +75,7 @@ const router = createBrowserRouter([
           { path: 'race-control', element: <RaceControlSelectPage /> },
           { path: 'forwarder', element: <ForwarderTokenPage /> },
           { path: 'audio', element: <AdminAudioSettingsPage /> },
+          { path: 'racers', element: <AdminRacersListPage /> },
           { path: 'racers/:userId', element: <AdminRacerDetailPage /> },
         ],
       },
@@ -100,6 +103,7 @@ const router = createBrowserRouter([
         ),
         children: [
           { index: true, element: <CockpitPage /> },
+          { path: 'practice', element: <PracticeLandingPage /> },
           { path: 'referee', element: <RefereePage /> },
           { path: 'results/:raceId', element: <PrintResultsPage /> },
         ],

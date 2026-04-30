@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useRunOrder } from '@/hooks/race-control/useRunOrder';
 import { useRaceStateMutations } from '@/hooks/race-control/useRaceStateMutations';
@@ -8,6 +9,7 @@ import { useLiveTiming } from '@/hooks/race-control/useLiveTiming';
 import { useAnnouncements } from '@/hooks/race-control/useAnnouncements';
 import { usePreRaceReadiness } from '@/hooks/race-control/usePreRaceReadiness';
 import { usePregeneratedClips } from '@/hooks/race-control/usePregeneratedClips';
+import { getAudioSettings } from '@/lib/audioApi';
 import { RunOrderPanel } from './panels/RunOrderPanel';
 import { GridEditorPanel } from './panels/GridEditorPanel';
 import { LiveTimingPanel } from './panels/LiveTimingPanel';
@@ -60,6 +62,12 @@ export default function CockpitPage() {
     return stored ? parseInt(stored, 10) / 100 : 0.8;
   })();
 
+  // Fetch audio settings — shared query key with AudioSettingsPanel so only one request fires
+  const { data: audioSettings } = useQuery({
+    queryKey: ['audio-settings'],
+    queryFn: () => getAudioSettings().then((r) => r.data),
+  });
+
   // Fetch grid entries for stagger sequencer when race is at GRID state
   const { data: preRaceReadiness } = usePreRaceReadiness(
     selectedRace?.status === 'GRID' ? selectedRaceId : null,
@@ -68,11 +76,11 @@ export default function CockpitPage() {
 
   const { playBeep, setClipMap } = useAnnouncements({
     raceId: selectedRaceId,
-    settings: null, // settings fetched inside AudioSettingsPanel; pass null here so hook uses ref
+    settings: audioSettings ?? null,
     volume: audioVolume,
     raceState: selectedRace?.status,
-    raceStartedAt: null,    // RunOrderItemDto does not expose startedAt
-    raceDurationSecs: null, // RunOrderItemDto does not expose durationSecs
+    raceStartedAt: selectedRace?.startedAt?.toString() ?? null,
+    raceDurationSecs: null, // race duration comes from format config — not yet in RunOrderItemDto
     gridEntries,
   });
 

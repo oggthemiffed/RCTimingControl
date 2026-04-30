@@ -35,6 +35,7 @@ export type RunOrderItemDto = {
   finalLetter: string | null;
   status: 'PENDING' | 'GRID' | 'RUNNING' | 'STOPPED' | 'FINISHED';
   sequenceInRound: number;
+  startedAt: string | null;
 };
 
 export type ResultRow = {

@@ -12,6 +12,7 @@ import {
   Flag,
   Radio,
   Volume2,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ const eventsGroup = [
 const operationsGroup = [
   { to: '/admin/race-control', label: 'Race Control', Icon: Flag },
   { to: '/admin/forwarder', label: 'Forwarder Token', Icon: Radio },
+  { to: '/admin/racers', label: 'Racers', Icon: Users },
 ] as const;
 
 const configGroup = [

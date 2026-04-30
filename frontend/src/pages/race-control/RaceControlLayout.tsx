@@ -1,5 +1,5 @@
 import { Outlet, Link, useParams, useMatches } from 'react-router-dom';
-import { Flag, Shield, LogOut, ChevronLeft } from 'lucide-react';
+import { Flag, Shield, LogOut, ChevronLeft, Dumbbell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -12,7 +12,7 @@ export default function RaceControlLayout() {
   const matches = useMatches();
 
   const base = `/race-control/event/${eventId}`;
-  // Check if any matched route ends at the referee path
+  const isPractice = matches.some((m) => m.pathname.includes('/practice'));
   const isReferee = matches.some((m) => m.pathname.endsWith('/referee'));
 
   function navClass(active: boolean) {
@@ -37,9 +37,13 @@ export default function RaceControlLayout() {
         </Link>
 
         <nav className="flex items-center gap-1 ml-4">
-          <Link to={base} className={navClass(!isReferee)}>
+          <Link to={base} className={navClass(!isReferee && !isPractice)}>
             <Flag className="h-3.5 w-3.5" />
             Cockpit
+          </Link>
+          <Link to={`${base}/practice`} className={navClass(isPractice)}>
+            <Dumbbell className="h-3.5 w-3.5" />
+            Practice
           </Link>
           <Link to={`${base}/referee`} className={navClass(isReferee)}>
             <Shield className="h-3.5 w-3.5" />
