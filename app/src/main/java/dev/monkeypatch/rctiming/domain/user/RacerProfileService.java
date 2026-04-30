@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.domain.user;
 
+import dev.monkeypatch.rctiming.api.ValidationException;
 import dev.monkeypatch.rctiming.api.racer.UserProfileUpdatedEvent;
 import dev.monkeypatch.rctiming.api.racer.dto.ClassRatingDto;
 import dev.monkeypatch.rctiming.api.racer.dto.MembershipDto;
@@ -55,13 +56,13 @@ public class RacerProfileService {
 
         // Profanity check before applying changes (AUDIO-14)
         if (req.firstName() != null && profanityFilter.isBlocked(req.firstName())) {
-            throw new IllegalArgumentException("First name contains inappropriate content");
+            throw new ValidationException("firstName", "First name contains inappropriate content");
         }
         if (req.lastName() != null && profanityFilter.isBlocked(req.lastName())) {
-            throw new IllegalArgumentException("Last name contains inappropriate content");
+            throw new ValidationException("lastName", "Last name contains inappropriate content");
         }
         if (req.phoneticName() != null && !req.phoneticName().isBlank() && profanityFilter.isBlocked(req.phoneticName())) {
-            throw new IllegalArgumentException("Phonetic name contains inappropriate content");
+            throw new ValidationException("phoneticName", "Phonetic name contains inappropriate content");
         }
 
         if (req.firstName() != null) user.setFirstName(req.firstName());

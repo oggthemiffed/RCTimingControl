@@ -62,6 +62,14 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid timezone: " + ex.getMessage());
     }
 
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleValidationException(ValidationException ex) {
+        var detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        detail.setProperty("errors", ex.getFieldErrors());
+        return detail;
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {
