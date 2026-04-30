@@ -60,7 +60,7 @@ public class RacerProfileService {
         if (req.lastName() != null && profanityFilter.isBlocked(req.lastName())) {
             throw new IllegalArgumentException("Last name contains inappropriate content");
         }
-        if (req.phoneticName() != null && profanityFilter.isBlocked(req.phoneticName())) {
+        if (req.phoneticName() != null && !req.phoneticName().isBlank() && profanityFilter.isBlocked(req.phoneticName())) {
             throw new IllegalArgumentException("Phonetic name contains inappropriate content");
         }
 
@@ -69,7 +69,7 @@ public class RacerProfileService {
         if (req.phoneNumber() != null) user.setPhoneNumber(req.phoneNumber());
         if (req.emergencyContactName() != null) user.setEmergencyContactName(req.emergencyContactName());
         if (req.emergencyContactPhone() != null) user.setEmergencyContactPhone(req.emergencyContactPhone());
-        if (req.phoneticName() != null) user.setPhoneticName(req.phoneticName());
+        if (req.phoneticName() != null) user.setPhoneticName(req.phoneticName().isBlank() ? null : req.phoneticName());
         user.setUpdatedAt(Instant.now());
         userRepository.save(user);
 
@@ -138,6 +138,7 @@ public class RacerProfileService {
                 user.getEmergencyContactName(),
                 user.getEmergencyContactPhone(),
                 user.getPhoneticName(),
+                user.getPreferredVoiceId(),
                 memberships,
                 classRatings
         );

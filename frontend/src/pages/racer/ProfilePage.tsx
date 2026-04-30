@@ -54,6 +54,12 @@ export default function ProfilePage() {
   const [selectedVoice, setSelectedVoice] = useState<string>('');
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
 
+  useEffect(() => {
+    if (profile?.preferredVoiceId && !selectedVoice) {
+      setSelectedVoice(profile.preferredVoiceId);
+    }
+  }, [profile?.preferredVoiceId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handlePreview = async () => {
     setIsPreviewPlaying(true);
     try {
@@ -110,7 +116,7 @@ export default function ProfilePage() {
         phoneNumber:           values.phoneNumber || undefined,
         emergencyContactName:  values.emergencyContactName || undefined,
         emergencyContactPhone: values.emergencyContactPhone || undefined,
-        phoneticName:          values.phoneticName || undefined,
+        phoneticName:          values.phoneticName,
       });
       toast.success('Profile updated');
     } catch (err) {

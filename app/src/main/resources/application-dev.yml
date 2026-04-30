@@ -17,3 +17,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+tts:
+  endpoint: localhost:10200

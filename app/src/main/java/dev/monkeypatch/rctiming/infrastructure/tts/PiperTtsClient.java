@@ -91,18 +91,23 @@ public class PiperTtsClient {
                     break;
                 }
 
-                JsonNode node = objectMapper.readTree(line);
-                String type = node.get("type").asText();
+                JsonNode header = objectMapper.readTree(line);
+                String type = header.get("type").asText();
+
+                // Wyoming protocol: data_length bytes of JSON payload follow the header line
+                int dataLength = header.path("data_length").asInt(0);
+                JsonNode data = dataLength > 0
+                        ? objectMapper.readTree(rawIn.readNBytes(dataLength))
+                        : header.path("data");
 
                 switch (type) {
                     case "audio-start" -> {
-                        JsonNode data = node.path("data");
                         sampleRate = data.path("rate").asInt(22050);
                         sampleWidth = data.path("width").asInt(2);
                         channels = data.path("channels").asInt(1);
                     }
                     case "audio-chunk" -> {
-                        int payloadLength = node.path("payload_length").asInt(0);
+                        int payloadLength = header.path("payload_length").asInt(0);
                         if (payloadLength > 0) {
                             byte[] payload = rawIn.readNBytes(payloadLength);
                             pcmBuffer.write(payload);
@@ -129,7 +134,8 @@ public class PiperTtsClient {
 
     /**
      * List available voices by sending a describe event to Piper.
-     * Returns empty list if Piper is unavailable.
+     * Falls back to a single-entry list using the configured default voice if Piper
+     * is unreachable or returns no voices (e.g. still downloading the model).
      */
     public List<VoiceInfo> listVoices() {
         if (!properties.enabled()) {
@@ -149,29 +155,49 @@ public class PiperTtsClient {
             rawOut.write(json.getBytes(StandardCharsets.UTF_8));
             rawOut.flush();
 
-            // Read info response
+            // Read info response — Wyoming protocol: data_length bytes carry the JSON payload
             String line = readJsonLine(rawIn);
             if (line != null && !line.isBlank()) {
-                JsonNode node = objectMapper.readTree(line);
-                if ("info".equals(node.path("type").asText())) {
+                JsonNode header = objectMapper.readTree(line);
+                if ("info".equals(header.path("type").asText())) {
+                    int dataLength = header.path("data_length").asInt(0);
+                    JsonNode data = dataLength > 0
+                            ? objectMapper.readTree(rawIn.readNBytes(dataLength))
+                            : header.path("data");
+
+                    List<String> effectiveLocales = properties.effectiveLocales();
                     List<VoiceInfo> voices = new ArrayList<>();
-                    JsonNode voicesNode = node.path("data").path("voices");
-                    if (voicesNode.isArray()) {
-                        for (JsonNode v : voicesNode) {
-                            String name = v.path("name").asText();
-                            boolean isDefault = name.equals(properties.defaultVoice());
-                            voices.add(new VoiceInfo(name, formatVoiceLabel(name), isDefault));
+                    JsonNode ttsArray = data.path("tts");
+                    if (ttsArray.isArray()) {
+                        for (JsonNode ttsProgram : ttsArray) {
+                            JsonNode voicesNode = ttsProgram.path("voices");
+                            if (voicesNode.isArray()) {
+                                for (JsonNode v : voicesNode) {
+                                    String name = v.path("name").asText();
+                                    if (!name.isBlank() && matchesLocale(name, effectiveLocales)) {
+                                        boolean isDefault = name.equals(properties.defaultVoice());
+                                        voices.add(new VoiceInfo(name, formatVoiceLabel(name), isDefault));
+                                    }
+                                }
+                            }
                         }
                     }
-                    return voices;
+                    if (!voices.isEmpty()) {
+                        return voices;
+                    }
+                    log.warn("No Piper voices matched locales {}; falling back to default voice", effectiveLocales);
                 }
             }
-            return Collections.emptyList();
 
         } catch (IOException e) {
             log.warn("Failed to list Piper voices from {}: {}", properties.endpoint(), e.getMessage());
-            return Collections.emptyList();
         }
+
+        // Fallback: return the configured default voice so the UI is never empty
+        return List.of(new VoiceInfo(
+                properties.defaultVoice(),
+                formatVoiceLabel(properties.defaultVoice()),
+                true));
     }
 
     /**
@@ -232,6 +258,13 @@ public class PiperTtsClient {
             return new String[]{endpoint.substring(0, lastColon), endpoint.substring(lastColon + 1)};
         }
         return new String[]{endpoint, "10200"};
+    }
+
+    /** Returns true if the voice name's locale prefix (e.g. "en_GB") is in the allowed list. */
+    private boolean matchesLocale(String voiceName, List<String> locales) {
+        int dash = voiceName.indexOf('-');
+        String voiceLocale = dash > 0 ? voiceName.substring(0, dash) : voiceName;
+        return locales.stream().anyMatch(l -> l.equalsIgnoreCase(voiceLocale));
     }
 
     private String formatVoiceLabel(String voiceId) {

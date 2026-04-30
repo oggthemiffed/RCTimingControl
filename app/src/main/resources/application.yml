@@ -27,3 +27,6 @@ tts:
   endpoint: ${TTS_ENDPOINT:piper:10200}
   defaultVoice: ${TTS_DEFAULT_VOICE:en_GB-alan-medium}
   enabled: ${TTS_ENABLED:true}
+  # Piper locale prefixes to show in the voice picker (e.g. en_GB, en_US).
+  # Leave empty to auto-detect from the JVM system locale.
+  locales: ${TTS_LOCALES:}
