@@ -39,10 +39,10 @@ export default function AdminRacerDetailPage() {
   });
 
   useEffect(() => {
-    if (phonetic && !editedPhonetic) {
-      setEditedPhonetic(phonetic.phoneticName || '');
+    if (phonetic !== undefined) {
+      setEditedPhonetic(phonetic.phoneticName ?? '');
     }
-  }, [phonetic]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [phonetic]);
 
   const saveMutation = useMutation({
     mutationFn: (phoneticName: string | null) => updateRacerPhonetic(id, phoneticName),

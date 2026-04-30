@@ -7,8 +7,7 @@ import dev.monkeypatch.rctiming.practice.dto.PracticeTimingRowDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,9 +42,9 @@ public class PracticeSessionController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<PracticeSessionDto> create(
             @RequestBody PracticeSessionService.CreateRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            Authentication auth) {
         PracticeSessionDto session = sessionService.create(request,
-                userDetails != null ? userDetails.getUsername() : null);
+                auth != null ? auth.getName() : null);
         return ResponseEntity.status(HttpStatus.CREATED).body(session);
     }
 
