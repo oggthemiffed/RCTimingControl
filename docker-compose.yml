@@ -44,7 +44,10 @@ services:
     container_name: rctiming-piper
     volumes:
       - piper_data:/data
-    command: --voice en_GB-alan-medium
+    command: >
+      --voice en_GB-alan-medium
+      --voice en_GB-cori-high
+      --voice en_US-amy-medium
     ports:
       - "10200:10200"
 

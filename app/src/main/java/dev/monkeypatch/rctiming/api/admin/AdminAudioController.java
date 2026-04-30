@@ -13,8 +13,7 @@ import dev.monkeypatch.rctiming.infrastructure.tts.TtsClipService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +31,6 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/admin/audio")
-@PreAuthorize("hasRole('ADMIN')")
 public class AdminAudioController {
 
     private final ClubProfileRepository clubProfileRepository;
@@ -70,6 +68,7 @@ public class AdminAudioController {
     ) {}
 
     @GetMapping("/settings")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<AudioSettingsDto> getAudioSettings() {
         Long profileId = clubProfileService.getSingletonProfileId();
         ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
@@ -85,7 +84,8 @@ public class AdminAudioController {
         ));
     }
 
-    @PostMapping("/settings")
+    @PutMapping("/settings")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<AudioSettingsDto> saveAudioSettings(@RequestBody AudioSettingsDto dto) {
         Long profileId = clubProfileService.getSingletonProfileId();
         ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
@@ -113,6 +113,7 @@ public class AdminAudioController {
     public record AddTermRequest(String word) {}
 
     @GetMapping("/blocklist")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public List<BlocklistTermDto> getBlocklist() {
         return blocklistRepository.findAll().stream()
                 .map(e -> new BlocklistTermDto(e.getId(), e.getWord(), e.getAddedAt().toString()))
@@ -120,9 +121,10 @@ public class AdminAudioController {
     }
 
     @PostMapping("/blocklist")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<BlocklistTermDto> addTerm(
             @RequestBody AddTermRequest request,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            Authentication authentication) {
         String word = request.word() == null ? "" : request.word().trim().toLowerCase();
         if (word.isEmpty()) {
             return ResponseEntity.badRequest().build();
@@ -131,7 +133,13 @@ public class AdminAudioController {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
 
-        User admin = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        User admin = null;
+        if (authentication != null) {
+            try {
+                Long userId = Long.parseLong(authentication.getName());
+                admin = userRepository.findById(userId).orElse(null);
+            } catch (NumberFormatException ignored) {}
+        }
         ProfanityBlocklistEntry entry = new ProfanityBlocklistEntry();
         entry.setWord(word);
         entry.setAddedBy(admin);
@@ -143,6 +151,7 @@ public class AdminAudioController {
     }
 
     @DeleteMapping("/blocklist/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<Void> removeTerm(@PathVariable Long id) {
         if (!blocklistRepository.existsById(id)) {
             return ResponseEntity.notFound().build();

@@ -162,7 +162,7 @@ public class PreRaceReadinessQuery {
                                 : 0,
                         r.get(RACE_ENTRIES.ENTRY_ID),
                         r.get("driverName", String.class),
-                        null, // car_number column does not exist in the entries table
+                        null, // car_number not yet on Entry — tracked as gap, see REQUIREMENTS.md ENTRY-03
                         r.get("className", String.class)
                 ));
 

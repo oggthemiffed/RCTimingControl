@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader2, ChevronLeft, RefreshCw } from 'lucide-react';
@@ -36,12 +36,13 @@ export default function AdminRacerDetailPage() {
     queryKey: ['racer-phonetic', id],
     queryFn: () => getRacerPhonetic(id),
     enabled: id > 0,
-    select: (data) => {
-      // Seed local input if not yet edited
-      setEditedPhonetic((prev) => prev || data.phoneticName || '');
-      return data;
-    },
   });
+
+  useEffect(() => {
+    if (phonetic && !editedPhonetic) {
+      setEditedPhonetic(phonetic.phoneticName || '');
+    }
+  }, [phonetic]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveMutation = useMutation({
     mutationFn: (phoneticName: string | null) => updateRacerPhonetic(id, phoneticName),

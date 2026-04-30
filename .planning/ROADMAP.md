@@ -2,7 +2,7 @@
 
 ## Overview
 
-Seven phases deliver a complete RC club management and race timing system. The build order follows a strict dependency chain: domain entities and auth unlock the racer portal; event management and format config unlock race control; race control unlocks live timing integration; audio and practice layer on top of a running timing system; results and championship scoring close out with post-race publishing. Each phase delivers a coherent, independently verifiable capability.
+Ten phases deliver a complete RC club management and race timing system. The build order follows a strict dependency chain: domain entities and auth unlock the racer portal; event management and format config unlock race control; race control unlocks live timing integration; audio and practice layer on top of a running timing system; results and championship scoring close out with post-race publishing. A first-run wizard and user documentation round out the system for new club installations, with a Docker-based trial environment enabling clubs to evaluate the system without committing to a full deployment.
 
 ## Phases
 
@@ -19,6 +19,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Live Timing & Forwarder** - AMB P3 forwarder, gRPC streaming, WebSocket live timing display (completed 2026-04-26)
 - [x] **Phase 6: Audio & Practice** - Voice announcements (Web Speech API + TTS), open practice sessions
 - [ ] **Phase 7: Results & Championship** - Post-race result snapshots, championship standings, PDF export
+- [ ] **Phase 8: First-Run Setup Wizard** - Guided onboarding for new club installations: club profile, tracks, formats, staff accounts, decoder config, forwarder test
+- [ ] **Phase 9: User Manual & Documentation** - In-app help system and printed/PDF race meeting guide for officials, racers, and admins
+- [ ] **Phase 10: Docker Trial Environment** - docker-compose stack with demo seed data and fake decoder replay so clubs can evaluate the full system locally with a single command
 
 ## Phase Details
 
@@ -147,10 +150,54 @@ Plans:
   3. Per-racer result history is viewable on the racer's portal page; printed results optionally display car tag values beneath the racer's name (controlled by admin setting)
 **Plans**: TBD
 
+**Research items (CARRY-FORWARD from Phase 6 UAT — must resolve before planning Phase 7):**
+
+1. **Car number (ENTRY-03 — implementation gap):** Car numbers were specified in FORMAT-08, AUDIO-03, AUDIO-05, AUDIO-09 but were never implemented in the domain. Car number lives on `RaceEntry` (not `Entry`) because it changes between phases: the round generator assigns numbers 1–N when qualifying rounds are created, then re-numbers from qualifying results (fastest qualifier = car 1) when finals are seeded. Car number is consistent within a phase (same number in Q1, Q2, Q3) but changes at the qualifying→finals boundary. It is distinct from grid position (grid position = start slot within a race; car number = driver identifier across the phase). Needs: `car_number` column on `race_entries` table (Flyway migration); round generator updated to assign qualifying numbers on creation and finals numbers on seeding; `PreRaceReadinessQuery` updated to pull it; stagger, finish, and pre-generated clip logic updated to use it. Stagger currently announces driver name only as a fallback.
+
+2. **Race start sequence:** UAT revealed the original project data contained requirements for a structured race-start flow not fully captured in Phase 6. Review original brief for the intended sequence: start-order recap announcement, T-30 and T-10 countdown calls, per-driver stagger start calls triggered by the race director rather than immediately on race start. Determine whether this belongs in Phase 7 or as a dedicated 7.x insertion. Reference: `.planning/phases/06-audio-practice/06-HUMAN-UAT.md` general feedback.
+
+### Phase 8: First-Run Setup Wizard
+**Goal**: A brand-new club installation can go from empty database to ready-to-run-a-meeting by following a guided multi-step wizard, without needing to read external documentation
+**Depends on**: Phase 7
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. On first boot (no club record exists), the app redirects to the setup wizard; once completed, the redirect no longer triggers
+  2. Wizard covers all mandatory setup steps in order: club profile (name, logo, contact), at least one track, at least one race format template, at least one staff account (admin/race director/referee), and decoder hardware configuration (IP address, RC-4 vs P3 protocol selection)
+  3. Each wizard step is individually completable and skippable; the wizard is re-entrant — closing it mid-way and returning resumes from the last incomplete step
+  4. A "test connection" action on the decoder config step verifies forwarder reachability and reports success/failure in the UI before the user proceeds
+  5. A setup completion summary shows all configured items with links to edit them; the wizard is accessible again from Admin settings for reconfiguration
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 9: User Manual & Documentation
+**Goal**: Comprehensive user-facing documentation covers every role — officials running a meeting, racers using the portal, and admins configuring the system — available both in-app and as a printable PDF
+**Depends on**: Phase 8
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. An in-app help system is accessible from every major page (contextual "?" link); each help page explains the current screen's purpose, key actions, and common mistakes
+  2. A printable "Race Meeting Guide" PDF covers the full race-day workflow for officials: setting up the event, calling the grid, starting/stopping races, applying marshal laps, handling incidents, and publishing results
+  3. A racer quick-start guide covers registration, adding cars and transponders, and submitting an event entry
+  4. An admin configuration guide covers club setup, track and format management, championship creation, and user/role management
+  5. All documentation is versioned alongside the codebase and kept accurate against the implemented features
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 10: Docker Trial Environment
+**Goal**: Any club can spin up the complete system locally with `docker compose up` — including a live timing demo using replayed passing data — to evaluate features and give feedback before committing to a full deployment
+**Depends on**: Phase 9
+**Requirements**: TBD
+**Success Criteria** (what must be TRUE):
+  1. `docker compose up` from a fresh clone brings up all services (PostgreSQL, Spring Boot app, frontend, Piper TTS, forwarder, fake decoder) with no manual config steps beyond copying a `.env.example` file
+  2. A demo-seed container runs once on first boot and populates the database with a sample club, track, race formats, racer accounts, and a completed historical event so the system is not a blank slate
+  3. The fake decoder container replays a recorded RC-4 passing file on a loop so live timing is visible in the race control client without physical AMB hardware
+  4. The setup wizard (Phase 8) is accessible and functional within the trial environment, allowing clubs to reconfigure it to match their own club details
+  5. A `docker-compose.ghcr.yml` variant pulls pre-built images from GitHub Container Registry (GHCR) so non-technical clubs do not need to build from source; images are published automatically by a GitHub Actions workflow on each version tag
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -161,6 +208,9 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 5. Live Timing & Forwarder | 5/5 | Complete | 2026-04-26 |
 | 6. Audio & Practice | 0/6 | Planning complete | - |
 | 7. Results & Championship | 0/TBD | Not started | - |
+| 8. First-Run Setup Wizard | 0/TBD | Not started | - |
+| 9. User Manual & Documentation | 0/TBD | Not started | - |
+| 10. Docker Trial Environment | 0/TBD | Not started | - |
 
 
 ## Backlog

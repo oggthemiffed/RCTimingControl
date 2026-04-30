@@ -16,16 +16,16 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Audio REST API — voice listing and name clip preview.
+ * Audio REST API — voice listing, name clip preview, and racer voice preference.
  * <p>
  * Endpoints:
  * <ul>
- *   <li>GET /api/v1/audio/voices — list available Piper voice models (AUDIO-13)</li>
- *   <li>GET /api/v1/audio/preview?voice={voiceId} — preview current user's name clip (AUDIO-13)</li>
+ *   <li>GET  /api/v1/audio/voices — list available Piper voice models (AUDIO-13)</li>
+ *   <li>GET  /api/v1/audio/preview?voice={voiceId} — preview current user's name clip (AUDIO-13)</li>
+ *   <li>PUT  /api/v1/racer/audio/voice — save the authenticated racer's preferred voice (AUDIO-08)</li>
  * </ul>
  */
 @RestController
-@RequestMapping("/api/v1/audio")
 public class AudioController {
 
     private final PiperTtsClient piperClient;
@@ -40,11 +40,14 @@ public class AudioController {
         this.userRepository = userRepository;
     }
 
+    /** Request body for voice preference save */
+    public record VoicePreferenceRequest(String voiceId) {}
+
     /**
      * List available Piper TTS voices (AUDIO-13).
      * Queries the running Piper container; returns empty list if unavailable.
      */
-    @GetMapping("/voices")
+    @GetMapping("/api/v1/audio/voices")
     public List<VoiceInfo> listVoices() {
         return piperClient.listVoices();
     }
@@ -57,7 +60,7 @@ public class AudioController {
      * @param auth    authenticated principal (JWT-derived; getName() returns user ID)
      * @param voice   optional voice override; defaults to user's preferredVoiceId or system default
      */
-    @GetMapping(value = "/preview", produces = "audio/wav")
+    @GetMapping(value = "/api/v1/audio/preview", produces = "audio/wav")
     public ResponseEntity<byte[]> previewNameClip(
             Authentication auth,
             @RequestParam(required = false) String voice) {
@@ -85,5 +88,22 @@ public class AudioController {
         } catch (TtsUnavailableException e) {
             return ResponseEntity.status(503).build();
         }
+    }
+
+    /**
+     * Save the authenticated racer's preferred TTS voice (AUDIO-08).
+     * Pass {@code voiceId: null} to clear the preference and revert to the club default.
+     */
+    @PutMapping("/api/v1/racer/audio/voice")
+    public ResponseEntity<Void> saveVoicePreference(
+            Authentication auth,
+            @RequestBody VoicePreferenceRequest request) {
+
+        Long userId = Long.parseLong(auth.getName());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
+        user.setPreferredVoiceId(request.voiceId());
+        userRepository.save(user);
+        return ResponseEntity.noContent().build();
     }
 }

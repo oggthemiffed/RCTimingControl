@@ -7,7 +7,7 @@ stopped_at: "Phase 06 audio-practice VERIFIED — all 6 plans complete, all gaps
 last_updated: "2026-04-29T09:05:00Z"
 last_activity: 2026-04-28
 progress:
-  total_phases: 7
+  total_phases: 10
   completed_phases: 6
   total_plans: 36
   completed_plans: 36
@@ -72,6 +72,7 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
+- Roadmap: 10 phases (7 original + Phase 8 first-run setup wizard + Phase 9 user manual/documentation + Phase 10 Docker trial environment added 2026-04-30)
 - Roadmap: 7 phases derived from 91 v1 requirements at standard granularity
 - Architecture: Modular monolith — single Spring Boot JAR, single PostgreSQL database
 - AMB Protocol: Highest-risk unknown — must register at mylaps.com/developers or capture Wireshark traces before Phase 5

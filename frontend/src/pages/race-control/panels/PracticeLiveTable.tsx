@@ -57,7 +57,17 @@ export function PracticeLiveTable({ rows, bestLapN }: PracticeLiveTableProps) {
         {rows.map((row) => (
           <TableRow
             key={row.transponderNumber}
-            className={row.isUnknown ? 'bg-[var(--flag-red)]/5' : ''}
+            className={
+              row.isUnknown
+                ? 'bg-[var(--flag-red)]/5'
+                : row.laps > 0 && row.position === 1
+                  ? 'bg-yellow-500/10'
+                  : row.laps > 0 && row.position === 2
+                    ? 'bg-slate-400/10'
+                    : row.laps > 0 && row.position === 3
+                      ? 'bg-amber-700/10'
+                      : ''
+            }
           >
             <TableCell className="text-xl font-semibold">
               {row.laps > 0 ? row.position : '—'}

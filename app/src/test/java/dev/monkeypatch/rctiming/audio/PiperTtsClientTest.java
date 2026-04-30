@@ -168,16 +168,17 @@ class PiperTtsClientTest {
 
     @Test
     void describe_returnsList_ofAvailableVoices() throws Exception {
+        // Wyoming protocol: voices are nested at data.tts[*].voices
         executor.submit(() -> {
             try (Socket client = serverSocket.accept()) {
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
                 reader.readLine(); // consume describe request
 
-                String infoResponse = "{\"type\":\"info\",\"data\":{\"voices\":[" +
+                String infoResponse = "{\"type\":\"info\",\"data\":{\"tts\":[{\"name\":\"piper\",\"voices\":[" +
                         "{\"name\":\"en_GB-alan-medium\"}," +
                         "{\"name\":\"en_GB-cori-high\"}" +
-                        "]}}\n";
+                        "]}]}}\n";
                 client.getOutputStream().write(infoResponse.getBytes(StandardCharsets.UTF_8));
                 client.getOutputStream().flush();
             } catch (IOException ignored) {}
@@ -190,5 +191,25 @@ class PiperTtsClientTest {
         assertEquals("en_GB-alan-medium", voices.get(0).voiceId());
         assertTrue(voices.get(0).isDefault(), "en_GB-alan-medium should be the default");
         assertFalse(voices.get(1).isDefault());
+    }
+
+    @Test
+    void describe_piperUnavailable_returnsFallbackDefaultVoice() {
+        // Close the server — Piper unreachable
+        try { serverSocket.close(); } catch (IOException ignored) {}
+
+        PiperTtsClient client = clientFor(true);
+        List<VoiceInfo> voices = client.listVoices();
+
+        assertEquals(1, voices.size(), "Should return fallback default voice when Piper is down");
+        assertEquals("en_GB-alan-medium", voices.get(0).voiceId());
+        assertTrue(voices.get(0).isDefault());
+    }
+
+    @Test
+    void describe_whenDisabled_returnsEmptyList() {
+        PiperTtsClient client = clientFor(false);
+        List<VoiceInfo> voices = client.listVoices();
+        assertTrue(voices.isEmpty(), "Disabled TTS should return empty voice list");
     }
 }

@@ -9,6 +9,7 @@ export interface RacerProfileDto {
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
   phoneticName: string | null;
+  preferredVoiceId: string | null;
   memberships: MembershipDto[];
   classRatings: ClassRatingDto[];
 }

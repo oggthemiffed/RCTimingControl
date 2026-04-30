@@ -11,6 +11,7 @@ public record RacerProfileDto(
         String emergencyContactName,
         String emergencyContactPhone,
         String phoneticName,
+        String preferredVoiceId,
         List<MembershipDto> memberships,
         List<ClassRatingDto> classRatings
 ) {}

@@ -58,6 +58,7 @@
 - [ ] **EVENT-06**: Admin can combine two or more classes into a single race (run together, score separately) for events with low class turnout
 - [ ] **ENTRY-01**: Entry has a lifecycle (PENDING → CONFIRMED → WITHDRAWN); racer can withdraw before entries close
 - [ ] **ENTRY-02**: Admin can view and manage all entries per event and per class
+- [ ] **ENTRY-03**: Each race entry (RaceEntry) carries a car number that identifies the driver for that race. Car numbers are consistent within a phase but change between phases: the round generator assigns numbers 1–N (entry order) when qualifying rounds are created, and re-numbers from qualifying results (fastest qualifier = 1) when finals are seeded — re-numbering cannot happen until qualifying results are known. Car number is distinct from grid position (grid position = where on the start line the driver stands; car number = their identifier). Car number is unique per class per race. The race director can manually reassign numbers before a round starts.
 
 ### Race Format Configuration
 

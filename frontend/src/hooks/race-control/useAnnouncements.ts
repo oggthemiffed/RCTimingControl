@@ -152,25 +152,34 @@ export function useAnnouncements({
     playClip('finish', 'Race finished. Checkered flag.');
   }, [raceState, playClip]);
 
+  // Guard so the stagger fires at most once per GRID entry, even if gridEntries refetches
+  const staggerFiredRef = useRef(false);
+  useEffect(() => {
+    if (raceState !== 'GRID') {
+      staggerFiredRef.current = false;
+    }
+  }, [raceState]);
+
   // Stagger sequencer: call car numbers in sequence at GRID state (AUDIO-03)
   useEffect(() => {
-    staggerTimeoutsRef.current.forEach(clearTimeout);
-    staggerTimeoutsRef.current = [];
-
     if (raceState !== 'GRID') return;
+    if (staggerFiredRef.current) return;
     const s = settingsRef.current;
     if (!s?.announceStagger) return;
     if (!gridEntries || gridEntries.length === 0) return;
+
+    staggerFiredRef.current = true;
+    staggerTimeoutsRef.current.forEach(clearTimeout);
+    staggerTimeoutsRef.current = [];
 
     gridEntries.forEach((entry, index) => {
       const t = setTimeout(() => {
         if (raceStateRef.current !== 'GRID') return;
         if (!settingsRef.current?.announceStagger) return;
-        const carLabel = entry.carNumber ? `Car ${entry.carNumber}` : entry.driverName;
-        playClip(
-          `car-${entry.carNumber ?? entry.driverName}`,
-          `${carLabel}, ${entry.driverName}.`,
-        );
+        const fallbackText = entry.carNumber
+          ? `Car ${entry.carNumber}, ${entry.driverName}.`
+          : `${entry.driverName}.`;
+        playClip(`car-${entry.carNumber ?? entry.driverName}`, fallbackText);
       }, index * 2000);
 
       staggerTimeoutsRef.current.push(t);

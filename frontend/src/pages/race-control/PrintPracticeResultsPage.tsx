@@ -20,16 +20,18 @@ export default function PrintPracticeResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const id = Number(sessionId);
 
-  const { data: session, isLoading: sessionLoading } = useQuery({
+  const validId = Number.isFinite(id) && id > 0;
+
+  const { data: session, isPending: sessionPending, isError: sessionError } = useQuery({
     queryKey: ['practice-session', id],
     queryFn: () => getSession(id).then((r) => r.data),
-    enabled: id > 0,
+    enabled: validId,
   });
 
-  const { data: results, isLoading: resultsLoading } = useQuery({
+  const { data: results, isPending: resultsPending, isError: resultsError } = useQuery({
     queryKey: ['practice-results', id],
     queryFn: () => getResults(id).then((r) => r.data),
-    enabled: id > 0,
+    enabled: validId,
   });
 
   useEffect(() => {
@@ -38,11 +40,15 @@ export default function PrintPracticeResultsPage() {
     }
   }, [session]);
 
-  if (sessionLoading || resultsLoading) {
+  if (!validId) {
+    return <div className="p-8 text-sm text-destructive">Invalid session ID.</div>;
+  }
+
+  if (sessionPending || resultsPending) {
     return <div className="p-8 text-sm text-muted-foreground">Loading results…</div>;
   }
 
-  if (!session || !results) {
+  if (sessionError || resultsError || !session || !results) {
     return <div className="p-8 text-sm text-destructive">Could not load results.</div>;
   }
 

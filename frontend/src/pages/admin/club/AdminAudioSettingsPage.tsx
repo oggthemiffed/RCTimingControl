@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2, Trash2, Plus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -49,14 +49,13 @@ export default function AdminAudioSettingsPage() {
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['admin-audio-settings'],
     queryFn: () => getAdminAudioSettings().then((r) => r.data),
-    select: (data) => {
-      // Sync localSettings on first load
-      if (!localSettings) {
-        setLocalSettings(data);
-      }
-      return data;
-    },
   });
+
+  useEffect(() => {
+    if (settings && !localSettings) {
+      setLocalSettings(settings);
+    }
+  }, [settings, localSettings]);
 
   const saveSettingsMutation = useMutation({
     mutationFn: (s: AudioSettingsDto) => saveAdminAudioSettings(s).then((r) => r.data),
