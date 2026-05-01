@@ -148,13 +148,15 @@ Plans:
   1. Final race results are published publicly after each race, correctly reflecting all marshal lap adjustments and penalties, including every individual lap time
   2. Championship standings table is live on the web with no login required, showing results in best-to-worst order per driver with drop scores visible
   3. Per-racer result history is viewable on the racer's portal page; printed results optionally display car tag values beneath the racer's name (controlled by admin setting)
-**Plans**: TBD
-
-**Research items (CARRY-FORWARD from Phase 6 UAT — must resolve before planning Phase 7):**
-
-1. **Car number (ENTRY-03 — implementation gap):** Car numbers were specified in FORMAT-08, AUDIO-03, AUDIO-05, AUDIO-09 but were never implemented in the domain. Car number lives on `RaceEntry` (not `Entry`) because it changes between phases: the round generator assigns numbers 1–N when qualifying rounds are created, then re-numbers from qualifying results (fastest qualifier = car 1) when finals are seeded. Car number is consistent within a phase (same number in Q1, Q2, Q3) but changes at the qualifying→finals boundary. It is distinct from grid position (grid position = start slot within a race; car number = driver identifier across the phase). Needs: `car_number` column on `race_entries` table (Flyway migration); round generator updated to assign qualifying numbers on creation and finals numbers on seeding; `PreRaceReadinessQuery` updated to pull it; stagger, finish, and pre-generated clip logic updated to use it. Stagger currently announces driver name only as a fallback.
-
-2. **Race start sequence:** UAT revealed the original project data contained requirements for a structured race-start flow not fully captured in Phase 6. Review original brief for the intended sequence: start-order recap announcement, T-30 and T-10 countdown calls, per-driver stagger start calls triggered by the race director rather than immediately on race start. Determine whether this belongs in Phase 7 or as a dedicated 7.x insertion. Reference: `.planning/phases/06-audio-practice/06-HUMAN-UAT.md` general feedback.
+**Plans**: 6 plans
+Plans:
+- [ ] 07-01-PLAN.md — Wave 0: test stubs (@Disabled for all Phase 7 test targets) + shadcn Collapsible install
+- [ ] 07-02-PLAN.md — V24 migration (car_number + show_car_tags_in_results) + RaceEntry/ClubProfile entities + car_number assignment in generators + ResultSnapshotService wire-up (RESULT-01, RESULT-02, RESULT-04)
+- [ ] 07-03-PLAN.md — ChampionshipStandingsQuery full implementation (best-X-from-Y, bonuses, DNS, drop logic) + RacerResultHistoryQuery + DTO (RESULT-03, CHAMP-05)
+- [ ] 07-04-PLAN.md — Public REST controllers (PublicResultsController, PublicChampionshipController, RacerResultsController) + SecurityConfig permitAll + car tag enrichment in ResultSnapshotQuery + EventScheduleDto enrichment (RESULT-01, RESULT-02, RESULT-04, RESULT-05, CHAMP-05)
+- [ ] 07-05-PLAN.md — Frontend: PublicResultsPage (expandable lap rows), PublicChampionshipPage, EventSchedulePage (implemented), usePublicResultSnapshot hook, App.tsx routing (RESULT-01, RESULT-05, CHAMP-05)
+- [ ] 07-06-PLAN.md — Frontend: RacerResultsPage + RacerEventHistoryCard + nav tab + admin car tags Switch toggle in ClubProfilePage (RESULT-03, RESULT-04)
+**UI hint**: yes
 
 ### Phase 8: First-Run Setup Wizard
 **Goal**: A brand-new club installation can go from empty database to ready-to-run-a-meeting by following a guided multi-step wizard, without needing to read external documentation
@@ -207,7 +209,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Race Control | 7/7 | Complete | 2026-04-24 |
 | 5. Live Timing & Forwarder | 5/5 | Complete | 2026-04-26 |
 | 6. Audio & Practice | 0/6 | Planning complete | - |
-| 7. Results & Championship | 0/TBD | Not started | - |
+| 7. Results & Championship | 0/6 | Planning complete | - |
 | 8. First-Run Setup Wizard | 0/TBD | Not started | - |
 | 9. User Manual & Documentation | 0/TBD | Not started | - |
 | 10. Docker Trial Environment | 0/TBD | Not started | - |
