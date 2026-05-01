@@ -61,8 +61,10 @@ All sizes use CSS custom property `--font-sans` (Figtree Variable) for UI, `--fo
 |------|-----------------|----|--------|-------------|-------|
 | Body | `text-sm` | 14px | 400 (regular) | 1.5 | Table cell content, metadata, secondary labels |
 | Label | `text-base` | 16px | 400 (regular) | 1.5 | Form labels, nav items, card body text |
+| Display | `text-xl` | 20px | 700 (bold) | 1.3 | Section headings, championship name on public page |
 | Heading | `text-2xl` | 24px | 700 (bold) | 1.2 | Page title, race label in results header |
-| Display | `text-lg` | 18px | 600 (semibold) | 1.3 | Section headings, championship name on public page |
+
+**Two weights only: 400 (regular) and 700 (bold).** Do not introduce weight 600 (semibold).
 
 **Mono — timing data:**
 - All lap times, total times, gaps, and position numbers in results tables: use `font-mono tabular-nums` (or Tailwind `font-mono`).
@@ -90,7 +92,7 @@ All values are CSS custom properties already defined in `index.css`. Do not intr
 1. "Print" button (matches existing `PrintResultsPage` button)
 2. Active nav item indicator in racer portal (matches existing `border-primary` pattern)
 3. Results link and Standings link on event schedule — these are calls-to-action, not just navigation
-4. Position 1 (P1) marker in results table — use `text-primary font-semibold` on first-place row
+4. Position 1 (P1) marker in results table — use `text-primary font-bold` on first-place row
 
 **Race-domain semantic colors (from `index.css`) — use where appropriate:**
 - `--lap-personal-best` (purple): highlight a racer's personal best lap in the expandable lap times list
