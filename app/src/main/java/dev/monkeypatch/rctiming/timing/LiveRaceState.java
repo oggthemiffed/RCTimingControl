@@ -84,6 +84,7 @@ public class LiveRaceState {
             if (lapMs > 0) {
                 pos.setLastLapMs(lapMs);
                 pos.accumulateLap(lapMs);
+                pos.getLapTimes().add(lapMs);
                 Long currentBest = pos.getBestLapMs();
                 if (currentBest == null || lapMs < currentBest) {
                     pos.setBestLapMs(lapMs);
@@ -227,6 +228,7 @@ public class LiveRaceState {
             if (lapMs > 0) {
                 pos.setLastLapMs(lapMs);
                 pos.accumulateLap(lapMs);
+                pos.getLapTimes().add(lapMs);
                 Long currentBest = pos.getBestLapMs();
                 if (currentBest == null || lapMs < currentBest) {
                     pos.setBestLapMs(lapMs);
@@ -236,5 +238,13 @@ public class LiveRaceState {
                 }
             }
         }
+    }
+
+    /**
+     * Returns a read-only snapshot of a single entry's position for use by ResultSnapshotService.
+     * Called when the race is FINISHED and no further lap events are processed.
+     */
+    public synchronized LiveRacePosition getPositionSnapshot(long entryId) {
+        return positions.get(entryId);
     }
 }

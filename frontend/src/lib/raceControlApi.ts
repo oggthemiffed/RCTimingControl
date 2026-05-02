@@ -59,6 +59,7 @@ export type PositionAtLap = {
   lapNumber: number;
   entryId: number;
   position: number;
+  lapTimeMs?: number | null;
 };
 
 export type ClubBrandingDto = {
