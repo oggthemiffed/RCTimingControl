@@ -38,6 +38,11 @@ export type RunOrderItemDto = {
   startedAt: string | null;
 };
 
+export type CarTagDto = {
+  key: string;
+  value: string;
+};
+
 export type ResultRow = {
   position: number;
   entryId: number;
@@ -47,6 +52,7 @@ export type ResultRow = {
   totalTimeMs: number;
   bestLapMs: number | null;
   gapToLeaderMs: number | null;
+  carTags: CarTagDto[] | null;
 };
 
 export type PositionAtLap = {
@@ -248,4 +254,25 @@ export async function generateForwarderToken(): Promise<GenerateTokenResponse> {
 
 export async function revokeForwarderToken(): Promise<void> {
   await api.delete('/api/v1/admin/forwarder/token');
+}
+
+// ── Public (no-auth) API functions ───────────────────────────────────────────
+
+export async function getPublicResultSnapshot(raceId: number): Promise<ResultSnapshotDto> {
+  const { data } = await api.get<ResultSnapshotDto>(`/api/v1/results/${raceId}`);
+  return data;
+}
+
+export type EventScheduleDto = {
+  id: number;
+  name: string;
+  eventDate: string;
+  entryAvailability: 'ENTRY_OPEN' | 'ENTRY_NOT_YET_OPEN' | 'ENTRY_CLOSED';
+  finishedRaceIds: number[];
+  championshipId: number | null;
+};
+
+export async function getEventSchedule(): Promise<EventScheduleDto[]> {
+  const { data } = await api.get<EventScheduleDto[]>('/api/v1/events');
+  return data;
 }

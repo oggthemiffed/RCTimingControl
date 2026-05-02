@@ -36,6 +36,8 @@ import PrintResultsPage from '@/pages/race-control/PrintResultsPage';
 import { PracticeSessionPage } from '@/pages/race-control/PracticeSessionPage';
 import { PracticeLandingPage } from '@/pages/race-control/PracticeLandingPage';
 import PrintPracticeResultsPage from '@/pages/race-control/PrintPracticeResultsPage';
+import PublicResultsPage from '@/pages/results/PublicResultsPage';
+import PublicChampionshipPage from '@/pages/championships/PublicChampionshipPage';
 
 function RootLayout() {
   return (
@@ -125,6 +127,8 @@ const router = createBrowserRouter([
         ),
       },
       { path: '/events', element: <EventSchedulePage /> },
+      { path: '/results/:raceId', element: <PublicResultsPage /> },
+      { path: '/championships/:id', element: <PublicChampionshipPage /> },
       { path: '/unauthorized', element: <UnauthorizedPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
