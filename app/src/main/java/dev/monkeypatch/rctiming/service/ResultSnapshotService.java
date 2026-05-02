@@ -140,7 +140,8 @@ public class ResultSnapshotService {
                     if (entry.isEmpty()) return new String[]{"Unknown", null};
                     Optional<User> user = userRepository.findById(entry.get().getUserId());
                     String name = user.map(u -> u.getFirstName() + " " + u.getLastName()).orElse("Unknown");
-                    return new String[]{name, null};
+                    String carNum = re.getCarNumber() != null ? re.getCarNumber().toString() : null;
+                    return new String[]{name, carNum};
                 }
         ));
     }

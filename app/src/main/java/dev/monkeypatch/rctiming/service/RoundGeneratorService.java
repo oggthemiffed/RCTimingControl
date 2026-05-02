@@ -334,6 +334,7 @@ public class RoundGeneratorService {
                         // Subsequent rounds: gridPosition=null — will be assigned when the
                         // previous round finishes via applyPreviousRoundFinishingOrder (plan 05).
                         entry.setGridPosition(isFirstRound ? pos + 1 : null);
+                        entry.setCarNumber(pos + 1);  // car_number = 1-N, same as heat slot order for qualifying heats
                         entry.setBumped(false);
                         raceEntryRepository.save(entry);
                     }
