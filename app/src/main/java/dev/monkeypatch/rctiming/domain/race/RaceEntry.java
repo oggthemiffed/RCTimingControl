@@ -27,6 +27,9 @@ public class RaceEntry {
     @Column(nullable = false)
     private boolean bumped = false;
 
+    @Column(name = "car_number")
+    private Integer carNumber;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -41,4 +44,7 @@ public class RaceEntry {
 
     public boolean isBumped() { return bumped; }
     public void setBumped(boolean bumped) { this.bumped = bumped; }
+
+    public Integer getCarNumber() { return carNumber; }
+    public void setCarNumber(Integer carNumber) { this.carNumber = carNumber; }
 }
