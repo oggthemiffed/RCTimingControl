@@ -92,3 +92,23 @@ export interface GoverningBodyAffiliationDto {
 
 export const fetchAffiliations = () =>
   api.get<GoverningBodyAffiliationDto[]>('/api/v1/racer/affiliations').then(r => r.data);
+
+export interface RaceResult {
+  raceId: number;
+  raceLabel: string;
+  position: number;
+  lapsCompleted: number;
+  bestLapMs: number | null;
+}
+
+export interface RacerResultHistoryDto {
+  eventId: number;
+  eventName: string;
+  eventDate: string;
+  races: RaceResult[];
+}
+
+export async function getMyResults(): Promise<RacerResultHistoryDto[]> {
+  const { data } = await api.get<RacerResultHistoryDto[]>('/api/v1/racer/results');
+  return data;
+}

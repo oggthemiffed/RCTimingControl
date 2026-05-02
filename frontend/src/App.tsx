@@ -14,6 +14,7 @@ import ProfilePage from '@/pages/racer/ProfilePage';
 import CarsPage from '@/pages/racer/CarsPage';
 import TranspondersPage from '@/pages/racer/TranspondersPage';
 import EntriesPage from '@/pages/racer/EntriesPage';
+import RacerResultsPage from '@/pages/racer/RacerResultsPage';
 import EventSchedulePage from '@/pages/events/EventSchedulePage';
 import AdminPanelLayout from '@/pages/admin/AdminPanelLayout';
 import EventListPage from '@/pages/admin/events/EventListPage';
@@ -94,6 +95,7 @@ const router = createBrowserRouter([
           { path: 'cars', element: <CarsPage /> },
           { path: 'transponders', element: <TranspondersPage /> },
           { path: 'entries', element: <EntriesPage /> },
+          { path: 'results', element: <RacerResultsPage /> },
         ],
       },
       {

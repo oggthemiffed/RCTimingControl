@@ -2,11 +2,14 @@ import { Outlet, NavLink } from 'react-router-dom';
 import { User, Car, Radio, FileText, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
+const TrophyIcon = () => <i className="ri-trophy-line h-5 w-5" aria-hidden="true" />;
+
 const navItems = [
   { to: '/racer/profile', label: 'Profile', Icon: User },
   { to: '/racer/cars', label: 'Cars', Icon: Car },
   { to: '/racer/transponders', label: 'Transponders', Icon: Radio },
   { to: '/racer/entries', label: 'Entries', Icon: FileText },
+  { to: '/racer/results', label: 'Results', Icon: TrophyIcon },
 ] as const;
 
 export default function RacerPortalLayout() {
