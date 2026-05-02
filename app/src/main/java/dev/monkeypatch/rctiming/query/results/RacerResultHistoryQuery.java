@@ -1,27 +1,139 @@
 package dev.monkeypatch.rctiming.query.results;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import org.jooq.DSLContext;
+import org.jooq.JSONB;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Entries.ENTRIES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Events.EVENTS;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries.RACE_ENTRIES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACING_CLASSES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Races.RACES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots.RESULT_SNAPSHOTS;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
+
 /**
- * RESULT-03 read side: returns result history for a given racer.
+ * RESULT-03 read side: returns result history for a given racer, grouped by event.
  *
- * Phase 7 Plan 05: implements full query joining race_results with
- * championship and event data, filtered strictly by authenticated user
- * to prevent IDOR (T-7-02).
- *
- * This stub exists so ChampionshipStandingsQueryTest compiles in Phase 7 Plan 01 (Wave 0).
- * Implementation is added in 07-05-PLAN.md.
+ * IDOR safety (T-07-03-01): userId MUST originate from the JWT principal in the
+ * controller (Authentication.getName()), never from a caller-supplied request parameter.
+ * This query enforces ENTRIES.USER_ID.eq(userId) as the primary scope guard.
  */
 @Service
 @Transactional(readOnly = true)
 public class RacerResultHistoryQuery {
 
-    @SuppressWarnings("unused")  // will be used in Phase 7 Plan 05
     private final DSLContext dsl;
+    private final ObjectMapper objectMapper;
 
-    public RacerResultHistoryQuery(DSLContext dsl) {
+    public RacerResultHistoryQuery(DSLContext dsl, ObjectMapper objectMapper) {
         this.dsl = dsl;
+        this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Returns the result history for a specific user, grouped by event, sorted most recent first.
+     *
+     * @param userId the authenticated user's ID — must come from JWT principal, never from caller input
+     */
+    public List<RacerResultHistoryDto> findForUser(Long userId) {
+        // Step 1: Find all entries for this user, join to events for grouping
+        var entryRows = dsl
+                .select(ENTRIES.ID, ENTRIES.EVENT_ID, EVENTS.NAME, EVENTS.EVENT_DATE)
+                .from(ENTRIES)
+                .join(EVENTS).on(EVENTS.ID.eq(ENTRIES.EVENT_ID))
+                .where(ENTRIES.USER_ID.eq(userId))
+                .orderBy(EVENTS.EVENT_DATE.desc())
+                .fetch();
+
+        // Group by event — LinkedHashMap preserves DESC order
+        Map<Long, RacerResultHistoryDto> byEvent = new LinkedHashMap<>();
+
+        for (var row : entryRows) {
+            Long eventId = row.get(EVENTS.ID);
+            Long entryId = row.get(ENTRIES.ID);
+
+            byEvent.computeIfAbsent(eventId, id -> new RacerResultHistoryDto(
+                    id,
+                    row.get(EVENTS.NAME),
+                    row.get(EVENTS.EVENT_DATE),
+                    new ArrayList<>()
+            ));
+
+            // Step 2: Find races for this entry via race_entries
+            var raceRows = dsl
+                    .select(RACES.ID, RACES.FINAL_LETTER, RACES.HEAT_NUMBER,
+                            ROUNDS.TYPE, ROUNDS.ROUND_NUMBER,
+                            RACING_CLASSES.NAME,
+                            RESULT_SNAPSHOTS.POSITIONS_JSON)
+                    .from(RACE_ENTRIES)
+                    .join(RACES).on(RACES.ID.eq(RACE_ENTRIES.RACE_ID))
+                    .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
+                    .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
+                    .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
+                    .leftJoin(RESULT_SNAPSHOTS).on(RESULT_SNAPSHOTS.RACE_ID.eq(RACES.ID))
+                    .where(RACE_ENTRIES.ENTRY_ID.eq(entryId))
+                    .orderBy(ROUNDS.ROUND_NUMBER.asc(), RACES.HEAT_NUMBER.asc())
+                    .fetch();
+
+            for (var raceRow : raceRows) {
+                Long raceId = raceRow.get(RACES.ID);
+                String className = raceRow.get(RACING_CLASSES.NAME);
+                String roundType = raceRow.get(ROUNDS.TYPE);
+                String finalLetter = raceRow.get(RACES.FINAL_LETTER);
+                Integer heatNum = raceRow.get(RACES.HEAT_NUMBER);
+
+                String raceLabel = buildRaceLabel(className, roundType, finalLetter, heatNum);
+
+                JSONB posJson = raceRow.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
+                int position = 0;
+                int lapsCompleted = 0;
+                Long bestLapMs = null;
+
+                if (posJson != null) {
+                    try {
+                        List<ResultSnapshotDto.ResultRow> positions = objectMapper.readValue(
+                                posJson.data(), new TypeReference<>() {});
+                        for (ResultSnapshotDto.ResultRow r : positions) {
+                            if (r.entryId() == entryId) {
+                                position = r.position();
+                                lapsCompleted = r.lapsCompleted();
+                                bestLapMs = r.bestLapMs();
+                                break;
+                            }
+                        }
+                    } catch (Exception ignored) {
+                        // Unfinished or malformed snapshot — position stays 0
+                    }
+                }
+
+                @SuppressWarnings("unchecked")
+                ArrayList<RacerResultHistoryDto.RaceResult> raceList =
+                        (ArrayList<RacerResultHistoryDto.RaceResult>) byEvent.get(eventId).races();
+                raceList.add(new RacerResultHistoryDto.RaceResult(
+                        raceId, raceLabel, position, lapsCompleted, bestLapMs));
+            }
+        }
+
+        return new ArrayList<>(byEvent.values());
+    }
+
+    private String buildRaceLabel(String className, String roundType,
+                                   String finalLetter, Integer heatNum) {
+        return switch (roundType) {
+            case "FINAL" -> className + " - " + (finalLetter != null ? finalLetter : "") + " Final";
+            case "QUALIFIER" -> className + " - Q" + (heatNum != null ? heatNum : "");
+            default -> className + " - Race";
+        };
     }
 }
