@@ -1,0 +1,31 @@
+package dev.monkeypatch.rctiming.api.pub;
+
+import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
+import dev.monkeypatch.rctiming.query.racecontrol.ResultSnapshotQuery;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * Public (no-auth) endpoint for race result snapshots.
+ * RESULT-01, RESULT-05.
+ *
+ * No @PreAuthorize — permitted via SecurityConfig.requestMatchers().permitAll().
+ * EntityNotFoundException from ResultSnapshotQuery.load() is mapped to 404 by GlobalExceptionHandler.
+ */
+@RestController
+@RequestMapping("/api/v1/results")
+public class PublicResultsController {
+
+    private final ResultSnapshotQuery query;
+
+    public PublicResultsController(ResultSnapshotQuery query) {
+        this.query = query;
+    }
+
+    @GetMapping("/{raceId}")
+    public ResultSnapshotDto get(@PathVariable Long raceId) {
+        return query.load(raceId);
+    }
+}

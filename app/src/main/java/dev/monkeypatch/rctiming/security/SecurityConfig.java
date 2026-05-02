@@ -31,6 +31,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/events", "/api/v1/events/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/results/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/championships/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "RACE_DIRECTOR", "REFEREE")
                         .requestMatchers("/ws/timing", "/ws/timing/**").permitAll()
                         .anyRequest().authenticated()
