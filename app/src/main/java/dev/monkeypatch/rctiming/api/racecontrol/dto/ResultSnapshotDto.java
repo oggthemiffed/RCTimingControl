@@ -23,7 +23,7 @@ public record ResultSnapshotDto(
             List<CarTagDto> carTags  // null when show_car_tags_in_results=false; empty list when enabled but no tags
     ) {}
 
-    public record PositionAtLap(int lapNumber, long entryId, int position) {}
+    public record PositionAtLap(int lapNumber, long entryId, int position, Long lapTimeMs) {}
 
     public record ClubBrandingDto(String clubName, String logoUrl) {}
 
