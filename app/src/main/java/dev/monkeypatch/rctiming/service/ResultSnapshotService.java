@@ -96,7 +96,8 @@ public class ResultSnapshotService {
                         row.lapsCompleted(),
                         totalTimeMs,
                         row.bestLapMs(),
-                        row.gapToLeaderMs()
+                        row.gapToLeaderMs(),
+                        null  // carTags: not populated at snapshot time; enriched at read time in ResultSnapshotQuery
                 ));
             }
 
