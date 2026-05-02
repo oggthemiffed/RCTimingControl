@@ -103,10 +103,13 @@ public class BumpUpSeedingService {
 
             // Create regular slot entries
             for (int i = 0; i < slotEntries.size(); i++) {
+                long entryId = slotEntries.get(i);
+                int carNum = qualifyingStandings.indexOf(entryId) + 1;
                 RaceEntry entry = new RaceEntry();
                 entry.setRaceId(finalRace.getId());
-                entry.setEntryId(slotEntries.get(i));
+                entry.setEntryId(entryId);
                 entry.setGridPosition(i + 1);
+                entry.setCarNumber(carNum > 0 ? carNum : null);  // car_number from qualifying standing position
                 entry.setBumped(false);
                 raceEntryRepository.save(entry);
             }
@@ -118,6 +121,7 @@ public class BumpUpSeedingService {
                     bumpEntry.setRaceId(finalRace.getId());
                     bumpEntry.setEntryId(0L); // placeholder until applyBumpUpResults fills it
                     bumpEntry.setGridPosition(slots + 1 + bump);
+                    bumpEntry.setCarNumber(null);  // bump-up drivers receive car_number after applyBumpUpResults
                     bumpEntry.setBumped(true);
                     raceEntryRepository.save(bumpEntry);
                 }

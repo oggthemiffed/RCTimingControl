@@ -19,10 +19,14 @@ public record ResultSnapshotDto(
             int lapsCompleted,
             long totalTimeMs,
             Long bestLapMs,
-            Long gapToLeaderMs
+            Long gapToLeaderMs,
+            List<CarTagDto> carTags  // null when show_car_tags_in_results=false; empty list when enabled but no tags
     ) {}
 
     public record PositionAtLap(int lapNumber, long entryId, int position) {}
 
     public record ClubBrandingDto(String clubName, String logoUrl) {}
+
+    /** One car tag key/value pair, e.g. "Motor Spec" / "Brushless 13.5T". */
+    public record CarTagDto(String key, String value) {}
 }
