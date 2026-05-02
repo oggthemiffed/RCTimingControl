@@ -259,6 +259,7 @@ export interface ClubProfileDto {
   timezone: string;
   logoType: string | null;
   logoUrl: string | null;
+  showCarTagsInResults: boolean;
 }
 
 export interface UpdateClubProfileRequest {
@@ -270,6 +271,7 @@ export interface UpdateClubProfileRequest {
   longitude: number | null;
   timezone: string;
   logoType: string | null;
+  showCarTagsInResults: boolean;
 }
 
 export interface CarTagCategoryDto {

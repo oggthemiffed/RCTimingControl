@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { useClubProfile, useUpdateClubProfile, useUploadClubLogo } from '@/hooks/admin/useAdminClub';
 import type { UpdateClubProfileRequest } from '@/lib/adminApi';
 import axios from 'axios';
@@ -21,6 +22,7 @@ const schema = z.object({
   longitude: z.coerce.number().nullable(),
   timezone: z.string().min(1, 'Timezone is required'),
   logoType: z.string().nullable().or(z.literal('')),
+  showCarTagsInResults: z.boolean(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -35,6 +37,7 @@ function toRequest(values: FormValues): UpdateClubProfileRequest {
     longitude: values.longitude,
     timezone: values.timezone,
     logoType: values.logoType || null,
+    showCarTagsInResults: values.showCarTagsInResults,
   };
 }
 
@@ -49,6 +52,8 @@ export default function ClubProfilePage() {
     handleSubmit,
     formState: { errors, isSubmitting, isDirty },
     reset,
+    watch,
+    setValue,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     values: data
@@ -61,6 +66,7 @@ export default function ClubProfilePage() {
           longitude: data.longitude ?? null,
           timezone: data.timezone ?? '',
           logoType: data.logoType ?? '',
+          showCarTagsInResults: data.showCarTagsInResults ?? false,
         }
       : undefined,
   });
@@ -188,6 +194,14 @@ export default function ClubProfilePage() {
           <Label htmlFor="club-tz">Timezone</Label>
           <Input id="club-tz" {...register('timezone')} placeholder="e.g. Europe/London" />
           {errors.timezone && <p className="text-xs text-destructive">{errors.timezone.message}</p>}
+        </div>
+        <div className="flex items-center gap-3 py-2">
+          <Switch
+            id="show-car-tags"
+            checked={watch('showCarTagsInResults')}
+            onCheckedChange={(checked) => setValue('showCarTagsInResults', checked, { shouldDirty: true })}
+          />
+          <Label htmlFor="show-car-tags">Show car details in printed results</Label>
         </div>
         <Button type="submit" disabled={!isDirty || isSubmitting || updateMutation.isPending}>
           {updateMutation.isPending ? 'Saving…' : 'Save Profile'}
