@@ -35,7 +35,10 @@ function LapTimesPanel({ entryId, lapHistory }: { entryId: number; lapHistory: P
         {laps.map(l => (
           <tr key={l.lapNumber}>
             <td className="pr-4 text-muted-foreground py-0.5">Lap {l.lapNumber}</td>
-            <td className="pr-4 text-right py-0.5">{formatLapTime(l.lapTimeMs)}</td>
+            <td
+              className="pr-4 text-right py-0.5"
+              data-ms={l.lapTimeMs ?? ''}
+            >{formatLapTime(l.lapTimeMs)}</td>
             <td className="text-right py-0.5">P{l.position}</td>
           </tr>
         ))}
