@@ -32,7 +32,10 @@ function RoundCell({ result }: { result: RoundResultDto | undefined }) {
     );
   }
   return (
-    <TableCell className={`text-center text-sm ${result.dropped ? 'text-slate-300 line-through' : ''}`}>
+    <TableCell
+      className={`text-center text-sm ${result.dropped ? 'text-muted-foreground line-through' : ''}`}
+      title={result.dropped ? 'This round was dropped from the total' : undefined}
+    >
       {result.points}
     </TableCell>
   );
