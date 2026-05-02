@@ -18,13 +18,25 @@ function LapTimesPanel({ entryId, lapHistory }: { entryId: number; lapHistory: P
   if (laps.length === 0) {
     return <p className="text-xs text-muted-foreground py-1">No lap data recorded.</p>;
   }
+  const formatLapTime = (ms: number | null | undefined): string => {
+    if (ms === null || ms === undefined) return '—';
+    return (ms / 1000).toFixed(3) + 's';
+  };
   return (
     <table className="text-xs font-mono w-full">
+      <thead>
+        <tr className="text-muted-foreground">
+          <th className="text-left font-normal pr-4 py-0.5">Lap</th>
+          <th className="text-right font-normal pr-4 py-0.5">Time</th>
+          <th className="text-right font-normal py-0.5">Pos</th>
+        </tr>
+      </thead>
       <tbody>
         {laps.map(l => (
           <tr key={l.lapNumber}>
             <td className="pr-4 text-muted-foreground py-0.5">Lap {l.lapNumber}</td>
-            <td className="text-right">P{l.position}</td>
+            <td className="pr-4 text-right py-0.5">{formatLapTime(l.lapTimeMs)}</td>
+            <td className="text-right py-0.5">P{l.position}</td>
           </tr>
         ))}
       </tbody>
