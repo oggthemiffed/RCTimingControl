@@ -84,10 +84,12 @@ public class ResultSnapshotService {
             Map<Long, String[]> entryInfo = resolveEntryInfo(raceId);
 
             positions = new ArrayList<>();
-            long leaderLastPassingMs = rows.isEmpty() ? 0L : rows.get(0).lastPassingTimeMs();
+            long raceStartMs = race.getStartedAt() != null ? race.getStartedAt().toEpochMilli()
+                    : (rows.isEmpty() ? 0L : rows.get(0).lastPassingTimeMs());
             for (LiveTimingRowDto row : rows) {
                 String[] info = entryInfo.getOrDefault(row.entryId(), new String[]{"Unknown", null});
-                long totalTimeMs = leaderLastPassingMs > 0 ? row.lastPassingTimeMs() : 0L;
+                long totalTimeMs = (raceStartMs > 0 && row.lastPassingTimeMs() > raceStartMs)
+                        ? row.lastPassingTimeMs() - raceStartMs : 0L;
                 positions.add(new ResultSnapshotDto.ResultRow(
                         row.position(),
                         row.entryId(),
@@ -134,17 +136,20 @@ public class ResultSnapshotService {
 
     private Map<Long, String[]> resolveEntryInfo(long raceId) {
         List<RaceEntry> raceEntries = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId);
-        return raceEntries.stream().collect(Collectors.toMap(
-                RaceEntry::getEntryId,
-                re -> {
-                    Optional<Entry> entry = entryRepository.findById(re.getEntryId());
-                    if (entry.isEmpty()) return new String[]{"Unknown", null};
-                    Optional<User> user = userRepository.findById(entry.get().getUserId());
-                    String name = user.map(u -> u.getFirstName() + " " + u.getLastName()).orElse("Unknown");
-                    String carNum = re.getCarNumber() != null ? re.getCarNumber().toString() : null;
-                    return new String[]{name, carNum};
-                }
-        ));
+        return raceEntries.stream()
+                .filter(re -> re.getEntryId() != 0L)
+                .collect(Collectors.toMap(
+                        RaceEntry::getEntryId,
+                        re -> {
+                            Optional<Entry> entry = entryRepository.findById(re.getEntryId());
+                            if (entry.isEmpty()) return new String[]{"Unknown", null};
+                            Optional<User> user = userRepository.findById(entry.get().getUserId());
+                            String name = user.map(u -> u.getFirstName() + " " + u.getLastName()).orElse("Unknown");
+                            String carNum = re.getCarNumber() != null ? re.getCarNumber().toString() : null;
+                            return new String[]{name, carNum};
+                        },
+                        (a, b) -> a  // keep first on duplicate real ID (defensive)
+                ));
     }
 
     /**

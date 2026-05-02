@@ -72,7 +72,7 @@ export type ResultSnapshotDto = {
   finishedAt: string;
   positions: ResultRow[];
   lapHistory: PositionAtLap[];
-  clubBranding: ClubBrandingDto;
+  clubBranding: ClubBrandingDto | null;
 };
 
 export type LiveTimingRowDto = {
@@ -260,6 +260,32 @@ export async function revokeForwarderToken(): Promise<void> {
 
 export async function getPublicResultSnapshot(raceId: number): Promise<ResultSnapshotDto> {
   const { data } = await api.get<ResultSnapshotDto>(`/api/v1/results/${raceId}`);
+  return data;
+}
+
+export type RoundResultDto = {
+  roundNumber: number;
+  eventId: number;
+  eventName: string;
+  position: number;
+  points: number;
+  excluded: boolean;
+  dropped: boolean;
+};
+
+export type PublicStandingsRowDto = {
+  driverId: number;
+  firstName: string;
+  lastName: string;
+  racingClassId: number;
+  totalPoints: number;
+  rounds: RoundResultDto[];
+};
+
+export async function getPublicChampionshipStandings(
+  championshipId: number,
+): Promise<PublicStandingsRowDto[]> {
+  const { data } = await api.get<PublicStandingsRowDto[]>(`/api/v1/championships/${championshipId}`);
   return data;
 }
 

@@ -78,12 +78,18 @@ public class EventScheduleQuery {
                 .and(RACES.STATUS.eq("FINISHED"))
                 .fetchGroups(ROUNDS.EVENT_ID, RACES.ID);
 
-        // Pass 2 — championship ID per event: championship_event_links.event_id → championship_id
+        // Pass 2 — championship ID per event (one championship per event by convention;
+        // fetchGroups + first-element avoids fetchMap's duplicate-key exception).
         Map<Long, Long> championshipByEvent = dsl
                 .select(CHAMPIONSHIP_EVENT_LINKS.EVENT_ID, CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID)
                 .from(CHAMPIONSHIP_EVENT_LINKS)
                 .where(CHAMPIONSHIP_EVENT_LINKS.EVENT_ID.in(eventIds))
-                .fetchMap(CHAMPIONSHIP_EVENT_LINKS.EVENT_ID, CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID);
+                .fetchGroups(CHAMPIONSHIP_EVENT_LINKS.EVENT_ID, CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID)
+                .entrySet().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        java.util.Map.Entry::getKey,
+                        e -> e.getValue().get(0)
+                ));
 
         // Re-map the events list with the two enrichment fields populated
         return events.stream().map(e -> new EventScheduleDto(
