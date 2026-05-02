@@ -151,16 +151,16 @@ Plans:
 **Plans**: 6 plans
 Plans:
 **Wave 1**
-- [ ] 07-01-PLAN.md — Wave 0: test stubs (@Disabled for all Phase 7 test targets) + shadcn Collapsible install
-- [ ] 07-02-PLAN.md — V24 migration (car_number + show_car_tags_in_results) + RaceEntry/ClubProfile entities + car_number assignment in generators + ResultSnapshotService wire-up (RESULT-01, RESULT-02, RESULT-04)
-- [ ] 07-03-PLAN.md — ChampionshipStandingsQuery full implementation (best-X-from-Y, bonuses, DNS, drop logic) + RacerResultHistoryQuery + DTO (RESULT-03, CHAMP-05)
+- [x] 07-01-PLAN.md — Wave 0: test stubs (@Disabled for all Phase 7 test targets) + shadcn Collapsible install
+- [x] 07-02-PLAN.md — V24 migration (car_number + show_car_tags_in_results) + RaceEntry/ClubProfile entities + car_number assignment in generators + ResultSnapshotService wire-up (RESULT-01, RESULT-02, RESULT-04)
+- [x] 07-03-PLAN.md — ChampionshipStandingsQuery full implementation (best-X-from-Y, bonuses, DNS, drop logic) + RacerResultHistoryQuery + DTO (RESULT-03, CHAMP-05)
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 07-04-PLAN.md — Public REST controllers (PublicResultsController, PublicChampionshipController, RacerResultsController) + SecurityConfig permitAll + car tag enrichment in ResultSnapshotQuery + EventScheduleDto enrichment (RESULT-01, RESULT-02, RESULT-04, RESULT-05, CHAMP-05)
+- [x] 07-04-PLAN.md — Public REST controllers (PublicResultsController, PublicChampionshipController, RacerResultsController) + SecurityConfig permitAll + car tag enrichment in ResultSnapshotQuery + EventScheduleDto enrichment (RESULT-01, RESULT-02, RESULT-04, RESULT-05, CHAMP-05)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 07-05-PLAN.md — Frontend: PublicResultsPage (expandable lap rows), PublicChampionshipPage, EventSchedulePage (implemented), usePublicResultSnapshot hook, App.tsx routing (RESULT-01, RESULT-05, CHAMP-05)
-- [ ] 07-06-PLAN.md — Frontend: RacerResultsPage + RacerEventHistoryCard + nav tab + admin car tags Switch toggle in ClubProfilePage (RESULT-03, RESULT-04)
+- [x] 07-05-PLAN.md — Frontend: PublicResultsPage (expandable lap rows), PublicChampionshipPage, EventSchedulePage (implemented), usePublicResultSnapshot hook, App.tsx routing (RESULT-01, RESULT-05, CHAMP-05)
+- [x] 07-06-PLAN.md — Frontend: RacerResultsPage + RacerEventHistoryCard + nav tab + admin car tags Switch toggle in ClubProfilePage (RESULT-03, RESULT-04)
 **UI hint**: yes
 
 ### Phase 8: First-Run Setup Wizard
