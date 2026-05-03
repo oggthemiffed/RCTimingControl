@@ -12,7 +12,17 @@ Racers can enter events online and manage their own car/transponder details, whi
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Racers can register and manage their profile, cars, and transponders via an online portal — Validated in Phase 1–2
+- [x] Racers can enter events and championships online — Validated in Phase 2
+- [x] Admins can create and configure events with multiple races and classes — Validated in Phase 3
+- [x] Admins can set up championships with configurable "best X from Y rounds" scoring — Validated in Phase 3 & 7
+- [x] Race control client (browser-based) runs on Windows and Linux at the track — Validated in Phase 4
+- [x] Race control: start and stop races; marshal laps; call the grid; print results — Validated in Phase 4
+- [x] Live lap timing received from AMB/MyLaps decoder via TCP — Validated in Phase 5
+- [x] Live timing display in the browser during a race — Validated in Phase 5–6
+- [x] Race results published and visible after each race, with individual lap times — Validated in Phase 7
+- [x] Championship standings (points table) visible on the web without login — Validated in Phase 7
+- [x] Per-racer result history viewable on the racer portal — Validated in Phase 7
 
 ### Active
 
@@ -78,4 +88,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-15 after initialization*
+*Last updated: 2026-05-03 — Phase 7 complete (Results & Championship)*
