@@ -67,7 +67,7 @@ Each step item in the wizard sidebar uses this visual language:
 | State | Visual Treatment |
 |-------|-----------------|
 | Complete | `ri-checkbox-circle-fill` icon (remixicon), `text-flag-green`, step label at `text-sm font-medium`, full opacity |
-| Current | `ri-record-circle-line` icon, `text-primary`, step label at `text-sm font-semibold`, left border accent `border-l-[3px] border-primary pl-[calc(0.75rem-3px)]` |
+| Current | `ri-record-circle-line` icon, `text-primary`, step label at `text-sm font-semibold`, left border accent `border-l-[3px] border-primary pl-[calc(0.75rem-3px)]` — verbatim class reuse from AdminPanelLayout NavItem — not a new spacing decision |
 | Incomplete | `ri-circle-line` icon, `text-muted-foreground`, step label at `text-sm`, normal opacity |
 
 Step list (ordered, not interactive links — wizard drives navigation via Next/Skip buttons):
@@ -98,7 +98,6 @@ Source: established 8-point scale in existing codebase (Tailwind v4, `@theme inl
 
 Exceptions:
 - Sidebar width: 240px (`w-60`) — matches AdminPanelLayout exactly.
-- Step item left border: `pl-[calc(0.75rem-3px)]` for active state — matches AdminPanelLayout NavItem pattern.
 - Mobile top bar height: `h-14` (56px) — matches AdminPanelLayout header.
 
 ---
@@ -113,7 +112,7 @@ Source: established in src/index.css and confirmed by existing page patterns (e.
 | Heading | 24px (`text-2xl`) | 600 (`font-semibold`) | 1.2 | Figtree Variable | Page titles within each wizard step |
 | Body | 16px (`text-base`) | 400 (`font-normal`) | 1.5 | Figtree Variable | Form field labels, descriptive text |
 | Label/Small | 14px (`text-sm`) | 400 (`font-normal`) | 1.5 | Figtree Variable | Sidebar step labels, card metadata, hints |
-| Caption | 12px (`text-xs`) | 500 (`font-medium`) | 1.4 | Figtree Variable | Section group headers in sidebar (`uppercase tracking-wide`) |
+| Caption | 12px (`text-xs`) | 400 (`font-normal`) | 1.4 | Figtree Variable | Section group headers in sidebar (`uppercase tracking-wide`) |
 | Mono | 14px (`text-sm`) | 400 | tabular | JetBrains Mono Variable | Token values, env file contents, decoder IP input |
 
 Two weights in use: `font-normal` (400) and `font-semibold` (600). No third weight.
@@ -236,7 +235,7 @@ No new shadcn components need to be installed for this phase. No stepper compone
 | Primary CTA (steps 1–4) | "Save and Continue" |
 | Primary CTA (step 5) | "Save and Finish" |
 | Skip link (steps 2–5) | "Skip for now" |
-| Back button | "Back" |
+| Back button | "Back" — intentional single-word navigation convention; executor must not change this label |
 | Manage more link | "Manage more in Admin →" |
 | Completion page heading | "Setup Complete" |
 | Completion page subtitle | "Your club is ready to run a meeting." |
