@@ -86,8 +86,12 @@ public class ResultSnapshotService {
             Map<Long, String[]> entryInfo = resolveEntryInfo(raceId);
 
             positions = new ArrayList<>();
-            long raceStartMs = race.getStartedAt() != null ? race.getStartedAt().toEpochMilli()
-                    : (rows.isEmpty() ? 0L : rows.get(0).lastPassingTimeMs());
+            long raceStartMs = 0L;
+            if (race.getStartedAt() != null) {
+                raceStartMs = race.getStartedAt().toEpochMilli();
+            } else {
+                log.warn("Race {} has no startedAt — totalTimeMs will be 0 for all positions", raceId);
+            }
             for (LiveTimingRowDto row : rows) {
                 String[] info = entryInfo.getOrDefault(row.entryId(), new String[]{"Unknown", null});
                 long totalTimeMs = (raceStartMs > 0 && row.lastPassingTimeMs() > raceStartMs)
