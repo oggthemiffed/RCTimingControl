@@ -229,12 +229,7 @@ public class ChampionshipStandingsQuery {
             // Step 6b/6c: Deserialize positions_json and collect per-driver best position per class
             for (var race : finishedRaces) {
                 JSONB posJson = race.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
-                String roundType = race.get(ROUNDS.TYPE);
-                String finalLetter = race.get(RACES.FINAL_LETTER);
-                Long raceId = race.get(RACES.ID);
-                Long racingClassIdForRace = null; // determined from event_class
                 var raceEventClassId = race.get(EVENT_CLASSES.RACING_CLASS_ID);
-                racingClassIdForRace = raceEventClassId;
 
                 if (posJson == null) continue;
 
@@ -246,24 +241,59 @@ public class ChampionshipStandingsQuery {
                         Long userId = entryIdToUserId.get(row.entryId());
                         if (userId == null) continue;
 
-                        Long rcId = racingClassIdForRace;
-
-                        // Step 9 bonus tracking: TQ
-                        if ("QUALIFIER".equals(roundType) && row.position() == 1) {
-                            tqDrivers.add(userId);
-                        }
-                        // A-final winner bonus
-                        if ("FINAL".equals(roundType) && "A".equals(finalLetter) && row.position() == 1) {
-                            afinalWinners.add(userId);
-                        }
-
                         // Track best position per driver per racing class at this event
                         classBestPosition
-                                .computeIfAbsent(rcId, k -> new HashMap<>())
+                                .computeIfAbsent(raceEventClassId, k -> new HashMap<>())
                                 .merge(userId, row.position(), Math::min);
                     }
                 } catch (Exception e) {
                     // Malformed snapshot — skip this race
+                }
+            }
+
+            // CR-05: Bonus tracking uses ALL finished races at this event regardless of scoringSource.
+            // When scoringSource=FINALS, finishedRaces contains no QUALIFIERs, so TQ bonus was never
+            // awarded. Separate query ensures bonuses are always evaluated from the correct race type.
+            var bonusRaces = dsl
+                    .select(RACES.ID, RACES.FINAL_LETTER, ROUNDS.TYPE, RESULT_SNAPSHOTS.POSITIONS_JSON)
+                    .from(RACES)
+                    .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
+                    .leftJoin(RESULT_SNAPSHOTS).on(RESULT_SNAPSHOTS.RACE_ID.eq(RACES.ID))
+                    .where(ROUNDS.EVENT_ID.eq(eventId))
+                    .and(RACES.STATUS.eq("FINISHED"))
+                    .fetch();
+
+            List<Long> bonusRaceIds = bonusRaces.map(r -> r.get(RACES.ID));
+            Map<Long, Long> bonusEntryToUser = new HashMap<>();
+            if (!bonusRaceIds.isEmpty()) {
+                dsl.select(RACE_ENTRIES.ENTRY_ID, ENTRIES.USER_ID)
+                        .from(RACE_ENTRIES)
+                        .join(ENTRIES).on(ENTRIES.ID.eq(RACE_ENTRIES.ENTRY_ID))
+                        .where(RACE_ENTRIES.RACE_ID.in(bonusRaceIds))
+                        .forEach(r -> bonusEntryToUser.put(r.get(RACE_ENTRIES.ENTRY_ID),
+                                r.get(ENTRIES.USER_ID)));
+            }
+
+            for (var race : bonusRaces) {
+                String roundType = race.get(ROUNDS.TYPE);
+                String finalLetter = race.get(RACES.FINAL_LETTER);
+                JSONB posJson = race.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
+                if (posJson == null) continue;
+                try {
+                    List<ResultSnapshotDto.ResultRow> positions = objectMapper.readValue(
+                            posJson.data(), new TypeReference<>() {});
+                    for (ResultSnapshotDto.ResultRow row : positions) {
+                        Long userId = bonusEntryToUser.get(row.entryId());
+                        if (userId == null) continue;
+                        if ("QUALIFIER".equals(roundType) && row.position() == 1) {
+                            tqDrivers.add(userId);
+                        }
+                        if ("FINAL".equals(roundType) && "A".equals(finalLetter) && row.position() == 1) {
+                            afinalWinners.add(userId);
+                        }
+                    }
+                } catch (Exception e) {
+                    // Malformed snapshot — skip
                 }
             }
 
@@ -289,6 +319,9 @@ public class ChampionshipStandingsQuery {
             }
 
             // DNS drivers: in race_entries but not in positions at this event for their class
+            // WR-03: deduplicate by (userId, rcId, eventId) — a driver with multiple heats can
+            // appear in entryIdToUserId multiple times, inflating their DNS round count.
+            Set<String> dnsEmitted = new HashSet<>();
             for (var entryIdEntry : entryIdToUserId.entrySet()) {
                 Long entryId = entryIdEntry.getKey();
                 Long userId = entryIdEntry.getValue();
@@ -302,13 +335,16 @@ public class ChampionshipStandingsQuery {
 
                 if (!appearedInPositions) {
                     // ASSUMED: DNS counts toward Y rounds (club confirmation pending — see STATE.md)
-                    String driverKey = userId + ":" + rcId;
-                    driverKeyToClassId.put(driverKey, rcId);
-                    driverKeyToUserId.put(driverKey, userId);
-                    boolean excluded = exclusionKeys.contains(userId + ":" + eventId);
-                    driverRounds.computeIfAbsent(driverKey, k -> new ArrayList<>())
-                            .add(new RoundResultDto(roundNumber, eventId, eventName,
-                                    0, 0, excluded, false));
+                    String dnsKey = userId + ":" + rcId + ":" + eventId;
+                    if (dnsEmitted.add(dnsKey)) {
+                        String driverKey = userId + ":" + rcId;
+                        driverKeyToClassId.put(driverKey, rcId);
+                        driverKeyToUserId.put(driverKey, userId);
+                        boolean excluded = exclusionKeys.contains(userId + ":" + eventId);
+                        driverRounds.computeIfAbsent(driverKey, k -> new ArrayList<>())
+                                .add(new RoundResultDto(roundNumber, eventId, eventName,
+                                        0, 0, excluded, false));
+                    }
                 }
             }
         }
@@ -332,7 +368,8 @@ public class ChampionshipStandingsQuery {
 
             // Sort by points DESC to identify worst rounds to drop
             List<RoundResultDto> sorted = new ArrayList<>(rounds);
-            sorted.sort(Comparator.comparingInt(RoundResultDto::points).reversed());
+            sorted.sort(Comparator.comparingInt(RoundResultDto::points).reversed()
+                    .thenComparingInt(RoundResultDto::position)); // worst position (highest) dropped first on tie
 
             // Mark bottom (Y - X) rounds as dropped, but only if we have >= Y rounds
             Set<Integer> droppedIndices = new HashSet<>();
