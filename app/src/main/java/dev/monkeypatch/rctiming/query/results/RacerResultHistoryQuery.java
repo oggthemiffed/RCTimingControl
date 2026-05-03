@@ -58,6 +58,7 @@ public class RacerResultHistoryQuery {
 
         // Group by event — LinkedHashMap preserves DESC order
         Map<Long, RacerResultHistoryDto> byEvent = new LinkedHashMap<>();
+        Map<Long, Long> entryIdToEventId = new LinkedHashMap<>();
 
         for (var row : entryRows) {
             Long eventId = row.get(EVENTS.ID);
@@ -69,60 +70,71 @@ public class RacerResultHistoryQuery {
                     row.get(EVENTS.EVENT_DATE),
                     new ArrayList<>()
             ));
+            entryIdToEventId.put(entryId, eventId);
+        }
 
-            // Step 2: Find races for this entry via race_entries
-            var raceRows = dsl
-                    .select(RACES.ID, RACES.FINAL_LETTER, RACES.HEAT_NUMBER,
-                            ROUNDS.TYPE, ROUNDS.ROUND_NUMBER,
-                            RACING_CLASSES.NAME,
-                            RESULT_SNAPSHOTS.POSITIONS_JSON)
-                    .from(RACE_ENTRIES)
-                    .join(RACES).on(RACES.ID.eq(RACE_ENTRIES.RACE_ID))
-                    .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
-                    .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
-                    .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
-                    .leftJoin(RESULT_SNAPSHOTS).on(RESULT_SNAPSHOTS.RACE_ID.eq(RACES.ID))
-                    .where(RACE_ENTRIES.ENTRY_ID.eq(entryId))
-                    .orderBy(ROUNDS.ROUND_NUMBER.asc(), RACES.HEAT_NUMBER.asc())
-                    .fetch();
+        if (entryIdToEventId.isEmpty()) {
+            return List.of();
+        }
 
-            for (var raceRow : raceRows) {
-                Long raceId = raceRow.get(RACES.ID);
-                String className = raceRow.get(RACING_CLASSES.NAME);
-                String roundType = raceRow.get(ROUNDS.TYPE);
-                String finalLetter = raceRow.get(RACES.FINAL_LETTER);
-                Integer heatNum = raceRow.get(RACES.HEAT_NUMBER);
+        // WR-02: Single batch query for all entries instead of one query per entry (N+1).
+        // CR-03: entryId.longValue() avoids auto-unboxing NPE on null Long comparison.
+        List<Long> allEntryIds = new ArrayList<>(entryIdToEventId.keySet());
+        var allRaceRows = dsl
+                .select(RACE_ENTRIES.ENTRY_ID, RACES.ID, RACES.FINAL_LETTER, RACES.HEAT_NUMBER,
+                        ROUNDS.TYPE, ROUNDS.ROUND_NUMBER,
+                        RACING_CLASSES.NAME,
+                        RESULT_SNAPSHOTS.POSITIONS_JSON)
+                .from(RACE_ENTRIES)
+                .join(RACES).on(RACES.ID.eq(RACE_ENTRIES.RACE_ID))
+                .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
+                .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
+                .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
+                .leftJoin(RESULT_SNAPSHOTS).on(RESULT_SNAPSHOTS.RACE_ID.eq(RACES.ID))
+                .where(RACE_ENTRIES.ENTRY_ID.in(allEntryIds))
+                .orderBy(RACE_ENTRIES.ENTRY_ID.asc(), ROUNDS.ROUND_NUMBER.asc(), RACES.HEAT_NUMBER.asc())
+                .fetch();
 
-                String raceLabel = buildRaceLabel(className, roundType, finalLetter, heatNum);
+        for (var raceRow : allRaceRows) {
+            Long entryId = raceRow.get(RACE_ENTRIES.ENTRY_ID);
+            Long eventId = entryIdToEventId.get(entryId);
+            if (eventId == null) continue;
 
-                JSONB posJson = raceRow.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
-                int position = 0;
-                int lapsCompleted = 0;
-                Long bestLapMs = null;
+            Long raceId = raceRow.get(RACES.ID);
+            String className = raceRow.get(RACING_CLASSES.NAME);
+            String roundType = raceRow.get(ROUNDS.TYPE);
+            String finalLetter = raceRow.get(RACES.FINAL_LETTER);
+            Integer heatNum = raceRow.get(RACES.HEAT_NUMBER);
 
-                if (posJson != null) {
-                    try {
-                        List<ResultSnapshotDto.ResultRow> positions = objectMapper.readValue(
-                                posJson.data(), new TypeReference<>() {});
-                        for (ResultSnapshotDto.ResultRow r : positions) {
-                            if (r.entryId() == entryId) {
-                                position = r.position();
-                                lapsCompleted = r.lapsCompleted();
-                                bestLapMs = r.bestLapMs();
-                                break;
-                            }
+            String raceLabel = buildRaceLabel(className, roundType, finalLetter, heatNum);
+
+            JSONB posJson = raceRow.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
+            int position = 0;
+            int lapsCompleted = 0;
+            Long bestLapMs = null;
+
+            if (posJson != null) {
+                try {
+                    List<ResultSnapshotDto.ResultRow> positions = objectMapper.readValue(
+                            posJson.data(), new TypeReference<>() {});
+                    for (ResultSnapshotDto.ResultRow r : positions) {
+                        if (entryId != null && r.entryId() == entryId.longValue()) {
+                            position = r.position();
+                            lapsCompleted = r.lapsCompleted();
+                            bestLapMs = r.bestLapMs();
+                            break;
                         }
-                    } catch (Exception ignored) {
-                        // Unfinished or malformed snapshot — position stays 0
                     }
+                } catch (Exception ignored) {
+                    // Unfinished or malformed snapshot — position stays 0
                 }
-
-                @SuppressWarnings("unchecked")
-                ArrayList<RacerResultHistoryDto.RaceResult> raceList =
-                        (ArrayList<RacerResultHistoryDto.RaceResult>) byEvent.get(eventId).races();
-                raceList.add(new RacerResultHistoryDto.RaceResult(
-                        raceId, raceLabel, position, lapsCompleted, bestLapMs));
             }
+
+            @SuppressWarnings("unchecked")
+            ArrayList<RacerResultHistoryDto.RaceResult> raceList =
+                    (ArrayList<RacerResultHistoryDto.RaceResult>) byEvent.get(eventId).races();
+            raceList.add(new RacerResultHistoryDto.RaceResult(
+                    raceId, raceLabel, position, lapsCompleted, bestLapMs));
         }
 
         return new ArrayList<>(byEvent.values());
