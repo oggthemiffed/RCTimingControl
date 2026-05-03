@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Race Control** - Browser-based race control client, race state machine, marshal laps, referee tools (completed 2026-04-24)
 - [x] **Phase 5: Live Timing & Forwarder** - AMB P3 forwarder, gRPC streaming, WebSocket live timing display (completed 2026-04-26)
 - [x] **Phase 6: Audio & Practice** - Voice announcements (Web Speech API + TTS), open practice sessions
-- [ ] **Phase 7: Results & Championship** - Post-race result snapshots, championship standings, PDF export
+- [x] **Phase 7: Results & Championship** - Post-race result snapshots, championship standings, PDF export (completed 2026-05-03)
 - [ ] **Phase 8: First-Run Setup Wizard** - Guided onboarding for new club installations: club profile, tracks, formats, staff accounts, decoder config, forwarder test
 - [ ] **Phase 9: User Manual & Documentation** - In-app help system and printed/PDF race meeting guide for officials, racers, and admins
 - [ ] **Phase 10: Docker Trial Environment** - docker-compose stack with demo seed data and fake decoder replay so clubs can evaluate the full system locally with a single command
@@ -213,8 +213,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Admin Panel & Event Management | 6/6 | Complete | 2026-04-20 |
 | 4. Race Control | 7/7 | Complete | 2026-04-24 |
 | 5. Live Timing & Forwarder | 5/5 | Complete | 2026-04-26 |
-| 6. Audio & Practice | 0/6 | Planning complete | - |
-| 7. Results & Championship | 0/6 | Planning complete | - |
+| 6. Audio & Practice | 6/6 | Complete | 2026-04-30 |
+| 7. Results & Championship | 7/7 | Complete | 2026-05-03 |
 | 8. First-Run Setup Wizard | 0/TBD | Not started | - |
 | 9. User Manual & Documentation | 0/TBD | Not started | - |
 | 10. Docker Trial Environment | 0/TBD | Not started | - |

@@ -143,7 +143,7 @@
 - [ ] **CHAMP-02**: Championship scoring handles DNF, DNS, and DQ correctly (all count toward Y rounds attended; DQ/DNS score zero points)
 - [ ] **CHAMP-03**: Separate championship standings per racing class
 - [ ] **CHAMP-04**: Admin can configure the points scale (points per finishing position) per championship
-- [ ] **CHAMP-05**: Public championship standings table is live on the web
+- [x] **CHAMP-05**: Public championship standings table is live on the web
 - [ ] **CHAMP-06**: Championship can score from qualifying results, final results, or both; if both, points from each source are summed per round
 - [ ] **CHAMP-07**: Championship can award a configurable bonus point to the top qualifier (TQ) per class per round
 - [ ] **CHAMP-08**: Championship can award a configurable bonus point to the A-final winner per class per round
@@ -152,11 +152,11 @@
 
 ### Results
 
-- [ ] **RESULT-01**: Final race results are published after each race
-- [ ] **RESULT-02**: Results correctly reflect any marshal lap adjustments and penalties applied
-- [ ] **RESULT-03**: Per-racer result history is viewable on the racer's portal page
-- [ ] **RESULT-04**: Printed/PDF results optionally display a racer's car tag values beneath their name; controlled by an admin display setting
-- [ ] **RESULT-05**: Result records include full individual lap time data (every lap, not just totals and best lap)
+- [x] **RESULT-01**: Final race results are published after each race
+- [x] **RESULT-02**: Results correctly reflect any marshal lap adjustments and penalties applied
+- [x] **RESULT-03**: Per-racer result history is viewable on the racer's portal page
+- [x] **RESULT-04**: Printed/PDF results optionally display a racer's car tag values beneath their name; controlled by an admin display setting
+- [x] **RESULT-05**: Result records include full individual lap time data (every lap, not just totals and best lap)
 
 ## v2 Requirements
 
@@ -297,17 +297,17 @@
 | CHAMP-02 | Phase 3 | Pending |
 | CHAMP-03 | Phase 3 | Pending |
 | CHAMP-04 | Phase 3 | Pending |
-| CHAMP-05 | Phase 7 | Pending |
+| CHAMP-05 | Phase 7 | Complete |
 | CHAMP-06 | Phase 3 | Pending |
 | CHAMP-07 | Phase 3 | Pending |
 | CHAMP-08 | Phase 3 | Pending |
 | CHAMP-09 | Phase 3 | Pending |
 | CHAMP-10 | Phase 3 | Pending |
-| RESULT-01 | Phase 7 | Pending |
-| RESULT-02 | Phase 7 | Pending |
-| RESULT-03 | Phase 7 | Pending |
-| RESULT-04 | Phase 7 | Pending |
-| RESULT-05 | Phase 7 | Pending |
+| RESULT-01 | Phase 7 | Complete |
+| RESULT-02 | Phase 7 | Complete |
+| RESULT-03 | Phase 7 | Complete |
+| RESULT-04 | Phase 7 | Complete |
+| RESULT-05 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 91 total

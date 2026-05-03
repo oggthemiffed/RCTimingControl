@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-05-PLAN.md — practice session timing backend
-last_updated: "2026-05-02T21:52:08.349Z"
-last_activity: 2026-05-02 -- Phase 07 execution started
+stopped_at: Completed 07-07-PLAN.md — per-lap durations (RESULT-05 gap closure)
+last_updated: "2026-05-03T00:00:00Z"
+last_activity: 2026-05-03 -- Phase 07 complete; advancing to Phase 08
 progress:
   total_phases: 11
-  completed_phases: 5
-  total_plans: 44
-  completed_plans: 42
-  percent: 95
+  completed_phases: 7
+  total_plans: 51
+  completed_plans: 49
+  percent: 96
 ---
 
 # Project State
@@ -21,16 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-15)
 
 **Core value:** Racers can enter events online and manage their own car/transponder details, while officials run a full race meeting from any Windows or Linux machine — with live timing fed directly from AMB/MyLaps hardware via a local forwarder agent to a cloud-hosted service.
-**Current focus:** Phase 07 — results-championship
+**Current focus:** Phase 08 — first-run-setup-wizard
 
 ## Current Position
 
-Phase: 07 (results-championship) — EXECUTING
-Plan: 1 of 7
-Status: Executing Phase 07
-Last activity: 2026-05-02 -- Phase 07 execution started
+Phase: 08 (first-run-setup-wizard) — NEXT
+Status: Phase 07 complete; Phase 08 not started
+Last activity: 2026-05-03 -- Phase 07 verified and marked complete
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -102,7 +101,7 @@ None yet.
 
 - [Phase 5 resolved]: Club runs MRT Pro transponders — locked to firmware < 4.5, port 5100 RC-4 text protocol. P3 binary (port 5403) not needed for this deployment; deferred indefinitely.
 - [Phase 5 resolved]: RC-4 text protocol uses session-relative timestamps (timeSinceStart offset from decoder power-on). Handled via EpochAnchor server-side anchoring — implemented in Phase 5.
-- [Phase 7 concern]: Championship DNS/DQ scoring policy (does DNS count toward Y rounds?) needs club confirmation before Phase 7 scoring implementation
+- [Phase 7 resolved]: Championship DNS/DQ scoring policy — DNS counts toward Y rounds, scores 0 points. Documented with ASSUMED comment in ChampionshipStandingsQuery pending formal club confirmation.
 
 ## Deferred Items
 
