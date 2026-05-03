@@ -1,6 +1,8 @@
 package dev.monkeypatch.rctiming.query.event;
 
 import org.jooq.DSLContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,8 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
 @Service
 @Transactional(readOnly = true)
 public class EventScheduleQuery {
+
+    private static final Logger log = LoggerFactory.getLogger(EventScheduleQuery.class);
 
     private final DSLContext dsl;
 
@@ -88,7 +92,13 @@ public class EventScheduleQuery {
                 .entrySet().stream()
                 .collect(java.util.stream.Collectors.toMap(
                         java.util.Map.Entry::getKey,
-                        e -> e.getValue().get(0)
+                        e -> {
+                            if (e.getValue().size() > 1) {
+                                log.warn("Event {} is linked to {} championships; only the first is shown on the schedule",
+                                        e.getKey(), e.getValue().size());
+                            }
+                            return e.getValue().get(0);
+                        }
                 ));
 
         // Re-map the events list with the two enrichment fields populated
