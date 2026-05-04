@@ -173,7 +173,14 @@ Plans:
   3. Each wizard step is individually completable and skippable; the wizard is re-entrant — closing it mid-way and returning resumes from the last incomplete step
   4. A "test connection" action on the decoder config step verifies forwarder reachability and reports success/failure in the UI before the user proceeds
   5. A setup completion summary shows all configured items with links to edit them; the wizard is accessible again from Admin settings for reconfiguration
-**Plans**: TBD
+**Plans**: 6 plans
+Plans:
+- [ ] 08-01-PLAN.md — Wave 0: backend + frontend test stubs (@Disabled / describe.skip) for SC-1..SC-4 + T-08-01..T-08-03
+- [ ] 08-02-PLAN.md — Backend core: V25 migration + ClubProfile decoder fields + UserService.createAdmin (T-08-01 replay guard) + SetupController/Service + 3 DTOs + SecurityConfig permitAll
+- [ ] 08-03-PLAN.md — Backend: PATCH /setup/decoder-config + POST /setup/staff + GET /setup/forwarder-config-download (T-08-03 placeholder)
+- [ ] 08-04-PLAN.md — Frontend foundation: setupApi + hooks + SetupGuard (T-08-02 mitigation) + SetupLayout shell + AdminBootstrapGate + App.tsx wiring + AdminPanelLayout nav entry
+- [ ] 08-05-PLAN.md — Wizard steps 1–4: ClubProfileStep, TrackStep, FormatStep, StaffStep + step orchestration in SetupLayout
+- [ ] 08-06-PLAN.md — Step 5 DecoderConfigStep (form + token UX + env download + 30s test connection polling) + SetupCompletePage + final phase checkpoint
 **UI hint**: yes
 
 ### Phase 9: User Manual & Documentation

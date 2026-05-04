@@ -478,21 +478,21 @@ Note: The UI-SPEC shows only email + password + confirm password fields for the 
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **forwarder.env Token Plaintext**
    - What we know: The token bcrypt hash is in the DB. The plaintext is shown once to the user after `ForwarderTokenService.generate()`.
    - What's unclear: Should the env file include a placeholder `APP_FORWARDER_TOKEN=<paste-token-here>` and instruct the user to fill it in manually? Or should the wizard require token generation before allowing the download (ensuring the user already copied the token)?
-   - Recommendation: The download button is disabled until the token is generated (enforced by UI). The env file includes `# Paste your forwarder token here (generated in the Decoder Config step)` above a blank `APP_FORWARDER_TOKEN=` line. This is safe and honest — never a recoverable value.
+   - RESOLVED: The download button is disabled until the token is generated (enforced by UI). The env file includes `# Paste your forwarder token here (generated in the Decoder Config step)` above a blank `APP_FORWARDER_TOKEN=` line. This is safe and honest — never a recoverable value.
 
 2. **Admin bootstrap form: firstName/lastName required?**
    - What we know: `User` entity has `firstName VARCHAR NOT NULL` and `lastName VARCHAR NOT NULL` in the schema. The UI-SPEC shows only email/password/confirm fields.
    - What's unclear: Should the bootstrap form collect firstName/lastName?
-   - Recommendation: Yes, include them. The `AdminPanelLayout` displays `user.firstName user.lastName` in the sidebar — a blank name there on first login is a poor experience. The UI-SPEC is silent on this; it is in "Claude's Discretion" territory.
+   - RESOLVED: Yes, include them. The `AdminPanelLayout` displays `user.firstName user.lastName` in the sidebar — a blank name there on first login is a poor experience. The UI-SPEC is silent on this; it is in "Claude's Discretion" territory.
 
 3. **`/setup/progress` merged into `/setup/status` or separate?**
    - What we know: D-10 defines `/setup/progress` as its own endpoint. Claude's Discretion says "whether merged or separate".
-   - Recommendation: Keep them separate. `status` is called on every page load (public, no auth) and is lightweight. `progress` is called only within the wizard (ADMIN-gated, richer response). Merging would require the public endpoint to do more DB work on every unauthenticated request.
+   - RESOLVED: Keep them separate. `status` is called on every page load (public, no auth) and is lightweight. `progress` is called only within the wizard (ADMIN-gated, richer response). Merging would require the public endpoint to do more DB work on every unauthenticated request.
 
 ---
 
@@ -534,9 +534,9 @@ No missing dependencies. No new services required.
 | SC-2 | Bootstrap blocked after first user exists (replay guard) | Integration | `./gradlew test --tests "*.SetupControllerIT.bootstrap_returns409_whenUsersExist"` | No — Wave 0 |
 | SC-3 | Progress endpoint returns correct booleans for each step | Integration | `./gradlew test --tests "*.SetupControllerIT.getProgress_reflectsDataState"` | No — Wave 0 |
 | SC-4 | Forwarder.env download returns attachment with correct content | Integration | `./gradlew test --tests "*.SetupControllerIT.downloadForwarderConfig_returnsEnvAttachment"` | No — Wave 0 |
-| SC-4 | Frontend: "Test connection" polling shows success when CONNECTED | Unit (frontend) | `npm test -- --run src/pages/setup/steps/DecoderConfigStep.test.tsx` | No — Wave 0 |
-| SC-5 | Setup wizard accessible from Admin sidebar (nav entry exists) | Unit (frontend) | `npm test -- --run src/pages/admin/AdminPanelLayout.test.tsx` | No — Wave 0 |
-| SC-1 | SetupGuard redirects to /setup when setupComplete=false | Unit (frontend) | `npm test -- --run src/pages/setup/SetupGuard.test.tsx` | No — Wave 0 |
+| SC-4 | Frontend: "Test connection" polling shows success when CONNECTED | Unit (frontend) | `npm test -- --run src/pages/setup/__tests__/DecoderConfigStep.test.tsx` | No — Wave 0 |
+| SC-5 | Setup wizard accessible from Admin sidebar (nav entry exists) | Unit (frontend) | `npm test -- --run src/pages/admin/__tests__/AdminPanelLayout.test.tsx` | No — Wave 0 |
+| SC-1 | SetupGuard redirects to /setup when setupComplete=false | Unit (frontend) | `npm test -- --run src/pages/setup/__tests__/SetupGuard.test.tsx` | No — Wave 0 |
 | SC-1 | SetupGuard does NOT redirect when already on /setup | Unit (frontend) | included in SetupGuard.test.tsx | No — Wave 0 |
 
 ### Sampling Rate
@@ -546,9 +546,9 @@ No missing dependencies. No new services required.
 
 ### Wave 0 Gaps
 - [ ] `app/src/test/java/.../api/setup/SetupControllerIT.java` — covers SC-1 through SC-4 backend behaviors
-- [ ] `frontend/src/pages/setup/SetupGuard.test.tsx` — covers SC-1 redirect behavior
-- [ ] `frontend/src/pages/setup/steps/DecoderConfigStep.test.tsx` — covers SC-4 polling UI
-- [ ] `frontend/src/pages/admin/AdminPanelLayout.test.tsx` — covers SC-5 nav entry (may already exist; verify)
+- [ ] `frontend/src/pages/setup/__tests__/SetupGuard.test.tsx` — covers SC-1 redirect behavior
+- [ ] `frontend/src/pages/setup/__tests__/DecoderConfigStep.test.tsx` — covers SC-4 polling UI
+- [ ] `frontend/src/pages/admin/__tests__/AdminPanelLayout.test.tsx` — covers SC-5 nav entry (may already exist; verify)
 
 ---
 
