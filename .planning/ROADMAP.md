@@ -175,7 +175,7 @@ Plans:
   5. A setup completion summary shows all configured items with links to edit them; the wizard is accessible again from Admin settings for reconfiguration
 **Plans**: 6 plans
 Plans:
-- [ ] 08-01-PLAN.md — Wave 0: backend + frontend test stubs (@Disabled / describe.skip) for SC-1..SC-4 + T-08-01..T-08-03
+- [x] 08-01-PLAN.md — Wave 0: backend + frontend test stubs (@Disabled / describe.skip) for SC-1..SC-4 + T-08-01..T-08-03
 - [ ] 08-02-PLAN.md — Backend core: V25 migration + ClubProfile decoder fields + UserService.createAdmin (T-08-01 replay guard) + SetupController/Service + 3 DTOs + SecurityConfig permitAll
 - [ ] 08-03-PLAN.md — Backend: PATCH /setup/decoder-config + POST /setup/staff + GET /setup/forwarder-config-download (T-08-03 placeholder)
 - [ ] 08-04-PLAN.md — Frontend foundation: setupApi + hooks + SetupGuard (T-08-02 mitigation) + SetupLayout shell + AdminBootstrapGate + App.tsx wiring + AdminPanelLayout nav entry
