@@ -10,7 +10,6 @@ import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.track.Track;
 import dev.monkeypatch.rctiming.domain.track.TrackRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -115,15 +114,53 @@ class SetupControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @Disabled("Plan 03 implements this endpoint")
     void downloadForwarderConfig_returnsEnvAttachment() {
-        // Plan 03: GET /api/v1/setup/forwarder-config-download
+        // Bootstrap an admin user to get a JWT
+        BootstrapRequest req = new BootstrapRequest("Admin", "User", "admin@test.com", "password123");
+        ResponseEntity<AuthResponse> bootstrapResp = restTemplate.postForEntity("/api/v1/setup/bootstrap", req, AuthResponse.class);
+        assertThat(bootstrapResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        String jwt = bootstrapResp.getBody().accessToken();
+
+        // GET /api/v1/setup/forwarder-config-download with admin JWT
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(jwt);
+        ResponseEntity<byte[]> response = restTemplate.exchange(
+                "/api/v1/setup/forwarder-config-download",
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                byte[].class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
+                .contains("attachment")
+                .contains("forwarder.env");
+
+        String body = new String(response.getBody(), java.nio.charset.StandardCharsets.UTF_8);
+        assertThat(body).contains("APP_SERVER_URL=");
+        assertThat(body).contains("APP_DECODER_HOST=");
     }
 
     @Test
-    @Disabled("Plan 03 implements this endpoint")
     void downloadForwarderConfig_includesTokenPlaceholder_notPlaintext() {
-        // Plan 03: forwarder config must not contain plaintext token
+        // T-08-03: forwarder.env must contain placeholder, never a real token value
+        BootstrapRequest req = new BootstrapRequest("Admin", "User", "admin@test.com", "password123");
+        ResponseEntity<AuthResponse> bootstrapResp = restTemplate.postForEntity("/api/v1/setup/bootstrap", req, AuthResponse.class);
+        assertThat(bootstrapResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        String jwt = bootstrapResp.getBody().accessToken();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(jwt);
+        ResponseEntity<byte[]> response = restTemplate.exchange(
+                "/api/v1/setup/forwarder-config-download",
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                byte[].class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        String body = new String(response.getBody(), java.nio.charset.StandardCharsets.UTF_8);
+
+        // T-08-03: The APP_FORWARDER_TOKEN line must contain the literal placeholder verbatim
+        assertThat(body).contains("APP_FORWARDER_TOKEN=<paste-your-token-here>");
     }
 
     // --- helpers ---

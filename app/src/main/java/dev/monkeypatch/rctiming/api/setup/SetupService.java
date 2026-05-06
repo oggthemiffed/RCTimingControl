@@ -11,9 +11,14 @@ import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.domain.user.UserService;
+import dev.monkeypatch.rctiming.forwarder.ForwarderTokenService;
 import dev.monkeypatch.rctiming.security.JwtTokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.time.Instant;
 
 @Service
 @Transactional
@@ -25,19 +30,22 @@ public class SetupService {
     private final JwtTokenService jwtTokenService;
     private final TrackRepository trackRepository;
     private final RaceFormatTemplateRepository raceFormatTemplateRepository;
+    private final ForwarderTokenService forwarderTokenService;
 
     public SetupService(ClubProfileRepository clubProfileRepository,
                         UserRepository userRepository,
                         UserService userService,
                         JwtTokenService jwtTokenService,
                         TrackRepository trackRepository,
-                        RaceFormatTemplateRepository raceFormatTemplateRepository) {
+                        RaceFormatTemplateRepository raceFormatTemplateRepository,
+                        ForwarderTokenService forwarderTokenService) {
         this.clubProfileRepository = clubProfileRepository;
         this.userRepository = userRepository;
         this.userService = userService;
         this.jwtTokenService = jwtTokenService;
         this.trackRepository = trackRepository;
         this.raceFormatTemplateRepository = raceFormatTemplateRepository;
+        this.forwarderTokenService = forwarderTokenService;
     }
 
     @Transactional(readOnly = true)
@@ -57,6 +65,29 @@ public class SetupService {
                 .map(p -> p.getDecoderHost() != null && p.getDecoderPort() != null && p.getDecoderProtocol() != null)
                 .orElse(false);
         return new SetupProgressDto(club, track, format, staff, decoder);
+    }
+
+    @Transactional(readOnly = true)
+    public String generateForwarderEnv(HttpServletRequest request) {
+        // T-08-03: plaintext token is NOT stored — env file carries only a placeholder
+        var profile = clubProfileRepository.findAll().stream().findFirst().orElse(null);
+        var status = forwarderTokenService.getCurrentStatus();
+        String baseUrl = ServletUriComponentsBuilder.fromRequestUri(request)
+                .replacePath("")
+                .build()
+                .toUriString();
+        StringBuilder sb = new StringBuilder();
+        sb.append("# forwarder.env — generated ").append(Instant.now()).append(" by RC Timing setup wizard\n");
+        sb.append("# Token status: ").append(status.status() == null ? "NONE" : status.status())
+          .append(", generated ").append(status.generatedAt() == null ? "never" : status.generatedAt()).append("\n");
+        sb.append("# IMPORTANT: paste the plaintext token shown when you generated it.\n");
+        sb.append("# The server cannot recover plaintext tokens (T-08-03).\n\n");
+        sb.append("APP_SERVER_URL=").append(baseUrl).append("\n");
+        sb.append("APP_FORWARDER_TOKEN=<paste-your-token-here>\n");
+        sb.append("APP_DECODER_HOST=").append(profile == null || profile.getDecoderHost() == null ? "" : profile.getDecoderHost()).append("\n");
+        sb.append("APP_DECODER_PORT=").append(profile == null || profile.getDecoderPort() == null ? "" : profile.getDecoderPort()).append("\n");
+        sb.append("APP_DECODER_PROTOCOL=").append(profile == null || profile.getDecoderProtocol() == null ? "" : profile.getDecoderProtocol()).append("\n");
+        return sb.toString();
     }
 
     public AuthResponse bootstrap(BootstrapRequest req) {
