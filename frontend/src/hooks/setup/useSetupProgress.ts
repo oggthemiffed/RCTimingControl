@@ -10,10 +10,12 @@ export function useSetupStatus() {
   });
 }
 
-export function useSetupProgress() {
+export function useSetupProgress({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['setup-progress'],
     queryFn: getSetupProgress,
     staleTime: 0,
+    enabled,
+    retry: false,
   });
 }

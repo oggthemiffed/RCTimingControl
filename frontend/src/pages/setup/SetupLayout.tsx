@@ -128,8 +128,10 @@ export default function SetupLayout() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const { data: statusData, isLoading: statusLoading } = useSetupStatus();
-  const { data: progress } = useSetupProgress();
   const { user } = useAuth();
+  // Only fetch progress once authenticated — /setup/progress requires auth and a 401 here
+  // would trigger the refresh interceptor loop before bootstrap completes (T-08-02 mitigation).
+  const { data: progress } = useSetupProgress({ enabled: !!user });
 
   // Derive current step from progress on first load (first incomplete step)
   useEffect(() => {
