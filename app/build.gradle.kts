@@ -93,7 +93,8 @@ tasks.withType<Test> {
     // Testcontainers hardcodes VERSION_1_32 as the default when no api.version is configured.
     // The docker-java shaded code in testcontainers reads "api.version" from JVM system properties
     // via overrideDockerPropertiesWithSystemProperties — setting it here bypasses the 1.32 fallback.
-    jvmArgs("-Dapi.version=1.47")
+    // Cap at 1.45 to match the installed Docker daemon's maximum supported API version.
+    jvmArgs("-Dapi.version=1.45")
 }
 
 // ---------------------------------------------------------------------------

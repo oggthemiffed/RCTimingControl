@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 08 execution started
+stopped_at: Phase 08 plan 02 complete
 last_updated: "2026-05-05T00:00:00.000Z"
-last_activity: 2026-05-05 -- Phase 08 execution started (6 plans)
+last_activity: 2026-05-05 -- Phase 08 plan 02 complete (08-01 and 08-02 done)
 progress:
   total_phases: 11
   completed_phases: 6
   total_plans: 50
-  completed_plans: 43
-  percent: 86
+  completed_plans: 45
+  percent: 90
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 
 ## Current Position
 
-Phase: 08 (first-run-setup-wizard) — NEXT
-Status: Phase 07 complete; Phase 08 not started
-Last activity: 2026-05-03 -- Phase 07 verified and marked complete
+Phase: 08 (first-run-setup-wizard) — IN PROGRESS
+Status: 08-01 complete (Wave-0 scaffolding); 08-02 complete (setup backend); 08-03 next
+Last activity: 2026-05-05 -- 08-02 verified: SetupController/Service, V25 migration, bootstrap endpoint, all tests pass
 
 Progress: [███████░░░] 70%
 

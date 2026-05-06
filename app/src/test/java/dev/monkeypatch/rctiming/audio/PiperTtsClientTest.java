@@ -40,7 +40,7 @@ class PiperTtsClientTest {
     }
 
     private PiperTtsClient clientFor(boolean enabled) {
-        TtsProperties props = new TtsProperties("localhost:" + port, "en_GB-alan-medium", enabled);
+        TtsProperties props = new TtsProperties("localhost:" + port, "en_GB-alan-medium", enabled, List.of());
         return new PiperTtsClient(props, objectMapper);
     }
 

@@ -28,7 +28,7 @@ class TtsClipServiceTest {
 
     private static final byte[] FAKE_WAV = new byte[]{0x52, 0x49, 0x46, 0x46}; // "RIFF"
     private static final TtsProperties PROPS =
-            new TtsProperties("piper:10200", "en_GB-alan-medium", true);
+            new TtsProperties("piper:10200", "en_GB-alan-medium", true, null);
 
     @BeforeEach
     void setUp() {

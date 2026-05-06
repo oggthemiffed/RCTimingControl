@@ -56,6 +56,15 @@ public class ClubProfile {
     @Column(name = "show_car_tags_in_results", nullable = false)
     private boolean showCarTagsInResults = false;
 
+    @Column(name = "decoder_host", length = 255)
+    private String decoderHost;
+
+    @Column(name = "decoder_port")
+    private Integer decoderPort;
+
+    @Column(name = "decoder_protocol", length = 10)
+    private String decoderProtocol;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -112,4 +121,13 @@ public class ClubProfile {
 
     public boolean isShowCarTagsInResults() { return showCarTagsInResults; }
     public void setShowCarTagsInResults(boolean showCarTagsInResults) { this.showCarTagsInResults = showCarTagsInResults; }
+
+    public String getDecoderHost() { return decoderHost; }
+    public void setDecoderHost(String decoderHost) { this.decoderHost = decoderHost; }
+
+    public Integer getDecoderPort() { return decoderPort; }
+    public void setDecoderPort(Integer decoderPort) { this.decoderPort = decoderPort; }
+
+    public String getDecoderProtocol() { return decoderProtocol; }
+    public void setDecoderProtocol(String decoderProtocol) { this.decoderProtocol = decoderProtocol; }
 }

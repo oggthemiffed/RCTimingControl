@@ -30,6 +30,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/setup/status").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/setup/bootstrap").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/events", "/api/v1/events/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/results/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/championships/**").permitAll()

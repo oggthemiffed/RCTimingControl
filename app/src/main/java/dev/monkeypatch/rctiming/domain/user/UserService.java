@@ -41,4 +41,25 @@ public class UserService {
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
     }
+
+    @Transactional
+    public User createAdmin(String email, String password, String firstName, String lastName) {
+        // T-08-01 server-side replay guard (defence-in-depth — SetupService is the first guard)
+        if (userRepository.count() > 0) {
+            throw new IllegalStateException("Bootstrap already complete - users exist");
+        }
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setRoles(Set.of(Role.ADMIN));
+        Instant now = Instant.now();
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
+        return userRepository.save(user);
+    }
 }
