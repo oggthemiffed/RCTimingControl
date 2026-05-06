@@ -4,13 +4,15 @@
 
 **Services needed:**
 ```bash
-make dev-start          # starts Postgres + backend + frontend in background
-# logs at: tail -f /tmp/rc-backend.log | /tmp/rc-frontend.log
+# For wizard UAT — start WITHOUT dev seed data (no pre-seeded club profile):
+make stop && make clean-db && make dev-start SEED=no
 
-# OR start manually in separate terminals:
-make up                 # Postgres
-make dev                # backend  (wait for "Started RcTimingApplication")
-make ui                 # frontend
+# Logs:
+tail -f /tmp/rc-backend.log   # watch for "Started RcTimingApplication"
+tail -f /tmp/rc-frontend.log
+
+# Normal dev start (includes seed data — NOT suitable for wizard UAT):
+make dev-start
 ```
 
 **Stop when done:** `make stop`
@@ -20,10 +22,11 @@ make ui                 # frontend
 ## Before you start
 
 - Use a **private / incognito** browser window so there's no stale auth session.
-- The backend must be on a **fresh database** (no existing club profile or admin user). To reset:
+- **IMPORTANT:** The dev seed creates a club profile, which makes the wizard think setup is already done. Always use `SEED=no` for wizard UAT:
   ```bash
-  make stop && make clean-db && make dev-start
+  make stop && make clean-db && make dev-start SEED=no
   ```
+- Wait for `Started RcTimingApplication` in `/tmp/rc-backend.log` before opening the browser.
 - Backend URL: `http://localhost:8080`
 - Frontend URL: `http://localhost:5173`
 
@@ -34,9 +37,11 @@ make ui                 # frontend
 > **What:** Before any admin exists, the wizard shows a pre-gate account-creation form instead of the wizard sidebar.
 
 ### 1.1 Unauthenticated redirect
-- [ ] Open `http://localhost:5173/`
+- [x] Open `http://localhost:5173/`
 - [ ] **Expect:** URL changes to `http://localhost:5173/setup` (SetupGuard redirected you)
 - [ ] **Expect:** A centred card appears — NOT the wizard sidebar
+
+** i have started the application and all i see is a log in screen, i have ran a clean-db and still the same
 
 ### 1.2 Bootstrap form content
 - [ ] The card has title **"Set Up RC Timing"**

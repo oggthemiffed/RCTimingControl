@@ -95,6 +95,11 @@ clean-db:
 dev:
 	./gradlew :app:bootRun --args='--spring.profiles.active=dev'
 
+# Runs backend without the dev seed data — use this when testing the setup wizard from scratch
+.PHONY: dev-setup-test
+dev-setup-test:
+	./gradlew :app:bootRun --args='--spring.profiles.active=setup-test'
+
 .PHONY: generate-db
 generate-db:
 	./gradlew :app:generateJooq
@@ -169,7 +174,8 @@ start: up
 		$(MAKE) generate-db; \
 	fi
 	@printf 'Starting backend (log: /tmp/rc-backend.log)…\n'
-	@./gradlew :app:bootRun --no-daemon --args='--spring.profiles.active=dev' -x generateJooq \
+	@PROFILE=$$([ "$(SEED)" = "no" ] && echo "setup-test" || echo "dev"); \
+	  ./gradlew :app:bootRun --no-daemon --args="--spring.profiles.active=$$PROFILE" -x generateJooq \
 		> /tmp/rc-backend.log 2>&1 & echo $$! > /tmp/rc-backend.pid
 	@printf 'Starting frontend (log: /tmp/rc-frontend.log)…\n'
 	@cd frontend && npm run dev > /tmp/rc-frontend.log 2>&1 & echo $$! > /tmp/rc-frontend.pid
