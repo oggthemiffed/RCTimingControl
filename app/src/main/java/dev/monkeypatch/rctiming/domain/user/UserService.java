@@ -43,6 +43,30 @@ public class UserService {
     }
 
     @Transactional
+    public User createStaff(String email, String password, String firstName, String lastName, Set<Role> roles) {
+        if (roles == null || roles.isEmpty()) {
+            throw new IllegalArgumentException("At least one role required");
+        }
+        if (roles.contains(Role.RACER)) {
+            // T-08-08: Staff endpoint cannot assign RACER role; use /auth/register for racers
+            throw new IllegalArgumentException("Staff endpoint cannot assign RACER role; use /auth/register for racers");
+        }
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setRoles(roles);
+        Instant now = Instant.now();
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
+        return userRepository.save(user);
+    }
+
+    @Transactional
     public User createAdmin(String email, String password, String firstName, String lastName) {
         // T-08-01 server-side replay guard (defence-in-depth — SetupService is the first guard)
         if (userRepository.count() > 0) {

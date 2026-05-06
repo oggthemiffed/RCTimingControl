@@ -108,4 +108,15 @@ public class ClubProfileService {
         }
         affiliationRepository.deleteById(id);
     }
+
+    @Transactional
+    public ClubProfile updateDecoderConfig(String host, Integer port, String protocol) {
+        ClubProfile profile = clubProfileRepository.findAll().stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("No club profile — complete club step first"));
+        profile.setDecoderHost(host);
+        profile.setDecoderPort(port);
+        profile.setDecoderProtocol(protocol);
+        profile.setUpdatedAt(Instant.now());
+        return clubProfileRepository.save(profile);
+    }
 }
