@@ -4,6 +4,16 @@
 BOLD  := \033[1m
 RESET := \033[0m
 
+# ── compose shim: prefer docker compose (v2 plugin), fall back to docker-compose (v1) ──
+COMPOSE := $(shell \
+  if docker compose version >/dev/null 2>&1; then \
+    echo 'docker compose'; \
+  elif command -v docker-compose >/dev/null 2>&1; then \
+    echo 'docker-compose'; \
+  else \
+    echo ''; \
+  fi)
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Help
 # ─────────────────────────────────────────────────────────────────────────────
@@ -45,16 +55,38 @@ help:
 # ─────────────────────────────────────────────────────────────────────────────
 .PHONY: up
 up:
-	docker compose up -d
+	@if [ -z "$(COMPOSE)" ]; then \
+		printf '$(BOLD)No Docker Compose found — starting Postgres directly via docker run.$(RESET)\n'; \
+		docker run -d --name rctiming-postgres \
+			-e POSTGRES_DB=rctiming_dev \
+			-e POSTGRES_USER=rctiming \
+			-e POSTGRES_PASSWORD=rctiming \
+			-p 5432:5432 \
+			postgres:16-alpine 2>/dev/null || docker start rctiming-postgres 2>/dev/null || true; \
+		printf 'Postgres started on :5432 (mailpit and minio skipped — install docker compose plugin for full stack).\n'; \
+	else \
+		$(COMPOSE) up -d; \
+	fi
 
 .PHONY: down
 down:
-	docker compose down
+	@if [ -z "$(COMPOSE)" ]; then \
+		docker stop rctiming-postgres rctiming-mailpit rctiming-minio rctiming-piper 2>/dev/null || true; \
+	else \
+		$(COMPOSE) down; \
+	fi
 
 .PHONY: clean-db
 clean-db:
-	docker compose down -v
-	docker compose up -d
+	@if [ -z "$(COMPOSE)" ]; then \
+		docker stop rctiming-postgres 2>/dev/null || true; \
+		docker rm rctiming-postgres 2>/dev/null || true; \
+		docker volume rm rctiming_pgdata 2>/dev/null || true; \
+		$(MAKE) up; \
+	else \
+		$(COMPOSE) down -v; \
+		$(COMPOSE) up -d; \
+	fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Backend
@@ -159,11 +191,11 @@ stop:
 	fi
 	@timeout 10 ./gradlew --stop >/dev/null 2>&1 || true
 	@pkill -f '[n]ode.*vite' 2>/dev/null || true
-	@docker compose down
+	@$(MAKE) down
 	@printf 'Services stopped.\n'
 
 .PHONY: clean
 clean: stop
 	./gradlew clean
 	rm -rf frontend/dist
-	docker compose down
+	@$(MAKE) down
