@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Loader2, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -7,6 +7,10 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { useSetupStatus, useSetupProgress } from '@/hooks/setup/useSetupProgress';
 import { useAuth } from '@/hooks/useAuth';
 import AdminBootstrapGate from './AdminBootstrapGate';
+import ClubProfileStep from './steps/ClubProfileStep';
+import TrackStep from './steps/TrackStep';
+import FormatStep from './steps/FormatStep';
+import StaffStep from './steps/StaffStep';
 
 // ── Step sidebar item ──────────────────────────────────────────────────────
 
@@ -16,14 +20,19 @@ function StepItem({
   number,
   label,
   state,
+  onClick,
 }: {
   number: number;
   label: string;
   state: StepState;
+  onClick?: () => void;
 }) {
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
       aria-current={state === 'current' ? 'step' : undefined}
+      disabled={!onClick}
       className={
         state === 'current'
           ? 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-semibold text-primary border-l-[3px] border-primary pl-[calc(0.75rem-3px)] w-full text-left'
@@ -44,7 +53,7 @@ function StepItem({
       />
       <span className="text-xs text-muted-foreground mr-1">{number}.</span>
       {label}
-    </div>
+    </button>
   );
 }
 
@@ -58,18 +67,26 @@ const STEPS: { key: 'club' | 'track' | 'format' | 'staff' | 'decoder'; label: st
   { key: 'decoder', label: 'Decoder Config' },
 ];
 
-function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
+function SidebarContent({
+  onNavClick,
+  currentStep,
+  clickable,
+  onStepClick,
+}: {
+  onNavClick?: () => void;
+  currentStep: number;
+  clickable: boolean;
+  onStepClick?: (step: number) => void;
+}) {
   const { data: progress } = useSetupProgress();
 
   function getStepState(key: string, index: number): StepState {
     if (!progress) return index === 0 ? 'current' : 'incomplete';
     const isComplete = progress[key as keyof typeof progress] as boolean;
     if (isComplete) return 'complete';
-    // Current = first incomplete step
-    const allComplete = STEPS.slice(0, index).every(
-      (s) => (progress[s.key as keyof typeof progress] as boolean),
-    );
-    return allComplete ? 'current' : 'incomplete';
+    // Current = matches the active step tracked by SetupLayout
+    if (index + 1 === currentStep) return 'current';
+    return 'incomplete';
   }
 
   return (
@@ -83,7 +100,13 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       {/* Step navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1" onClick={onNavClick}>
         {STEPS.map(({ key, label }, index) => (
-          <StepItem key={key} number={index + 1} label={label} state={getStepState(key, index)} />
+          <StepItem
+            key={key}
+            number={index + 1}
+            label={label}
+            state={getStepState(key, index)}
+            onClick={clickable && onStepClick ? () => onStepClick(index + 1) : undefined}
+          />
         ))}
       </nav>
 
@@ -103,8 +126,21 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 
 export default function SetupLayout() {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [currentStep, setCurrentStep] = useState<number>(1);
   const { data: statusData, isLoading: statusLoading } = useSetupStatus();
+  const { data: progress } = useSetupProgress();
   const { user } = useAuth();
+
+  // Derive current step from progress on first load (first incomplete step)
+  useEffect(() => {
+    if (!progress) return;
+    if (!progress.club) setCurrentStep(1);
+    else if (!progress.track) setCurrentStep(2);
+    else if (!progress.format) setCurrentStep(3);
+    else if (!progress.staff) setCurrentStep(4);
+    else if (!progress.decoder) setCurrentStep(5);
+    else setCurrentStep(6); // all complete -> summary (Plan 06)
+  }, [progress]);
 
   if (statusLoading) {
     return (
@@ -125,11 +161,46 @@ export default function SetupLayout() {
     return <Navigate to="/login" replace />;
   }
 
+  const handleNext = () => setCurrentStep((s) => Math.min(s + 1, 6));
+  const handleBack = () => setCurrentStep((s) => Math.max(s - 1, 1));
+
+  // In re-entry mode (setup already complete), sidebar steps are clickable
+  const clickable = statusData?.setupComplete === true;
+
+  let stepContent: React.ReactNode;
+  switch (currentStep) {
+    case 1:
+      stepContent = <ClubProfileStep onNext={handleNext} />;
+      break;
+    case 2:
+      stepContent = <TrackStep onNext={handleNext} onBack={handleBack} />;
+      break;
+    case 3:
+      stepContent = <FormatStep onNext={handleNext} onBack={handleBack} />;
+      break;
+    case 4:
+      stepContent = <StaffStep onNext={handleNext} onBack={handleBack} />;
+      break;
+    case 5:
+      stepContent = (
+        <div className="text-sm text-muted-foreground">Decoder Config (Plan 06)</div>
+      );
+      break;
+    default:
+      stepContent = (
+        <div className="text-sm text-muted-foreground">Setup Complete (Plan 06)</div>
+      );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop: fixed left sidebar */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-60 border-r bg-card flex-col z-10">
-        <SidebarContent />
+        <SidebarContent
+          currentStep={currentStep}
+          clickable={clickable}
+          onStepClick={setCurrentStep}
+        />
       </aside>
 
       {/* Mobile: top bar with hamburger */}
@@ -151,16 +222,22 @@ export default function SetupLayout() {
           <SheetHeader className="sr-only">
             <SheetTitle>Setup Steps</SheetTitle>
           </SheetHeader>
-          <SidebarContent onNavClick={() => setSheetOpen(false)} />
+          <SidebarContent
+            onNavClick={() => setSheetOpen(false)}
+            currentStep={currentStep}
+            clickable={clickable}
+            onStepClick={(step) => {
+              setCurrentStep(step);
+              setSheetOpen(false);
+            }}
+          />
         </SheetContent>
       </Sheet>
 
       {/* Main content */}
       <main className="md:pl-60">
         <div className="px-6 pt-6 pb-10 min-h-screen">
-          <Outlet />
-          {/* Plans 05–06 will render the active step here. */}
-          <div className="text-muted-foreground text-sm">Plans 05–06 will render the active step here.</div>
+          {stepContent}
         </div>
       </main>
     </div>
