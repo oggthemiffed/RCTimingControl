@@ -19,6 +19,8 @@ export interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
+  /** Used by AdminBootstrapGate to store JWT after bootstrap without navigating */
+  setAuthFromToken: (token: string, authUser: AuthUser) => void;
 }
 
 interface AuthResponse {
@@ -79,6 +81,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     navigate('/login');
   };
 
+  const setAuthFromToken = (token: string, authUser: AuthUser) => {
+    setAccessToken(token);
+    setAccessTokenState(token);
+    setUser(authUser);
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -89,7 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, accessToken: accessTokenState, login, logout, isLoading }}
+      value={{ user, accessToken: accessTokenState, login, logout, isLoading, setAuthFromToken }}
     >
       {children}
     </AuthContext.Provider>

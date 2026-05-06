@@ -13,6 +13,7 @@ import {
   Radio,
   Volume2,
   Users,
+  Wand2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const operationsGroup = [
   { to: '/admin/race-control', label: 'Race Control', Icon: Flag },
   { to: '/admin/forwarder', label: 'Forwarder Token', Icon: Radio },
   { to: '/admin/racers', label: 'Racers', Icon: Users },
+  { to: '/setup', label: 'Setup Wizard', Icon: Wand2 },
 ] as const;
 
 const configGroup = [

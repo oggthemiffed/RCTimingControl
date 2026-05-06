@@ -2,6 +2,8 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import SetupGuard from '@/pages/setup/SetupGuard';
+import SetupLayout from '@/pages/setup/SetupLayout';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
@@ -43,7 +45,9 @@ import PublicChampionshipPage from '@/pages/championships/PublicChampionshipPage
 function RootLayout() {
   return (
     <AuthProvider>
-      <Outlet />
+      <SetupGuard>
+        <Outlet />
+      </SetupGuard>
       <Toaster />
     </AuthProvider>
   );
@@ -128,6 +132,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      { path: '/setup', element: <SetupLayout /> },
       { path: '/events', element: <EventSchedulePage /> },
       { path: '/results/:raceId', element: <PublicResultsPage /> },
       { path: '/championships/:id', element: <PublicChampionshipPage /> },

@@ -46,14 +46,14 @@ export default function PrintResultsPage() {
           <div>
             <h1 className="text-2xl font-bold">{data.raceLabel}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {data.clubBranding.clubName} &bull; Finished{' '}
+              {data.clubBranding?.clubName} &bull; Finished{' '}
               {new Date(data.finishedAt).toLocaleString()}
             </p>
           </div>
-          {data.clubBranding.logoUrl && (
+          {data.clubBranding?.logoUrl && (
             <img
               src={data.clubBranding.logoUrl}
-              alt={data.clubBranding.clubName}
+              alt={data.clubBranding?.clubName}
               className="h-16 object-contain"
             />
           )}
