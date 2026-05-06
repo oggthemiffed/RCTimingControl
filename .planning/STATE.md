@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 08 plan 02 complete
-last_updated: "2026-05-05T00:00:00.000Z"
-last_activity: 2026-05-05 -- Phase 08 plan 02 complete (08-01 and 08-02 done)
+stopped_at: Phase 08 plan 04 checkpoint — awaiting human-verify (Task 3)
+last_updated: "2026-05-06T10:50:00.000Z"
+last_activity: 2026-05-06 -- 08-04 Tasks 1+2 complete; SetupGuard, AdminBootstrapGate, SetupLayout, App.tsx routing, AdminPanelLayout nav entry all implemented and tests passing
 progress:
   total_phases: 11
   completed_phases: 6
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 ## Current Position
 
 Phase: 08 (first-run-setup-wizard) — IN PROGRESS
-Status: 08-01 complete (Wave-0 scaffolding); 08-02 complete (setup backend); 08-03 next
-Last activity: 2026-05-05 -- 08-02 verified: SetupController/Service, V25 migration, bootstrap endpoint, all tests pass
+Status: 08-01 complete; 08-02 complete; 08-03 complete; 08-04 Tasks 1+2 complete (checkpoint awaiting human-verify for Task 3)
+Last activity: 2026-05-06 -- 08-04: setupApi, useSetupProgress hooks, SetupGuard (4 tests pass), AdminBootstrapGate, SetupLayout wizard shell, App.tsx /setup route + SetupGuard, AdminPanelLayout Setup Wizard nav entry (SC-5)
 
 Progress: [███████░░░] 70%
 
@@ -92,6 +92,9 @@ Recent decisions affecting current work:
 - [Phase 06-04]: countdownIntervals stored within existing audio_settings JSONB column; no V24 migration column needed
 - [Phase 06-05]: LapPassingEvent is a Java record (raceId, transponderNumber, rtcTimeMicros) — lap time derived from rtcMicros delta / 1000; no getLapTimeMs() method
 - [Phase 06-05]: PracticeTimingService omits @Async to keep @Transactional effective for PracticeLap persistence
+- [Phase 08-04]: SetupLayout handles pre-gate vs wizard mode internally (single /setup route) rather than splitting into two routes — keeps URL stable
+- [Phase 08-04]: AuthProvider extended with setAuthFromToken(token, authUser) for bootstrap auto-login without a second network call
+- [Phase 08-04]: SetupGuard wraps AuthProvider children (not outside) so useAuth() resolves in AdminBootstrapGate after bootstrap
 
 ### Pending Todos
 
@@ -111,6 +114,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-03T21:04:34.132Z
-Stopped at: Completed 06-05-PLAN.md — practice session timing backend
+Last session: 2026-05-06T10:35:59Z
+Stopped at: 08-04 checkpoint:human-verify (Task 3 — bootstrap flow visual verification)
 Resume file: None
