@@ -157,8 +157,8 @@ export default function SetupLayout() {
     if (statusData?.bootstrapped === false) {
       return <AdminBootstrapGate />;
     }
-    // Admin exists but this browser has no session — go to login
-    return <Navigate to="/login" replace />;
+    // Admin exists but this browser has no session — go to login, preserving return path
+    return <Navigate to="/login?from=/setup" replace />;
   }
 
   // Setup complete but user is not ADMIN → redirect to login

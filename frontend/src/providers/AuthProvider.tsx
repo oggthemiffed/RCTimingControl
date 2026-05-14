@@ -16,7 +16,7 @@ export interface AuthUser {
 export interface AuthContextValue {
   user: AuthUser | null;
   accessToken: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   /** Used by AdminBootstrapGate to store JWT after bootstrap without navigating */
@@ -62,16 +62,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string, redirectTo?: string): Promise<void> => {
     const { data } = await api.post<AuthResponse>('/api/v1/auth/login', { email, password });
     const authUser = authResponseToUser(data);
     setAccessToken(data.accessToken);
     setAccessTokenState(data.accessToken);
     setUser(authUser);
 
-    const staffRoles: AuthUser['roles'][number][] = ['ADMIN', 'RACE_DIRECTOR', 'REFEREE'];
-    const isStaff = authUser.roles.some((r) => staffRoles.includes(r));
-    navigate(isStaff ? '/admin' : '/racer');
+    if (redirectTo) {
+      navigate(redirectTo);
+    } else {
+      const staffRoles: AuthUser['roles'][number][] = ['ADMIN', 'RACE_DIRECTOR', 'REFEREE'];
+      const isStaff = authUser.roles.some((r) => staffRoles.includes(r));
+      navigate(isStaff ? '/admin' : '/racer');
+    }
   };
 
   const logout = () => {

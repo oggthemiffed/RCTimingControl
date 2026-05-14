@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,6 +28,8 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('from') ?? undefined;
   const [isPending, setIsPending] = useState(false);
 
   const form = useForm<LoginForm>({
@@ -39,7 +41,7 @@ export default function LoginPage() {
   async function onSubmit(values: LoginForm) {
     setIsPending(true);
     try {
-      await login(values.email, values.password);
+      await login(values.email, values.password, redirectTo);
     } catch (err) {
       if (isAxiosError(err) && err.response?.status === 401) {
         form.setError('password', { message: 'Invalid email or password' });

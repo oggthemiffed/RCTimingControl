@@ -37,7 +37,8 @@ api.interceptors.response.use(
         failedQueue.forEach((p) => p.reject(error));
         failedQueue = [];
         clearAccessToken();
-        window.location.href = '/login';
+        const from = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/login?from=${from}`;
       } finally {
         isRefreshing = false;
       }
