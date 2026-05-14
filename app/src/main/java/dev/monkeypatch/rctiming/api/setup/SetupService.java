@@ -50,7 +50,9 @@ public class SetupService {
 
     @Transactional(readOnly = true)
     public SetupStatusDto getStatus() {
-        return new SetupStatusDto(clubProfileRepository.count() > 0);
+        boolean bootstrapped = userRepository.count() > 0;
+        boolean setupComplete = clubProfileRepository.count() > 0;
+        return new SetupStatusDto(bootstrapped, setupComplete);
     }
 
     @Transactional(readOnly = true)

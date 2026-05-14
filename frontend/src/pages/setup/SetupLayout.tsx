@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Loader2, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -112,12 +112,14 @@ function SidebarContent({
 
       <Separator />
 
-      {/* Skip wizard link */}
-      <div className="px-4 py-4">
-        <Button variant="ghost" size="sm" className="text-sm text-muted-foreground w-full" asChild>
-          <a href="/admin">Skip wizard</a>
-        </Button>
-      </div>
+      {/* Skip wizard link — only shown in re-entry mode (setup already complete) */}
+      {clickable && (
+        <div className="px-4 py-4">
+          <Button variant="ghost" size="sm" className="text-sm text-muted-foreground w-full" asChild>
+            <Link to="/admin">Skip wizard</Link>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -152,14 +154,17 @@ export default function SetupLayout() {
     );
   }
 
-  // Pre-gate: setup not complete and user not authenticated → show bootstrap form
-  if (statusData?.setupComplete === false && !user) {
-    return <AdminBootstrapGate />;
+  if (!user) {
+    // No admin account yet — show the bootstrap form
+    if (statusData?.bootstrapped === false) {
+      return <AdminBootstrapGate />;
+    }
+    // Admin exists but this browser has no session — go to login
+    return <Navigate to="/login" replace />;
   }
 
-  // Pitfall 5: setup complete but user is not ADMIN → redirect to login
-  // This prevents non-admin users from accessing the wizard after first-run
-  if (statusData?.setupComplete === true && (!user || !user.roles.includes('ADMIN'))) {
+  // Setup complete but user is not ADMIN → redirect to login
+  if (statusData?.setupComplete === true && !user.roles.includes('ADMIN')) {
     return <Navigate to="/login" replace />;
   }
 

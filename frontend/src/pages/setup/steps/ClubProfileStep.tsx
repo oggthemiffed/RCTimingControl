@@ -6,6 +6,13 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Form,
   FormField,
   FormItem,
@@ -14,6 +21,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { adminApi } from '@/lib/adminApi';
+
+const TIMEZONES = Intl.supportedValuesOf('timeZone');
+const BROWSER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const schema = z.object({
   name: z.string().min(1, 'Club name is required').max(200),
@@ -37,7 +47,7 @@ export default function ClubProfileStep({ onNext }: Props) {
     mode: 'onBlur',
     defaultValues: {
       name: '',
-      timezone: '',
+      timezone: BROWSER_TZ,
       email: '',
       phone: '',
       websiteUrl: '',
@@ -95,9 +105,20 @@ export default function ClubProfileStep({ onNext }: Props) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Timezone</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Europe/London" {...field} />
-                </FormControl>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select timezone" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="max-h-60">
+                    {TIMEZONES.map((tz) => (
+                      <SelectItem key={tz} value={tz}>
+                        {tz}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -153,13 +174,6 @@ export default function ClubProfileStep({ onNext }: Props) {
           </div>
         </form>
       </Form>
-
-      <a
-        href="/admin/club"
-        className="text-sm text-muted-foreground underline mt-4 inline-block"
-      >
-        Manage more in Admin →
-      </a>
     </div>
   );
 }

@@ -51,14 +51,19 @@ class SetupControllerIT extends AbstractIntegrationTest {
         ResponseEntity<SetupStatusDto> response = restTemplate.getForEntity("/api/v1/setup/status", SetupStatusDto.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().bootstrapped()).isFalse();
         assertThat(response.getBody().setupComplete()).isFalse();
     }
 
     @Test
     void getStatus_returnsSetupComplete_true_afterClubSaved() {
+        restTemplate.postForEntity("/api/v1/setup/bootstrap",
+                new BootstrapRequest("Admin", "User", "admin@test.com", "password123"),
+                AuthResponse.class);
         clubProfileRepository.save(minimalClub());
         ResponseEntity<SetupStatusDto> response = restTemplate.getForEntity("/api/v1/setup/status", SetupStatusDto.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().bootstrapped()).isTrue();
         assertThat(response.getBody().setupComplete()).isTrue();
     }
 

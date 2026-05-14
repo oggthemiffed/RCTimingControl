@@ -38,41 +38,43 @@ make dev-start
 
 ### 1.1 Unauthenticated redirect
 - [x] Open `http://localhost:5173/`
-- [ ] **Expect:** URL changes to `http://localhost:5173/setup` (SetupGuard redirected you)
-- [ ] **Expect:** A centred card appears — NOT the wizard sidebar
-
-** i have started the application and all i see is a log in screen, i have ran a clean-db and still the same
+- [x] **Expect:** URL changes to `http://localhost:5173/setup` (SetupGuard redirected you)
+- [x] **Expect:** A centred card appears — NOT the wizard sidebar
 
 ### 1.2 Bootstrap form content
-- [ ] The card has title **"Set Up RC Timing"**
-- [ ] Subtitle says something like "Create your admin account to get started"
-- [ ] Five fields are visible: **First name, Last name, Email, Password, Confirm password**
-- [ ] A single submit button (e.g. "Create Admin Account" or "Get Started")
+- [x] The card has title **"Set Up RC Timing"**
+- [x] Subtitle says something like "Create your admin account to get started"
+- [x] Five fields are visible: **First name, Last name, Email, Password, Confirm password**
+- [x] A single submit button (e.g. "Create Admin Account" or "Get Started")
 
 ### 1.3 Password mismatch validation
-- [ ] Enter mismatched passwords and submit
-- [ ] **Expect:** Inline error message — form does not submit
+- [x] Enter mismatched passwords and submit
+- [x] **Expect:** Inline error message — form does not submit
 
 ### 1.4 Successful bootstrap
-- [ ] Submit with valid values:
+- [x] Submit with valid values:
   - First name: `Test`, Last name: `Admin`
   - Email: `admin@example.com`, Password: `Password1!`, Confirm: `Password1!`
-- [ ] **Expect:** No redirect to a login page — you land directly in the wizard
-- [ ] **Expect:** The centred card disappears; the **wizard sidebar** appears on the left
+- [x] **Expect:** No redirect to a login page — you land directly in the wizard
+- [x] **Expect:** The centred card disappears; the **wizard sidebar** appears on the left
 
 ### 1.5 Wizard sidebar structure
-- [ ] Sidebar header shows brand (e.g. "RC Timing — Setup")
-- [ ] Five numbered step items are visible:
+- [x] Sidebar header shows brand (e.g. "RC Timing — Setup")
+- [x] Five numbered step items are visible:
   1. Club Profile
   2. Track
   3. Race Format
   4. Staff Account
   5. Decoder Config
-- [ ] A "Skip wizard" or similar exit link is visible at the bottom
+- [x] A "Skip wizard" or similar exit link is visible at the bottom
+
+** whats the 'manage more in admin' link all about?
 
 ### 1.6 Replay protection
 - [ ] While still logged in, open a new tab and navigate to `http://localhost:5173/setup`
 - [ ] **Expect:** Wizard sidebar loads — NOT the bootstrap gate (already bootstrapped)
+
+** white screen -> installHook.js:1 Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. **
 
 ---
 
@@ -88,9 +90,11 @@ make dev-start
 - [ ] **No "Skip for now" button** — this step is mandatory
 - [ ] A **"Save and Continue"** button is present
 
+** We shoul dhave a selector for the timezone, as no one really rememebrs is, default to the current user tz**
+
 ### 2.2 Validation — empty name
-- [ ] Submit with club name blank
-- [ ] **Expect:** Inline error on the Club name field — form does not submit
+- [x] Submit with club name blank
+- [x] **Expect:** Inline error on the Club name field — form does not submit
 
 ### 2.3 Successful save
 - [ ] Enter **Club name:** `Test RC Club`, fill optional fields as desired
@@ -98,6 +102,8 @@ make dev-start
 - [ ] **Expect:** Toast/success notification (e.g. "Club profile saved")
 - [ ] **Expect:** Sidebar Step 1 shows a green checkmark (or similar complete indicator)
 - [ ] **Expect:** Main panel automatically advances to Step 2 (Track)
+
+** adminApi.ts:402  PUT http://localhost:5173/api/v1/admin/club/profile 400 (Bad Request) -> unable to save **
 
 ---
 

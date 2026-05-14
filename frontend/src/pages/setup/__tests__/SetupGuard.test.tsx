@@ -16,7 +16,7 @@ function makeClient() {
 
 describe('SetupGuard (Wave 0 stub — enabled in Plan 04)', () => {
   it('redirects to /setup when setupComplete is false and pathname is not /setup', async () => {
-    vi.mocked(getSetupStatus).mockResolvedValue({ setupComplete: false });
+    vi.mocked(getSetupStatus).mockResolvedValue({ bootstrapped: false, setupComplete: false });
     const qc = makeClient();
     render(
       <QueryClientProvider client={qc}>
@@ -36,7 +36,7 @@ describe('SetupGuard (Wave 0 stub — enabled in Plan 04)', () => {
   });
 
   it('does NOT redirect when pathname starts with /setup (Pitfall 1: infinite redirect)', async () => {
-    vi.mocked(getSetupStatus).mockResolvedValue({ setupComplete: false });
+    vi.mocked(getSetupStatus).mockResolvedValue({ bootstrapped: false, setupComplete: false });
     const qc = makeClient();
     render(
       <QueryClientProvider client={qc}>
@@ -51,7 +51,7 @@ describe('SetupGuard (Wave 0 stub — enabled in Plan 04)', () => {
   });
 
   it('renders children when setupComplete is true', async () => {
-    vi.mocked(getSetupStatus).mockResolvedValue({ setupComplete: true });
+    vi.mocked(getSetupStatus).mockResolvedValue({ bootstrapped: true, setupComplete: true });
     const qc = makeClient();
     render(
       <QueryClientProvider client={qc}>
@@ -65,7 +65,22 @@ describe('SetupGuard (Wave 0 stub — enabled in Plan 04)', () => {
     expect(await screen.findByText('protected')).toBeTruthy();
   });
 
-  it('shows loading spinner while status query is loading', async () => {
+  it('does NOT redirect when on /login (prevents /setup ↔ /login loop)', async () => {
+    vi.mocked(getSetupStatus).mockResolvedValue({ bootstrapped: true, setupComplete: false });
+    const qc = makeClient();
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/login']}>
+          <SetupGuard>
+            <div>login page</div>
+          </SetupGuard>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByText('login page')).toBeTruthy();
+  });
+
+  it('shows loading spinner while status query is loading', () => {
     vi.mocked(getSetupStatus).mockImplementation(() => new Promise(() => {}));
     const qc = makeClient();
     render(

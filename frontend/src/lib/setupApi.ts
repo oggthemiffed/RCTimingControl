@@ -2,7 +2,7 @@ import api from './api';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-export type SetupStatusDto = { setupComplete: boolean };
+export type SetupStatusDto = { bootstrapped: boolean; setupComplete: boolean };
 
 export type SetupProgressDto = {
   club: boolean;
