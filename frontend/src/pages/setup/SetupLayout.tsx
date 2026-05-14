@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { Loader2, Menu } from 'lucide-react';
+import { RiCheckboxCircleFill, RiRecordCircleLine, RiCheckboxBlankCircleLine } from '@remixicon/react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -41,16 +42,13 @@ function StepItem({
             : 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground w-full text-left'
       }
     >
-      <i
-        className={
-          state === 'complete'
-            ? 'ri-checkbox-circle-fill text-[var(--flag-green)]'
-            : state === 'current'
-              ? 'ri-record-circle-line text-primary'
-              : 'ri-circle-line'
-        }
-        aria-hidden="true"
-      />
+      {state === 'complete' ? (
+        <RiCheckboxCircleFill className="h-4 w-4 shrink-0 text-[var(--flag-green)]" aria-hidden="true" />
+      ) : state === 'current' ? (
+        <RiRecordCircleLine className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+      ) : (
+        <RiCheckboxBlankCircleLine className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+      )}
       <span className="text-xs text-muted-foreground mr-1">{number}.</span>
       {label}
     </button>

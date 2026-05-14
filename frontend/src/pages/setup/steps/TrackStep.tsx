@@ -136,12 +136,6 @@ export default function TrackStep({ onNext, onBack }: Props) {
         </form>
       </Form>
 
-      <a
-        href="/admin/tracks"
-        className="text-sm text-muted-foreground underline mt-4 inline-block"
-      >
-        Manage more in Admin →
-      </a>
     </div>
   );
 }

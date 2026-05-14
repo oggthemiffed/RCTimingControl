@@ -1,8 +1,9 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import { User, Car, Radio, FileText, LogOut } from 'lucide-react';
+import { RiTrophyLine } from '@remixicon/react';
 import { useAuth } from '@/hooks/useAuth';
 
-const TrophyIcon = () => <i className="ri-trophy-line h-5 w-5" aria-hidden="true" />;
+const TrophyIcon = () => <RiTrophyLine className="h-5 w-5" aria-hidden="true" />;
 
 const navItems = [
   { to: '/racer/profile', label: 'Profile', Icon: User },

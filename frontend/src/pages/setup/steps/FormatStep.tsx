@@ -187,12 +187,6 @@ export default function FormatStep({ onNext, onBack }: Props) {
         </form>
       </Form>
 
-      <a
-        href="/admin/formats"
-        className="text-sm text-muted-foreground underline mt-4 inline-block"
-      >
-        Manage more in Admin →
-      </a>
     </div>
   );
 }

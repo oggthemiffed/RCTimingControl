@@ -92,7 +92,7 @@ export default function ClubProfileStep({ onNext }: Props) {
               <FormItem>
                 <FormLabel>Club Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. Glasgow RC Club" {...field} />
+                  <Input placeholder="e.g. Riverside RC Club" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

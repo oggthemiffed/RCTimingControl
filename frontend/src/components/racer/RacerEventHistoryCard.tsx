@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { RiArrowDownSLine, RiExternalLinkLine } from '@remixicon/react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { RacerResultHistoryDto } from '@/lib/racerApi';
 
@@ -22,7 +23,7 @@ export function RacerEventHistoryCard({ event }: Props) {
           <span className="font-semibold text-base">{event.eventName}</span>
           <span className="ml-3 text-sm text-muted-foreground">{displayDate}</span>
         </div>
-        <i className={`ri-arrow-down-s-line transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
+        <RiArrowDownSLine className={`h-5 w-5 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="px-4 pb-4 pt-0">
@@ -45,7 +46,7 @@ export function RacerEventHistoryCard({ event }: Props) {
                         to={`/results/${race.raceId}`}
                         className="text-primary hover:underline inline-flex items-center gap-1 text-xs"
                       >
-                        <i className="ri-external-link-line" aria-hidden="true" />
+                        <RiExternalLinkLine className="h-3 w-3" aria-hidden="true" />
                         View
                       </Link>
                     </td>
