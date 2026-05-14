@@ -12,6 +12,8 @@ import ClubProfileStep from './steps/ClubProfileStep';
 import TrackStep from './steps/TrackStep';
 import FormatStep from './steps/FormatStep';
 import StaffStep from './steps/StaffStep';
+import DecoderConfigStep from './steps/DecoderConfigStep';
+import SetupCompletePage from './SetupCompletePage';
 
 // ── Step sidebar item ──────────────────────────────────────────────────────
 
@@ -187,14 +189,10 @@ export default function SetupLayout() {
       stepContent = <StaffStep onNext={handleNext} onBack={handleBack} />;
       break;
     case 5:
-      stepContent = (
-        <div className="text-sm text-muted-foreground">Decoder Config (Plan 06)</div>
-      );
+      stepContent = <DecoderConfigStep onNext={handleNext} onBack={handleBack} />;
       break;
     default:
-      stepContent = (
-        <div className="text-sm text-muted-foreground">Setup Complete (Plan 06)</div>
-      );
+      stepContent = <SetupCompletePage />;
   }
 
   return (

@@ -303,3 +303,17 @@ export async function getEventSchedule(): Promise<EventScheduleDto[]> {
   const { data } = await api.get<EventScheduleDto[]>('/api/v1/events');
   return data;
 }
+
+// ── Forwarder status ───────────────────────────────────────────────────────
+
+export type ConnectionState = 'CONNECTED' | 'RECONNECTING' | 'DISCONNECTED';
+
+export type ForwarderStatusDto = {
+  decoderState: ConnectionState;
+  forwarderState: ConnectionState;
+};
+
+export async function fetchForwarderStatus(): Promise<ForwarderStatusDto> {
+  const { data } = await api.get<ForwarderStatusDto>('/api/v1/race-control/forwarder/status');
+  return data;
+}
