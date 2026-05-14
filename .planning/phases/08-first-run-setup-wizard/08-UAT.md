@@ -222,12 +222,48 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 ** Impossibru as step 5 is just a placeholder screen on the set up wizard **
 ---
 
-## Section 8 — Decoder Config step (Plan 06 — implement after this UAT)
+## Section 8 — Decoder Config step (Plan 06)
 
-> **Note:** Step 5 (Decoder Config) and the completion screen are implemented in Plan 06, which runs after this UAT is approved. The placeholder ("Decoder Config (Plan 06)") in the sidebar is expected.
+> **What:** Step 5 — decoder host/protocol/port form, embedded token UX, forwarder.env download, 30s Test Connection polling.
 
-- [x] Confirm the sidebar shows Step 5 placeholder without crashing
-- [x] Note any visual issues to report before Plan 06 executes
+### 8.1 Protocol → port auto-fill
+- [x] Change protocol to **RC4** → port auto-fills **5100**
+- [x] Switch to **P3** → port changes to **5403**
+- [x] Manually edit port to **5099**, switch protocol → port stays **5099** (user edit preserved)
+
+### 8.2 Token generation
+- [x] Click **Generate Token** → one-time reveal Alert appears with mono token and Copy button
+
+### 8.3 forwarder.env download
+- [x] Click **Download forwarder.env** → file downloads
+- [x] Open the file → `APP_FORWARDER_TOKEN=` contains the actual generated token (not a placeholder)
+
+### 8.4 Test Connection polling
+- [x] Click **Test Connection** (no forwarder running) → polling begins
+- [x] After ~30s: **"Forwarder not yet connected"** Alert appears
+
+### 8.5 Save and advance
+- [x] Fill in **decoderHost** (e.g. `192.168.1.50`), click **Save and Finish**
+- [x] Advances to Setup Complete screen
+
+### 8.6 Staff Step pre-completion fix
+- [x] On fresh bootstrap, Step 4 (Staff Account) shows as **incomplete** — bootstrap admin alone does not satisfy the wizard requirement; creating a second staff account via Step 4 completes it
+
+---
+
+## Section 9 — Completion screen (Plan 06)
+
+### 9.1 Completion screen content
+- [x] Heading: **"Setup Complete"**
+- [x] Subtitle: **"Your club is ready to run a meeting."**
+- [x] 5 cards — one each for Club Profile, Track, Race Format, Staff Account, Decoder Config
+- [x] Each card shows **Configured** (green badge) or **Skipped** badge with an **Edit** link
+- [x] **"Go to Admin Panel"** button at the bottom
+
+### 9.2 Admin panel re-entry
+- [x] Click **Go to Admin Panel** → redirects to `/admin`
+- [x] SetupGuard does NOT redirect back (setupComplete is now true)
+- [x] Setup Wizard nav entry in Admin sidebar → re-opens wizard with all steps showing green checks
 
 ---
 
@@ -239,11 +275,12 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | 2 — Club Profile (Step 1) | Pass | Timezone selector added; generic placeholder |
 | 3 — Track (Step 2) | Pass | "Manage more in Admin" link removed |
 | 4 — Race Format (Step 3) | Pass | |
-| 5 — Staff Account (Step 4) | Pass | |
+| 5 — Staff Account (Step 4) | Pass | Fixed: bootstrap admin no longer pre-completes step |
 | 6 — Re-entry & Navigation | Pass | 6.1 fixed via login ?from= redirect |
 | 7 — Backend Security | Pass | 7.2 verified via curl |
-| 8 — Step 5 Placeholder | Pass | Placeholder renders cleanly; full implementation in Plan 06 |
+| 8 — Decoder Config (Step 5) | Pass | Protocol auto-fill, token reveal, .env with real token, 30s timeout |
+| 9 — Completion Screen | Pass | 5 cards, edit links, Go to Admin Panel |
 
 **Overall:** Pass  
-**Approved to continue to Plan 06:** Yes  
-**Issues to fix first:** None — all issues resolved during UAT cycle
+**Phase 08 UAT approved:** 2026-05-14  
+**Issues fixed during UAT:** Staff pre-completion; forwarder.env token placeholder; RacerResultHistoryQueryTest isolation

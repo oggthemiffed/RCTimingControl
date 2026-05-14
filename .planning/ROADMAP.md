@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Live Timing & Forwarder** - AMB P3 forwarder, gRPC streaming, WebSocket live timing display (completed 2026-04-26)
 - [x] **Phase 6: Audio & Practice** - Voice announcements (Web Speech API + TTS), open practice sessions
 - [x] **Phase 7: Results & Championship** - Post-race result snapshots, championship standings, PDF export (completed 2026-05-03)
-- [ ] **Phase 8: First-Run Setup Wizard** - Guided onboarding for new club installations: club profile, tracks, formats, staff accounts, decoder config, forwarder test
+- [x] **Phase 8: First-Run Setup Wizard** - Guided onboarding for new club installations: club profile, tracks, formats, staff accounts, decoder config, forwarder test (completed 2026-05-14)
 - [ ] **Phase 9: User Manual & Documentation** - In-app help system and printed/PDF race meeting guide for officials, racers, and admins
 - [ ] **Phase 10: Docker Trial Environment** - docker-compose stack with demo seed data and fake decoder replay so clubs can evaluate the full system locally with a single command
 
@@ -176,11 +176,11 @@ Plans:
 **Plans**: 6 plans
 Plans:
 - [x] 08-01-PLAN.md — Wave 0: backend + frontend test stubs (@Disabled / describe.skip) for SC-1..SC-4 + T-08-01..T-08-03
-- [ ] 08-02-PLAN.md — Backend core: V25 migration + ClubProfile decoder fields + UserService.createAdmin (T-08-01 replay guard) + SetupController/Service + 3 DTOs + SecurityConfig permitAll
+- [x] 08-02-PLAN.md — Backend core: V25 migration + ClubProfile decoder fields + UserService.createAdmin (T-08-01 replay guard) + SetupController/Service + 3 DTOs + SecurityConfig permitAll
 - [x] 08-03-PLAN.md — Backend: PATCH /setup/decoder-config + POST /setup/staff + GET /setup/forwarder-config-download (T-08-03 placeholder)
 - [x] 08-04-PLAN.md — Frontend foundation: setupApi + hooks + SetupGuard (T-08-02 mitigation) + SetupLayout shell + AdminBootstrapGate + App.tsx wiring + AdminPanelLayout nav entry
-- [ ] 08-05-PLAN.md — Wizard steps 1–4: ClubProfileStep, TrackStep, FormatStep, StaffStep + step orchestration in SetupLayout
-- [ ] 08-06-PLAN.md — Step 5 DecoderConfigStep (form + token UX + env download + 30s test connection polling) + SetupCompletePage + final phase checkpoint
+- [x] 08-05-PLAN.md — Wizard steps 1–4: ClubProfileStep, TrackStep, FormatStep, StaffStep + step orchestration in SetupLayout
+- [x] 08-06-PLAN.md — Step 5 DecoderConfigStep (form + token UX + env download + 30s test connection polling) + SetupCompletePage + final phase checkpoint
 **UI hint**: yes
 
 ### Phase 9: User Manual & Documentation
