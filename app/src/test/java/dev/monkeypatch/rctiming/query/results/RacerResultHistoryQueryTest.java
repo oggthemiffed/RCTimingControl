@@ -28,7 +28,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -176,6 +175,11 @@ class RacerResultHistoryQueryTest extends AbstractIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        // TRUNCATE CASCADE clears all test data atomically — shared Testcontainers DB accumulates
+        // rows across tests and sequences don't roll back, so FK-ordered deletes risk partial clears.
+        dsl.execute("TRUNCATE TABLE result_snapshots, race_entries, races, entries, rounds, " +
+                "event_classes, events, users, racing_classes RESTART IDENTITY CASCADE");
+
         RacingClass rc = new RacingClass();
         rc.setName("Sport-" + UUID.randomUUID());
         Instant now = Instant.now();

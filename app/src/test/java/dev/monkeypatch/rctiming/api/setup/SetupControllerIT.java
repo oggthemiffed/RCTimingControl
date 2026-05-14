@@ -94,12 +94,13 @@ class SetupControllerIT extends AbstractIntegrationTest {
         assertThat(bootstrapResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         String jwt = bootstrapResp.getBody().accessToken();
 
-        // After bootstrap: staff=true (admin role user exists), others false
+        // After bootstrap: staff=false — bootstrap admin alone does not satisfy Step 4;
+        // requires a second non-RACER user created through the wizard
         SetupProgressDto progress1 = getProgress(jwt);
         assertThat(progress1.club()).isFalse();
         assertThat(progress1.track()).isFalse();
         assertThat(progress1.format()).isFalse();
-        assertThat(progress1.staff()).isTrue();
+        assertThat(progress1.staff()).isFalse();
         assertThat(progress1.decoder()).isFalse();
 
         // Add club profile: club=true, decoder still false (no host/port/protocol)
@@ -146,8 +147,8 @@ class SetupControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void downloadForwarderConfig_includesTokenPlaceholder_notPlaintext() {
-        // T-08-03: forwarder.env must contain placeholder, never a real token value
+    void downloadForwarderConfig_includesNoTokenMessage_whenNoTokenGenerated() {
+        // Before any token is generated, env file should indicate the operator needs to generate one
         BootstrapRequest req = new BootstrapRequest("Admin", "User", "admin@test.com", "password123");
         ResponseEntity<AuthResponse> bootstrapResp = restTemplate.postForEntity("/api/v1/setup/bootstrap", req, AuthResponse.class);
         assertThat(bootstrapResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -164,8 +165,8 @@ class SetupControllerIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         String body = new String(response.getBody(), java.nio.charset.StandardCharsets.UTF_8);
 
-        // T-08-03: The APP_FORWARDER_TOKEN line must contain the literal placeholder verbatim
-        assertThat(body).contains("APP_FORWARDER_TOKEN=<paste-your-token-here>");
+        // No token generated yet — env file carries the no-token sentinel
+        assertThat(body).contains("APP_FORWARDER_TOKEN=<no-token-generate-one-first>");
     }
 
     // --- helpers ---
