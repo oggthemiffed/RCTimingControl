@@ -36,8 +36,9 @@ created: 2026-05-14
 | `Button` | '?' icon trigger button (variant: ghost, size: icon-sm) |
 | `Separator` | Section breaks within help articles |
 | `Badge` | Optional: highlight key terms in help content |
+| `Tooltip` | Wrap the '?' button so sighted users hovering see a label |
 
-No new shadcn components need to be installed. Sheet is already present at `frontend/src/components/ui/sheet.tsx`.
+No new shadcn components need to be installed. Sheet, Button, and Tooltip are already present in `frontend/src/components/ui/`.
 
 ---
 
@@ -65,16 +66,18 @@ Exceptions:
 
 All values detected from `src/index.css` and existing page implementations. Help content and print guides use the sans font stack only.
 
+Two weights only: 400 (regular) and 600 (semibold).
+
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Body | 14px (`text-sm`) | 400 (regular) | 1.5 | Help article prose, drawer body text |
 | Label | 14px (`text-sm`) | 600 (semibold, `font-semibold`) | 1.4 | Help section headings within drawer, bullet lead words |
-| Heading | 20px (`text-xl`) | 700 (bold, `font-bold`) | 1.2 | Print guide h2 section headers |
-| Display | 24px (`text-2xl`) | 700 (bold, `font-bold`) | 1.2 | Print guide page title (matches `PrintResultsPage` `text-2xl font-bold`) |
+| Heading | 20px (`text-xl`) | 600 (semibold, `font-semibold`) | 1.2 | Print guide h2 section headers |
+| Display | 24px (`text-2xl`) | 600 (semibold, `font-semibold`) | 1.2 | Print guide page title |
 
 Typography rules for this phase:
 - Help drawer articles: `text-sm` body, `font-semibold` for subsection labels, `text-muted-foreground` for secondary text.
-- Print guides: `text-sm` for table/detail rows, `text-base` for narrative paragraphs, `text-xl font-bold` for section headers, `text-2xl font-bold` for document title.
+- Print guides: `text-sm` for table/detail rows, `text-base` for narrative paragraphs, `text-xl font-semibold` for section headers, `text-2xl font-semibold` for document title.
 - Mono font (`font-mono`) reserved for any lap time or transponder number references within documentation content only.
 - NO Barlow Condensed / display font in help content. That font is reserved for race cockpit timing displays.
 
@@ -114,6 +117,7 @@ Print context (`@media print`): Use `print:hidden` on the "Print" button and any
   - `AdminPanelLayout` mobile header: add to the right of the `<span>` brand label.
   - Racer portal layout (if it has a header): same `ml-auto` pattern.
 - **Appearance:** `<Button variant="ghost" size="icon-sm" aria-label="Open help">` containing a `<HelpCircle className="h-4 w-4" />` lucide icon.
+- **Tooltip:** The button is icon-only (no visible label). Wrap it in a shadcn `<Tooltip>` with `<TooltipContent>Open help</TooltipContent>` so sighted users hovering over the button see a label. If `Tooltip` is unavailable in a given layout context, fall back to a native `title="Open help"` attribute on the `<Button>` element.
 - **Behaviour:** Clicking opens the `Sheet` from `HelpProvider` context. If the current page has not called `useHelp()`, the button is hidden (or renders as `null`) — pages without help content do not show a broken drawer.
 - **State:** Button disabled (visually suppressed with `opacity-50 cursor-default`) when no help content is registered for the current page.
 
@@ -153,6 +157,7 @@ No external dependencies. No markdown parsers. Plain JSX with Tailwind/shadcn cl
 | Element | Copy |
 |---------|------|
 | '?' button aria-label | `"Open help"` |
+| '?' button tooltip content | `"Open help"` |
 | Drawer title (Cockpit) | `"Race Control Help"` |
 | Drawer title (Admin events) | `"Event Management Help"` |
 | Drawer title (Racer profile) | `"Profile Help"` |
@@ -207,7 +212,7 @@ No external dependencies. No markdown parsers. Plain JSX with Tailwind/shadcn cl
 
 | Registry | Blocks Used | Safety Gate |
 |----------|-------------|-------------|
-| shadcn official | Sheet (already installed), Button (already installed), Separator (already installed), Badge (already installed) | not required — already in codebase |
+| shadcn official | Sheet (already installed), Button (already installed), Separator (already installed), Badge (already installed), Tooltip (already installed) | not required — already in codebase |
 
 No third-party registries. No new shadcn components to install.
 
