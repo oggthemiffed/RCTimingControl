@@ -77,7 +77,7 @@ Two weights only: 400 (regular) and 600 (semibold).
 
 Typography rules for this phase:
 - Help drawer articles: `text-sm` body, `font-semibold` for subsection labels, `text-muted-foreground` for secondary text.
-- Print guides: `text-sm` for table/detail rows, `text-base` for narrative paragraphs, `text-xl font-semibold` for section headers, `text-2xl font-semibold` for document title.
+- Print guides: `text-sm` for table/detail rows, `text-sm` for narrative paragraphs, `text-xl font-semibold` for section headers, `text-2xl font-semibold` for document title.
 - Mono font (`font-mono`) reserved for any lap time or transponder number references within documentation content only.
 - NO Barlow Condensed / display font in help content. That font is reserved for race cockpit timing displays.
 
