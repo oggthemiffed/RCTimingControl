@@ -60,9 +60,10 @@ public class SetupService {
         boolean club = clubProfileRepository.count() > 0;
         boolean track = trackRepository.count() > 0;
         boolean format = raceFormatTemplateRepository.count() > 0;
-        // RESEARCH.md A3: user table is tiny in a club deployment; findAll() stream is acceptable
+        // Staff is complete only when a second non-RACER user exists beyond the bootstrap admin
         boolean staff = userRepository.findAll().stream()
-                .anyMatch(u -> u.getRoles().stream().anyMatch(r -> r != Role.RACER));
+                .filter(u -> u.getRoles().stream().anyMatch(r -> r != Role.RACER))
+                .count() >= 2;
         boolean decoder = clubProfileRepository.findAll().stream().findFirst()
                 .map(p -> p.getDecoderHost() != null && p.getDecoderPort() != null && p.getDecoderProtocol() != null)
                 .orElse(false);
@@ -71,7 +72,6 @@ public class SetupService {
 
     @Transactional(readOnly = true)
     public String generateForwarderEnv(HttpServletRequest request) {
-        // T-08-03: plaintext token is NOT stored — env file carries only a placeholder
         var profile = clubProfileRepository.findAll().stream().findFirst().orElse(null);
         var status = forwarderTokenService.getCurrentStatus();
         String baseUrl = ServletUriComponentsBuilder.fromRequestUri(request)
@@ -79,13 +79,12 @@ public class SetupService {
                 .build()
                 .toUriString();
         StringBuilder sb = new StringBuilder();
-        sb.append("# forwarder.env — generated ").append(Instant.now()).append(" by RC Timing setup wizard\n");
-        sb.append("# Token status: ").append(status.status() == null ? "NONE" : status.status())
-          .append(", generated ").append(status.generatedAt() == null ? "never" : status.generatedAt()).append("\n");
-        sb.append("# IMPORTANT: paste the plaintext token shown when you generated it.\n");
-        sb.append("# The server cannot recover plaintext tokens (T-08-03).\n\n");
+        String tokenLine = status.tokenValue() != null
+                ? status.tokenValue()
+                : "<no-token-generate-one-first>";
+        sb.append("# forwarder.env — generated ").append(Instant.now()).append(" by RC Timing setup wizard\n\n");
         sb.append("APP_SERVER_URL=").append(baseUrl).append("\n");
-        sb.append("APP_FORWARDER_TOKEN=<paste-your-token-here>\n");
+        sb.append("APP_FORWARDER_TOKEN=").append(tokenLine).append("\n");
         sb.append("APP_DECODER_HOST=").append(profile == null || profile.getDecoderHost() == null ? "" : profile.getDecoderHost()).append("\n");
         sb.append("APP_DECODER_PORT=").append(profile == null || profile.getDecoderPort() == null ? "" : profile.getDecoderPort()).append("\n");
         sb.append("APP_DECODER_PROTOCOL=").append(profile == null || profile.getDecoderProtocol() == null ? "" : profile.getDecoderProtocol()).append("\n");

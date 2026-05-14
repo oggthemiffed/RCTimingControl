@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.forwarder;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,17 +16,15 @@ import static dev.monkeypatch.rctiming.forwarder.ForwarderTokenStatus.REVOKED;
 public class ForwarderTokenService {
 
     private final ForwarderTokenRepository repo;
-    private final PasswordEncoder passwordEncoder;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    public ForwarderTokenService(ForwarderTokenRepository repo, PasswordEncoder passwordEncoder) {
+    public ForwarderTokenService(ForwarderTokenRepository repo) {
         this.repo = repo;
-        this.passwordEncoder = passwordEncoder;
     }
 
     public record GenerateResult(String plaintext, ForwarderToken persisted) {}
 
-    public record CurrentStatus(ForwarderTokenStatus status, Instant generatedAt, Instant revokedAt) {}
+    public record CurrentStatus(ForwarderTokenStatus status, Instant generatedAt, Instant revokedAt, String tokenValue) {}
 
     public GenerateResult generate() {
         repo.findAllByStatus(ACTIVE).forEach(t -> {
@@ -38,7 +35,8 @@ public class ForwarderTokenService {
         secureRandom.nextBytes(bytes);
         String plaintext = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
         ForwarderToken token = new ForwarderToken();
-        token.setTokenHash(passwordEncoder.encode(plaintext));
+        token.setTokenHash(plaintext); // kept for schema compatibility; value is the token itself
+        token.setTokenValue(plaintext);
         token.setStatus(ACTIVE);
         token.setGeneratedAt(Instant.now());
         repo.save(token);
@@ -56,7 +54,7 @@ public class ForwarderTokenService {
     public Optional<ForwarderToken> validate(String plaintext) {
         if (plaintext == null || plaintext.isBlank()) return Optional.empty();
         return repo.findAllByStatus(ACTIVE).stream()
-                .filter(t -> passwordEncoder.matches(plaintext, t.getTokenHash()))
+                .filter(t -> plaintext.equals(t.getTokenValue()))
                 .findFirst();
     }
 
@@ -64,10 +62,11 @@ public class ForwarderTokenService {
     public CurrentStatus getCurrentStatus() {
         var active = repo.findFirstByStatusOrderByGeneratedAtDesc(ACTIVE);
         if (active.isPresent()) {
-            return new CurrentStatus(ACTIVE, active.get().getGeneratedAt(), null);
+            var t = active.get();
+            return new CurrentStatus(ACTIVE, t.getGeneratedAt(), null, t.getTokenValue());
         }
         var any = repo.findFirstByOrderByGeneratedAtDesc();
-        return any.map(t -> new CurrentStatus(REVOKED, t.getGeneratedAt(), t.getRevokedAt()))
-                  .orElse(new CurrentStatus(null, null, null));
+        return any.map(t -> new CurrentStatus(REVOKED, t.getGeneratedAt(), t.getRevokedAt(), null))
+                  .orElse(new CurrentStatus(null, null, null, null));
     }
 }

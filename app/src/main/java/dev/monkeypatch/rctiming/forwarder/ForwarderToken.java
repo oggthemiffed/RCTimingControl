@@ -22,6 +22,9 @@ public class ForwarderToken {
     @Column(name = "token_hash", nullable = false)
     private String tokenHash;
 
+    @Column(name = "token_value")
+    private String tokenValue;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ForwarderTokenStatus status;
@@ -38,6 +41,9 @@ public class ForwarderToken {
 
     public String getTokenHash() { return tokenHash; }
     void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
+
+    public String getTokenValue() { return tokenValue; }
+    void setTokenValue(String tokenValue) { this.tokenValue = tokenValue; }
 
     public ForwarderTokenStatus getStatus() { return status; }
     void setStatus(ForwarderTokenStatus status) { this.status = status; }

@@ -16,10 +16,10 @@ class ForwarderTokenServiceTest extends AbstractIntegrationTest {
     ForwarderTokenRepository repo;
 
     @Test
-    void generateTokenReturnsPlaintextOnce() {
+    void generateTokenReturnsPlaintext() {
         var result = service.generate();
         assertThat(result.plaintext()).hasSizeBetween(40, 50);
-        assertThat(result.persisted().getTokenHash()).isNotEqualTo(result.plaintext());
+        assertThat(result.persisted().getTokenValue()).isEqualTo(result.plaintext());
     }
 
     @Test
@@ -53,10 +53,9 @@ class ForwarderTokenServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void tokenStoredAsBcryptHashNotPlaintext() {
+    void tokenValueStoredAsPlaintext() {
         var result = service.generate();
         var entity = repo.findById(result.persisted().getId()).orElseThrow();
-        assertThat(entity.getTokenHash()).matches("\\$2[ab]\\$.*");
-        assertThat(entity.getTokenHash()).isNotEqualTo(result.plaintext());
+        assertThat(entity.getTokenValue()).isEqualTo(result.plaintext());
     }
 }
