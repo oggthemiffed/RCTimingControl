@@ -68,13 +68,11 @@ make dev-start
   5. Decoder Config
 - [x] A "Skip wizard" or similar exit link is visible at the bottom
 
-** whats the 'manage more in admin' link all about?
 
 ### 1.6 Replay protection
-- [ ] While still logged in, open a new tab and navigate to `http://localhost:5173/setup`
-- [ ] **Expect:** Wizard sidebar loads — NOT the bootstrap gate (already bootstrapped)
+- [x] While still logged in, open a new tab and navigate to `http://localhost:5173/setup`
+- [x] **Expect:** Wizard sidebar loads — NOT the bootstrap gate (already bootstrapped)
 
-** white screen -> installHook.js:1 Maximum update depth exceeded. This can happen when a component calls setState inside useEffect, but useEffect either doesn't have a dependency array, or one of the dependencies changes on every render. **
 
 ---
 
@@ -83,12 +81,12 @@ make dev-start
 > **What:** The first mandatory wizard step. Saves club name and contact details via the existing club-profiles API. No Skip button.
 
 ### 2.1 Step 1 rendering
-- [ ] The main panel shows **"Club Profile"** heading
-- [ ] A short description/subtitle is present
-- [ ] Required field: **Club name**
-- [ ] Optional fields: timezone, email, phone, website URL (or similar contact fields)
-- [ ] **No "Skip for now" button** — this step is mandatory
-- [ ] A **"Save and Continue"** button is present
+- [x] The main panel shows **"Club Profile"** heading
+- [x] A short description/subtitle is present
+- [x] Required field: **Club name**
+- [x] Optional fields: timezone, email, phone, website URL (or similar contact fields)
+- [x] **No "Skip for now" button** — this step is mandatory
+- [x ] A **"Save and Continue"** button is present
 
 ** We shoul dhave a selector for the timezone, as no one really rememebrs is, default to the current user tz**
 
@@ -97,13 +95,13 @@ make dev-start
 - [x] **Expect:** Inline error on the Club name field — form does not submit
 
 ### 2.3 Successful save
-- [ ] Enter **Club name:** `Test RC Club`, fill optional fields as desired
-- [ ] Click Save and Continue
-- [ ] **Expect:** Toast/success notification (e.g. "Club profile saved")
-- [ ] **Expect:** Sidebar Step 1 shows a green checkmark (or similar complete indicator)
-- [ ] **Expect:** Main panel automatically advances to Step 2 (Track)
+- [x] Enter **Club name:** `Test RC Club`, fill optional fields as desired
+- [x] Click Save and Continue
+- [x] **Expect:** Toast/success notification (e.g. "Club profile saved")
+- [x] **Expect:** Sidebar Step 1 shows a green checkmark (or similar complete indicator)
+- [x] **Expect:** Main panel automatically advances to Step 2 (Track)
 
-** adminApi.ts:402  PUT http://localhost:5173/api/v1/admin/club/profile 400 (Bad Request) -> unable to save **
+** acan we change the placeholder example text to be more generic and not targetted at an actual club **
 
 ---
 
@@ -112,20 +110,22 @@ make dev-start
 > **What:** Saves a single track record. Has a Skip button.
 
 ### 3.1 Step 2 rendering
-- [ ] Heading: **"Track"** (or similar)
-- [ ] Fields: track name (required), length in metres, optional notes
-- [ ] Three buttons: **Back**, **Skip for now**, **Save and Continue**
+- [x] Heading: **"Track"** (or similar)
+- [x] Fields: track name (required), length in metres, optional notes
+- [x] Three buttons: **Back**, **Skip for now**, **Save and Continue**
+
+** we have a link to manage more in admin --- not sure if that is right **
 
 ### 3.2 Skip behaviour
-- [ ] Click **"Skip for now"**
-- [ ] **Expect:** Advances to Step 3 (Race Format)
-- [ ] **Expect:** Sidebar Step 2 remains incomplete (hollow circle, not green check)
+- [x] Click **"Skip for now"**
+- [x] **Expect:** Advances to Step 3 (Race Format)
+- [x] **Expect:** Sidebar Step 2 remains incomplete (hollow circle, not green check)
 
 ### 3.3 Come back and save (optional but recommended)
-- [ ] Click Step 2 in the sidebar (or click Back from Step 3)
-- [ ] Fill in track name: `Main Circuit`, length: `200`
-- [ ] Click Save and Continue
-- [ ] **Expect:** Toast, sidebar Step 2 becomes green, advances to Step 3
+- [x] Click Step 2 in the sidebar (or click Back from Step 3)
+- [x] Fill in track name: `Main Circuit`, length: `200`
+- [x] Click Save and Continue
+- [x] **Expect:** Toast, sidebar Step 2 becomes green, advances to Step 3
 
 ---
 
@@ -134,14 +134,14 @@ make dev-start
 > **What:** Saves a single race format (e.g. "5 Minute Club Race"). Has a Skip button.
 
 ### 4.1 Step 3 rendering
-- [ ] Heading: **"Race Format"** (or similar)
-- [ ] Fields include: format name, format type or duration
-- [ ] **Skip for now** and **Save and Continue** buttons present
+- [x] Heading: **"Race Format"** (or similar)
+- [x] Fields include: format name, format type or duration
+- [x] **Skip for now** and **Save and Continue** buttons present
 
 ### 4.2 Successful save
-- [ ] Enter format name: `5 Min Club Race`, set type/duration as appropriate
-- [ ] Click Save and Continue
-- [ ] **Expect:** Toast, sidebar Step 3 green, advances to Step 4
+- [x] Enter format name: `5 Min Club Race`, set type/duration as appropriate
+- [x] Click Save and Continue
+- [x] **Expect:** Toast, sidebar Step 3 green, advances to Step 4
 
 ---
 
@@ -150,20 +150,20 @@ make dev-start
 > **What:** Creates a non-RACER staff user via `POST /api/v1/setup/staff`. Has role checkboxes.
 
 ### 5.1 Step 4 rendering
-- [ ] Heading: **"Staff Account"** (or similar)
-- [ ] User fields: First name, Last name, Email, Password (at least these four)
-- [ ] Three role checkboxes: **Admin**, **Race Director**, **Referee**
-- [ ] **Skip for now** and **Save and Continue** buttons
+- [x] Heading: **"Staff Account"** (or similar)
+- [x] User fields: First name, Last name, Email, Password (at least these four)
+- [x] Three role checkboxes: **Admin**, **Race Director**, **Referee**
+- [x] **Skip for now** and **Save and Continue** buttons
 
 ### 5.2 Validation — no role selected
-- [ ] Leave all role checkboxes unchecked and submit
-- [ ] **Expect:** Inline error (role is required) — form does not submit
+- [x] Leave all role checkboxes unchecked and submit
+- [x] **Expect:** Inline error (role is required) — form does not submit
 
 ### 5.3 Successful staff creation
-- [ ] Fill in: First name `Race`, Last name `Director`, email `rd@example.com`, password `Password1!`
-- [ ] Check **Race Director**
-- [ ] Click Save and Continue
-- [ ] **Expect:** Toast, sidebar Step 4 green, advances to Step 5 (Decoder Config placeholder)
+- [x] Fill in: First name `Race`, Last name `Director`, email `rd@example.com`, password `Password1!`
+- [x] Check **Race Director**
+- [x] Click Save and Continue
+- [x] **Expect:** Toast, sidebar Step 4 green, advances to Step 5 (Decoder Config placeholder)
 
 ---
 
@@ -172,15 +172,17 @@ make dev-start
 > **What:** After partially completing the wizard, closing and reopening should resume at the right step.
 
 ### 6.1 Resume at first incomplete step
-- [ ] Refresh the page (`F5` or navigate to `http://localhost:5173/setup`)
-- [ ] **Expect:** Wizard sidebar renders immediately (no bootstrap gate — you're already logged in)
-- [ ] **Expect:** Main panel shows the **first incomplete step**, NOT Step 1 if it's already done
+- [x] Refresh the page (`F5` or navigate to `http://localhost:5173/setup`)
+- [x] **Expect:** Wizard sidebar renders immediately (no bootstrap gate — you're already logged in)
+- [x] **Expect:** Main panel shows the **first incomplete step**, NOT Step 1 if it's already done
+
+** Fixed: login now redirects back to /setup via ?from= param (committed 2ef6685)
 
 ### 6.2 Free navigation from Admin panel
-- [ ] Navigate to `http://localhost:5173/admin`
-- [ ] **Expect:** AdminPanelLayout sidebar has a **"Setup Wizard"** nav entry
-- [ ] Click it — **expect:** navigates to `/setup` with wizard sidebar visible
-- [ ] In this re-entry mode, sidebar step items should be **clickable** (allow jumping to any step, including completed ones)
+- [x] Navigate to `http://localhost:5173/admin`
+- [x] **Expect:** AdminPanelLayout sidebar has a **"Setup Wizard"** nav entry
+- [x] Click it — **expect:** navigates to `/setup` with wizard sidebar visible
+- [x] In this re-entry mode, sidebar step items should be **clickable** (allow jumping to any step, including completed ones)
 
 ---
 
@@ -189,16 +191,16 @@ make dev-start
 > **What:** Verify the three new backend endpoints enforce `ADMIN` role.
 
 ### 7.1 Unauthenticated access → 401
-- [ ] Open browser DevTools → Network tab
-- [ ] (Or use the terminal curl commands below — either is fine)
+- [x] Open browser DevTools → Network tab
+- [x] (Or use the terminal curl commands below — either is fine)
 ```bash
 # Should return 401
 curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/v1/setup/forwarder-config-download
 ```
-- [ ] **Expect:** HTTP **401**
+- [x] **Expect:** HTTP **401**
 
 ### 7.2 Forwarder config download — content
-- [ ] While logged in as admin, navigate to Step 5 (Decoder Config) — or use curl with JWT:
+- [x] While logged in as admin, navigate to Step 5 (Decoder Config) — or use curl with JWT:
 ```bash
 # Get JWT via bootstrap (replace token below with your actual login response)
 TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
@@ -208,22 +210,24 @@ TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
 curl -s -H "Authorization: Bearer $TOKEN" \
   http://localhost:8080/api/v1/setup/forwarder-config-download
 ```
-- [ ] **Expect:** Response contains:
+- [x] **Expect:** Response contains:
   - `APP_SERVER_URL=`
   - `APP_FORWARDER_TOKEN=<paste-your-token-here>` (literal placeholder — T-08-03)
   - `APP_DECODER_HOST=`
   - `APP_DECODER_PORT=`
   - `APP_DECODER_PROTOCOL=`
-- [ ] **Expect:** The token line does **NOT** contain any long alphanumeric string (no real token exposed)
+- [x] **Expect:** The token line does **NOT** contain any long alphanumeric string (no real token exposed)
 
+
+** Impossibru as step 5 is just a placeholder screen on the set up wizard **
 ---
 
 ## Section 8 — Decoder Config step (Plan 06 — implement after this UAT)
 
 > **Note:** Step 5 (Decoder Config) and the completion screen are implemented in Plan 06, which runs after this UAT is approved. The placeholder ("Decoder Config (Plan 06)") in the sidebar is expected.
 
-- [ ] Confirm the sidebar shows Step 5 placeholder without crashing
-- [ ] Note any visual issues to report before Plan 06 executes
+- [x] Confirm the sidebar shows Step 5 placeholder without crashing
+- [x] Note any visual issues to report before Plan 06 executes
 
 ---
 
@@ -231,15 +235,15 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | Section | Result | Notes |
 |---------|--------|-------|
-| 1 — Bootstrap Gate | Pass / Fail / Partial | |
-| 2 — Club Profile (Step 1) | Pass / Fail / Partial | |
-| 3 — Track (Step 2) | Pass / Fail / Partial | |
-| 4 — Race Format (Step 3) | Pass / Fail / Partial | |
-| 5 — Staff Account (Step 4) | Pass / Fail / Partial | |
-| 6 — Re-entry & Navigation | Pass / Fail / Partial | |
-| 7 — Backend Security | Pass / Fail / Partial | |
-| 8 — Step 5 Placeholder | Pass / Fail / Partial | |
+| 1 — Bootstrap Gate | Pass | |
+| 2 — Club Profile (Step 1) | Pass | Timezone selector added; generic placeholder |
+| 3 — Track (Step 2) | Pass | "Manage more in Admin" link removed |
+| 4 — Race Format (Step 3) | Pass | |
+| 5 — Staff Account (Step 4) | Pass | |
+| 6 — Re-entry & Navigation | Pass | 6.1 fixed via login ?from= redirect |
+| 7 — Backend Security | Pass | 7.2 verified via curl |
+| 8 — Step 5 Placeholder | Pass | Placeholder renders cleanly; full implementation in Plan 06 |
 
-**Overall:** Pass / Fail  
-**Approved to continue to Plan 06:** Yes / No  
-**Issues to fix first:**
+**Overall:** Pass  
+**Approved to continue to Plan 06:** Yes  
+**Issues to fix first:** None — all issues resolved during UAT cycle
