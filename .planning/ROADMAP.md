@@ -196,7 +196,7 @@ Plans:
 **Plans**: 4 plans
 Plans:
 **Wave 1**
-- [ ] 09-01-PLAN.md — Wave 0 test scaffolding: HelpContext + print page stubs
+- [x] 09-01-PLAN.md — Wave 0 test scaffolding: HelpContext + print page stubs
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 09-02-PLAN.md — HelpProvider infrastructure + layout '?' buttons + print guide shell pages
@@ -235,7 +235,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Audio & Practice | 6/6 | Complete | 2026-04-30 |
 | 7. Results & Championship | 7/7 | Complete | 2026-05-03 |
 | 8. First-Run Setup Wizard | 0/TBD | Not started | - |
-| 9. User Manual & Documentation | 0/4 | Not started | - |
+| 9. User Manual & Documentation | 1/4 | In Progress|  |
 | 10. Docker Trial Environment | 0/TBD | Not started | - |
 
 
@@ -245,7 +245,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 **Goal:** Secure the production deployment with TLS everywhere — HTTPS for the app server and TLS for the gRPC forwarder connection — removing accepted risks T-05-11 and T-05-20 from the Phase 5 security register.
 **Requirements:** TBD
-**Plans:** 0 plans
+**Plans:** 1/4 plans executed
 
 **Context:**
 - T-05-11: Token plaintext intercepted on venue LAN (accepted for v1 — HTTPS not provisioned)

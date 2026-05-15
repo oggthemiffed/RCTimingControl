@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Phase 09 planned 2026-05-15 — 4 plans ready to execute
-last_updated: "2026-05-15T00:00:00.000Z"
-last_activity: 2026-05-15 -- Phase 09 planned (4 plans, 4 waves; verification passed)
+status: 09-01 starting (Wave 1/4)
+stopped_at: "08-04 checkpoint:human-verify (Task 3 — bootstrap flow visual verification)"
+last_updated: "2026-05-15T18:30:33.574Z"
+last_activity: 2026-05-15 -- Phase 09 execution started (4 plans, 4 waves)
 progress:
   total_phases: 11
   completed_phases: 7
   total_plans: 54
-  completed_plans: 51
+  completed_plans: 50
   percent: 93
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 
 ## Current Position
 
-Phase: 08 (first-run-setup-wizard) — IN PROGRESS
-Status: 08-01 complete; 08-02 complete; 08-03 complete; 08-04 Tasks 1+2 complete (checkpoint awaiting human-verify for Task 3)
-Last activity: 2026-05-06 -- 08-04: setupApi, useSetupProgress hooks, SetupGuard (4 tests pass), AdminBootstrapGate, SetupLayout wizard shell, App.tsx /setup route + SetupGuard, AdminPanelLayout Setup Wizard nav entry (SC-5)
+Phase: 09 (user-manual-documentation) — IN PROGRESS
+Status: 09-01 starting (Wave 1/4)
+Last activity: 2026-05-15 -- Phase 09 execution started (4 plans, 4 waves)
 
-Progress: [███████░░░] 70%
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [███████░░░] 70%
 | Phase 06 P03 | ~20m | 3 tasks | 15 files |
 | Phase 06 P04 | ~25m | 5 tasks | 10 files |
 | Phase 06 P05 | ~6m | 3 tasks | 10 files |
+| Phase 09 P01 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-06T10:35:59Z
+Last session: 2026-05-15T18:30:33.557Z
 Stopped at: 08-04 checkpoint:human-verify (Task 3 — bootstrap flow visual verification)
 Resume file: None
