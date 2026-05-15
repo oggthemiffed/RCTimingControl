@@ -14,11 +14,13 @@ import {
   Volume2,
   Users,
   Wand2,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { useHelp } from '@/context/HelpContext';
 
 // ── Nav definition ─────────────────────────────────────────────────────────
 
@@ -150,6 +152,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 
 export default function AdminPanelLayout() {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const { helpContent, isOpen, setIsOpen } = useHelp();
 
   return (
     <div className="min-h-screen bg-background">
@@ -169,6 +172,18 @@ export default function AdminPanelLayout() {
           <Menu className="h-5 w-5" />
         </Button>
         <span className="ml-3 font-semibold text-sm">RC Timing — Admin</span>
+        {helpContent && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Open help"
+            title="Open help"
+            onClick={() => setIsOpen(true)}
+            className="ml-auto"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </Button>
+        )}
       </header>
 
       {/* Mobile: Sheet drawer */}
@@ -178,6 +193,19 @@ export default function AdminPanelLayout() {
             <SheetTitle>Navigation</SheetTitle>
           </SheetHeader>
           <SidebarContent onNavClick={() => setSheetOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      {/* Help Sheet */}
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent side="right" className="w-96" showCloseButton>
+          <SheetHeader>
+            <SheetTitle>Help</SheetTitle>
+            <SheetDescription>Page guide</SheetDescription>
+          </SheetHeader>
+          <div className="overflow-y-auto flex-1 px-6 pb-6">
+            {helpContent}
+          </div>
         </SheetContent>
       </Sheet>
 

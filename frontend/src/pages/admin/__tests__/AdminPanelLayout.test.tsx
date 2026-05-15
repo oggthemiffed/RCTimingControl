@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import AdminPanelLayout from '../AdminPanelLayout';
+import { HelpProvider } from '@/context/HelpContext';
 
 // Mock useAuth to provide a basic admin user
 vi.mock('@/hooks/useAuth', () => ({
@@ -25,7 +26,9 @@ describe('AdminPanelLayout (Wave 0 stub — enabled in Plan 04)', () => {
   it('renders Setup Wizard nav entry linking to /setup (SC-5)', () => {
     render(
       <MemoryRouter initialEntries={['/admin']}>
-        <AdminPanelLayout />
+        <HelpProvider>
+          <AdminPanelLayout />
+        </HelpProvider>
       </MemoryRouter>,
     );
 

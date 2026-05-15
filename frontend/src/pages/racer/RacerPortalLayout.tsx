@@ -1,7 +1,16 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { User, Car, Radio, FileText, LogOut } from 'lucide-react';
+import { User, Car, Radio, FileText, LogOut, HelpCircle } from 'lucide-react';
 import { RiTrophyLine } from '@remixicon/react';
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import { useHelp } from '@/context/HelpContext';
 
 const TrophyIcon = () => <RiTrophyLine className="h-5 w-5" aria-hidden="true" />;
 
@@ -15,6 +24,7 @@ const navItems = [
 
 export default function RacerPortalLayout() {
   const { logout } = useAuth();
+  const { helpContent, isOpen, setIsOpen } = useHelp();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -35,15 +45,40 @@ export default function RacerPortalLayout() {
             {label}
           </NavLink>
         ))}
-        <button
-          onClick={logout}
-          aria-label="Log out"
-          className="ml-auto flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm"
-        >
-          <LogOut className="h-4 w-4" aria-hidden="true" />
-          Log out
-        </button>
+        <div className="ml-auto flex items-center gap-3">
+          {helpContent && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Open help"
+              title="Open help"
+              onClick={() => setIsOpen(true)}
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          )}
+          <button
+            onClick={logout}
+            aria-label="Log out"
+            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+            Log out
+          </button>
+        </div>
       </nav>
+
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent side="right" className="w-96" showCloseButton>
+          <SheetHeader>
+            <SheetTitle>Help</SheetTitle>
+            <SheetDescription>Page guide</SheetDescription>
+          </SheetHeader>
+          <div className="overflow-y-auto flex-1 px-6 pb-6">
+            {helpContent}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Content — pb-16 reserves room for mobile bottom nav */}
       <main className="flex-1 pb-16 md:pb-0 p-4 md:p-6">

@@ -1,14 +1,23 @@
 import { Outlet, Link, useParams, useMatches } from 'react-router-dom';
-import { Flag, Shield, LogOut, ChevronLeft, Dumbbell } from 'lucide-react';
+import { Flag, Shield, LogOut, ChevronLeft, Dumbbell, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import { useHelp } from '@/context/HelpContext';
 import { ForwarderStatusBar } from './panels/ForwarderStatusBar';
 import { RaceControlErrorBoundary } from '@/components/RaceControlErrorBoundary';
 
 export default function RaceControlLayout() {
   const { eventId } = useParams<{ eventId: string }>();
   const { user, logout } = useAuth();
+  const { helpContent, isOpen, setIsOpen } = useHelp();
   const matches = useMatches();
 
   const base = `/race-control/event/${eventId}`;
@@ -55,11 +64,34 @@ export default function RaceControlLayout() {
           <span className="text-xs text-muted-foreground hidden sm:block">
             {user ? `${user.firstName} ${user.lastName}` : ''}
           </span>
+          {helpContent && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Open help"
+              title="Open help"
+              onClick={() => setIsOpen(true)}
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          )}
           <Button variant="ghost" size="icon-sm" onClick={logout} aria-label="Log out">
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </header>
+
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent side="right" className="w-96" showCloseButton>
+          <SheetHeader>
+            <SheetTitle>Help</SheetTitle>
+            <SheetDescription>Page guide</SheetDescription>
+          </SheetHeader>
+          <div className="overflow-y-auto flex-1 px-6 pb-6">
+            {helpContent}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Separator />
 
