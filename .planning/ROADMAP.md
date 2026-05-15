@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Audio & Practice** - Voice announcements (Web Speech API + TTS), open practice sessions
 - [x] **Phase 7: Results & Championship** - Post-race result snapshots, championship standings, PDF export (completed 2026-05-03)
 - [x] **Phase 8: First-Run Setup Wizard** - Guided onboarding for new club installations: club profile, tracks, formats, staff accounts, decoder config, forwarder test (completed 2026-05-14)
-- [ ] **Phase 9: User Manual & Documentation** - In-app help system and printed/PDF race meeting guide for officials, racers, and admins
+- [x] **Phase 9: User Manual & Documentation** - In-app help system and printed/PDF race meeting guide for officials, racers, and admins (completed 2026-05-15)
 - [ ] **Phase 10: Docker Trial Environment** - docker-compose stack with demo seed data and fake decoder replay so clubs can evaluate the full system locally with a single command
 
 ## Phase Details
@@ -205,7 +205,7 @@ Plans:
 - [x] 09-03-PLAN.md — Help article content (11 articles) + useHelp() wiring in 12 target pages
 
 **Wave 4** *(blocked on Wave 3 completion)*
-- [ ] 09-04-PLAN.md — Print guide comprehensive content + human review checkpoint (SC-5)
+- [x] 09-04-PLAN.md — Print guide comprehensive content + human review checkpoint (SC-5)
 **UI hint**: yes
 
 ### Phase 10: Docker Trial Environment
@@ -235,7 +235,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Audio & Practice | 6/6 | Complete | 2026-04-30 |
 | 7. Results & Championship | 7/7 | Complete | 2026-05-03 |
 | 8. First-Run Setup Wizard | 0/TBD | Not started | - |
-| 9. User Manual & Documentation | 1/4 | In Progress|  |
+| 9. User Manual & Documentation | 4/4 | Complete   | 2026-05-15 |
 | 10. Docker Trial Environment | 0/TBD | Not started | - |
 
 
@@ -245,7 +245,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 **Goal:** Secure the production deployment with TLS everywhere — HTTPS for the app server and TLS for the gRPC forwarder connection — removing accepted risks T-05-11 and T-05-20 from the Phase 5 security register.
 **Requirements:** TBD
-**Plans:** 1/4 plans executed
+**Plans:** 4/4 plans complete
 
 **Context:**
 - T-05-11: Token plaintext intercepted on venue LAN (accepted for v1 — HTTPS not provisioned)

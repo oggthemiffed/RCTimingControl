@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: 09-03 complete (Wave 3/4)
-stopped_at: "Completed 09-03-PLAN.md"
-last_updated: "2026-05-15T19:47:00.000Z"
-last_activity: 2026-05-15 -- Phase 09 Plan 03 complete (11 help articles + useHelp() wiring in 12 pages)
+status: completed
+stopped_at: Completed 09-04-PLAN.md
+last_updated: "2026-05-15T22:30:00.000Z"
+last_activity: 2026-05-15 -- Phase 09 Plan 04 complete (3 comprehensive print guides authored and human-reviewed)
 progress:
   total_phases: 11
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 54
-  completed_plans: 52
-  percent: 94
+  completed_plans: 53
+  percent: 98
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-04-15)
 
 ## Current Position
 
-Phase: 09 (user-manual-documentation) — IN PROGRESS
-Status: 09-03 complete (Wave 3/4)
-Last activity: 2026-05-15 -- Phase 09 Plan 03 complete (11 help articles + useHelp() wiring in 12 pages)
+Phase: 09 (user-manual-documentation) — COMPLETE
+Status: 09-04 complete (Wave 4/4)
+Last activity: 2026-05-15 -- Phase 09 Plan 04 complete (3 comprehensive print guides authored and human-reviewed)
 
 Progress: [█████████░] 93%
 
@@ -98,6 +98,7 @@ Recent decisions affecting current work:
 - [Phase 08-04]: SetupLayout handles pre-gate vs wizard mode internally (single /setup route) rather than splitting into two routes — keeps URL stable
 - [Phase 08-04]: AuthProvider extended with setAuthFromToken(token, authUser) for bootstrap auto-login without a second network call
 - [Phase 08-04]: SetupGuard wraps AuthProvider children (not outside) so useAuth() resolves in AdminBootstrapGate after bootstrap
+- [Phase ?]: [Phase 09-04]: Content derived by reading implemented components before writing
 
 ### Pending Todos
 
@@ -117,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-15T19:47:00Z
+Last session: 2026-05-15T22:20:01.666Z
 Stopped at: Completed 09-03-PLAN.md
 Resume file: None
