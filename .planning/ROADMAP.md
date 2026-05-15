@@ -202,7 +202,7 @@ Plans:
 - [x] 09-02-PLAN.md — HelpProvider infrastructure + layout '?' buttons + print guide shell pages
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 09-03-PLAN.md — Help article content (11 articles) + useHelp() wiring in 12 target pages
+- [x] 09-03-PLAN.md — Help article content (11 articles) + useHelp() wiring in 12 target pages
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 09-04-PLAN.md — Print guide comprehensive content + human review checkpoint (SC-5)
