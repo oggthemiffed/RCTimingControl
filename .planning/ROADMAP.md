@@ -193,7 +193,12 @@ Plans:
   3. A racer quick-start guide covers registration, adding cars and transponders, and submitting an event entry
   4. An admin configuration guide covers club setup, track and format management, championship creation, and user/role management
   5. All documentation is versioned alongside the codebase and kept accurate against the implemented features
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 09-01-PLAN.md — Wave 0 test scaffolding: HelpContext + print page stubs
+- [ ] 09-02-PLAN.md — HelpProvider infrastructure + layout '?' buttons + print guide shell pages
+- [ ] 09-03-PLAN.md — Help article content (11 articles) + useHelp() wiring in 12 target pages
+- [ ] 09-04-PLAN.md — Print guide comprehensive content + human review checkpoint (SC-5)
 **UI hint**: yes
 
 ### Phase 10: Docker Trial Environment
@@ -223,7 +228,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Audio & Practice | 6/6 | Complete | 2026-04-30 |
 | 7. Results & Championship | 7/7 | Complete | 2026-05-03 |
 | 8. First-Run Setup Wizard | 0/TBD | Not started | - |
-| 9. User Manual & Documentation | 0/TBD | Not started | - |
+| 9. User Manual & Documentation | 0/4 | Not started | - |
 | 10. Docker Trial Environment | 0/TBD | Not started | - |
 
 
