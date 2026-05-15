@@ -1,35 +1,38 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, renderHook } from '@testing-library/react';
+import React from 'react';
+import { HelpProvider, useHelp } from '@/context/HelpContext';
 
-// Wave 0 stub — real tests enabled in Plan 09-02 once HelpContext.tsx is created.
-// These describe.skip blocks define the contract for what must be verified.
-
-describe.skip('HelpProvider (enabled in Plan 09-02)', () => {
+describe('HelpProvider', () => {
   it('renders children without crashing', () => {
-    // Will import HelpProvider from @/context/HelpContext and render a child component
-    expect(true).toBe(true);
+    render(
+      <HelpProvider>
+        <span>child</span>
+      </HelpProvider>
+    );
+    expect(screen.getByText('child')).toBeTruthy();
   });
 
-  it('provides helpContent and setHelpContent via context', () => {
-    // Will use renderHook + HelpProvider wrapper to check initial state is null
-    expect(true).toBe(true);
+  it('provides helpContent as null initially', () => {
+    const { result } = renderHook(() => useHelp(), {
+      wrapper: ({ children }) => <HelpProvider>{children}</HelpProvider>,
+    });
+    expect(result.current.helpContent).toBeNull();
+  });
+
+  it('provides isOpen as false initially', () => {
+    const { result } = renderHook(() => useHelp(), {
+      wrapper: ({ children }) => <HelpProvider>{children}</HelpProvider>,
+    });
+    expect(result.current.isOpen).toBe(false);
   });
 });
 
-describe.skip('useHelp (enabled in Plan 09-02)', () => {
+describe('useHelp', () => {
   it('throws when used outside HelpProvider', () => {
-    // Will renderHook(() => useHelp()) without a provider and expect throw
-    expect(true).toBe(true);
-  });
-
-  it('returns helpContent null initially', () => {
-    // Will renderHook(() => useHelp(), { wrapper: HelpProvider }) and check initial state
-    expect(true).toBe(true);
-  });
-});
-
-// Passing sentinel so the file itself is never empty
-describe('HelpContext (Wave 0 — stubs pending implementation)', () => {
-  it('test file exists', () => {
-    expect(true).toBe(true);
+    // Suppress React error boundary output in test console
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() => renderHook(() => useHelp())).toThrow('useHelp must be used within HelpProvider');
+    consoleSpy.mockRestore();
   });
 });

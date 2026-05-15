@@ -41,13 +41,19 @@ import { PracticeLandingPage } from '@/pages/race-control/PracticeLandingPage';
 import PrintPracticeResultsPage from '@/pages/race-control/PrintPracticeResultsPage';
 import PublicResultsPage from '@/pages/results/PublicResultsPage';
 import PublicChampionshipPage from '@/pages/championships/PublicChampionshipPage';
+import { HelpProvider } from '@/context/HelpContext';
+import MeetingGuidePage from '@/pages/print/MeetingGuidePage';
+import RacerGuidePage from '@/pages/print/RacerGuidePage';
+import AdminGuidePage from '@/pages/print/AdminGuidePage';
 
 function RootLayout() {
   return (
     <AuthProvider>
-      <SetupGuard>
-        <Outlet />
-      </SetupGuard>
+      <HelpProvider>
+        <SetupGuard>
+          <Outlet />
+        </SetupGuard>
+      </HelpProvider>
       <Toaster />
     </AuthProvider>
   );
@@ -136,6 +142,9 @@ const router = createBrowserRouter([
       { path: '/events', element: <EventSchedulePage /> },
       { path: '/results/:raceId', element: <PublicResultsPage /> },
       { path: '/championships/:id', element: <PublicChampionshipPage /> },
+      { path: '/print/meeting-guide', element: <MeetingGuidePage /> },
+      { path: '/print/racer-guide', element: <RacerGuidePage /> },
+      { path: '/print/admin-guide', element: <AdminGuidePage /> },
       { path: '/unauthorized', element: <UnauthorizedPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
