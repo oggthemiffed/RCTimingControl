@@ -199,7 +199,7 @@ Plans:
 - [x] 09-01-PLAN.md — Wave 0 test scaffolding: HelpContext + print page stubs
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 09-02-PLAN.md — HelpProvider infrastructure + layout '?' buttons + print guide shell pages
+- [x] 09-02-PLAN.md — HelpProvider infrastructure + layout '?' buttons + print guide shell pages
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 09-03-PLAN.md — Help article content (11 articles) + useHelp() wiring in 12 target pages
