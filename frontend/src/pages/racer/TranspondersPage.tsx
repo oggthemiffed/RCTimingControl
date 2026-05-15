@@ -1,3 +1,14 @@
+import { useEffect } from 'react';
+import { useHelp } from '@/context/HelpContext';
+import { CarTransponderHelp } from '@/help/CarTransponderHelp';
+
 export default function TranspondersPage() {
+  const { setHelpContent } = useHelp();
+
+  useEffect(() => {
+    setHelpContent(<CarTransponderHelp />);
+    return () => setHelpContent(null);
+  }, [setHelpContent]);
+
   return <div className="text-muted-foreground">Transponders — coming in Plan 06.</div>;
 }

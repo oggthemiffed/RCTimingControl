@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -53,6 +53,8 @@ import type { ChampionshipDto, UserSummaryDto } from '@/lib/adminApi';
 import { adminApi } from '@/lib/adminApi';
 import { useQuery } from '@tanstack/react-query';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
+import { useHelp } from '@/context/HelpContext';
+import { ChampionshipHelp } from '@/help/ChampionshipHelp';
 
 // ── Driver combobox ────────────────────────────────────────────────────────
 
@@ -415,6 +417,12 @@ export default function ChampionshipDetailPage() {
   const { id: idParam } = useParams<{ id: string }>();
   const id = Number(idParam);
   const navigate = useNavigate();
+  const { setHelpContent } = useHelp();
+
+  useEffect(() => {
+    setHelpContent(<ChampionshipHelp />);
+    return () => setHelpContent(null);
+  }, [setHelpContent]);
 
   const { data, isLoading, isError, refetch } = useChampionshipDetail(id);
   const updateMutation = useUpdateChampionship(id);

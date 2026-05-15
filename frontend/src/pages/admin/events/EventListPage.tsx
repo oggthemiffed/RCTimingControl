@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useReactTable,
@@ -36,6 +36,8 @@ import { Label } from '@/components/ui/label';
 
 import { useAdminEventsList, useCreateAdminEvent } from '@/hooks/admin/useAdminEvents';
 import type { AdminEventListDto, EventStatus } from '@/lib/adminApi';
+import { useHelp } from '@/context/HelpContext';
+import { EntryManagementHelp } from '@/help/EntryManagementHelp';
 
 // ── Status badge colors (D-06 / UI-SPEC.md) ───────────────────────────────
 
@@ -75,6 +77,12 @@ export default function EventListPage() {
   const navigate = useNavigate();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [createOpen, setCreateOpen] = useState(false);
+  const { setHelpContent } = useHelp();
+
+  useEffect(() => {
+    setHelpContent(<EntryManagementHelp />);
+    return () => setHelpContent(null);
+  }, [setHelpContent]);
 
   const { data: events, isLoading, isError, refetch } = useAdminEventsList();
   const createEvent = useCreateAdminEvent();

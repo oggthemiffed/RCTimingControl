@@ -1,8 +1,17 @@
+import { useEffect } from 'react';
+import { useHelp } from '@/context/HelpContext';
+import { ResultsHelp } from '@/help/ResultsHelp';
 import { useRacerResults } from '@/hooks/racer/useRacerResults';
 import { RacerEventHistoryCard } from '@/components/racer/RacerEventHistoryCard';
 
 export default function RacerResultsPage() {
   const { data, isPending, error } = useRacerResults();
+  const { setHelpContent } = useHelp();
+
+  useEffect(() => {
+    setHelpContent(<ResultsHelp />);
+    return () => setHelpContent(null);
+  }, [setHelpContent]);
 
   if (isPending) {
     return (

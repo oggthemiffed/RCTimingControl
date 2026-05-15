@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useHelp } from '@/context/HelpContext';
+import { RefereeHelp } from '@/help/RefereeHelp';
 import { useRunOrder } from '@/hooks/race-control/useRunOrder';
 import { useRaceStateMutations } from '@/hooks/race-control/useRaceStateMutations';
 import { useLiveTiming } from '@/hooks/race-control/useLiveTiming';
@@ -16,6 +18,13 @@ import type { LiveTimingRowDto, IncidentReportRequest, PenaltyRequest } from '@/
 export default function RefereePage() {
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
   const eventId = Number(eventIdStr);
+
+  const { setHelpContent } = useHelp();
+
+  useEffect(() => {
+    setHelpContent(<RefereeHelp />);
+    return () => setHelpContent(null);
+  }, [setHelpContent]);
 
   const { data: runOrder = [] } = useRunOrder(eventId || null);
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);

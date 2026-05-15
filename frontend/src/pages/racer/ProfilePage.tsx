@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useHelp } from '@/context/HelpContext';
+import { RacerProfileHelp } from '@/help/RacerProfileHelp';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -45,6 +47,12 @@ export default function ProfilePage() {
   const updateProfile = useUpdateProfile();
   const addMembership = useAddMembership();
   const removeMembership = useRemoveMembership();
+  const { setHelpContent } = useHelp();
+
+  useEffect(() => {
+    setHelpContent(<RacerProfileHelp />);
+    return () => setHelpContent(null);
+  }, [setHelpContent]);
 
   // ── Voice preference state ─────────────────────────────────────────────────
   const { data: voices, isLoading: voicesLoading } = useQuery({

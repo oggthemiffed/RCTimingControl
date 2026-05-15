@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -35,6 +35,8 @@ import {
   useTracks,
 } from '@/hooks/admin/useAdminEvents';
 import type { EventStatus } from '@/lib/adminApi';
+import { useHelp } from '@/context/HelpContext';
+import { EventManagementHelp } from '@/help/EventManagementHelp';
 import EventClassSection from './EventClassSection';
 import EntryListSection from './EntryListSection';
 
@@ -126,6 +128,12 @@ export default function EventDetailPage() {
   const { id: idParam } = useParams<{ id: string }>();
   const id = Number(idParam);
   const navigate = useNavigate();
+  const { setHelpContent } = useHelp();
+
+  useEffect(() => {
+    setHelpContent(<EventManagementHelp />);
+    return () => setHelpContent(null);
+  }, [setHelpContent]);
 
   const { data, isLoading, isError, refetch } = useAdminEventDetail(id);
   const updateEvent = useUpdateAdminEvent(id);

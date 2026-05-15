@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useHelp } from '@/context/HelpContext';
+import { CarTransponderHelp } from '@/help/CarTransponderHelp';
 import { useCars } from '@/hooks/racer/useCars';
 import CarCard from '@/components/racer/CarCard';
 import CarEditSheet from '@/components/racer/CarEditSheet';
@@ -10,6 +12,12 @@ export default function CarsPage() {
   const { data: cars, isPending, error } = useCars();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<CarDto | null>(null);
+  const { setHelpContent } = useHelp();
+
+  useEffect(() => {
+    setHelpContent(<CarTransponderHelp />);
+    return () => setHelpContent(null);
+  }, [setHelpContent]);
 
   function openCreate() { setSelected(null); setOpen(true); }
   function openEdit(car: CarDto) { setSelected(car); setOpen(true); }
