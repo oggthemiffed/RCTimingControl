@@ -833,32 +833,24 @@ Security enforcement is enabled (not explicitly set to false in config.json).
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **jOOQ generated sources in version control**
+1. **jOOQ generated sources in version control** — RESOLVED
    - What we know: `bootJar` triggers `generateJooq` which requires live postgres (Testcontainers). Docker build has no Docker socket by default.
-   - What's unclear: Are jOOQ generated sources currently committed to git or gitignored?
-   - Recommendation: Check `.gitignore` for `build/generated-src/`. If gitignored, the Dockerfile must pass `-x generateJooq` and the CI workflow needs pre-committed generated sources, or use a Docker-in-Docker build service. **This must be resolved before the first build task.**
+   - Resolution: Plan 03 Task 0 generates jOOQ sources on the host (where Docker is available) and commits them to `app/src/generated/jooq/` (outside the gitignored `build/` tree). The app Dockerfile builds with `-x generateJooq` flag.
 
-2. **D-06 replay file vs generative mode**
-   - What we know: D-06 specifies a `.txt` replay file. `PlaybackMode.replay()` does not loop — it plays once and returns, causing the fake decoder to stop emitting after one pass.
-   - What's unclear: Does D-06 require an actual file (for inspectability, offline review), or is generative mode with matching transponder IDs equally acceptable?
-   - Recommendation: Use generative mode. If a replay file is truly required, `PlaybackMode` needs a loop wrapper — a small code change, but an extra task. Flag this in the plan for user confirmation.
+2. **D-06 replay file vs generative mode** — RESOLVED (user confirmed)
+   - What we know: D-06 specifies a `.txt` replay file. `PlaybackMode.replay()` does not loop — it plays once and returns.
+   - Resolution: User confirmed generative mode (`SimulatorMain --mode=generative`) is acceptable. It loops forever by design, uses the 8 seeded transponder IDs explicitly, and produces identical live timing output. SC-3's "recorded file" wording is relaxed accordingly.
 
-3. **FORWARDER_API_TOKEN bootstrapping**
-   - What we know: The forwarder token is stored in the `forwarder_token` table with a `token_value` column (added in V26). The demo-seed must insert a valid token, and the forwarder must be configured with the same value.
-   - What's unclear: Should the trial use a fixed hardcoded token (simple, reproducible) or a randomly generated one? A fixed token in `.env.example` is simplest for trials.
-   - Recommendation: Fixed demo token in `.env.example` with a `FORWARDER_API_TOKEN` variable. Seed SQL inserts this token value into `forwarder_token`. Document that this must be regenerated for production.
+3. **FORWARDER_API_TOKEN bootstrapping** — RESOLVED
+   - Resolution: Fixed demo token `DEMO-FORWARDER-TOKEN-CHANGE-BEFORE-PRODUCTION` used across seed SQL, compose default, and `.env.example`. Documented as requiring regeneration before any real deployment.
 
-4. **MinIO in trial stack**
-   - What we know: The app uses MinIO for logo/audio clip storage. The dev compose includes MinIO. D-02 says the trial stack is self-contained.
-   - What's unclear: Does the trial stack need MinIO for logo uploads, or can this be omitted? The trial demo doesn't necessarily need club logo uploads to work.
-   - Recommendation: Include MinIO (same config as dev) for completeness — clubs will want to upload a logo as part of the wizard evaluation.
+4. **MinIO in trial stack** — RESOLVED
+   - Resolution: MinIO included in trial stack (internal bridge only, no host port) for full wizard evaluation including logo uploads (SC-4).
 
-5. **`service_completed_successfully` availability**
-   - What we know: `depends_on: condition: service_completed_successfully` requires Docker Compose v2.1+ (part of Compose Spec).
-   - What's unclear: The environment has Docker Compose v5.1.3 [VERIFIED] — this is supported. But older club laptops may have older versions.
-   - Recommendation: Document minimum Docker Compose version (v2.1+) in trial README. The condition is required for correct seed ordering.
+5. **`service_completed_successfully` availability** — RESOLVED
+   - Resolution: Docker Compose v5.1.3 confirmed on dev machine [VERIFIED]. Minimum version (v2.1+) documented in `.env.example` header. The condition is required for correct seed ordering.
 
 ---
 
