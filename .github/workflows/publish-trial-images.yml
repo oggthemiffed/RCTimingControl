@@ -20,6 +20,8 @@ jobs:
             dockerfile: docker/forwarder/Dockerfile
           - image: fake-decoder
             dockerfile: docker/fake-decoder/Dockerfile
+          - image: seed
+            dockerfile: docker/seed/Dockerfile
     steps:
       - uses: actions/checkout@v4
 

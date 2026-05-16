@@ -41,7 +41,7 @@ services:
       "
 
   demo-seed:
-    build: docker/seed/
+    image: ghcr.io/oggthemiffed/rctimingcontrol/seed:${RCTIMING_VERSION:?Set RCTIMING_VERSION in .env}
     restart: "no"
     environment:
       PGHOST: postgres
