@@ -145,4 +145,16 @@ See `docs/AMB_DECODER_PROTOCOL.md` for the full reference. Summary:
 1. If you raise any processes, start services or ui services, you MUST stop them after you are finished.
 2. Use the `gh` CLI for all GitHub operations (push, PR creation, issue management). The repo uses HTTPS via `gh auth` — do not use SSH git remotes. Remote URL: `https://github.com/oggthemiffed/RCTimingControl.git`.
 3. If you see the context getting filled up to a serious level (75% and above) please stop and give me a restart prompt to continue the task after i have cleared the context
-4. **Never commit files matching `docs/local-*.md` or `*.local.md`** — these patterns are gitignored and reserved for local-only notes (infrastructure details, internal ops runbooks, private setup guides). If a task produces a doc that contains internal URLs, account-specific setup steps, or operational details the owner doesn't want in the public repo, name it with one of these patterns so it stays on the local machine only.
+4. **Sensitive documentation must NEVER be committed to the repo.** Any doc you generate that contains any of the following must be saved as `docs/local-*.md` or `*.local.md` (both patterns are gitignored) and never staged or committed:
+   - Registry paths, container image locations, or package repository URLs specific to this project
+   - GitHub/CI/CD configuration steps, settings URLs, or account-specific setup instructions
+   - Internal tooling, build system details, or deployment pipeline internals
+   - Anything describing how the infrastructure, release process, or development environment is set up internally
+   - Account names, usernames, organisation names, or service endpoints
+   - Anything you would not want a member of the general public or a competitor to read
+
+   When in doubt, ask: "would this tell a stranger something useful about how this project is built or operated?" If yes — local file only.
+
+   Examples that MUST be local: GitHub Actions setup guides, GHCR configuration steps, branch protection runbooks, environment variable references, deployment checklists, service account details.
+
+   Examples that are safe to commit: architecture decisions, API contracts, user-facing feature docs, contribution guidelines (no internal URLs), quickstart guides for end users.
