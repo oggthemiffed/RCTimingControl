@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 7: Results & Championship** - Post-race result snapshots, championship standings, PDF export (completed 2026-05-03)
 - [x] **Phase 8: First-Run Setup Wizard** - Guided onboarding for new club installations: club profile, tracks, formats, staff accounts, decoder config, forwarder test (completed 2026-05-14)
 - [x] **Phase 9: User Manual & Documentation** - In-app help system and printed/PDF race meeting guide for officials, racers, and admins (completed 2026-05-15)
-- [ ] **Phase 10: Docker Trial Environment** - docker-compose stack with demo seed data and fake decoder replay so clubs can evaluate the full system locally with a single command
+- [x] **Phase 10: Docker Trial Environment** - docker-compose stack with demo seed data and fake decoder replay so clubs can evaluate the full system locally with a single command (completed 2026-05-16)
 
 ## Phase Details
 
@@ -229,7 +229,7 @@ Plans:
 - [x] 10-03-PLAN.md — Commit jOOQ sources; app & frontend Dockerfiles; nginx reverse-proxy config; docker-compose.trial.yml
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 10-04-PLAN.md — .env.example; docker-compose.ghcr.yml; GitHub Actions GHCR publish workflow
+- [x] 10-04-PLAN.md — .env.example; docker-compose.ghcr.yml; GitHub Actions GHCR publish workflow
 
 ## Progress
 
@@ -247,7 +247,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Results & Championship | 7/7 | Complete | 2026-05-03 |
 | 8. First-Run Setup Wizard | 0/TBD | Not started | - |
 | 9. User Manual & Documentation | 4/4 | Complete   | 2026-05-15 |
-| 10. Docker Trial Environment | 3/4 | In Progress | - |
+| 10. Docker Trial Environment | 4/4 | Complete | 2026-05-16 |
 
 
 ## Backlog
