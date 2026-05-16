@@ -151,4 +151,4 @@ cd frontend && npm run test:e2e:ui
 - [Development guide](docs/development.md) — local environment setup, Makefile reference
 - [Architecture](docs/architecture.md) — module structure and design decisions
 - [RELEASES.md](RELEASES.md) — release and hotfix process
-- [docs/github-setup.md](docs/github-setup.md) — one-time GHCR configuration
+- `docs/local-github-setup.md` — one-time GHCR configuration (local file, not in repo — see your local copy)
