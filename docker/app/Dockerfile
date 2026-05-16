@@ -13,6 +13,6 @@ RUN --mount=type=cache,target=/root/.gradle \
 FROM eclipse-temurin:21-jre-alpine AS runtime
 RUN apk add --no-cache curl
 WORKDIR /app
-COPY --from=builder /build/app/build/libs/app-*.jar app.jar
+COPY --from=builder /build/app/build/libs/app.jar app.jar
 EXPOSE 8080 9090
 ENTRYPOINT ["java", "-jar", "app.jar"]

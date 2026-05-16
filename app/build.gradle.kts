@@ -209,6 +209,10 @@ tasks.withType<nu.studer.gradle.jooq.JooqGenerate>().configureEach {
 }
 
 // jOOQ generated sources are committed at app/src/generated/jooq (Docker builds skip codegen with -x generateJooq)
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    archiveFileName.set("app.jar")
+}
+
 sourceSets["main"].java.srcDir("src/generated/jooq")
 
 // Proto/gRPC generated sources are committed at app/src/generated/proto (Docker builds skip codegen with -x generateProto)
