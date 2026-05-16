@@ -1,0 +1,135 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: rctiming
+      POSTGRES_USER: rctiming
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rctiming_trial}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rctiming -d rctiming"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin} &&
+      mc mb --ignore-existing local/rctiming &&
+      mc anonymous set download local/rctiming
+      "
+
+  demo-seed:
+    build: docker/seed/
+    restart: "no"
+    environment:
+      PGHOST: postgres
+      PGUSER: rctiming
+      PGPASSWORD: ${POSTGRES_PASSWORD:-rctiming_trial}
+      PGDATABASE: rctiming
+    depends_on:
+      app:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/rctiming
+      SPRING_DATASOURCE_USERNAME: rctiming
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-rctiming_trial}
+      JWT_SECRET: ${JWT_SECRET:-dGhpcyBpcyBhIGRldmVsb3BtZW50IHNlY3JldCBrZXkgdGhhdCBtdXN0IGJlIGF0IGxlYXN0IDI1NiBiaXRz}
+      STORAGE_ENDPOINT: http://minio:9000
+      STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      STORAGE_REGION: us-east-1
+      STORAGE_BUCKET: rctiming
+      STORAGE_PUBLIC_BASE_URL: http://localhost/storage/rctiming
+      TTS_ENDPOINT: piper:10200
+      TTS_DEFAULT_VOICE: en_GB-alan-medium
+      TTS_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health | grep -q UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend/Dockerfile
+    ports:
+      - "${HOST_PORT:-80}:80"
+    depends_on:
+      app:
+        condition: service_healthy
+
+  piper:
+    image: rhasspy/wyoming-piper:latest
+    volumes:
+      - piper_data:/data
+    command: >
+      --voice en_GB-alan-medium
+      --voice en_GB-cori-high
+      --voice en_US-amy-medium
+
+  fake-decoder:
+    build:
+      context: .
+      dockerfile: docker/fake-decoder/Dockerfile
+    command: >
+      --mode=generative
+      --port=5100
+      --transponders=101,102,103,104,105,106,107,108
+      --interval-ms=13000
+      --jitter-ms=2500
+
+  forwarder:
+    build:
+      context: .
+      dockerfile: docker/forwarder/Dockerfile
+    environment:
+      FORWARDER_API_TOKEN: ${FORWARDER_API_TOKEN:-DEMO-FORWARDER-TOKEN-CHANGE-BEFORE-PRODUCTION}
+      FORWARDER_DECODER_HOST: fake-decoder
+      FORWARDER_DECODER_PORT: 5100
+      FORWARDER_GRPC_HOST: app
+      FORWARDER_GRPC_PORT: 9090
+      FORWARDER_GRPC_PLAINTEXT: "true"
+    depends_on:
+      app:
+        condition: service_healthy
+      fake-decoder:
+        condition: service_started
+
+volumes:
+  pgdata:
+  minio_data:
+  piper_data:
