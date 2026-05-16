@@ -3,6 +3,8 @@
 build/
 **/build/
 
+# jOOQ generated sources are committed at app/src/generated/jooq (Docker builds skip codegen)
+
 # IDE files
 .idea/
 *.iml

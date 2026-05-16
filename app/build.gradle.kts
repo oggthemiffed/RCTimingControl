@@ -193,7 +193,7 @@ jooq {
                     }
                     target.apply {
                         packageName = "dev.monkeypatch.rctiming.jooq.generated"
-                        directory = "build/generated-sources/jooq"
+                        directory = "src/generated/jooq"
                     }
                     strategy.name = "org.jooq.codegen.DefaultGeneratorStrategy"
                 }
@@ -207,6 +207,9 @@ tasks.withType<nu.studer.gradle.jooq.JooqGenerate>().configureEach {
     finalizedBy(stopJooqDb)
     inputs.dir("src/main/resources/db/migration")
 }
+
+// jOOQ generated sources are committed at app/src/generated/jooq (Docker builds skip codegen with -x generateJooq)
+sourceSets["main"].java.srcDir("src/generated/jooq")
 
 // Phase 5: protobuf/gRPC code generation for cloud-side gRPC server
 protobuf {
