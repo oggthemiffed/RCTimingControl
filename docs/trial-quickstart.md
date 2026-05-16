@@ -28,14 +28,14 @@ Once installed, open Docker Desktop and make sure it says **"Docker Desktop is r
 
 ## Step 2 — Download the trial files
 
-Create a folder somewhere on your computer (e.g. `rctiming-trial` on your Desktop), then download these two files into it:
+Go to the [latest release page](https://github.com/oggthemiffed/RCTimingControl/releases/latest) and download the two files attached to the release:
 
 | File | What it is |
 |------|-----------|
-| [`docker-compose.ghcr.yml`](../docker-compose.ghcr.yml) | Tells Docker which services to start |
-| [`.env.example`](../.env.example) | Configuration template |
+| `docker-compose.ghcr.yml` | Tells Docker which services to start |
+| `.env.example` | Configuration template |
 
-Then **rename** `.env.example` to `.env` (remove the `.example` part).
+Save both into a new folder on your computer (e.g. `rctiming-trial` on your Desktop), then **rename** `.env.example` to `.env` (remove the `.example` part).
 
 ---
 

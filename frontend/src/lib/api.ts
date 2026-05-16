@@ -48,3 +48,13 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+export interface AboutDto {
+  version: string;
+  buildTime: string;
+}
+
+export async function getAboutInfo(): Promise<AboutDto> {
+  const { data } = await api.get<AboutDto>('/api/v1/about');
+  return data;
+}

@@ -1,10 +1,12 @@
 name: Publish Trial Images
+
 on:
   push:
     tags: ['v*']
 
 jobs:
   build-and-push:
+    name: Build & push Docker images
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -47,3 +49,56 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "v${{ steps.version.outputs.version }}"
+          body: |
+            ## RCTimingControl v${{ steps.version.outputs.version }}
+
+            ### Trial environment
+
+            **Requires:** Docker Desktop
+
+            ```bash
+            # 1. Download docker-compose.ghcr.yml and .env.example from this release
+            # 2. Copy the config template
+            cp .env.example .env
+
+            # 3. Set the version in .env
+            # Edit .env and set: RCTIMING_VERSION=${{ github.ref_name }}
+
+            # 4. Start everything
+            docker compose -f docker-compose.ghcr.yml up
+            ```
+
+            Open **http://localhost** — demo credentials in [docs/trial-quickstart.md](docs/trial-quickstart.md)
+
+            ### Docker images (GHCR)
+
+            | Image | Tag |
+            |-------|-----|
+            | `ghcr.io/oggthemiffed/rctimingcontrol/app` | `${{ steps.version.outputs.version }}` |
+            | `ghcr.io/oggthemiffed/rctimingcontrol/frontend` | `${{ steps.version.outputs.version }}` |
+            | `ghcr.io/oggthemiffed/rctimingcontrol/forwarder` | `${{ steps.version.outputs.version }}` |
+            | `ghcr.io/oggthemiffed/rctimingcontrol/fake-decoder` | `${{ steps.version.outputs.version }}` |
+            | `ghcr.io/oggthemiffed/rctimingcontrol/seed` | `${{ steps.version.outputs.version }}` |
+          files: |
+            docker-compose.ghcr.yml
+            .env.example
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') || startsWith(steps.version.outputs.version, '0.') }}

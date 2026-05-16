@@ -6,10 +6,16 @@ plugins {
     java
 }
 
+version = file("../VERSION").readText().trim()
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
+}
+
+springBoot {
+    buildInfo()
 }
 
 // Separate configuration for jOOQ codegen classpath (Flyway + PG driver + TC)

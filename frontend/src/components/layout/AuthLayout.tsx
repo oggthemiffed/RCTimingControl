@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import {
   Card,
   CardHeader,
@@ -26,6 +27,9 @@ export default function AuthLayout({ title, subtitle, footer, children }: AuthLa
         <CardContent>{children}</CardContent>
         {footer && <CardFooter>{footer}</CardFooter>}
       </Card>
+      <div className="mt-6 text-xs text-muted-foreground">
+        <Link to="/about" className="hover:underline">About</Link>
+      </div>
     </div>
   );
 }

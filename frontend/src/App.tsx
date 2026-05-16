@@ -45,6 +45,7 @@ import { HelpProvider } from '@/context/HelpContext';
 import MeetingGuidePage from '@/pages/print/MeetingGuidePage';
 import RacerGuidePage from '@/pages/print/RacerGuidePage';
 import AdminGuidePage from '@/pages/print/AdminGuidePage';
+import AboutPage from '@/pages/AboutPage';
 
 function RootLayout() {
   return (
@@ -145,6 +146,7 @@ const router = createBrowserRouter([
       { path: '/print/meeting-guide', element: <MeetingGuidePage /> },
       { path: '/print/racer-guide', element: <RacerGuidePage /> },
       { path: '/print/admin-guide', element: <AdminGuidePage /> },
+      { path: '/about', element: <AboutPage /> },
       { path: '/unauthorized', element: <UnauthorizedPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
