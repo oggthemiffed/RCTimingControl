@@ -115,7 +115,7 @@ export default function CockpitPage() {
         const improving =
           row.lastLapMs !== null &&
           row.bestLapMs !== null &&
-          row.lastLapMs <= row.bestLapMs;
+          row.lastLapMs < row.bestLapMs;
         playBeep(improving);
       }
       if (row.lastPassingTimeMs) {
