@@ -29,7 +29,7 @@ services:
 
   minio-init:
     image: minio/mc:latest
-    restart: "no"
+    restart: on-failure
     depends_on:
       minio:
         condition: service_healthy
