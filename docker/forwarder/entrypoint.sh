@@ -1,6 +1,7 @@
 #!/bin/sh
 # Writes forwarder.properties from env vars, then launches the forwarder.
 set -e
+: "${FORWARDER_API_TOKEN:?FORWARDER_API_TOKEN must be set}"
 cat > /tmp/forwarder.properties <<PROPS
 forwarder.api-token=${FORWARDER_API_TOKEN}
 forwarder.decoder.host=${FORWARDER_DECODER_HOST:-fake-decoder}
