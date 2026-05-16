@@ -218,7 +218,18 @@ Plans:
   3. The fake decoder container replays a recorded RC-4 passing file on a loop so live timing is visible in the race control client without physical AMB hardware
   4. The setup wizard (Phase 8) is accessible and functional within the trial environment, allowing clubs to reconfigure it to match their own club details
   5. A `docker-compose.ghcr.yml` variant pulls pre-built images from GitHub Container Registry (GHCR) so non-technical clubs do not need to build from source; images are published automatically by a GitHub Actions workflow on each version tag
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+
+**Wave 1**
+- [ ] 10-01-PLAN.md — ForwarderApplication `--config-file` arg + test; forwarder & fake-decoder Dockerfiles + scripts
+- [ ] 10-02-PLAN.md — Idempotent Wyvern RC Club seed SQL + demo-seed one-shot Dockerfile
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 10-03-PLAN.md — Commit jOOQ sources; app & frontend Dockerfiles; nginx reverse-proxy config; docker-compose.trial.yml
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 10-04-PLAN.md — .env.example; docker-compose.ghcr.yml; GitHub Actions GHCR publish workflow
 
 ## Progress
 
@@ -236,7 +247,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Results & Championship | 7/7 | Complete | 2026-05-03 |
 | 8. First-Run Setup Wizard | 0/TBD | Not started | - |
 | 9. User Manual & Documentation | 4/4 | Complete   | 2026-05-15 |
-| 10. Docker Trial Environment | 0/TBD | Not started | - |
+| 10. Docker Trial Environment | 0/4 | Not started | - |
 
 
 ## Backlog
