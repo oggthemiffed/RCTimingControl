@@ -226,7 +226,7 @@ Plans:
 - [x] 10-02-PLAN.md — Idempotent Wyvern RC Club seed SQL + demo-seed one-shot Dockerfile
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 10-03-PLAN.md — Commit jOOQ sources; app & frontend Dockerfiles; nginx reverse-proxy config; docker-compose.trial.yml
+- [x] 10-03-PLAN.md — Commit jOOQ sources; app & frontend Dockerfiles; nginx reverse-proxy config; docker-compose.trial.yml
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 10-04-PLAN.md — .env.example; docker-compose.ghcr.yml; GitHub Actions GHCR publish workflow
@@ -247,7 +247,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Results & Championship | 7/7 | Complete | 2026-05-03 |
 | 8. First-Run Setup Wizard | 0/TBD | Not started | - |
 | 9. User Manual & Documentation | 4/4 | Complete   | 2026-05-15 |
-| 10. Docker Trial Environment | 2/4 | In Progress | - |
+| 10. Docker Trial Environment | 3/4 | In Progress | - |
 
 
 ## Backlog
