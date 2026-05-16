@@ -28,3 +28,7 @@ node_modules/
 frontend/dist/
 frontend/.vite/
 bin/
+
+# Playwright
+frontend/playwright-report/
+frontend/test-results/
