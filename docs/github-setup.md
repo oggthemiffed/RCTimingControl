@@ -71,6 +71,48 @@ Open **http://localhost** — the About page should show `v0.1.0`.
 
 ---
 
+## Step 5 — Enable branch protection on master
+
+This prevents direct pushes to `master` and blocks merging a PR if CI is red. Strongly recommended before anyone else contributes — optional for solo work.
+
+Go to:
+```
+https://github.com/oggthemiffed/RCTimingControl/settings/branches
+```
+
+Click **"Add branch ruleset"** (GitHub's current UI) or **"Add rule"** (classic UI), then:
+
+**Branch name pattern:** `master`
+
+Enable these options:
+
+| Setting | Why |
+|---------|-----|
+| **Require a pull request before merging** | No direct pushes to master |
+| **Require status checks to pass** | CI must be green before merge |
+| **Require branches to be up to date before merging** | No merging a stale branch |
+
+Under **"Require status checks to pass"**, search for and add these three checks:
+- `test-backend`
+- `test-frontend`
+- `test-e2e`
+
+Click **Save**.
+
+> **Note:** Once this is enabled you can no longer `git push origin master` directly.
+> All changes go via a PR branch. See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full workflow.
+
+### Emergency bypass (if you ever need it)
+
+If CI is broken and you need to merge a hotfix urgently:
+
+1. Go to `https://github.com/oggthemiffed/RCTimingControl/settings/branches`
+2. Edit the rule → temporarily disable "Require status checks to pass"
+3. Merge your fix
+4. Re-enable the rule immediately after
+
+---
+
 ## Done — future releases
 
 For all subsequent releases you only need to:
