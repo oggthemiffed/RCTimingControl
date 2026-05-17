@@ -1,4 +1,4 @@
-name: Publish Trial Images
+name: Publish Release Images
 
 on:
   push:
@@ -70,23 +70,41 @@ jobs:
           body: |
             ## RCTimingControl v${{ steps.version.outputs.version }}
 
-            ### Trial environment
+            ---
+
+            ### Trial environment (demo data, fake decoder)
 
             **Requires:** Docker Desktop
 
             ```bash
             # 1. Download docker-compose.ghcr.yml and .env.example from this release
-            # 2. Copy the config template
             cp .env.example .env
-
-            # 3. Set the version in .env
             # Edit .env and set: RCTIMING_VERSION=${{ github.ref_name }}
-
-            # 4. Start everything
             docker compose -f docker-compose.ghcr.yml up
             ```
 
             Open **http://localhost** — demo credentials in [docs/trial-quickstart.md](docs/trial-quickstart.md)
+
+            ---
+
+            ### Production environment (real decoder, no demo data)
+
+            **Requires:** Docker Compose v2.1+ on a Linux server on your venue LAN.
+
+            ```bash
+            # 1. Download docker-compose.production.yml and prod.env.example from this release
+            cp prod.env.example .env
+            # 2. Fill in every REQUIRED value in .env (passwords, JWT secret, decoder IP, etc.)
+            # 3. Start
+            docker compose -f docker-compose.production.yml up -d
+            ```
+
+            First-time setup after the stack is healthy:
+            1. Browse to **http://your-server-ip** and create the admin account
+            2. Go to **Admin → Forwarder Token**, generate a token, and paste it into `.env` as `FORWARDER_API_TOKEN`
+            3. `docker compose -f docker-compose.production.yml restart forwarder`
+
+            ---
 
             ### Docker images (GHCR)
 
@@ -100,5 +118,7 @@ jobs:
           files: |
             docker-compose.ghcr.yml
             .env.example
+            docker-compose.production.yml
+            prod.env.example
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') || startsWith(steps.version.outputs.version, '0.') }}
