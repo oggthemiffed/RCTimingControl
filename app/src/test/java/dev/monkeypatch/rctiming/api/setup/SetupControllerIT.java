@@ -44,6 +44,7 @@ class SetupControllerIT extends AbstractIntegrationTest {
         trackRepository.deleteAll();
         clubProfileRepository.deleteAll();
         jdbcTemplate.execute("TRUNCATE users CASCADE");
+        jdbcTemplate.execute("TRUNCATE race_format_templates CASCADE");
     }
 
     @Test
