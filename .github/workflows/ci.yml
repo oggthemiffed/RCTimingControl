@@ -19,7 +19,7 @@ jobs:
           cache: gradle
 
       - name: Run backend tests
-        run: ./gradlew :app:test :forwarder:test -x generateJooq -x generateProto
+        run: ./gradlew :app:test :forwarder:test -x generateJooq
 
   test-frontend:
     name: Frontend tests (Node 20)
