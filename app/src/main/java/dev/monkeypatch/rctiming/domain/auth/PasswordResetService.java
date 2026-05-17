@@ -2,7 +2,10 @@ package dev.monkeypatch.rctiming.domain.auth;
 
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +24,8 @@ import java.util.Optional;
 @Service
 @Transactional
 public class PasswordResetService {
+
+    private static final Logger log = LoggerFactory.getLogger(PasswordResetService.class);
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
@@ -78,7 +83,13 @@ public class PasswordResetService {
                 + resetBaseUrl + "?token=" + rawToken
                 + "\n\nThis link expires in 1 hour."
                 + "\n\nIf you did not request a password reset, please ignore this email.");
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+        } catch (MailException e) {
+            // Log and continue — email delivery failure must not change the HTTP response
+            // (security: email enumeration prevention requires identical 200 for all cases)
+            log.warn("Failed to send password reset email to {}: {}", user.getEmail(), e.getMessage());
+        }
     }
 
     /**
