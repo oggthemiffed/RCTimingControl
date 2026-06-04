@@ -8,7 +8,7 @@ COPY app/ app/
 COPY forwarder/ forwarder/
 RUN --mount=type=cache,target=/root/.gradle,id=gradle-forwarder \
     chmod +x gradlew && \
-    ./gradlew :forwarder:dependencies --no-daemon && \
+    ./gradlew :forwarder:generateProto --no-daemon 2>/dev/null || true && \
     find /root/.gradle -name "protoc-gen-grpc-java*.exe" -exec chmod +x {} \; && \
     ./gradlew :forwarder:installDist -x test --no-daemon
 
