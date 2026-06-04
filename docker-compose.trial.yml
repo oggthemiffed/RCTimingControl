@@ -41,7 +41,9 @@ services:
       "
 
   demo-seed:
-    build: docker/seed/
+    build:
+      context: .
+      dockerfile: docker/seed/Dockerfile
     restart: "no"
     environment:
       PGHOST: postgres
