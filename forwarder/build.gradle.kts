@@ -42,6 +42,12 @@ protobuf {
     generatedFilesBaseDir = "src/generated/proto"
 }
 
+// Generated proto sources are committed; ensure they're on the classpath even when generateProto is skipped.
+sourceSets["main"].java {
+    srcDir("src/generated/proto/main/java")
+    srcDir("src/generated/proto/main/grpc")
+}
+
 application {
     mainClass.set("dev.monkeypatch.rctiming.forwarder.ForwarderApplication")
 }

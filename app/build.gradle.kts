@@ -220,6 +220,9 @@ tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
 }
 
 sourceSets["main"].java.srcDir("src/generated/jooq")
+// Generated proto sources are committed; ensure they're on the classpath even when generateProto is skipped.
+sourceSets["main"].java.srcDir("src/generated/proto/java")
+sourceSets["main"].java.srcDir("src/generated/proto/grpc")
 
 // Proto/gRPC generated sources are committed at app/src/generated/proto (Docker builds skip codegen with -x generateProto)
 
