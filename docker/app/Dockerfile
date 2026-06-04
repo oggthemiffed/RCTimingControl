@@ -8,6 +8,8 @@ COPY app/ app/
 COPY forwarder/ forwarder/
 RUN --mount=type=cache,target=/root/.gradle \
     chmod +x gradlew && \
+    ./gradlew :app:dependencies --no-daemon && \
+    find /root/.gradle -name "protoc-gen-grpc-java*.exe" -exec chmod +x {} \; && \
     ./gradlew :app:bootJar -x test -x generateJooq --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine AS runtime

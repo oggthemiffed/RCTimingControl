@@ -8,6 +8,8 @@ COPY app/ app/
 COPY forwarder/ forwarder/
 RUN --mount=type=cache,target=/root/.gradle \
     chmod +x gradlew && \
+    ./gradlew :forwarder:dependencies --no-daemon && \
+    find /root/.gradle -name "protoc-gen-grpc-java*.exe" -exec chmod +x {} \; && \
     ./gradlew :forwarder:installDist -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
