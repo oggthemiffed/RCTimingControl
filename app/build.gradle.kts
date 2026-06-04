@@ -224,7 +224,7 @@ sourceSets["main"].java.srcDir("src/generated/jooq")
 // Proto/gRPC generated sources are committed at app/src/generated/proto (Docker builds skip codegen with -x generateProto)
 
 // Phase 5: protobuf/gRPC code generation for cloud-side gRPC server
-// Generated sources are committed at app/src/generated/proto so Docker builds can skip generateProto.
+// Generated sources are committed at app/src/generated/proto for IDE convenience.
 protobuf {
     protoc { artifact = "com.google.protobuf:protoc:3.25.8" }
     plugins {
@@ -236,4 +236,17 @@ protobuf {
         }
     }
     generatedFilesBaseDir = "src/generated/proto"
+}
+
+// protoc-gen-grpc-java is downloaded as .exe without the execute bit on Linux.
+// Resolve the plugin configuration and chmod it before protoc invokes it.
+tasks.withType<com.google.protobuf.gradle.GenerateProtoTask>().configureEach {
+    doFirst {
+        configurations
+            .matching { it.name.startsWith("protobufToolsLocator") }
+            .forEach { config ->
+                config.resolvedConfiguration.resolvedArtifacts
+                    .forEach { it.file.setExecutable(true) }
+            }
+    }
 }
