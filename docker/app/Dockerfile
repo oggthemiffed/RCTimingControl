@@ -6,9 +6,8 @@ COPY buildSrc/ buildSrc/
 COPY gradle/ gradle/
 COPY app/ app/
 COPY forwarder/ forwarder/
-RUN --mount=type=cache,target=/root/.gradle,id=gradle-app \
-    chmod +x gradlew && \
-    ./gradlew :app:generateProto --no-daemon 2>/dev/null || true && \
+RUN chmod +x gradlew && \
+    ./gradlew :app:generateProto --no-daemon; \
     find /root/.gradle -name "protoc-gen-grpc-java*.exe" -exec chmod +x {} \; && \
     ./gradlew :app:bootJar -x test -x generateJooq --no-daemon
 
