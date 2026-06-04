@@ -6,7 +6,7 @@ COPY buildSrc/ buildSrc/
 COPY gradle/ gradle/
 COPY app/ app/
 COPY forwarder/ forwarder/
-RUN --mount=type=cache,target=/root/.gradle \
+RUN --mount=type=cache,target=/root/.gradle,id=gradle-fake-decoder \
     chmod +x gradlew && \
     ./gradlew :forwarder:dependencies --no-daemon && \
     find /root/.gradle -name "protoc-gen-grpc-java*.exe" -exec chmod +x {} \; && \
