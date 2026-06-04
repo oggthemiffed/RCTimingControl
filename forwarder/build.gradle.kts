@@ -56,3 +56,12 @@ tasks.register<JavaExec>("runSimulator") {
 tasks.test {
     useJUnitPlatform()
 }
+
+// protoc-gen-grpc-java is downloaded as .exe without the execute bit on Linux
+tasks.withType<com.google.protobuf.gradle.GenerateProtoTask>().configureEach {
+    doFirst {
+        fileTree(gradle.gradleUserHomeDir.resolve("caches")) {
+            include("**/protoc-gen-grpc-java*.exe")
+        }.forEach { it.setExecutable(true) }
+    }
+}

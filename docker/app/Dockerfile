@@ -8,7 +8,7 @@ COPY app/ app/
 COPY forwarder/ forwarder/
 RUN --mount=type=cache,target=/root/.gradle \
     chmod +x gradlew && \
-    ./gradlew :app:bootJar -x test -x generateJooq --no-daemon
+    ./gradlew :app:bootJar -x test -x generateJooq -x generateProto --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
 RUN apk add --no-cache curl
