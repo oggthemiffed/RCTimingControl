@@ -51,7 +51,7 @@ jobs:
         run: cp .env.example .env
 
       - name: Start trial stack
-        run: docker compose -f docker-compose.trial.yml up -d --build
+        run: docker compose -f docker-compose.trial.yml up -d --build || (docker compose -f docker-compose.trial.yml logs app && exit 1)
         timeout-minutes: 10
 
       - name: Wait for app to be healthy
