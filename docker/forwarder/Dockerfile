@@ -7,9 +7,7 @@ COPY gradle/ gradle/
 COPY app/ app/
 COPY forwarder/ forwarder/
 RUN chmod +x gradlew && \
-    ./gradlew :forwarder:generateProto --no-daemon; \
-    find /root/.gradle -name "protoc-gen-grpc-java*.exe" -exec chmod +x {} \; && \
-    ./gradlew :forwarder:installDist -x test --no-daemon
+    ./gradlew :forwarder:installDist -x test -x generateProto --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app

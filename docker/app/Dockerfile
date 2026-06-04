@@ -7,9 +7,7 @@ COPY gradle/ gradle/
 COPY app/ app/
 COPY forwarder/ forwarder/
 RUN chmod +x gradlew && \
-    ./gradlew :app:generateProto --no-daemon; \
-    find /root/.gradle -name "protoc-gen-grpc-java*.exe" -exec chmod +x {} \; && \
-    ./gradlew :app:bootJar -x test -x generateJooq --no-daemon
+    ./gradlew :app:bootJar -x test -x generateJooq -x generateProto --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
 RUN apk add --no-cache curl

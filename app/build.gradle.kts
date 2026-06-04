@@ -237,16 +237,3 @@ protobuf {
     }
     generatedFilesBaseDir = "src/generated/proto"
 }
-
-// protoc-gen-grpc-java is downloaded as .exe without the execute bit on Linux.
-// Resolve the plugin configuration and chmod it before protoc invokes it.
-tasks.withType<com.google.protobuf.gradle.GenerateProtoTask>().configureEach {
-    doFirst {
-        configurations
-            .matching { it.name.startsWith("protobufToolsLocator") }
-            .forEach { config ->
-                config.resolvedConfiguration.resolvedArtifacts
-                    .forEach { it.file.setExecutable(true) }
-            }
-    }
-}
