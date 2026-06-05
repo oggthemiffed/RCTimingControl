@@ -10,5 +10,10 @@ export default function EntriesPage() {
     return () => setHelpContent(null);
   }, [setHelpContent]);
 
-  return <div className="text-muted-foreground">Entries — coming in Plan 06.</div>;
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold mb-4">Entries</h1>
+      <div className="text-muted-foreground">Entries — coming in Plan 06.</div>
+    </div>
+  );
 }

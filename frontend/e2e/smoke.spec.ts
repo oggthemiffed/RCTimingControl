@@ -50,7 +50,7 @@ test.describe('Admin login and navigation', () => {
   test('admin can open club profile', async ({ page }) => {
     await page.getByRole('link', { name: /club/i }).click();
     await page.waitForURL(/\/admin\/club/);
-    await expect(page.getByRole('heading', { name: /club/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Club Profile', level: 1 })).toBeVisible();
   });
 
   test('admin can open forwarder token page', async ({ page }) => {
