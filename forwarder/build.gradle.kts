@@ -42,11 +42,7 @@ protobuf {
     generatedFilesBaseDir = "src/generated/proto"
 }
 
-// Generated proto sources are committed; ensure they're on the classpath even when generateProto is skipped.
-sourceSets["main"].java {
-    srcDir("src/generated/proto/main/java")
-    srcDir("src/generated/proto/main/grpc")
-}
+// Proto srcDirs are registered by the protobuf plugin; adding them again causes duplicate class errors.
 
 application {
     mainClass.set("dev.monkeypatch.rctiming.forwarder.ForwarderApplication")
