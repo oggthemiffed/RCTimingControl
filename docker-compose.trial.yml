@@ -72,7 +72,9 @@ services:
       TTS_ENDPOINT: piper:10200
       TTS_DEFAULT_VOICE: en_GB-alan-medium
       TTS_ENABLED: "true"
-      SPRING_AUTOCONFIGURE_EXCLUDE: org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration
+      SPRING_MAIL_HOST: localhost
+      SPRING_MAIL_PORT: 25
+      SPRING_MAIL_TEST_CONNECTION: "false"
     depends_on:
       postgres:
         condition: service_healthy
