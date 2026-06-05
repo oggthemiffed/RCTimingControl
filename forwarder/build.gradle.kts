@@ -42,7 +42,12 @@ protobuf {
     generatedFilesBaseDir = "src/generated/proto"
 }
 
-// Proto srcDirs are registered by the protobuf plugin; adding them again causes duplicate class errors.
+// Docker builds skip generateProto (-x generateProto) so the plugin never registers its output dirs.
+// Pass -PcommittedProto to put the committed generated sources on the source path in that case.
+if (project.hasProperty("committedProto")) {
+    sourceSets["main"].java.srcDir("src/generated/proto/main/java")
+    sourceSets["main"].java.srcDir("src/generated/proto/main/grpc")
+}
 
 application {
     mainClass.set("dev.monkeypatch.rctiming.forwarder.ForwarderApplication")

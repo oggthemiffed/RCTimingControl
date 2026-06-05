@@ -220,7 +220,12 @@ tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
 }
 
 sourceSets["main"].java.srcDir("src/generated/jooq")
-// Proto srcDirs are registered by the protobuf plugin; adding them again causes duplicate class errors.
+// Docker builds skip generateProto (-x generateProto) so the plugin never registers its output dirs.
+// Pass -PcommittedProto to put the committed generated sources on the source path in that case.
+if (project.hasProperty("committedProto")) {
+    sourceSets["main"].java.srcDir("src/generated/proto/main/java")
+    sourceSets["main"].java.srcDir("src/generated/proto/main/grpc")
+}
 
 // Proto/gRPC generated sources are committed at app/src/generated/proto (Docker builds skip codegen with -x generateProto)
 
