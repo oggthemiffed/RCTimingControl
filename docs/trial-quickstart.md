@@ -81,14 +81,14 @@ All accounts use the password: **`trial123`**
 ### As a racer (`dave.racer@example.com`)
 
 1. Log in and view your profile, car, and transponder
-2. Look at the event schedule — the Wyvern Spring Club Championship is listed
+2. Look at the event schedule — the Wyvern Winter Series Round 4 is listed as an upcoming open event
 3. View your entry history and past results
 
 ### As admin (`admin@example.com`)
 
 1. Go to **Admin** → **Events** to see the championship event and its races
 2. Go to **Admin** → **Championships** to see the points standings
-3. Go to **Admin** → **Club** to see the club profile (you can edit this to match your own club)
+3. Go to **Admin** → **Club Profile** to see the club profile (you can edit this to match your own club)
 4. Go to **Admin** → **Forwarder Token** to see how the decoder connection is configured
 
 ### Race control
@@ -98,9 +98,9 @@ All accounts use the password: **`trial123`**
 3. The fake decoder is sending live lap passings — you should see timing data updating in real time
 4. Try starting a race: select a race, click **Call Grid**, then **Start**
 
-### Live timing (public)
+### Event schedule (public)
 
-Open [http://localhost/timing](http://localhost/timing) in a second browser tab — this is the public-facing live timing display, no login required.
+Open [http://localhost/events](http://localhost/events) in a second browser tab — this is the public-facing event schedule, no login required.
 
 ---
 
