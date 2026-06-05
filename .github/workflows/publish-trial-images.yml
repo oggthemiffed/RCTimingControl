@@ -40,7 +40,7 @@ jobs:
         with:
           images: ghcr.io/oggthemiffed/rctimingcontrol/${{ matrix.image }}
           tags: |
-            type=semver,pattern={{version}}
+            type=semver,pattern=v{{version}}
 
       - uses: docker/build-push-action@v6
         with:
