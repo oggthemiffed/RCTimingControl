@@ -75,6 +75,7 @@ services:
       SPRING_MAIL_HOST: localhost
       SPRING_MAIL_PORT: 25
       SPRING_MAIL_TEST_CONNECTION: "false"
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
     depends_on:
       postgres:
         condition: service_healthy
