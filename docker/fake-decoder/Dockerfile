@@ -7,7 +7,7 @@ COPY gradle/ gradle/
 COPY app/ app/
 COPY forwarder/ forwarder/
 RUN chmod +x gradlew && \
-    ./gradlew :forwarder:installDist -x test -x generateProto --no-daemon
+    ./gradlew :forwarder:installDist -x test -x generateProto -PcommittedProto --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
