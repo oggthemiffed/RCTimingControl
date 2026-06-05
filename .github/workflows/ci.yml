@@ -68,10 +68,10 @@ jobs:
           docker compose -f docker-compose.trial.yml logs app
           exit 1
 
-      - name: Wait for demo seed to complete
+      - name: Run demo seed
         run: |
-          echo "Waiting for demo-seed..."
-          docker compose -f docker-compose.trial.yml wait demo-seed
+          echo "Running demo-seed..."
+          docker compose -f docker-compose.trial.yml up --no-deps demo-seed
           echo "Seed complete"
 
       - uses: actions/setup-node@v4
