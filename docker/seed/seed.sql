@@ -75,8 +75,8 @@ DECLARE
     v_round_id       bigint;
     v_race_id        bigint;
 
-    -- known BCrypt hash for password 'trial123' (cost 10, Spring Security BCryptPasswordEncoder)
-    v_pw_hash        text := '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+    -- BCrypt hash for password 'trial123' (cost 10, verified with Python bcrypt)
+    v_pw_hash        text := '$2b$10$O1DvFrcjL3XLlNnXWdaa1.vynY1S5eZ2eLwvJ9NuA2jbxLcLO4y52';
 
 BEGIN
     -- Guard 1: schema not yet migrated — fail loudly so compose retries.
