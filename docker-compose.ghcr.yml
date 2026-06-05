@@ -68,6 +68,10 @@ services:
       TTS_ENDPOINT: piper:10200
       TTS_DEFAULT_VOICE: en_GB-alan-medium
       TTS_ENABLED: "true"
+      SPRING_MAIL_HOST: localhost
+      SPRING_MAIL_PORT: 25
+      SPRING_MAIL_TEST_CONNECTION: "false"
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
     depends_on:
       postgres:
         condition: service_healthy
