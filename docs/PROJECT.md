@@ -72,20 +72,20 @@ Racers can enter events online and manage their own car/transponder details, whi
 
 ## Evolution
 
-This document evolves at phase transitions and milestone boundaries.
+Keep this document accurate as the project changes.
 
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
+**When completing a significant feature or fix:**
+1. Requirements validated? → Move to Validated with a short note
+2. Requirements invalidated? → Move to Out of Scope with reason
 3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
+4. Decisions to log? → Add to Key Decisions table
 5. "What This Is" still accurate? → Update if drifted
 
-**After each milestone** (via `/gsd-complete-milestone`):
+**Periodically (e.g. after a batch of issues closed):**
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+4. Update Context to reflect current state
 
 ---
 *Last updated: 2026-05-03 — Phase 7 complete (Results & Championship)*

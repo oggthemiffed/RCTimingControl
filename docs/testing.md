@@ -109,12 +109,13 @@ The live timing panel will update in real time via WebSocket without needing phy
 
 ## Manual UAT checklists
 
-Each phase has its own UAT document with detailed steps and recorded pass/fail results.
-These are the single source of truth for manual testing — do not duplicate steps here.
+Historical UAT records from v1 development are kept in `.planning/phases/` as a reference for
+what was tested and how. They are not maintained going forward — use GitHub Issues to track
+manual testing for new work.
 
 | Phase | UAT document | Status |
 |-------|-------------|--------|
 | Phase 1 — Domain Foundation | [01-HUMAN-UAT.md](../.planning/phases/01-domain-foundation/01-HUMAN-UAT.md) | Complete (4/4) |
 | Phase 2 — Racer Portal | [02-HUMAN-UAT.md](../.planning/phases/02-racer-portal/02-HUMAN-UAT.md) | Complete (8/8) |
 | Phase 3 — Admin Panel | [03-HUMAN-UAT.md](../.planning/phases/03-admin-panel-event-management/03-HUMAN-UAT.md) | Complete (18/18) |
-| Phase 4 — Race Control | [04-UAT.md](../.planning/phases/04-race-state-machine/04-UAT.md) | In progress |
+| Phase 4 — Race Control | [04-UAT.md](../.planning/phases/04-race-state-machine/04-UAT.md) | Complete |

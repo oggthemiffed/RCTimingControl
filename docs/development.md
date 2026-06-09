@@ -272,3 +272,51 @@ Run `make help` to see all targets. Quick reference:
 ## Email in development
 
 Password reset emails are caught by Mailpit. Open `http://localhost:8025` to view them. No real email is ever sent in dev — all SMTP traffic goes to `localhost:1025`.
+
+---
+
+## Developer workflow
+
+### Picking up a piece of work
+
+1. Check [GitHub Issues](https://github.com/oggthemiffed/RCTimingControl/issues) for the next task
+2. Read `CLAUDE.md` for architecture context before starting — it's the primary reference for any AI-assisted session
+3. Read `docs/PROJECT.md` for requirements and `docs/REQUIREMENTS.md` for the full requirement list
+
+### Making a change
+
+1. Start the dev environment: `make dev-start`
+2. Implement the change, following the patterns in `CLAUDE.md` (domain module for writes, jOOQ query module for reads, no cross-module Hibernate)
+3. If adding a database column or table, add a Flyway migration (`V{next}__description.sql`) and re-run `./gradlew :app:generateJooq`
+4. Write or update tests — backend integration tests in `app/src/test/`, frontend unit tests in `frontend/src/`
+5. Run `make test-fast` (backend) and `npm test` in `frontend/` before pushing
+
+### Schema changes
+
+Any new `V*__.sql` migration file requires jOOQ codegen to be re-run before the code will compile:
+
+```bash
+make up
+./gradlew :app:generateJooq
+```
+
+Flyway applies migrations automatically on backend startup — you do not need to run them manually.
+
+### Submitting a PR
+
+```bash
+gh pr create
+```
+
+Reference the GitHub Issue number in the PR description (`Closes #N`). PRs should include passing tests — `make test` runs the full suite including forwarder tests.
+
+### Working with Claude Code
+
+Open the project in Claude Code from the repo root. `CLAUDE.md` is loaded automatically and gives Claude the full architecture context. For a new feature or bug fix, describe the GitHub Issue and Claude will use the existing patterns.
+
+Key docs to reference in a session:
+- `CLAUDE.md` — stack, architecture, module boundaries, rules
+- `docs/PROJECT.md` — what the system is and its requirements
+- `docs/REQUIREMENTS.md` — full requirement list (AUTH, RACER, EVENT, etc.)
+- `docs/architecture.md` — deeper architecture notes
+- `.planning/phases/` — historical decision log per phase (useful if you hit an unexpected behaviour)
