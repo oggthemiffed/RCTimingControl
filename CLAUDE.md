@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A web-based RC club management and race timing system replacing RCResults. Two user roles: **racers** (self-service portal for profile, cars, transponders, online event entry) and **officials** (browser-based race control client for running a full meeting). Live lap timing is received from AMB/MyLaps decoder hardware over TCP via a separate forwarder application.
 
-See `.planning/PROJECT.md` for the authoritative requirements summary and `.planning/REQUIREMENTS.md` for the full v1 requirement list (88 requirements across AUTH, RACER, CLUB, TRACK, EVENT, FORMAT, FORWARDER, TIMING, CTRL, AUDIO, OFFICIAL, PRACTICE, CHAMP, RESULT domains).
+See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUIREMENTS.md` for the full v1 requirement list (88 requirements across AUTH, RACER, CLUB, TRACK, EVENT, FORMAT, FORWARDER, TIMING, CTRL, AUDIO, OFFICIAL, PRACTICE, CHAMP, RESULT domains).
 
 ## Planned Stack
 
