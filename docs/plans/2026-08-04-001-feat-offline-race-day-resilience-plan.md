@@ -15,7 +15,7 @@ execution: code
 
 - **Objective:** Design offline-resilient race-day operation for RC Timing Control so a venue can run a complete meeting — check-in through results — with zero internet for hours or a full day, while the cloud remains authoritative for everything outside race day.
 - **Product authority:** This plan owns the offline / race-day-resilience decision. Racer self-service, event and championship administration, and cross-club reporting remain cloud-owned and are not active scope here, except where this plan defines the handoff of authority to and from them.
-- **Open blockers:** None block planning. Four implementation-level choices are deferred to `ce-plan` (see Outstanding Questions).
+- **Open blockers:** None block planning. Two implementation-level choices are deferred to `ce-plan` (see Outstanding Questions).
 
 ## Product Contract
 
@@ -31,7 +31,7 @@ The current architecture cannot absorb that failure. It is a single cloud-hosted
 
 ### Key Decisions
 
-- **KD1. Local authority is triggered by an explicit official action (open/close event day), with automatic cloud-side lockout only as a mid-day safety net if connectivity fails before an explicit close.** (session-settled: user-directed — chosen over a fully automatic detect-and-failover trigger: removes split-brain ambiguity between cloud and venue while still protecting against failure mid-day. The anti-split-brain property depends on planning-stage tuning of the lockout threshold and an authenticated trigger signal — see Outstanding Questions.) Governs R1, R2, R3.
+- **KD1. Local authority is triggered by an explicit official action (open/close event day), with automatic cloud-side lockout only as a mid-day safety net if connectivity fails before an explicit close.** (session-settled: user-directed — chosen over a fully automatic detect-and-failover trigger: removes split-brain ambiguity between cloud and venue while still protecting against failure mid-day. The anti-split-brain property depends on planning-stage tuning of the lockout threshold; the trigger signal itself is a dedicated authenticated heartbeat, see KD10.) Governs R1, R2, R3.
 - **KD2. Each event day is opened and closed independently; multi-day continuous local sessions are out of scope for now.** (session-settled: user-directed — chosen over carrying local authority across a whole multi-day event: treated as future/low-likelihood work, since clubs can usually recover connectivity via mobile hotspot within a day.) Governs R4.
 - **KD3. The Race Day Module is scoped to event-day operations only (check-in, race control, timing, local results) rather than replicating full admin capability locally.** (session-settled: user-directed — chosen over running the full cloud application at the venue: sidesteps future multi-tenancy complications if the cloud comes to host multiple clubs, and keeps the local install light. "Light" refers to install footprint and avoided multi-tenancy, not a reduced feature set — R6 still requires full race-control parity for the workflows this plan covers.) Governs R5, R6, R8.
 - **KD4. The Race Day Module is a Java service extending the existing forwarder, serving the existing React frontend, rather than a native desktop application.** (session-settled: user-directed — chosen over a native WinForms/C# app: avoids Windows-only lock-in and a second permanent UI stack to maintain; API-first design leaves room for a richer native front-end later if actually wanted.) Governs R6, R7.
@@ -39,6 +39,9 @@ The current architecture cannot absorb that failure. It is a single cloud-hosted
 - **KD6. Sync from venue to cloud is continuous and opportunistic rather than batched at end-of-day, with an explicit close-time completeness check that warns rather than silently assuming success.** (session-settled: user-directed — ensures data flows "as soon as possible" and surfaces an incomplete sync instead of hiding it.) Governs R11, R12, R13.
 - **KD7. The venue proactively pre-caches the day's entries, schedule, and format config during setup, rather than assuming connectivity at the moment racing starts.** (session-settled: user-directed) Governs R14.
 - **KD8. The public cloud event page stays reachable during a venue outage, showing possibly-stale data with an outage indicator, rather than needing to reflect live data in real time.** (session-settled: user-directed) Governs R15.
+- **KD9. Race-control and state-machine logic is extracted into a shared, framework-independent module used by both the main app and the Race Day Module, rather than duplicated locally.** (session-settled: user-directed — chosen over a scoped duplication of that logic in the Race Day Module: today's forwarder has no build dependency on the app module and the logic is Spring/JPA-coupled, so extraction is real, necessary scope rather than a trivial reuse; one implementation to maintain beats two that can drift.) Governs R6.
+- **KD10. The cloud-side automatic lockout (R3) is driven by a dedicated, authenticated heartbeat channel, separate from the race-day data-sync stream.** (session-settled: user-directed — chosen over keying lockout off the data-sync channel: enables faster, more precise loss detection at the cost of a second channel to build and secure.) Governs R3.
+- **KD11. Race-control domain events (state transitions, marshal adjustments, results, check-in, transponder reassignment) sync to the cloud over a channel separate from the existing raw-passings gRPC stream.** (session-settled: user-directed — chosen over widening the existing `FORWARDER-03` stream: keeps raw-passings streaming untouched and lowest-risk, at the cost of a second connection to manage.) Governs R11.
 
 ### Actors
 
@@ -185,7 +188,7 @@ sequenceDiagram
 ### Dependencies / Assumptions
 
 - Assumes a venue machine already runs the forwarder and remains present and powered through the event day, per existing `FORWARDER-01`–`FORWARDER-05`.
-- Assumes race-control and state-machine logic can be reused by the Race Day Module without full duplication — though today's shared-domain-model pattern between the forwarder and the main app (`FORWARDER-04`) covers only wire-format DTOs, not the Spring/JPA-coupled race-control services themselves. Whether reuse requires extracting a framework-independent module, or a scoped duplication is acceptable, is an open planning question (see Outstanding Questions).
+- Assumes extracting race-control and state-machine logic into a shared, framework-independent module (KD9) is undertaken as part of this work — today's shared-domain-model pattern between the forwarder and the main app (`FORWARDER-04`) covers only wire-format DTOs, not the Spring/JPA-coupled race-control services themselves, so this extraction is real scope rather than a trivial reuse.
 - Assumes clubs generally have a mobile-hotspot or similar fallback, so complete multi-day blackouts are low-likelihood and out of scope for now (KD2).
 - Assumes the venue's local network (WiFi/LAN) has enough capacity to serve live timing, schedule, and results to the attendee volumes seen at regional/nationals-scale events; graceful degradation under overload (e.g., connection caps, polling fallback) is not addressed by this plan.
 
@@ -194,9 +197,7 @@ sequenceDiagram
 **Deferred to Planning:**
 
 - Choice of local persistence technology for the Race Day Module (must stay lightweight, minimal-install, and OS-independent).
-- Exact mechanism, thresholds, and authenticity guarantees for the cloud-side automatic lockout (R3) — heartbeat interval, timeout before lockout engages, and confirmation that the trigger signal cannot be spoofed or suppressed by a third party on the venue network, and that it keys off the same channel used for race-day data sync rather than a separate heartbeat that could diverge.
-- How the existing gRPC bidirectional stream (currently raw passings only) widens to carry race-control domain events (state transitions, marshal adjustments, results) without breaking `FORWARDER-03`.
-- Whether reusing the app's existing race-control/state-machine logic in the Race Day Module requires extracting it into a framework-independent module, or whether a scoped duplication is acceptable — today's forwarder has no build dependency on the main app module.
+- Exact heartbeat interval and timeout tuning for the KD10 lockout signal — the channel and authentication are settled; the specific numbers are a planning-stage call.
 
 ### Sources / Research
 
