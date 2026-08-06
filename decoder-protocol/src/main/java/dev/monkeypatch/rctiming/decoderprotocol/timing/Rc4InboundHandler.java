@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.forwarder.timing;
+package dev.monkeypatch.rctiming.decoderprotocol.timing;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;

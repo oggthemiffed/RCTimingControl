@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.forwarder.timing;
+package dev.monkeypatch.rctiming.decoderprotocol.timing;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

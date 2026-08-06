@@ -6,7 +6,7 @@ import dev.monkeypatch.rctiming.forwarder.proto.ForwarderStatus;
 import dev.monkeypatch.rctiming.forwarder.proto.LapPassing;
 import dev.monkeypatch.rctiming.forwarder.proto.StatusAck;
 import dev.monkeypatch.rctiming.forwarder.proto.TimingServiceGrpc;
-import dev.monkeypatch.rctiming.forwarder.timing.EpochCorrectedPassing;
+import dev.monkeypatch.rctiming.decoderprotocol.timing.EpochCorrectedPassing;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.ClientCall;

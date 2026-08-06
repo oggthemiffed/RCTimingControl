@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.forwarder.timing;
+package dev.monkeypatch.rctiming.decoderprotocol.timing;
 
 /**
  * A {@link ParsedPassing} whose {@code timeSinceStart} has been converted to an absolute

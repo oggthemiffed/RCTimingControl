@@ -2,7 +2,7 @@ package dev.monkeypatch.rctiming.forwarder;
 
 import dev.monkeypatch.rctiming.forwarder.config.ForwarderConfig;
 import dev.monkeypatch.rctiming.forwarder.grpc.ForwarderGrpcClient;
-import dev.monkeypatch.rctiming.forwarder.timing.AmbRc4TimingSource;
+import dev.monkeypatch.rctiming.decoderprotocol.timing.AmbRc4TimingSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

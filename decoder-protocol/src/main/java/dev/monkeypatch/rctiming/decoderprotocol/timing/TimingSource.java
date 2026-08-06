@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.forwarder.timing;
+package dev.monkeypatch.rctiming.decoderprotocol.timing;
 
 /**
  * Timing data source interface (TIMING-05).

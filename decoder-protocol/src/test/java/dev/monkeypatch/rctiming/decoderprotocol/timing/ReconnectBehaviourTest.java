@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.forwarder.timing;
+package dev.monkeypatch.rctiming.decoderprotocol.timing;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;

@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.forwarder.timing;
+package dev.monkeypatch.rctiming.decoderprotocol.timing;
 
 /**
  * Immutable record of a single PASSING event parsed from the RC-4 text protocol.
