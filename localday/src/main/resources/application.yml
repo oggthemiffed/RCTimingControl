@@ -1,0 +1,27 @@
+# localday: the offline race-day application. Runs standalone on a venue laptop with no
+# internet connectivity and no dependency on the app/ module's database or migrations.
+server:
+  port: 8081
+
+spring:
+  application:
+    name: localday
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  lifecycle:
+    # Generous shutdown timeout — the embedded PostgreSQL bean needs time to stop cleanly
+    # (pg_ctl stop) before the JVM exits, or a laptop lid-close could still corrupt data.
+    timeout-per-shutdown-phase: 30s
+
+localday:
+  datasource:
+    embedded-postgres:
+      # Real on-disk path under the module's runtime working directory — NOT tmpfs/in-memory.
+      # Durability across an unclean shutdown is the entire reason embedded Postgres was chosen
+      # over H2 for this module; an in-memory data directory would defeat that purpose.
+      data-directory: ${LOCALDAY_PG_DATA_DIR:./data/localday-pg}
