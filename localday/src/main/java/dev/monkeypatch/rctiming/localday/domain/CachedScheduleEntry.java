@@ -1,7 +1,10 @@
 package dev.monkeypatch.rctiming.localday.domain;
 
+import dev.monkeypatch.rctiming.localday.race.RaceState;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -42,8 +45,15 @@ public class CachedScheduleEntry {
     @Column(name = "scheduled_start_at")
     private Instant scheduledStartAt;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status = "PENDING";
+    private RaceState status = RaceState.PENDING;
+
+    @Column(name = "started_at")
+    private Instant startedAt;
+
+    @Column(name = "finished_at")
+    private Instant finishedAt;
 
     @Column(name = "synced_at", nullable = false)
     private Instant syncedAt = Instant.now();
@@ -78,8 +88,14 @@ public class CachedScheduleEntry {
     public Instant getScheduledStartAt() { return scheduledStartAt; }
     public void setScheduledStartAt(Instant scheduledStartAt) { this.scheduledStartAt = scheduledStartAt; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public RaceState getStatus() { return status; }
+    public void setStatus(RaceState status) { this.status = status; }
+
+    public Instant getStartedAt() { return startedAt; }
+    public void setStartedAt(Instant startedAt) { this.startedAt = startedAt; }
+
+    public Instant getFinishedAt() { return finishedAt; }
+    public void setFinishedAt(Instant finishedAt) { this.finishedAt = finishedAt; }
 
     public Instant getSyncedAt() { return syncedAt; }
     public void setSyncedAt(Instant syncedAt) { this.syncedAt = syncedAt; }
