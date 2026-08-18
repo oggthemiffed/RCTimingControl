@@ -25,3 +25,8 @@ localday:
       # Durability across an unclean shutdown is the entire reason embedded Postgres was chosen
       # over H2 for this module; an in-memory data directory would defeat that purpose.
       data-directory: ${LOCALDAY_PG_DATA_DIR:./data/localday-pg}
+  decoder:
+    # RC-4 text protocol (firmware < 4.5) — port 5100 is the confirmed club-hardware default,
+    # matching forwarder.properties' forwarder.decoder.port default.
+    host: ${LOCALDAY_DECODER_HOST:localhost}
+    port: ${LOCALDAY_DECODER_PORT:5100}
