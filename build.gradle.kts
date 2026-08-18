@@ -1,5 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "3.4.7" apply false
+    id("org.springframework.boot") version "3.4.11" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
     id("nu.studer.jooq") version "9.0" apply false
     java
