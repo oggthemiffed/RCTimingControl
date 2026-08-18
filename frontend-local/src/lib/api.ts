@@ -69,3 +69,59 @@ export async function recover(
   });
   return data;
 }
+
+export interface CheckinEntry {
+  cachedEntryId: number;
+  racerName: string;
+  carName: string;
+  className: string;
+  transponderNumber: string;
+  checkedIn: boolean;
+  checkedInAt: string | null;
+}
+
+export interface CheckinConfirmResponse {
+  cachedEntryId: number;
+  racerName: string;
+  checkedIn: boolean;
+  checkedInAt: string;
+  alreadyCheckedIn: boolean;
+}
+
+export interface ReassignTransponderResponse {
+  cachedEntryId: number;
+  oldTransponderNumber: string;
+  newTransponderNumber: string;
+}
+
+export async function checkinResolve(transponderNumber: string): Promise<CheckinEntry> {
+  const { data } = await api.post<CheckinEntry>('/api/v1/checkin/resolve', {
+    transponderNumber,
+  });
+  return data;
+}
+
+export async function checkinSearch(query: string): Promise<CheckinEntry[]> {
+  const { data } = await api.get<CheckinEntry[]>('/api/v1/checkin/search', {
+    params: { query },
+  });
+  return data;
+}
+
+export async function checkinConfirm(cachedEntryId: number): Promise<CheckinConfirmResponse> {
+  const { data } = await api.post<CheckinConfirmResponse>(
+    `/api/v1/checkin/${cachedEntryId}/confirm`,
+  );
+  return data;
+}
+
+export async function reassignTransponder(
+  cachedEntryId: number,
+  newTransponderNumber: string,
+): Promise<ReassignTransponderResponse> {
+  const { data } = await api.post<ReassignTransponderResponse>('/api/v1/transponders/reassign', {
+    cachedEntryId,
+    newTransponderNumber,
+  });
+  return data;
+}

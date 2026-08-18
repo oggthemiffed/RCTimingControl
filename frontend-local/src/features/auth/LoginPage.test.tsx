@@ -13,6 +13,13 @@ vi.mock('@/lib/auth', () => ({
   storeSession: vi.fn(),
 }));
 
+// CheckInDesk pulls in the camera/scanner stack (getUserMedia, barcode-detector, WASM), which
+// is irrelevant to LoginPage's own behavior and isn't available in jsdom — stub it so these
+// tests stay focused on the login/session flow.
+vi.mock('@/features/checkin/CheckInDesk', () => ({
+  default: () => <div>Check-in Desk (mocked)</div>,
+}));
+
 import { listOfficials, login, recover } from '@/lib/api';
 import { getStoredSession, storeSession } from '@/lib/auth';
 
@@ -52,7 +59,7 @@ describe('LoginPage', () => {
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
-    await screen.findByText('Logged in as Jane Doe');
+    await screen.findByText('Check-in Desk (mocked)');
 
     expect(login).toHaveBeenCalledWith(1, '1234');
     expect(storeSession).toHaveBeenCalledWith({
@@ -134,7 +141,7 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    await screen.findByText('Logged in as Existing Official');
+    await screen.findByText('Check-in Desk (mocked)');
     expect(screen.queryByLabelText('Official')).toBeNull();
     expect(listOfficials).not.toHaveBeenCalled();
   });

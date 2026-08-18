@@ -6,6 +6,7 @@ import {
   type OfficialSummary,
 } from '@/lib/api';
 import { getStoredSession, storeSession, type StoredSession } from '@/lib/auth';
+import CheckInDesk from '@/features/checkin/CheckInDesk';
 
 type LoginError =
   | { kind: 'invalid_credential' }
@@ -105,11 +106,7 @@ export default function LoginPage() {
   }
 
   if (session) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Logged in as {session.officialName}</p>
-      </div>
-    );
+    return <CheckInDesk />;
   }
 
   return (
