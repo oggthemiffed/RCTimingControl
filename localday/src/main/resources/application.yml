@@ -30,3 +30,7 @@ localday:
     # matching forwarder.properties' forwarder.decoder.port default.
     host: ${LOCALDAY_DECODER_HOST:localhost}
     port: ${LOCALDAY_DECODER_PORT:5100}
+  # Extra CSP connect-src origin for the future cloud-sync channel (U6 local auth's
+  # LocalSecurityConfig). Empty by default — no additional origin is appended to the CSP until a
+  # later unit actually wires up cloud sync.
+  cloud-sync-origin: ${LOCALDAY_CLOUD_SYNC_ORIGIN:}

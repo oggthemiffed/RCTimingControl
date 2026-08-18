@@ -14,6 +14,11 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * cloud injects a {@code JwtChannelInterceptor} here — {@code :localday} has no local auth yet
  * (a later unit, U6, adds a day-scoped local credential), so no interceptor is added here,
  * matching this unit's actual scope: the STOMP endpoint is left open for now.
+ *
+ * <p>U6 added {@code LocalSecurityConfig}, which now HTTP-gates most endpoints behind a local
+ * session token, but explicitly {@code permitAll()}s {@code /ws/timing} — live timing broadcast
+ * is the anonymous read-only board/attendee view R9 preserves, not a write action. No
+ * STOMP-frame-level (CONNECT) auth exists yet; that remains future scope if it's ever needed.
  */
 @Configuration
 @EnableWebSocketMessageBroker
