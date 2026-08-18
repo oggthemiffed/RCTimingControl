@@ -1,0 +1,71 @@
+import axios from 'axios';
+import { getStoredSession, clearSession } from './auth';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
+});
+
+api.interceptors.request.use(async (config) => {
+  const session = await getStoredSession();
+  if (session) {
+    config.headers.Authorization = `Bearer ${session.sessionToken}`;
+  }
+  return config;
+});
+
+// :localday's session model has no refresh-token concept. A 401 means the stored session is
+// no longer valid (expired or unknown to the server) — clear it reactively so the UI falls
+// back to the login screen. There is nothing to retry.
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      await clearSession();
+    }
+    return Promise.reject(error);
+  },
+);
+
+export default api;
+
+export interface OfficialSummary {
+  credentialId: number;
+  officialName: string;
+  recovery: boolean;
+}
+
+export interface LoginResponse {
+  sessionToken: string;
+  officialName: string;
+  credentialId: number;
+}
+
+export interface RecoverResponse {
+  unlocked: boolean;
+}
+
+export async function listOfficials(): Promise<OfficialSummary[]> {
+  const { data } = await api.get<OfficialSummary[]>('/api/v1/local-auth/officials');
+  return data;
+}
+
+export async function login(credentialId: number, secret: string): Promise<LoginResponse> {
+  const { data } = await api.post<LoginResponse>('/api/v1/local-auth/login', {
+    credentialId,
+    secret,
+  });
+  return data;
+}
+
+export async function recover(
+  recoveryCredentialId: number,
+  recoverySecret: string,
+  targetCredentialId: number,
+): Promise<RecoverResponse> {
+  const { data } = await api.post<RecoverResponse>('/api/v1/local-auth/recover', {
+    recoveryCredentialId,
+    recoverySecret,
+    targetCredentialId,
+  });
+  return data;
+}
