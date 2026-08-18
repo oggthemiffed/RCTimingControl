@@ -51,6 +51,11 @@ public class LocalSessionAuthenticationFilter extends OncePerRequestFilter {
                 List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_OFFICIAL"));
                 var auth = new UsernamePasswordAuthenticationToken(
                         principal.get().officialName(), null, authorities);
+                // Preserve getName()/getPrincipal() behavior exactly (a plain display-name string)
+                // for anything already relying on it, while additionally attaching the full
+                // SessionPrincipal (with credentialId) via getDetails() so write-action controllers
+                // (U7+) can resolve the acting official's numeric identity for audit trails.
+                auth.setDetails(principal.get());
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
             // Invalid/expired/unknown token: do not set the context; Spring Security's own

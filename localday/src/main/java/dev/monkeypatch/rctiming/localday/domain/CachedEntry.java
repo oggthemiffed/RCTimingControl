@@ -51,6 +51,12 @@ public class CachedEntry {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
+    @Column(name = "checked_in", nullable = false)
+    private boolean checkedIn = false;
+
+    @Column(name = "checked_in_at")
+    private Instant checkedInAt;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -83,4 +89,10 @@ public class CachedEntry {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public boolean isCheckedIn() { return checkedIn; }
+    public void setCheckedIn(boolean checkedIn) { this.checkedIn = checkedIn; }
+
+    public Instant getCheckedInAt() { return checkedInAt; }
+    public void setCheckedInAt(Instant checkedInAt) { this.checkedInAt = checkedInAt; }
 }
