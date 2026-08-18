@@ -10,4 +10,6 @@ public interface CachedScheduleEntryRepository extends JpaRepository<CachedSched
     Optional<CachedScheduleEntry> findByCloudRaceId(Long cloudRaceId);
 
     List<CachedScheduleEntry> findAllByOrderBySequenceAsc();
+
+    List<CachedScheduleEntry> findByClassNameAndFinalLetterIsNotNull(String className);
 }
