@@ -6,5 +6,4 @@ public record PreCacheResponseDto(PreCacheEventDto event,
                                    List<PreCacheEntryDto> entries,
                                    List<PreCacheScheduleDto> schedule,
                                    List<PreCacheCredentialDto> officialCredentials,
-                                   PreCacheInstanceSecretDto instanceSecret,
-                                   long generation) {}
+                                   PreCacheInstanceSecretDto instanceSecret) {}

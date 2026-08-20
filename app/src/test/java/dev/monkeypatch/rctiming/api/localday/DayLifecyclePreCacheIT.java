@@ -18,6 +18,7 @@ import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.QualifyingType;
 import dev.monkeypatch.rctiming.domain.format.StartType;
 import dev.monkeypatch.rctiming.domain.format.TimedRaceConfig;
+import dev.monkeypatch.rctiming.domain.localday.EventSyncGenerationRepository;
 import dev.monkeypatch.rctiming.domain.localday.LocaldayCredentialRepository;
 import dev.monkeypatch.rctiming.domain.localday.LocaldayInstanceSecretRepository;
 import dev.monkeypatch.rctiming.domain.race.Race;
@@ -90,6 +91,9 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
     @Autowired
     LocaldayInstanceSecretRepository localdayInstanceSecretRepository;
 
+    @Autowired
+    EventSyncGenerationRepository eventSyncGenerationRepository;
+
     private String adminToken;
     private Long adminUserId;
 
@@ -115,11 +119,12 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
 
         ResponseEntity<EventLockStatusDto> openResp = restTemplate.exchange(
                 "/api/v1/localday/events/" + eventId + "/lifecycle/open", HttpMethod.POST,
-                new HttpEntity<>(adminHeaders()), EventLockStatusDto.class);
+                new HttpEntity<>(Map.of("instanceId", "instance-open-1"), adminHeaders()), EventLockStatusDto.class);
 
         assertThat(openResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(openResp.getBody().locked()).isTrue();
         assertThat(openResp.getBody().lockedAt()).isNotNull();
+        assertThat(openResp.getBody().generation()).isEqualTo(1L);
 
         ResponseEntity<EventLockStatusDto> statusResp = restTemplate.exchange(
                 "/api/v1/localday/events/" + eventId + "/lifecycle/lock-status", HttpMethod.GET,
@@ -128,6 +133,7 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
         assertThat(statusResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(statusResp.getBody().locked()).isTrue();
         assertThat(statusResp.getBody().lockedAt()).isNotNull();
+        assertThat(statusResp.getBody().generation()).isEqualTo(1L);
     }
 
     @Test
@@ -135,7 +141,7 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
         Long eventId = createEventInDb();
         restTemplate.exchange(
                 "/api/v1/localday/events/" + eventId + "/lifecycle/open", HttpMethod.POST,
-                new HttpEntity<>(adminHeaders()), EventLockStatusDto.class);
+                new HttpEntity<>(Map.of("instanceId", "instance-open-2"), adminHeaders()), EventLockStatusDto.class);
 
         ResponseEntity<CloseDayResponseDto> closeResp = restTemplate.exchange(
                 "/api/v1/localday/events/" + eventId + "/lifecycle/close", HttpMethod.POST,
@@ -155,7 +161,7 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
         Long eventId = createEventInDb();
         restTemplate.exchange(
                 "/api/v1/localday/events/" + eventId + "/lifecycle/open", HttpMethod.POST,
-                new HttpEntity<>(adminHeaders()), EventLockStatusDto.class);
+                new HttpEntity<>(Map.of("instanceId", "instance-open-3"), adminHeaders()), EventLockStatusDto.class);
 
         ResponseEntity<CloseDayResponseDto> closeResp = restTemplate.exchange(
                 "/api/v1/localday/events/" + eventId + "/lifecycle/close", HttpMethod.POST,
@@ -180,15 +186,44 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
 
         assertThat(statusResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(statusResp.getBody().locked()).isFalse();
+        assertThat(statusResp.getBody().generation()).isEqualTo(0L);
     }
 
     @Test
     void openDay_nonexistentEvent_returns404() {
         ResponseEntity<Map> resp = restTemplate.exchange(
                 "/api/v1/localday/events/999999999/lifecycle/open", HttpMethod.POST,
-                new HttpEntity<>(adminHeaders()), Map.class);
+                new HttpEntity<>(Map.of("instanceId", "instance-missing-event"), adminHeaders()), Map.class);
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void openDay_calledTwice_generationIncrementsEachTime() {
+        Long eventId = createEventInDb();
+
+        ResponseEntity<EventLockStatusDto> resp1 = restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/lifecycle/open", HttpMethod.POST,
+                new HttpEntity<>(Map.of("instanceId", "instance-open-twice"), adminHeaders()), EventLockStatusDto.class);
+        ResponseEntity<EventLockStatusDto> resp2 = restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/lifecycle/open", HttpMethod.POST,
+                new HttpEntity<>(Map.of("instanceId", "instance-open-twice"), adminHeaders()), EventLockStatusDto.class);
+
+        assertThat(resp1.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp2.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp2.getBody().generation()).isGreaterThan(resp1.getBody().generation());
+    }
+
+    @Test
+    void openDay_blankInstanceId_returns400() {
+        Long eventId = createEventInDb();
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/lifecycle/open", HttpMethod.POST,
+                new HttpEntity<>(Map.of("instanceId", ""), adminHeaders()), Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(eventSyncGenerationRepository.findById(eventId)).isEmpty();
     }
 
     // --- Pre-cache ---
@@ -293,30 +328,71 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void preCache_calledTwice_generationIncrementsAndPinReplaced() {
+    void preCache_calledTwice_pinReplacedAndSingleRow() {
         Long eventId = createEventInDb();
 
         ResponseEntity<PreCacheResponseDto> resp1 = restTemplate.exchange(
                 "/api/v1/localday/events/" + eventId + "/pre-cache", HttpMethod.POST,
                 new HttpEntity<>(Map.of("instanceId", "instance-C"), adminHeaders()), PreCacheResponseDto.class);
-        long generation1 = resp1.getBody().generation();
         String pin1 = resp1.getBody().officialCredentials().stream()
                 .filter(c -> c.cloudUserId().equals(adminUserId)).findFirst().orElseThrow().pin();
 
         ResponseEntity<PreCacheResponseDto> resp2 = restTemplate.exchange(
                 "/api/v1/localday/events/" + eventId + "/pre-cache", HttpMethod.POST,
                 new HttpEntity<>(Map.of("instanceId", "instance-C"), adminHeaders()), PreCacheResponseDto.class);
-        long generation2 = resp2.getBody().generation();
         String pin2 = resp2.getBody().officialCredentials().stream()
                 .filter(c -> c.cloudUserId().equals(adminUserId)).findFirst().orElseThrow().pin();
 
-        assertThat(generation2).isGreaterThan(generation1);
         assertThat(pin2).isNotEqualTo(pin1);
 
         long rowCount = localdayCredentialRepository.findAll().stream()
                 .filter(c -> c.getEventId().equals(eventId) && c.getUserId().equals(adminUserId))
                 .count();
         assertThat(rowCount).isEqualTo(1);
+    }
+
+    @Test
+    void preCache_calledTwice_doesNotChangeSyncGeneration() {
+        Long eventId = createEventInDb();
+
+        restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/lifecycle/open", HttpMethod.POST,
+                new HttpEntity<>(Map.of("instanceId", "instance-precache-gen"), adminHeaders()), EventLockStatusDto.class);
+        long generationAfterOpen = eventSyncGenerationRepository.findById(eventId).orElseThrow().getGeneration();
+
+        restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/pre-cache", HttpMethod.POST,
+                new HttpEntity<>(Map.of("instanceId", "instance-precache-gen"), adminHeaders()), PreCacheResponseDto.class);
+        restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/pre-cache", HttpMethod.POST,
+                new HttpEntity<>(Map.of("instanceId", "instance-precache-gen"), adminHeaders()), PreCacheResponseDto.class);
+
+        long generationAfterPreCache = eventSyncGenerationRepository.findById(eventId).orElseThrow().getGeneration();
+        assertThat(generationAfterPreCache).isEqualTo(generationAfterOpen);
+    }
+
+    @Test
+    void preCache_blankInstanceId_returns400AndCreatesNoCredentialRow() {
+        Long eventId = createEventInDb();
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/pre-cache", HttpMethod.POST,
+                new HttpEntity<>(Map.of("instanceId", ""), adminHeaders()), Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(localdayCredentialRepository.findByEventIdAndUserId(eventId, adminUserId)).isEmpty();
+    }
+
+    @Test
+    void preCache_missingInstanceId_returns400AndCreatesNoCredentialRow() {
+        Long eventId = createEventInDb();
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/pre-cache", HttpMethod.POST,
+                new HttpEntity<>(Map.of(), adminHeaders()), Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(localdayCredentialRepository.findByEventIdAndUserId(eventId, adminUserId)).isEmpty();
     }
 
     @Test
@@ -362,7 +438,7 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
 
         ResponseEntity<Map> resp = restTemplate.exchange(
                 "/api/v1/localday/events/" + eventId + "/lifecycle/open", HttpMethod.POST,
-                new HttpEntity<>(headers), Map.class);
+                new HttpEntity<>(Map.of("instanceId", "instance-racer-forbidden"), headers), Map.class);
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }

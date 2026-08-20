@@ -7,6 +7,4 @@ import java.util.Optional;
 public interface LocaldayCredentialRepository extends JpaRepository<LocaldayCredential, Long> {
 
     Optional<LocaldayCredential> findByEventIdAndUserId(Long eventId, Long userId);
-
-    void deleteByEventIdAndUserId(Long eventId, Long userId);
 }
