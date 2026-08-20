@@ -229,3 +229,36 @@ export async function advanceRound(
   );
   return data;
 }
+
+// Anonymous spectator-board endpoints (U9). No auth header is sent or required — these are the
+// only two endpoints board code may call; everything under /api/v1/race-control/** requires an
+// authenticated official session and must not be used here.
+export interface NowNextDto {
+  currentRace: ScheduleEntryDto | null;
+  nextRace: ScheduleEntryDto | null;
+  lastCompletedRace: ScheduleEntryDto | null;
+}
+
+export interface RaceResultRowDto {
+  entryId: number;
+  racerName: string | null;
+  transponderNumber: string | null;
+  position: number;
+  lapsCompleted: number;
+  bestLapMs: number | null;
+}
+
+export interface ResultsDto {
+  race: ScheduleEntryDto | null;
+  results: RaceResultRowDto[];
+}
+
+export async function getNowNext(): Promise<NowNextDto> {
+  const { data } = await api.get<NowNextDto>('/api/v1/boards/now-next');
+  return data;
+}
+
+export async function getResults(): Promise<ResultsDto> {
+  const { data } = await api.get<ResultsDto>('/api/v1/boards/results');
+  return data;
+}
