@@ -203,6 +203,17 @@ class RaceControlControllerIT {
                 .andExpect(jsonPath("$.rows").isEmpty());
     }
 
+    @Test
+    void live_unknownRaceId_returns404() throws Exception {
+        Long credentialId = createCredential("Live 404 Official", "4445");
+        String token = login(credentialId, "4445");
+
+        mockMvc.perform(get("/api/v1/race-control/races/999999/live")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("race_not_found"));
+    }
+
     // --- POST /races/{id}/transition ---
 
     @Test
@@ -254,6 +265,21 @@ class RaceControlControllerIT {
                 .andExpect(jsonPath("$.error").value("illegal_transition"));
     }
 
+    @Test
+    void transition_missingTargetField_returns400NotServerError() throws Exception {
+        Long credentialId = createCredential("Null Target Official", "6667");
+        String token = login(credentialId, "6667");
+
+        Long scheduleId = seedSchedule(42L, 1, 1, 1, "Buggy");
+
+        mockMvc.perform(post("/api/v1/race-control/races/" + scheduleId + "/transition")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("invalid_target_state"));
+    }
+
     // --- POST /races/{id}/marshal-adjustment ---
 
     @Test
@@ -263,6 +289,7 @@ class RaceControlControllerIT {
 
         Long scheduleId = seedSchedule(50L, 1, 1, 1, "Buggy");
         Long entryId = seedEntry(501L, "6666666", "Frank Racer");
+        seedGridEntry(scheduleId, entryId, 1, 1);
 
         String requestBody = objectMapper.writeValueAsString(new HashMap<>() {{
             put("cachedEntryId", entryId);
@@ -284,6 +311,52 @@ class RaceControlControllerIT {
         assertThat(adjustments).hasSize(1);
         assertThat(adjustments.get(0).getEntryId()).isEqualTo(entryId);
         assertThat(adjustments.get(0).getLapDelta()).isEqualTo(1);
+    }
+
+    @Test
+    void marshalAdjustment_entryNotInThisRacesGrid_returns404() throws Exception {
+        Long credentialId = createCredential("Marshal WrongRace Official", "7778");
+        String token = login(credentialId, "7778");
+
+        Long scheduleId = seedSchedule(51L, 1, 1, 1, "Buggy");
+        // Entry exists, but was never seeded into scheduleId's grid — e.g. it only raced elsewhere.
+        Long entryId = seedEntry(502L, "6666667", "Gina Racer");
+
+        String requestBody = objectMapper.writeValueAsString(new HashMap<>() {{
+            put("cachedEntryId", entryId);
+            put("lapDelta", 1);
+        }});
+
+        mockMvc.perform(post("/api/v1/race-control/races/" + scheduleId + "/marshal-adjustment")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("entry_not_in_race"));
+
+        assertThat(marshalAdjustmentRepository.findAllByRaceIdOrderByAdjustedAtAsc(scheduleId)).isEmpty();
+    }
+
+    @Test
+    void marshalAdjustment_invalidLapDelta_returns400() throws Exception {
+        Long credentialId = createCredential("Marshal BadDelta Official", "7779");
+        String token = login(credentialId, "7779");
+
+        Long scheduleId = seedSchedule(52L, 1, 1, 1, "Buggy");
+        Long entryId = seedEntry(503L, "6666668", "Hugh Racer");
+        seedGridEntry(scheduleId, entryId, 1, 1);
+
+        String requestBody = objectMapper.writeValueAsString(new HashMap<>() {{
+            put("cachedEntryId", entryId);
+            put("lapDelta", 5);
+        }});
+
+        mockMvc.perform(post("/api/v1/race-control/races/" + scheduleId + "/marshal-adjustment")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("invalid_lap_delta"));
     }
 
     // --- POST /races/{id}/advance-round ---
@@ -346,6 +419,26 @@ class RaceControlControllerIT {
                         .content(requestBody))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("target_race_not_found"));
+    }
+
+    @Test
+    void advanceRound_unknownSourceRaceId_returns404() throws Exception {
+        Long credentialId = createCredential("Advance SourceNotFound Official", "9998");
+        String token = login(credentialId, "9998");
+
+        Long nextScheduleId = seedSchedule(71L, 2, 1, 2, "Buggy");
+
+        String requestBody = objectMapper.writeValueAsString(new HashMap<>() {{
+            put("nextScheduleId", nextScheduleId);
+            put("entryIdsInFinishingOrder", List.of());
+        }});
+
+        mockMvc.perform(post("/api/v1/race-control/races/999999/advance-round")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("race_not_found"));
     }
 
     // --- AE4-adjacent: no-auth rejection ---

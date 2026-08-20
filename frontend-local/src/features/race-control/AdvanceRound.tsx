@@ -51,45 +51,52 @@ export default function AdvanceRound({ raceId, races, liveRows }: AdvanceRoundPr
     <section className="flex flex-col gap-2 border-t pt-4">
       <h3 className="text-sm font-medium text-slate-600">Advance to next round</h3>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">Next race</span>
-        <select
-          className="rounded border px-2 py-1"
-          value={nextScheduleId}
-          onChange={(e) => setNextScheduleId(e.target.value === '' ? '' : Number(e.target.value))}
-        >
-          <option value="">Select next race…</option>
-          {candidates.map((r) => (
-            <option key={r.id} value={r.id}>
-              Round {r.roundNumber} · Heat {r.heatNumber}
-              {r.finalLetter ? ` ${r.finalLetter}` : ''} — {r.className}
-            </option>
-          ))}
-        </select>
-      </label>
+      {state.kind !== 'success' && (
+        <>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">Next race</span>
+            <select
+              className="rounded border px-2 py-1"
+              value={nextScheduleId}
+              onChange={(e) => setNextScheduleId(e.target.value === '' ? '' : Number(e.target.value))}
+            >
+              <option value="">Select next race…</option>
+              {candidates.map((r) => (
+                <option key={r.id} value={r.id}>
+                  Round {r.roundNumber} · Heat {r.heatNumber}
+                  {r.finalLetter ? ` ${r.finalLetter}` : ''} — {r.className}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      <button
-        type="button"
-        disabled={state.kind === 'pending' || nextScheduleId === '' || noLiveData}
-        onClick={handleAdvance}
-        className="self-start rounded bg-blue-600 px-3 py-2 text-white disabled:opacity-50"
-      >
-        {state.kind === 'pending' ? 'Advancing…' : 'Advance to next round'}
-      </button>
+          <button
+            type="button"
+            disabled={state.kind === 'pending' || nextScheduleId === '' || noLiveData}
+            onClick={handleAdvance}
+            className="self-start rounded bg-blue-600 px-3 py-2 text-white disabled:opacity-50"
+          >
+            {state.kind === 'pending' ? 'Advancing…' : 'Advance to next round'}
+          </button>
 
-      {noLiveData && (
-        <p className="text-sm text-amber-700">
-          No live data available for this race — cannot capture finishing order.
-        </p>
-      )}
+          {noLiveData && (
+            <p className="text-sm text-amber-700">
+              No live data available for this race — cannot capture finishing order.
+            </p>
+          )}
 
-      {state.kind === 'error' && (
-        <p className="text-sm text-red-600">Could not advance round. Please try again.</p>
+          {state.kind === 'error' && (
+            <p className="text-sm text-red-600">Could not advance round. Please try again.</p>
+          )}
+        </>
       )}
 
       {state.kind === 'success' && (
         <div className="flex flex-col gap-2">
           <p className="text-sm font-medium text-green-700">Advanced — next race grid set.</p>
+          <p className="text-sm text-slate-600">
+            This race can&rsquo;t be advanced again — pick a different race to advance separately.
+          </p>
           <GridTable grid={state.detail.grid} />
         </div>
       )}

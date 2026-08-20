@@ -110,12 +110,35 @@ export default function RaceDetail({ raceId, races }: RaceDetailProps) {
     );
   }
 
+  // Sync race status from a STOMP /state broadcast — another official's transition (Stop, Finish,
+  // etc.) must be reflected here too, not just this browser's own transitionRace() calls. Same
+  // render-time sync pattern as channel.rows above, for the same lint-rule reason.
+  const [syncedStateEvent, setSyncedStateEvent] = useState(channel.stateEvent);
+  if (channel.stateEvent !== syncedStateEvent) {
+    setSyncedStateEvent(channel.stateEvent);
+    if (channel.stateEvent) {
+      const newStatus = channel.stateEvent.newStatus as ScheduleEntryDto['status'];
+      setState((prev) =>
+        prev.kind === 'loaded'
+          ? { kind: 'loaded', detail: { ...prev.detail, race: { ...prev.detail.race, status: newStatus } } }
+          : prev,
+      );
+    }
+  }
+
+  // Re-sorts by lapsCompleted DESC (mirroring the backend's LiveRaceState.calculatePositions
+  // ordering) and renumbers `position` so array order stays the true finishing order — AdvanceRound
+  // reads rows in array order to build entryIdsInFinishingOrder, so a stale order here would seed
+  // the next round's grid backwards from the actual result until the next STOMP /timing broadcast
+  // arrives to correct it.
   function handleMarshalAdjusted(cachedEntryId: number, lapDelta: 1 | -1) {
-    setLiveRows((rows) =>
-      rows.map((row) =>
+    setLiveRows((rows) => {
+      const adjusted = rows.map((row) =>
         row.entryId === cachedEntryId ? { ...row, lapsCompleted: row.lapsCompleted + lapDelta } : row,
-      ),
-    );
+      );
+      adjusted.sort((a, b) => b.lapsCompleted - a.lapsCompleted);
+      return adjusted.map((row, i) => ({ ...row, position: i + 1 }));
+    });
   }
 
   if (state.kind === 'loading') {

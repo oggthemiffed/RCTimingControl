@@ -284,6 +284,68 @@ describe('RaceControl — advance to next round', () => {
     await screen.findByText('Advanced — next race grid set.');
   });
 
+  it('cannot be re-submitted for the same race once it has succeeded', async () => {
+    vi.mocked(listRaces).mockResolvedValue([raceA, raceB]);
+    vi.mocked(getRaceDetail).mockResolvedValue({ race: raceB, grid: gridB });
+    vi.mocked(getLiveSnapshot).mockResolvedValue({ scheduleId: 2, rows: liveRowsB });
+    vi.mocked(advanceRound).mockResolvedValue({
+      race: { ...raceA, status: 'GRID' },
+      grid: [
+        { ...gridB[0], gridPosition: 1 },
+        { ...gridB[1], gridPosition: 2 },
+      ],
+    });
+
+    render(<RaceControl />);
+
+    await selectRace(raceB);
+    await screen.findByLabelText('Next race');
+
+    fireEvent.change(screen.getByLabelText('Next race'), { target: { value: String(raceA.id) } });
+    fireEvent.click(screen.getByRole('button', { name: /advance to next round/i }));
+
+    await screen.findByText('Advanced — next race grid set.');
+
+    expect(advanceRound).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: /advance to next round/i })).toBeNull();
+    expect(screen.queryByLabelText('Next race')).toBeNull();
+  });
+
+  it('captures the finishing order after a marshal adjustment reorders the field, not the stale pre-adjustment order', async () => {
+    vi.mocked(listRaces).mockResolvedValue([raceA, raceB]);
+    vi.mocked(getRaceDetail).mockResolvedValue({ race: raceB, grid: gridB });
+    // Jane and John start tied at 5 laps (array order [Jane, John]).
+    vi.mocked(getLiveSnapshot).mockResolvedValue({ scheduleId: 2, rows: liveRowsB });
+    vi.mocked(recordMarshalAdjustment).mockResolvedValue({
+      raceId: 2,
+      entryId: 11,
+      transponderNumber: '7654321',
+      lapDelta: 1,
+      actingUserName: 'Official',
+    });
+    vi.mocked(advanceRound).mockResolvedValue({
+      race: { ...raceA, status: 'GRID' },
+      grid: [],
+    });
+
+    render(<RaceControl />);
+
+    await selectRace(raceB);
+    await screen.findAllByText('John Smith');
+
+    // Give John (not the leader) a marshal +1 lap so he overtakes Jane — the true finishing order
+    // is now [John, Jane], not the original array order [Jane, John].
+    const rows = screen.getAllByRole('row');
+    const johnGridRow = rows.find((row) => within(row).queryByText('John Smith'));
+    fireEvent.click(within(johnGridRow as HTMLElement).getByLabelText('Add marshal lap'));
+    await waitFor(() => expect(recordMarshalAdjustment).toHaveBeenCalledWith(2, 11, 1));
+
+    fireEvent.change(screen.getByLabelText('Next race'), { target: { value: String(raceA.id) } });
+    fireEvent.click(screen.getByRole('button', { name: /advance to next round/i }));
+
+    await waitFor(() => expect(advanceRound).toHaveBeenCalledWith(2, 1, [11, 10]));
+  });
+
   it('shows a no-live-data message and does not call advanceRound when the live snapshot is empty', async () => {
     vi.mocked(listRaces).mockResolvedValue([raceA, raceB]);
     vi.mocked(getRaceDetail).mockResolvedValue({ race: raceB, grid: gridB });

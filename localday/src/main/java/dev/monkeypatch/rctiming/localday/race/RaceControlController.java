@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -82,10 +83,13 @@ public class RaceControlController {
     }
 
     @GetMapping("/races/{id}/live")
-    public LiveSnapshotDto live(@PathVariable Long id) {
+    public ResponseEntity<?> live(@PathVariable Long id) {
+        if (cachedScheduleEntryRepository.findById(id).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("race_not_found"));
+        }
         List<dev.monkeypatch.rctiming.localday.timing.dto.LiveTimingRowDto> rows =
                 lapTimingService.peek(id).map(LiveRaceState::calculatePositions).orElse(List.of());
-        return new LiveSnapshotDto(id, rows);
+        return ResponseEntity.ok(new LiveSnapshotDto(id, rows));
     }
 
     @PostMapping("/races/{id}/transition")
@@ -96,6 +100,9 @@ public class RaceControlController {
         }
         CachedScheduleEntry race = raceOpt.get();
 
+        if (request.target() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("invalid_target_state"));
+        }
         RaceState target;
         try {
             target = RaceState.valueOf(request.target());
@@ -122,9 +129,23 @@ public class RaceControlController {
         if (raceOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("race_not_found"));
         }
+        if (request.cachedEntryId() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("entry_not_found"));
+        }
+        if (request.lapDelta() != 1 && request.lapDelta() != -1) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("invalid_lap_delta"));
+        }
         Optional<CachedEntry> entryOpt = cachedEntryRepository.findById(request.cachedEntryId());
         if (entryOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("entry_not_found"));
+        }
+        // Guard against adjusting an entry that never raced in this heat — e.g. a stale client
+        // request for a car that only appeared in a different race's grid.
+        boolean inThisRacesGrid = cachedRaceEntryRepository
+                .findByCachedScheduleIdOrderByGridPositionAsc(id).stream()
+                .anyMatch(re -> request.cachedEntryId().equals(re.getCachedEntryId()));
+        if (!inThisRacesGrid) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("entry_not_in_race"));
         }
 
         SessionPrincipal principal = (SessionPrincipal)
@@ -146,6 +167,9 @@ public class RaceControlController {
      */
     @PostMapping("/races/{id}/advance-round")
     public ResponseEntity<?> advanceRound(@PathVariable Long id, @RequestBody AdvanceRoundRequest request) {
+        if (cachedScheduleEntryRepository.findById(id).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("race_not_found"));
+        }
         Optional<CachedScheduleEntry> nextRaceOpt = cachedScheduleEntryRepository.findById(request.nextScheduleId());
         if (nextRaceOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse("target_race_not_found"));
@@ -162,16 +186,22 @@ public class RaceControlController {
     private ScheduleEntryDetailDto toDetailDto(CachedScheduleEntry race) {
         List<CachedRaceEntry> raceEntries =
                 cachedRaceEntryRepository.findByCachedScheduleIdOrderByGridPositionAsc(race.getId());
+
+        List<Long> entryIds = raceEntries.stream()
+                .map(CachedRaceEntry::getCachedEntryId)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        Map<Long, CachedEntry> entriesById = cachedEntryRepository.findAllById(entryIds).stream()
+                .collect(java.util.stream.Collectors.toMap(CachedEntry::getId, e -> e));
+
         List<GridEntryDto> grid = raceEntries.stream()
                 .map(re -> {
                     Long cachedEntryId = re.getCachedEntryId();
-                    Optional<CachedEntry> entry = cachedEntryId == null
-                            ? Optional.empty()
-                            : cachedEntryRepository.findById(cachedEntryId);
+                    CachedEntry entry = cachedEntryId == null ? null : entriesById.get(cachedEntryId);
                     return new GridEntryDto(
                             cachedEntryId,
-                            entry.map(CachedEntry::getRacerName).orElse(null),
-                            entry.map(CachedEntry::getTransponderNumber).orElse(null),
+                            entry == null ? null : entry.getRacerName(),
+                            entry == null ? null : entry.getTransponderNumber(),
                             re.getCarNumber(),
                             re.getGridPosition(),
                             re.isBumped());
