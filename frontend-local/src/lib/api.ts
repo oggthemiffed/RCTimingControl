@@ -125,3 +125,107 @@ export async function reassignTransponder(
   });
   return data;
 }
+
+export type RaceStatus = 'PENDING' | 'GRID' | 'RUNNING' | 'STOPPED' | 'FINISHED';
+
+export interface ScheduleEntryDto {
+  id: number;
+  cloudRaceId: number;
+  roundNumber: number;
+  heatNumber: number;
+  sequence: number;
+  className: string;
+  finalLetter: string | null;
+  scheduledStartAt: string | null;
+  status: RaceStatus;
+}
+
+export interface GridEntryDto {
+  cachedEntryId: number | null;
+  racerName: string | null;
+  transponderNumber: string | null;
+  carNumber: string | null;
+  gridPosition: number;
+  bumped: boolean;
+}
+
+export interface ScheduleEntryDetailDto {
+  race: ScheduleEntryDto;
+  grid: GridEntryDto[];
+}
+
+export interface LiveTimingRowDto {
+  entryId: number;
+  driverName: string;
+  position: number;
+  lapsCompleted: number;
+  lastPassingTimeMs: number | null;
+  lastLapMs: number | null;
+  bestLapMs: number | null;
+  avgLapMs: number | null;
+  overallFastestLapMs: number | null;
+  lapsDown: number | null;
+  intervalLapsDown: number | null;
+  gapToLeaderMs: number | null;
+  gapToAheadMs: number | null;
+}
+
+export interface LiveSnapshotDto {
+  scheduleId: number;
+  rows: LiveTimingRowDto[];
+}
+
+export interface MarshalAdjustmentResponseDto {
+  raceId: number;
+  entryId: number;
+  transponderNumber: string;
+  lapDelta: number;
+  actingUserName: string;
+}
+
+export async function listRaces(): Promise<ScheduleEntryDto[]> {
+  const { data } = await api.get<ScheduleEntryDto[]>('/api/v1/race-control/races');
+  return data;
+}
+
+export async function getRaceDetail(id: number): Promise<ScheduleEntryDetailDto> {
+  const { data } = await api.get<ScheduleEntryDetailDto>(`/api/v1/race-control/races/${id}`);
+  return data;
+}
+
+export async function getLiveSnapshot(id: number): Promise<LiveSnapshotDto> {
+  const { data } = await api.get<LiveSnapshotDto>(`/api/v1/race-control/races/${id}/live`);
+  return data;
+}
+
+export async function transitionRace(id: number, target: RaceStatus): Promise<ScheduleEntryDto> {
+  const { data } = await api.post<ScheduleEntryDto>(
+    `/api/v1/race-control/races/${id}/transition`,
+    { target },
+  );
+  return data;
+}
+
+export async function recordMarshalAdjustment(
+  id: number,
+  cachedEntryId: number,
+  lapDelta: 1 | -1,
+): Promise<MarshalAdjustmentResponseDto> {
+  const { data } = await api.post<MarshalAdjustmentResponseDto>(
+    `/api/v1/race-control/races/${id}/marshal-adjustment`,
+    { cachedEntryId, lapDelta },
+  );
+  return data;
+}
+
+export async function advanceRound(
+  id: number,
+  nextScheduleId: number,
+  entryIdsInFinishingOrder: number[],
+): Promise<ScheduleEntryDetailDto> {
+  const { data } = await api.post<ScheduleEntryDetailDto>(
+    `/api/v1/race-control/races/${id}/advance-round`,
+    { nextScheduleId, entryIdsInFinishingOrder },
+  );
+  return data;
+}

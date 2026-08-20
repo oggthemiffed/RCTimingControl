@@ -6,7 +6,7 @@ import {
   type OfficialSummary,
 } from '@/lib/api';
 import { getStoredSession, storeSession, type StoredSession } from '@/lib/auth';
-import CheckInDesk from '@/features/checkin/CheckInDesk';
+import OfficialShell from '@/features/shell/OfficialShell';
 
 type LoginError =
   | { kind: 'invalid_credential' }
@@ -106,7 +106,7 @@ export default function LoginPage() {
   }
 
   if (session) {
-    return <CheckInDesk />;
+    return <OfficialShell />;
   }
 
   return (

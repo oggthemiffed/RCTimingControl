@@ -13,11 +13,13 @@ vi.mock('@/lib/auth', () => ({
   storeSession: vi.fn(),
 }));
 
-// CheckInDesk pulls in the camera/scanner stack (getUserMedia, barcode-detector, WASM), which
-// is irrelevant to LoginPage's own behavior and isn't available in jsdom — stub it so these
-// tests stay focused on the login/session flow.
-vi.mock('@/features/checkin/CheckInDesk', () => ({
-  default: () => <div>Check-in Desk (mocked)</div>,
+// OfficialShell pulls in RaceControl and CheckInDesk (which itself pulls in the camera/scanner
+// stack — getUserMedia, barcode-detector, WASM), none of which is relevant to LoginPage's own
+// behavior and isn't available in jsdom — stub it so these tests stay focused on the
+// login/session flow. Coverage of OfficialShell's own tab-switching behavior and RaceControl's
+// behavior live in their own feature directories, not here.
+vi.mock('@/features/shell/OfficialShell', () => ({
+  default: () => <div>Official Shell (mocked)</div>,
 }));
 
 import { listOfficials, login, recover } from '@/lib/api';
@@ -59,7 +61,7 @@ describe('LoginPage', () => {
     fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '1234' } });
     fireEvent.click(screen.getByRole('button', { name: /log in/i }));
 
-    await screen.findByText('Check-in Desk (mocked)');
+    await screen.findByText('Official Shell (mocked)');
 
     expect(login).toHaveBeenCalledWith(1, '1234');
     expect(storeSession).toHaveBeenCalledWith({
@@ -132,6 +134,13 @@ describe('LoginPage', () => {
     await screen.findByText('Credential unlocked.');
   });
 
+  it('renders the login form, not race control, when no session is stored (AE4)', async () => {
+    render(<LoginPage />);
+
+    await screen.findByLabelText('Official');
+    expect(screen.queryByText('Official Shell (mocked)')).toBeNull();
+  });
+
   it('shows the logged-in state immediately when a session is already stored', async () => {
     vi.mocked(getStoredSession).mockResolvedValue({
       sessionToken: 'tok-existing',
@@ -141,7 +150,7 @@ describe('LoginPage', () => {
 
     render(<LoginPage />);
 
-    await screen.findByText('Check-in Desk (mocked)');
+    await screen.findByText('Official Shell (mocked)');
     expect(screen.queryByLabelText('Official')).toBeNull();
     expect(listOfficials).not.toHaveBeenCalled();
   });
