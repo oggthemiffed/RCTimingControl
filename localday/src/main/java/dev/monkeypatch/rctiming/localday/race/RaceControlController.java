@@ -137,19 +137,17 @@ public class RaceControlController {
 
         // transition() only mutates the in-memory status field — it does not persist. Without this
         // explicit save, the new state would be silently lost on the next read.
-        cachedScheduleEntryRepository.save(race);
+        try {
+            cachedScheduleEntryRepository.save(race);
+        } catch (org.springframework.orm.ObjectOptimisticLockingFailureException e) {
+            // Another request already transitioned this race between our read and our write (e.g.
+            // a double-submitted "Finish" click, or a client retry after a slow response) — reject
+            // rather than silently racing ahead and, for FINISHED, double-writing race_results.
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponse("concurrent_modification"));
+        }
 
         if (target == RaceState.FINISHED) {
-            for (LiveTimingRowDto row : finalPositions) {
-                RaceResultEntry result = new RaceResultEntry();
-                result.setRaceId(id);
-                result.setEntryId(row.entryId());
-                result.setPosition(row.position());
-                result.setLapsCompleted(row.lapsCompleted());
-                result.setBestLapMs(row.bestLapMs());
-                result.setRecordedAt(Instant.now());
-                raceResultEntryRepository.save(result);
-            }
+            raceResultEntryRepository.saveAll(buildResultRows(id, finalPositions));
         }
 
         return ResponseEntity.ok(ScheduleEntryDto.from(race));
@@ -213,6 +211,50 @@ public class RaceControlController {
         CachedScheduleEntry refreshed = cachedScheduleEntryRepository.findById(request.nextScheduleId())
                 .orElseThrow();
         return ResponseEntity.ok(toDetailDto(refreshed));
+    }
+
+    /**
+     * Builds the durable result rows for a just-finished race. {@code finalPositions} (from
+     * {@link LiveRaceState#calculatePositions()}) only contains entries that recorded at least one
+     * lap or marshal adjustment — a grid entry whose transponder never registered (DNS, dead
+     * battery, unlinked transponder) would otherwise be silently missing from the finishing order
+     * shown on the results board. This appends every remaining grid entry, in grid order, as a
+     * zero-lap finisher after everyone who actually turned a lap.
+     */
+    private List<RaceResultEntry> buildResultRows(Long raceId, List<LiveTimingRowDto> finalPositions) {
+        Instant recordedAt = Instant.now();
+        List<RaceResultEntry> results = new java.util.ArrayList<>(finalPositions.size());
+        java.util.Set<Long> accountedFor = new java.util.HashSet<>();
+
+        for (LiveTimingRowDto row : finalPositions) {
+            RaceResultEntry result = new RaceResultEntry();
+            result.setRaceId(raceId);
+            result.setEntryId(row.entryId());
+            result.setPosition(row.position());
+            result.setLapsCompleted(row.lapsCompleted());
+            result.setBestLapMs(row.bestLapMs());
+            result.setRecordedAt(recordedAt);
+            results.add(result);
+            accountedFor.add(row.entryId());
+        }
+
+        int nextPosition = finalPositions.size() + 1;
+        for (CachedRaceEntry gridRow : cachedRaceEntryRepository.findByCachedScheduleIdOrderByGridPositionAsc(raceId)) {
+            Long entryId = gridRow.getCachedEntryId();
+            if (entryId == null || accountedFor.contains(entryId)) {
+                continue; // unfilled bump slot, or already has a real live-position result
+            }
+            RaceResultEntry result = new RaceResultEntry();
+            result.setRaceId(raceId);
+            result.setEntryId(entryId);
+            result.setPosition(nextPosition++);
+            result.setLapsCompleted(0);
+            result.setBestLapMs(null);
+            result.setRecordedAt(recordedAt);
+            results.add(result);
+        }
+
+        return results;
     }
 
     private ScheduleEntryDetailDto toDetailDto(CachedScheduleEntry race) {

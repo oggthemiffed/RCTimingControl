@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.time.Instant;
 
@@ -23,6 +24,13 @@ public class CachedScheduleEntry {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // Optimistic lock: guards against two concurrent race-control requests (e.g. a double-submitted
+    // "Finish" click) both reading the same status and racing to transition/persist it — the loser's
+    // save() throws ObjectOptimisticLockingFailureException instead of silently overwriting.
+    @Version
+    @Column(nullable = false)
+    private long version;
 
     @Column(name = "cloud_race_id", nullable = false)
     private Long cloudRaceId;

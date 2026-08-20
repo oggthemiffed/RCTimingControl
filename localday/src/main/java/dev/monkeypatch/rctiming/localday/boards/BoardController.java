@@ -55,8 +55,7 @@ public class BoardController {
         Optional<CachedScheduleEntry> next = cachedScheduleEntryRepository
                 .findFirstByStatusInOrderBySequenceAsc(List.of(RaceState.PENDING, RaceState.GRID));
 
-        Optional<CachedScheduleEntry> lastCompleted =
-                cachedScheduleEntryRepository.findFirstByStatusOrderByFinishedAtDesc(RaceState.FINISHED);
+        Optional<CachedScheduleEntry> lastCompleted = findLastCompletedRace();
 
         return new NowNextDto(
                 current.map(ScheduleEntryDto::from).orElse(null),
@@ -66,8 +65,7 @@ public class BoardController {
 
     @GetMapping("/results")
     public ResultsDto results() {
-        Optional<CachedScheduleEntry> lastCompleted =
-                cachedScheduleEntryRepository.findFirstByStatusOrderByFinishedAtDesc(RaceState.FINISHED);
+        Optional<CachedScheduleEntry> lastCompleted = findLastCompletedRace();
         if (lastCompleted.isEmpty()) {
             return new ResultsDto(null, List.of());
         }
@@ -96,5 +94,10 @@ public class BoardController {
                 .toList();
 
         return new ResultsDto(ScheduleEntryDto.from(race), rows);
+    }
+
+    /** The most recently finished race, shared by both endpoints so they can't disagree. */
+    private Optional<CachedScheduleEntry> findLastCompletedRace() {
+        return cachedScheduleEntryRepository.findFirstByStatusOrderByFinishedAtDesc(RaceState.FINISHED);
     }
 }

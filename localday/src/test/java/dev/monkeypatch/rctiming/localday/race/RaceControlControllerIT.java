@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -346,6 +348,28 @@ class RaceControlControllerIT {
                 .andExpect(jsonPath("$.status").value("FINISHED"));
 
         assertThat(raceResultEntryRepository.findByRaceIdOrderByPositionAsc(scheduleId)).isEmpty();
+    }
+
+    @Test
+    void concurrentStaleWrite_toCachedSchedule_rejectedByOptimisticLock() throws Exception {
+        // Proves the mechanism RaceControlController's transition() endpoint relies on to reject a
+        // double-submitted "Finish" click (or a client retry racing the original request): once one
+        // writer's save() has advanced the row's version, a second writer holding a copy fetched
+        // before that write can no longer save() it — Hibernate throws instead of silently
+        // overwriting. Driven at the repository level (rather than two real concurrent HTTP
+        // requests, which can't be reliably interleaved from a single test thread) since this is
+        // exactly the read-then-write race the controller's catch block defends against.
+        Long scheduleId = seedSchedule(45L, 1, 1, 1, "Buggy");
+
+        CachedScheduleEntry staleCopyA = cachedScheduleEntryRepository.findById(scheduleId).orElseThrow();
+        CachedScheduleEntry staleCopyB = cachedScheduleEntryRepository.findById(scheduleId).orElseThrow();
+
+        staleCopyA.setStatus(RaceState.GRID);
+        cachedScheduleEntryRepository.saveAndFlush(staleCopyA);
+
+        staleCopyB.setStatus(RaceState.FINISHED);
+        assertThatThrownBy(() -> cachedScheduleEntryRepository.saveAndFlush(staleCopyB))
+                .isInstanceOf(ObjectOptimisticLockingFailureException.class);
     }
 
     // --- POST /races/{id}/marshal-adjustment ---

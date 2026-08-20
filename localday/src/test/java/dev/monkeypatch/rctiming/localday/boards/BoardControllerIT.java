@@ -294,4 +294,36 @@ class BoardControllerIT {
                 .andExpect(jsonPath("$.results[0].position").value(1))
                 .andExpect(jsonPath("$.results[0].lapsCompleted").value(2));
     }
+
+    @Test
+    @Order(7)
+    void results_gridEntryThatNeverRecordedALap_stillAppearsAsAZeroLapFinisher() throws Exception {
+        Long credentialId = createCredential("Board DNS Official", "8002");
+        String token = login(credentialId, "8002");
+
+        Long scheduleId = seedSchedule(201L, 1, 1, 9202, "Buggy");
+        Long lappedEntryId = seedEntry(702L, "8000002", "Amir Racer");
+        Long dnsEntryId = seedEntry(703L, "8000003", "Beatrix Racer");
+        seedGridEntry(scheduleId, lappedEntryId, 1, 1);
+        seedGridEntry(scheduleId, dnsEntryId, 2, 2);
+
+        postTransition(token, scheduleId, "GRID");
+        postTransition(token, scheduleId, "RUNNING");
+
+        // Only lappedEntryId ever registers a passing — dnsEntryId's transponder never checks in
+        // (dead battery, DNS, etc.), so it's never added to LiveRaceState.positions.
+        LiveRaceState state = lapTimingService.stateFor(scheduleId);
+        state.applyLapPassing(new LapPassingEvent(scheduleId, "8000002", 1_000_000L), lappedEntryId);
+        state.applyLapPassing(new LapPassingEvent(scheduleId, "8000002", 11_000_000L), lappedEntryId);
+
+        postTransition(token, scheduleId, "FINISHED");
+
+        mockMvc.perform(get("/api/v1/boards/results"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.results.length()").value(2))
+                .andExpect(jsonPath("$.results[0].entryId").value(lappedEntryId))
+                .andExpect(jsonPath("$.results[0].lapsCompleted").value(2))
+                .andExpect(jsonPath("$.results[1].entryId").value(dnsEntryId))
+                .andExpect(jsonPath("$.results[1].lapsCompleted").value(0));
+    }
 }
