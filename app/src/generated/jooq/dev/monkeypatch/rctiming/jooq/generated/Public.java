@@ -17,10 +17,14 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.DecoderLoops;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EventOfflineLocks;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EventSyncGenerations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ForwarderToken;
 import dev.monkeypatch.rctiming.jooq.generated.tables.GoverningBodyAffiliations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayInstanceSecrets;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
@@ -133,6 +137,23 @@ public class Public extends SchemaImpl {
     public final EventClasses EVENT_CLASSES = EventClasses.EVENT_CLASSES;
 
     /**
+     * Static open/closed lock for an event handed to the Local Race Day Program
+     * (KD4/R2) -- set at day-open, cleared at day-close once :localday confirms
+     * its own sync is complete. Not a live-monitored lock -- no heartbeat, per
+     * KD4.
+     */
+    public final EventOfflineLocks EVENT_OFFLINE_LOCKS = EventOfflineLocks.EVENT_OFFLINE_LOCKS;
+
+    /**
+     * Stored generation-per-event for a future unit's snapshot-ingest fencing
+     * (KTD4). Each pre-cache call atomically increments this and hands the new
+     * value to the calling :localday instance as its claimed generation for the
+     * session. The compare-and-reject logic on snapshot ingest itself is a
+     * future unit -- this table only tracks the counter.
+     */
+    public final EventSyncGenerations EVENT_SYNC_GENERATIONS = EventSyncGenerations.EVENT_SYNC_GENERATIONS;
+
+    /**
      * The table <code>public.events</code>.
      */
     public final Events EVENTS = Events.EVENTS;
@@ -151,6 +172,29 @@ public class Public extends SchemaImpl {
      * The table <code>public.incident_reports</code>.
      */
     public final IncidentReports INCIDENT_REPORTS = IncidentReports.INCIDENT_REPORTS;
+
+    /**
+     * Day-scoped local login credentials minted at pre-cache time (KTD5) for
+     * officials working an event with the Local Race Day Program. secret_hash
+     * is a BCrypt hash of a randomly generated 6-digit PIN -- the plaintext PIN
+     * is returned once in the pre-cache response and never stored. Distinct
+     * from users.password_hash (the cloud login credential) per KTD5.
+     * Re-calling pre-cache for the same (event, user) replaces the row -- the
+     * previous PIN stops being mintable/re-showable, which is why the unique
+     * index exists.
+     */
+    public final LocaldayCredentials LOCALDAY_CREDENTIALS = LocaldayCredentials.LOCALDAY_CREDENTIALS;
+
+    /**
+     * Per-day-instance sync-channel secret (KTD9), minted alongside officials'
+     * credentials at pre-cache time, keyed by the calling :localday instance's
+     * own self-generated instance_id (a stable UUID string the local install
+     * generates once and keeps for its lifetime). Machine-to-machine identity
+     * distinct from officials' local session auth (KTD5) -- authenticates a
+     * future snapshot-push channel. invalidated_at is set by a future
+     * device-loss declaration (R16), not used yet.
+     */
+    public final LocaldayInstanceSecrets LOCALDAY_INSTANCE_SECRETS = LocaldayInstanceSecrets.LOCALDAY_INSTANCE_SECRETS;
 
     /**
      * The table <code>public.marshal_absences</code>.
@@ -301,10 +345,14 @@ public class Public extends SchemaImpl {
             Entries.ENTRIES,
             EntryAuditLog.ENTRY_AUDIT_LOG,
             EventClasses.EVENT_CLASSES,
+            EventOfflineLocks.EVENT_OFFLINE_LOCKS,
+            EventSyncGenerations.EVENT_SYNC_GENERATIONS,
             Events.EVENTS,
             ForwarderToken.FORWARDER_TOKEN,
             GoverningBodyAffiliations.GOVERNING_BODY_AFFILIATIONS,
             IncidentReports.INCIDENT_REPORTS,
+            LocaldayCredentials.LOCALDAY_CREDENTIALS,
+            LocaldayInstanceSecrets.LOCALDAY_INSTANCE_SECRETS,
             MarshalAbsences.MARSHAL_ABSENCES,
             MarshalAdjustments.MARSHAL_ADJUSTMENTS,
             MarshalPenalties.MARSHAL_PENALTIES,

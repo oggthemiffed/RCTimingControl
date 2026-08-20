@@ -12,6 +12,10 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.Cha
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships.ChampionshipsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EventOfflineLocks.EventOfflineLocksPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EventSyncGenerations.EventSyncGenerationsPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials.LocaldayCredentialsPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayInstanceSecrets.LocaldayInstanceSecretsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences.MarshalAbsencesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties.MarshalPenaltiesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions.PracticeSessionsPath;
@@ -266,6 +270,58 @@ public class Events extends TableImpl<EventsRecord> {
             _eventClasses = new EventClassesPath(this, null, Keys.EVENT_CLASSES__EVENT_CLASSES_EVENT_ID_FKEY.getInverseKey());
 
         return _eventClasses;
+    }
+
+    private transient EventOfflineLocksPath _eventOfflineLocks;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.event_offline_locks</code> table
+     */
+    public EventOfflineLocksPath eventOfflineLocks() {
+        if (_eventOfflineLocks == null)
+            _eventOfflineLocks = new EventOfflineLocksPath(this, null, Keys.EVENT_OFFLINE_LOCKS__EVENT_OFFLINE_LOCKS_EVENT_ID_FKEY.getInverseKey());
+
+        return _eventOfflineLocks;
+    }
+
+    private transient EventSyncGenerationsPath _eventSyncGenerations;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.event_sync_generations</code> table
+     */
+    public EventSyncGenerationsPath eventSyncGenerations() {
+        if (_eventSyncGenerations == null)
+            _eventSyncGenerations = new EventSyncGenerationsPath(this, null, Keys.EVENT_SYNC_GENERATIONS__EVENT_SYNC_GENERATIONS_EVENT_ID_FKEY.getInverseKey());
+
+        return _eventSyncGenerations;
+    }
+
+    private transient LocaldayCredentialsPath _localdayCredentials;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.localday_credentials</code> table
+     */
+    public LocaldayCredentialsPath localdayCredentials() {
+        if (_localdayCredentials == null)
+            _localdayCredentials = new LocaldayCredentialsPath(this, null, Keys.LOCALDAY_CREDENTIALS__LOCALDAY_CREDENTIALS_EVENT_ID_FKEY.getInverseKey());
+
+        return _localdayCredentials;
+    }
+
+    private transient LocaldayInstanceSecretsPath _localdayInstanceSecrets;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.localday_instance_secrets</code> table
+     */
+    public LocaldayInstanceSecretsPath localdayInstanceSecrets() {
+        if (_localdayInstanceSecrets == null)
+            _localdayInstanceSecrets = new LocaldayInstanceSecretsPath(this, null, Keys.LOCALDAY_INSTANCE_SECRETS__LOCALDAY_INSTANCE_SECRETS_EVENT_ID_FKEY.getInverseKey());
+
+        return _localdayInstanceSecrets;
     }
 
     private transient MarshalAbsencesPath _marshalAbsences;

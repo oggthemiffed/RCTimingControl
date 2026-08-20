@@ -16,6 +16,8 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ForwarderToken;
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayInstanceSecrets;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PasswordResetTokens;
@@ -67,6 +69,9 @@ public class Indexes {
     public static final Index IDX_EVENTS_TRACK_ID = Internal.createIndex(DSL.name("idx_events_track_id"), Events.EVENTS, new OrderField[] { Events.EVENTS.TRACK_ID }, false);
     public static final Index IDX_FORWARDER_TOKEN_STATUS = Internal.createIndex(DSL.name("idx_forwarder_token_status"), ForwarderToken.FORWARDER_TOKEN, new OrderField[] { ForwarderToken.FORWARDER_TOKEN.STATUS }, false);
     public static final Index IDX_INCIDENT_REPORTS_RACE_ID = Internal.createIndex(DSL.name("idx_incident_reports_race_id"), IncidentReports.INCIDENT_REPORTS, new OrderField[] { IncidentReports.INCIDENT_REPORTS.RACE_ID }, false);
+    public static final Index IDX_LOCALDAY_CREDENTIALS_EVENT_ID = Internal.createIndex(DSL.name("idx_localday_credentials_event_id"), LocaldayCredentials.LOCALDAY_CREDENTIALS, new OrderField[] { LocaldayCredentials.LOCALDAY_CREDENTIALS.EVENT_ID }, false);
+    public static final Index IDX_LOCALDAY_CREDENTIALS_EVENT_USER = Internal.createIndex(DSL.name("idx_localday_credentials_event_user"), LocaldayCredentials.LOCALDAY_CREDENTIALS, new OrderField[] { LocaldayCredentials.LOCALDAY_CREDENTIALS.EVENT_ID, LocaldayCredentials.LOCALDAY_CREDENTIALS.USER_ID }, true);
+    public static final Index IDX_LOCALDAY_INSTANCE_SECRETS_EVENT_INSTANCE = Internal.createIndex(DSL.name("idx_localday_instance_secrets_event_instance"), LocaldayInstanceSecrets.LOCALDAY_INSTANCE_SECRETS, new OrderField[] { LocaldayInstanceSecrets.LOCALDAY_INSTANCE_SECRETS.EVENT_ID, LocaldayInstanceSecrets.LOCALDAY_INSTANCE_SECRETS.INSTANCE_ID }, true);
     public static final Index IDX_MARSHAL_ABSENCES_EVENT_ID = Internal.createIndex(DSL.name("idx_marshal_absences_event_id"), MarshalAbsences.MARSHAL_ABSENCES, new OrderField[] { MarshalAbsences.MARSHAL_ABSENCES.EVENT_ID }, false);
     public static final Index IDX_MARSHAL_ADJUSTMENTS_RACE_ID = Internal.createIndex(DSL.name("idx_marshal_adjustments_race_id"), MarshalAdjustments.MARSHAL_ADJUSTMENTS, new OrderField[] { MarshalAdjustments.MARSHAL_ADJUSTMENTS.RACE_ID }, false);
     public static final Index IDX_PASSWORD_RESET_TOKENS_USER_ID = Internal.createIndex(DSL.name("idx_password_reset_tokens_user_id"), PasswordResetTokens.PASSWORD_RESET_TOKENS, new OrderField[] { PasswordResetTokens.PASSWORD_RESET_TOKENS.USER_ID }, false);
