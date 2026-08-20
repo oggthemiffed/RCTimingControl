@@ -52,6 +52,7 @@ public class LocalSecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/local-auth/**").permitAll()
+                        .requestMatchers("/api/v1/boards/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/ws/timing", "/ws/timing/**").permitAll()
                         .anyRequest().authenticated()

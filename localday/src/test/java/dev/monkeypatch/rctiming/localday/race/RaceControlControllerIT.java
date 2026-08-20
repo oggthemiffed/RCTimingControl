@@ -73,6 +73,9 @@ class RaceControlControllerIT {
     private MarshalAdjustmentRepository marshalAdjustmentRepository;
 
     @Autowired
+    private RaceResultEntryRepository raceResultEntryRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -278,6 +281,71 @@ class RaceControlControllerIT {
                         .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("invalid_target_state"));
+    }
+
+    @Test
+    void transition_toRunning_setsStartedAt() throws Exception {
+        Long credentialId = createCredential("StartedAt Test Official", "5556");
+        String token = login(credentialId, "5556");
+
+        Long scheduleId = seedSchedule(43L, 1, 1, 1, "Buggy");
+
+        mockMvc.perform(post("/api/v1/race-control/races/" + scheduleId + "/transition")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new HashMap<>() {{
+                            put("target", "GRID");
+                        }})))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/race-control/races/" + scheduleId + "/transition")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new HashMap<>() {{
+                            put("target", "RUNNING");
+                        }})))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("RUNNING"));
+
+        Optional<CachedScheduleEntry> persisted = cachedScheduleEntryRepository.findById(scheduleId);
+        assertThat(persisted).isPresent();
+        assertThat(persisted.get().getStartedAt()).isNotNull();
+    }
+
+    @Test
+    void transition_toFinishedWithNoLiveState_doesNotThrowAndPersistsNoResultRows() throws Exception {
+        Long credentialId = createCredential("Empty Finish Official", "5557");
+        String token = login(credentialId, "5557");
+
+        Long scheduleId = seedSchedule(44L, 1, 1, 1, "Buggy");
+
+        mockMvc.perform(post("/api/v1/race-control/races/" + scheduleId + "/transition")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new HashMap<>() {{
+                            put("target", "GRID");
+                        }})))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/race-control/races/" + scheduleId + "/transition")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new HashMap<>() {{
+                            put("target", "RUNNING");
+                        }})))
+                .andExpect(status().isOk());
+
+        // No lap events were ever ingested for this race — LapTimingService.peek() will be empty.
+        mockMvc.perform(post("/api/v1/race-control/races/" + scheduleId + "/transition")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new HashMap<>() {{
+                            put("target", "FINISHED");
+                        }})))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("FINISHED"));
+
+        assertThat(raceResultEntryRepository.findByRaceIdOrderByPositionAsc(scheduleId)).isEmpty();
     }
 
     // --- POST /races/{id}/marshal-adjustment ---

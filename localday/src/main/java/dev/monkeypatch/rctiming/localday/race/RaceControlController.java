@@ -18,6 +18,7 @@ import dev.monkeypatch.rctiming.localday.race.dto.ScheduleEntryDto;
 import dev.monkeypatch.rctiming.localday.race.dto.TransitionRequest;
 import dev.monkeypatch.rctiming.localday.timing.LapTimingService;
 import dev.monkeypatch.rctiming.localday.timing.LiveRaceState;
+import dev.monkeypatch.rctiming.localday.timing.dto.LiveTimingRowDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,19 +53,22 @@ public class RaceControlController {
     private final CachedScheduleEntryRepository cachedScheduleEntryRepository;
     private final CachedRaceEntryRepository cachedRaceEntryRepository;
     private final CachedEntryRepository cachedEntryRepository;
+    private final RaceResultEntryRepository raceResultEntryRepository;
 
     public RaceControlController(RaceStateMachineService raceStateMachineService,
                                   RoundGeneratorService roundGeneratorService,
                                   LapTimingService lapTimingService,
                                   CachedScheduleEntryRepository cachedScheduleEntryRepository,
                                   CachedRaceEntryRepository cachedRaceEntryRepository,
-                                  CachedEntryRepository cachedEntryRepository) {
+                                  CachedEntryRepository cachedEntryRepository,
+                                  RaceResultEntryRepository raceResultEntryRepository) {
         this.raceStateMachineService = raceStateMachineService;
         this.roundGeneratorService = roundGeneratorService;
         this.lapTimingService = lapTimingService;
         this.cachedScheduleEntryRepository = cachedScheduleEntryRepository;
         this.cachedRaceEntryRepository = cachedRaceEntryRepository;
         this.cachedEntryRepository = cachedEntryRepository;
+        this.raceResultEntryRepository = raceResultEntryRepository;
     }
 
     @GetMapping("/races")
@@ -110,6 +115,20 @@ public class RaceControlController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("invalid_target_state"));
         }
 
+        if (target == RaceState.RUNNING && race.getStartedAt() == null) {
+            race.setStartedAt(Instant.now());
+        }
+
+        // Capture the live snapshot BEFORE the transition call — transition() internally releases
+        // the in-memory live-timing state on FINISHED (see RaceStateMachineService.transition's
+        // FINISHED branch), so capturing after would always see an empty snapshot. Same ordering
+        // requirement as advance-round's pre-transition live-snapshot capture.
+        List<LiveTimingRowDto> finalPositions = List.of();
+        if (target == RaceState.FINISHED) {
+            finalPositions = lapTimingService.peek(id).map(LiveRaceState::calculatePositions).orElse(List.of());
+            race.setFinishedAt(Instant.now());
+        }
+
         try {
             raceStateMachineService.transition(race, target);
         } catch (IllegalStateTransitionException e) {
@@ -119,6 +138,19 @@ public class RaceControlController {
         // transition() only mutates the in-memory status field — it does not persist. Without this
         // explicit save, the new state would be silently lost on the next read.
         cachedScheduleEntryRepository.save(race);
+
+        if (target == RaceState.FINISHED) {
+            for (LiveTimingRowDto row : finalPositions) {
+                RaceResultEntry result = new RaceResultEntry();
+                result.setRaceId(id);
+                result.setEntryId(row.entryId());
+                result.setPosition(row.position());
+                result.setLapsCompleted(row.lapsCompleted());
+                result.setBestLapMs(row.bestLapMs());
+                result.setRecordedAt(Instant.now());
+                raceResultEntryRepository.save(result);
+            }
+        }
 
         return ResponseEntity.ok(ScheduleEntryDto.from(race));
     }
