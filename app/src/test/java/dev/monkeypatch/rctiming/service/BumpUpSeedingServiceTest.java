@@ -138,12 +138,17 @@ class BumpUpSeedingServiceTest {
         service().seedFinals(eventClassId, standings, 2, 10, 2);
 
         ArgumentCaptor<RaceEntry> captor = ArgumentCaptor.forClass(RaceEntry.class);
-        verify(raceEntryRepository, times(4)).save(captor.capture());
+        // 5 B-final regular slots + 0 A-final regular slots + 2 A-final bump-slot
+        // placeholders (bump slots are created for non-lowest finals regardless of whether
+        // any regular slots remain) = 7 total saves.
+        verify(raceEntryRepository, times(7)).save(captor.capture());
         List<RaceEntry> saved = captor.getAllValues();
 
         List<RaceEntry> bEntries = saved.stream().filter(e -> e.getRaceId().equals(bFinal.getId())).toList();
         List<RaceEntry> aRegular = saved.stream()
                 .filter(e -> e.getRaceId().equals(aFinal.getId()) && !e.isBumped()).toList();
+        List<RaceEntry> aBump = saved.stream()
+                .filter(e -> e.getRaceId().equals(aFinal.getId()) && e.isBumped()).toList();
 
         // Lowest final (B) draws from the bottom: with only 5 standings and 10 lowest-final
         // slots, all 5 land in B.
@@ -153,5 +158,9 @@ class BumpUpSeedingServiceTest {
         // Top-down pass for A starts after the bottom pass has already consumed everything
         // (both pointers walk the same list), so no regular slots remain for A here.
         assertThat(aRegular).isEmpty();
+        // Bump-slot placeholders are still created for the A-final even though no regular
+        // qualifiers were seated there.
+        assertThat(aBump).hasSize(2);
+        assertThat(aBump).allMatch(e -> e.getEntryId() == 0L);
     }
 }
