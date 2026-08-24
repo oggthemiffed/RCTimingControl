@@ -2,9 +2,11 @@ package dev.monkeypatch.rctiming.localday.checkin;
 
 import dev.monkeypatch.rctiming.localday.domain.CachedEntry;
 import dev.monkeypatch.rctiming.localday.domain.CachedEntryRepository;
+import dev.monkeypatch.rctiming.localday.sync.SnapshotTriggerEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Instant;
 import java.util.List;
@@ -21,12 +23,14 @@ import static org.mockito.ArgumentMatchers.any;
 class CheckInServiceTest {
 
     private CachedEntryRepository cachedEntryRepository;
+    private ApplicationEventPublisher eventPublisher;
     private CheckInService service;
 
     @BeforeEach
     void setUp() {
         cachedEntryRepository = Mockito.mock(CachedEntryRepository.class);
-        service = new CheckInService(cachedEntryRepository);
+        eventPublisher = Mockito.mock(ApplicationEventPublisher.class);
+        service = new CheckInService(cachedEntryRepository, eventPublisher);
 
         Mockito.when(cachedEntryRepository.save(any(CachedEntry.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -75,6 +79,7 @@ class CheckInServiceTest {
                 .isBetween(before, after);
 
         Mockito.verify(cachedEntryRepository).save(cached);
+        Mockito.verify(eventPublisher).publishEvent(Mockito.any(SnapshotTriggerEvent.class));
     }
 
     // --- Edge case: repeat confirm ---
@@ -96,6 +101,7 @@ class CheckInServiceTest {
         assertThat(success.entry().getCheckedInAt()).isEqualTo(originalCheckInTime);
 
         Mockito.verify(cachedEntryRepository, Mockito.never()).save(any());
+        Mockito.verifyNoInteractions(eventPublisher);
     }
 
     // --- Error path ---

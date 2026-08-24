@@ -2,9 +2,11 @@ package dev.monkeypatch.rctiming.localday.race;
 
 import dev.monkeypatch.rctiming.localday.domain.CachedEntry;
 import dev.monkeypatch.rctiming.localday.domain.CachedScheduleEntry;
+import dev.monkeypatch.rctiming.localday.sync.SnapshotTriggerEvent;
 import dev.monkeypatch.rctiming.localday.timing.LapTimingService;
 import dev.monkeypatch.rctiming.localday.timing.LiveTimingHub;
 import dev.monkeypatch.rctiming.localday.timing.dto.MarshalAdjustmentDto;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -41,13 +43,16 @@ public class RaceStateMachineService {
     private final MarshalAdjustmentRepository marshalAdjustmentRepository;
     private final LiveTimingHub liveTimingHub;
     private final LapTimingService lapTimingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RaceStateMachineService(MarshalAdjustmentRepository marshalAdjustmentRepository,
                                     LiveTimingHub liveTimingHub,
-                                    LapTimingService lapTimingService) {
+                                    LapTimingService lapTimingService,
+                                    ApplicationEventPublisher eventPublisher) {
         this.marshalAdjustmentRepository = marshalAdjustmentRepository;
         this.liveTimingHub = liveTimingHub;
         this.lapTimingService = lapTimingService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -73,6 +78,10 @@ public class RaceStateMachineService {
         if (target == RaceState.FINISHED) {
             lapTimingService.releaseState(race.getId());
         }
+
+        // KTD8: an immediate snapshot push on every race-state transition, not waiting for the
+        // next periodic tick.
+        eventPublisher.publishEvent(new SnapshotTriggerEvent("race-state-transition"));
     }
 
     /**

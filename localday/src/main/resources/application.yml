@@ -39,3 +39,10 @@ localday:
     # and day-lifecycle open/close. Defaults to :app's local dev port for a same-machine setup;
     # override for a real venue deployment where the cloud runs elsewhere.
     base-url: ${LOCALDAY_CLOUD_BASE_URL:http://localhost:8080}
+  sync:
+    # KTD8: periodic snapshot push interval to the cloud while connected, plus immediate pushes
+    # on race-state transitions and check-ins (SnapshotPushService, U11).
+    push-interval-seconds: ${LOCALDAY_SYNC_PUSH_INTERVAL_SECONDS:20}
+    # Backoff cap for repeated push failures (unreachable cloud, or a rejected snapshot) — avoids
+    # hammering an unreachable cloud every tick during a sustained outage.
+    max-backoff-seconds: ${LOCALDAY_SYNC_MAX_BACKOFF_SECONDS:300}

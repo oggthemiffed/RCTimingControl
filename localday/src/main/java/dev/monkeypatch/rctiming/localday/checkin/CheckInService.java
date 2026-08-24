@@ -2,6 +2,8 @@ package dev.monkeypatch.rctiming.localday.checkin;
 
 import dev.monkeypatch.rctiming.localday.domain.CachedEntry;
 import dev.monkeypatch.rctiming.localday.domain.CachedEntryRepository;
+import dev.monkeypatch.rctiming.localday.sync.SnapshotTriggerEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -18,9 +20,11 @@ import java.util.Optional;
 public class CheckInService {
 
     private final CachedEntryRepository cachedEntryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public CheckInService(CachedEntryRepository cachedEntryRepository) {
+    public CheckInService(CachedEntryRepository cachedEntryRepository, ApplicationEventPublisher eventPublisher) {
         this.cachedEntryRepository = cachedEntryRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public Optional<CachedEntry> resolveByTransponderNumber(String transponderNumber) {
@@ -57,6 +61,9 @@ public class CheckInService {
         entry.setCheckedIn(true);
         entry.setCheckedInAt(Instant.now());
         cachedEntryRepository.save(entry);
+        // KTD8: an immediate snapshot push on every fresh check-in, not waiting for the next
+        // periodic tick. An already-checked-in repeat confirm above does not re-publish.
+        eventPublisher.publishEvent(new SnapshotTriggerEvent("check-in"));
         return new CheckInResult.Success(entry, false);
     }
 }

@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.localday.race;
 
 import dev.monkeypatch.rctiming.localday.domain.CachedEntry;
 import dev.monkeypatch.rctiming.localday.domain.CachedScheduleEntry;
+import dev.monkeypatch.rctiming.localday.sync.SnapshotTriggerEvent;
 import dev.monkeypatch.rctiming.localday.timing.LapTimingService;
 import dev.monkeypatch.rctiming.localday.timing.LiveTimingHub;
 import dev.monkeypatch.rctiming.localday.timing.dto.MarshalAdjustmentDto;
@@ -11,6 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Instant;
 
@@ -29,6 +31,7 @@ class RaceStateMachineServiceTest {
     private MarshalAdjustmentRepository marshalAdjustmentRepository;
     private LiveTimingHub liveTimingHub;
     private LapTimingService lapTimingService;
+    private ApplicationEventPublisher eventPublisher;
     private RaceStateMachineService service;
 
     @BeforeEach
@@ -36,7 +39,8 @@ class RaceStateMachineServiceTest {
         marshalAdjustmentRepository = Mockito.mock(MarshalAdjustmentRepository.class);
         liveTimingHub = Mockito.mock(LiveTimingHub.class);
         lapTimingService = Mockito.mock(LapTimingService.class);
-        service = new RaceStateMachineService(marshalAdjustmentRepository, liveTimingHub, lapTimingService);
+        eventPublisher = Mockito.mock(ApplicationEventPublisher.class);
+        service = new RaceStateMachineService(marshalAdjustmentRepository, liveTimingHub, lapTimingService, eventPublisher);
     }
 
     private CachedScheduleEntry raceWithStatus(RaceState status) {
@@ -139,6 +143,18 @@ class RaceStateMachineServiceTest {
 
         Mockito.verifyNoInteractions(liveTimingHub);
         Mockito.verifyNoInteractions(lapTimingService);
+        Mockito.verifyNoInteractions(eventPublisher);
+    }
+
+    @Test
+    void validTransition_publishesSnapshotTriggerEvent() {
+        CachedScheduleEntry race = raceWithStatus(RaceState.PENDING);
+
+        service.transition(race, RaceState.GRID);
+
+        ArgumentCaptor<SnapshotTriggerEvent> captor = ArgumentCaptor.forClass(SnapshotTriggerEvent.class);
+        Mockito.verify(eventPublisher).publishEvent(captor.capture());
+        assertThat(captor.getValue().reason()).isEqualTo("race-state-transition");
     }
 
     // --- Error path: invalid transitions ---
