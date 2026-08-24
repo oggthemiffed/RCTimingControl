@@ -306,6 +306,69 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
         assertThat(scheduleDto.sequence()).isEqualTo(1);
         assertThat(scheduleDto.className()).isEqualTo(racingClass.getName());
         assertThat(scheduleDto.status()).isEqualTo("PENDING");
+
+        assertThat(body.formatConfigs()).hasSize(1);
+        var formatConfigDto = body.formatConfigs().get(0);
+        assertThat(formatConfigDto.cloudEventClassId()).isEqualTo(eventClassId);
+        assertThat(formatConfigDto.className()).isEqualTo(racingClass.getName());
+        assertThat(formatConfigDto.config()).isInstanceOf(TimedRaceConfig.class);
+        assertThat(((TimedRaceConfig) formatConfigDto.config()).durationMinutes()).isEqualTo(5);
+    }
+
+    @Test
+    void preCache_eventClassWithOverride_returnsMergedNotRawSnapshot() {
+        Long eventId = createEventInDb();
+        RacingClass racingClass = createRacingClassInDb("PreCacheOverrideClass");
+
+        EventClass ec = new EventClass();
+        ec.setEventId(eventId);
+        ec.setRacingClassId(racingClass.getId());
+        ec.setConfigSnapshot(new TimedRaceConfig(5, StartType.GRID, QualifyingType.FASTEST_LAP, 1, 0));
+        ec.setConfigOverride(Map.of("durationMinutes", 8));
+        Long eventClassId = eventClassRepository.save(ec).getId();
+
+        ResponseEntity<PreCacheResponseDto> resp = restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/pre-cache", HttpMethod.POST,
+                new HttpEntity<>(Map.of("instanceId", "instance-override"), adminHeaders()), PreCacheResponseDto.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        var formatConfigDto = resp.getBody().formatConfigs().stream()
+                .filter(f -> f.cloudEventClassId().equals(eventClassId))
+                .findFirst()
+                .orElseThrow();
+        assertThat(formatConfigDto.config()).isInstanceOf(TimedRaceConfig.class);
+        assertThat(((TimedRaceConfig) formatConfigDto.config()).durationMinutes()).isEqualTo(8);
+    }
+
+    @Test
+    void preCache_eventClassWithoutOverride_returnsSnapshotUnchanged() {
+        Long eventId = createEventInDb();
+        RacingClass racingClass = createRacingClassInDb("PreCacheNoOverrideClass");
+        Long eventClassId = createEventClassInDb(eventId, racingClass.getId());
+
+        ResponseEntity<PreCacheResponseDto> resp = restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/pre-cache", HttpMethod.POST,
+                new HttpEntity<>(Map.of("instanceId", "instance-no-override"), adminHeaders()), PreCacheResponseDto.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        var formatConfigDto = resp.getBody().formatConfigs().stream()
+                .filter(f -> f.cloudEventClassId().equals(eventClassId))
+                .findFirst()
+                .orElseThrow();
+        assertThat(formatConfigDto.config()).isInstanceOf(TimedRaceConfig.class);
+        assertThat(((TimedRaceConfig) formatConfigDto.config()).durationMinutes()).isEqualTo(5);
+    }
+
+    @Test
+    void preCache_noEventClasses_returnsEmptyFormatConfigsList() {
+        Long eventId = createEventInDb();
+
+        ResponseEntity<PreCacheResponseDto> resp = restTemplate.exchange(
+                "/api/v1/localday/events/" + eventId + "/pre-cache", HttpMethod.POST,
+                new HttpEntity<>(Map.of("instanceId", "instance-no-classes"), adminHeaders()), PreCacheResponseDto.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp.getBody().formatConfigs()).isEmpty();
     }
 
     @Test

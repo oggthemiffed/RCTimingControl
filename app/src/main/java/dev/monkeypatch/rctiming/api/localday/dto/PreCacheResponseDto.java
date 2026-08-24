@@ -5,5 +5,6 @@ import java.util.List;
 public record PreCacheResponseDto(PreCacheEventDto event,
                                    List<PreCacheEntryDto> entries,
                                    List<PreCacheScheduleDto> schedule,
+                                   List<PreCacheFormatConfigDto> formatConfigs,
                                    List<PreCacheCredentialDto> officialCredentials,
                                    PreCacheInstanceSecretDto instanceSecret) {}

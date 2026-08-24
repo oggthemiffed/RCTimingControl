@@ -3,13 +3,19 @@ package dev.monkeypatch.rctiming.api.localday;
 import dev.monkeypatch.rctiming.api.localday.dto.PreCacheCredentialDto;
 import dev.monkeypatch.rctiming.api.localday.dto.PreCacheEntryDto;
 import dev.monkeypatch.rctiming.api.localday.dto.PreCacheEventDto;
+import dev.monkeypatch.rctiming.api.localday.dto.PreCacheFormatConfigDto;
 import dev.monkeypatch.rctiming.api.localday.dto.PreCacheInstanceSecretDto;
 import dev.monkeypatch.rctiming.api.localday.dto.PreCacheRequest;
 import dev.monkeypatch.rctiming.api.localday.dto.PreCacheResponseDto;
 import dev.monkeypatch.rctiming.api.localday.dto.PreCacheScheduleDto;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
+import dev.monkeypatch.rctiming.domain.format.EventClass;
+import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
+import dev.monkeypatch.rctiming.domain.format.RaceFormatService;
 import dev.monkeypatch.rctiming.domain.localday.PreCacheService;
+import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
+import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.query.localday.PreCacheQuery;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,13 +37,22 @@ public class PreCacheController {
     private final PreCacheService preCacheService;
     private final PreCacheQuery preCacheQuery;
     private final EventRepository eventRepository;
+    private final EventClassRepository eventClassRepository;
+    private final RacingClassRepository racingClassRepository;
+    private final RaceFormatService raceFormatService;
 
     public PreCacheController(PreCacheService preCacheService,
                                PreCacheQuery preCacheQuery,
-                               EventRepository eventRepository) {
+                               EventRepository eventRepository,
+                               EventClassRepository eventClassRepository,
+                               RacingClassRepository racingClassRepository,
+                               RaceFormatService raceFormatService) {
         this.preCacheService = preCacheService;
         this.preCacheQuery = preCacheQuery;
         this.eventRepository = eventRepository;
+        this.eventClassRepository = eventClassRepository;
+        this.racingClassRepository = racingClassRepository;
+        this.raceFormatService = raceFormatService;
     }
 
     @PostMapping
@@ -64,6 +79,11 @@ public class PreCacheController {
                         s.className(), s.finalLetter(), s.status()))
                 .toList();
 
+        var eventClasses = eventClassRepository.findByEventId(eventId);
+        var formatConfigs = eventClasses.stream()
+                .map(this::toFormatConfigDto)
+                .toList();
+
         var officialCredentials = mintResult.officialCredentials().stream()
                 .map(c -> new PreCacheCredentialDto(c.cloudUserId(), c.officialName(), c.pin()))
                 .toList();
@@ -71,6 +91,18 @@ public class PreCacheController {
         PreCacheInstanceSecretDto instanceSecret =
                 new PreCacheInstanceSecretDto(mintResult.instanceId(), mintResult.instanceSecret());
 
-        return new PreCacheResponseDto(eventDto, entries, schedule, officialCredentials, instanceSecret);
+        return new PreCacheResponseDto(eventDto, entries, schedule, formatConfigs, officialCredentials, instanceSecret);
+    }
+
+    private PreCacheFormatConfigDto toFormatConfigDto(EventClass eventClass) {
+        String className = null;
+        Long racingClassId = eventClass.getRacingClassId();
+        if (racingClassId != null) {
+            className = racingClassRepository.findById(racingClassId)
+                    .map(RacingClass::getName)
+                    .orElse(null);
+        }
+        var effectiveConfig = raceFormatService.getEffectiveConfig(eventClass);
+        return new PreCacheFormatConfigDto(eventClass.getId(), className, effectiveConfig);
     }
 }
