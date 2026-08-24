@@ -72,6 +72,7 @@ public class SnapshotPushService implements SmartLifecycle {
     private final CachedScheduleEntryRepository cachedScheduleEntryRepository;
     private final CachedEntryRepository cachedEntryRepository;
     private final RaceResultEntryRepository raceResultEntryRepository;
+    private final DeviceLossHandler deviceLossHandler;
     private final Clock clock;
     private final long pushIntervalSeconds;
     private final long maxBackoffSeconds;
@@ -88,6 +89,7 @@ public class SnapshotPushService implements SmartLifecycle {
                                 CachedScheduleEntryRepository cachedScheduleEntryRepository,
                                 CachedEntryRepository cachedEntryRepository,
                                 RaceResultEntryRepository raceResultEntryRepository,
+                                DeviceLossHandler deviceLossHandler,
                                 Clock clock,
                                 @Value("${localday.sync.push-interval-seconds:20}") long pushIntervalSeconds,
                                 @Value("${localday.sync.max-backoff-seconds:300}") long maxBackoffSeconds) {
@@ -98,6 +100,7 @@ public class SnapshotPushService implements SmartLifecycle {
         this.cachedScheduleEntryRepository = cachedScheduleEntryRepository;
         this.cachedEntryRepository = cachedEntryRepository;
         this.raceResultEntryRepository = raceResultEntryRepository;
+        this.deviceLossHandler = deviceLossHandler;
         this.clock = clock;
         this.pushIntervalSeconds = pushIntervalSeconds;
         this.maxBackoffSeconds = maxBackoffSeconds;
@@ -189,6 +192,12 @@ public class SnapshotPushService implements SmartLifecycle {
         if (state.getStatus() != DayLifecycleStatus.OPEN) {
             return;
         }
+        if (state.isSuperseded()) {
+            // A prior push was already rejected as superseded (KTD4/DeviceLossHandler) — this
+            // instance's generation can never become current again, so there is nothing to gain
+            // from ever attempting another push. Permanent, not backoff-timed.
+            return;
+        }
         Long eventId = state.getCloudEventId();
         String instanceSecret = state.getInstanceSecret();
         Long generation = state.getGeneration();
@@ -233,13 +242,19 @@ public class SnapshotPushService implements SmartLifecycle {
             nextAttemptNotBefore = Instant.MIN;
             state.setPendingSyncCount(0);
         } catch (RuntimeException e) {
-            consecutiveFailures++;
-            long backoffMultiplier = 1L << Math.min(consecutiveFailures - 1, 20);
-            long backoffSeconds = Math.min(pushIntervalSeconds * backoffMultiplier, maxBackoffSeconds);
-            nextAttemptNotBefore = now.plusSeconds(backoffSeconds);
+            if (deviceLossHandler.isSuperseded(e)) {
+                // Permanent, not a transient failure — no backoff bookkeeping; pushNow()'s guard
+                // above stops every future attempt once state.isSuperseded() is true.
+                deviceLossHandler.markSuperseded(state, now);
+            } else {
+                consecutiveFailures++;
+                long backoffMultiplier = 1L << Math.min(consecutiveFailures - 1, 20);
+                long backoffSeconds = Math.min(pushIntervalSeconds * backoffMultiplier, maxBackoffSeconds);
+                nextAttemptNotBefore = now.plusSeconds(backoffSeconds);
+                log.warn("Snapshot push failed (attempt {}), backing off {}s: {}",
+                        consecutiveFailures, backoffSeconds, e.getMessage());
+            }
             state.setPendingSyncCount(unsyncedLaps.size());
-            log.warn("Snapshot push failed (attempt {}), backing off {}s: {}",
-                    consecutiveFailures, backoffSeconds, e.getMessage());
         }
 
         queue.setUpdatedAt(now);

@@ -276,6 +276,10 @@ export interface DayLifecycleStatus {
   splitBrainWarning: boolean;
   pendingSyncCount: number;
   lastPreCachedAt: string | null;
+  // U12: set once this instance's snapshot push has been rejected as superseded (KTD4) — a
+  // replacement instance has taken over this event day (device-loss declared, R16/R17). Sticky
+  // for the rest of this session; there is no un-supersede path.
+  superseded: boolean;
 }
 
 export interface CloseDayResponse {

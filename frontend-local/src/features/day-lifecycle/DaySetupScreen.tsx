@@ -88,6 +88,12 @@ export default function DaySetupScreen({ status, onStatusChange }: DaySetupScree
   const [error, setError] = useState<SetupError | null>(null);
   const [preCacheConfirmed, setPreCacheConfirmed] = useState(false);
   const [splitBrainWarning, setSplitBrainWarning] = useState(false);
+  // U12 / P0 mitigation: an offline open has no cloud round-trip to ever detect a second device
+  // opening the same day (see splitBrainWarning above, shown *after* the fact) — this is a
+  // before-the-fact operator-facing gate. There's no reliable way to tell "first open of the day"
+  // apart from "replacement device taking over" without connectivity, so it's asked unconditionally
+  // rather than only when a replacement is suspected.
+  const [offlineOpenConfirmed, setOfflineOpenConfirmed] = useState(false);
 
   const parsedEventId = Number(eventId);
   const eventIdValid = eventId.trim() !== '' && Number.isFinite(parsedEventId);
@@ -135,7 +141,7 @@ export default function DaySetupScreen({ status, onStatusChange }: DaySetupScree
 
   function handleOpenOffline(e: React.FormEvent) {
     e.preventDefault();
-    if (!eventIdValid) return;
+    if (!eventIdValid || !offlineOpenConfirmed) return;
     void runAction('open-offline', () => openDay(parsedEventId));
   }
 
@@ -237,10 +243,25 @@ export default function DaySetupScreen({ status, onStatusChange }: DaySetupScree
           No internet right now, but this event was already pre-cached on this device? Open
           offline using whatever was last pre-cached — no cloud credentials needed.
         </p>
+
+        <label className="mb-2 flex items-start gap-2 text-sm text-slate-700">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={offlineOpenConfirmed}
+            onChange={(e) => setOfflineOpenConfirmed(e.target.checked)}
+          />
+          <span>
+            I confirm: either no other device is currently running this event, or — if a
+            previous device failed — I've verified on-site that it's physically powered down
+            or disconnected (not just unreachable) and its loss has been declared.
+          </span>
+        </label>
+
         <button
           type="button"
           onClick={handleOpenOffline}
-          disabled={busy || !eventIdValid}
+          disabled={busy || !eventIdValid || !offlineOpenConfirmed}
           className="w-full rounded border border-slate-400 px-3 py-2 text-sm font-medium text-slate-700 disabled:opacity-50"
         >
           {action === 'open-offline' ? 'Opening…' : 'Open Day (offline — no connectivity)'}

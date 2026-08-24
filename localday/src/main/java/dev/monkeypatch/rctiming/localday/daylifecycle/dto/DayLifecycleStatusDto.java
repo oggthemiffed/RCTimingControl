@@ -11,7 +11,7 @@ import java.time.Instant;
  */
 public record DayLifecycleStatusDto(String status, Long eventId, Long generation,
                                      boolean splitBrainWarning, int pendingSyncCount,
-                                     Instant lastPreCachedAt) {
+                                     Instant lastPreCachedAt, boolean superseded) {
 
     public static DayLifecycleStatusDto from(DayLifecycleState state) {
         return new DayLifecycleStatusDto(
@@ -20,6 +20,7 @@ public record DayLifecycleStatusDto(String status, Long eventId, Long generation
                 state.getGeneration(),
                 state.isSplitBrainWarning(),
                 state.getPendingSyncCount(),
-                state.getLastPreCachedAt());
+                state.getLastPreCachedAt(),
+                state.isSuperseded());
     }
 }

@@ -48,6 +48,16 @@ public class DayLifecycleState {
     @Column(name = "split_brain_warning", nullable = false)
     private boolean splitBrainWarning = false;
 
+    // Set once this instance's snapshot push is rejected with a 409 Superseded (U12,
+    // DeviceLossHandler) — a replacement instance has since opened at a higher generation, per a
+    // device-loss declaration (R16/R17). Permanent for the rest of this local session; see the
+    // V10 migration's comment.
+    @Column(name = "superseded", nullable = false)
+    private boolean superseded = false;
+
+    @Column(name = "superseded_at")
+    private Instant supersededAt;
+
     @Column(name = "last_pre_cached_at")
     private Instant lastPreCachedAt;
 
@@ -80,6 +90,12 @@ public class DayLifecycleState {
 
     public boolean isSplitBrainWarning() { return splitBrainWarning; }
     public void setSplitBrainWarning(boolean splitBrainWarning) { this.splitBrainWarning = splitBrainWarning; }
+
+    public boolean isSuperseded() { return superseded; }
+    public void setSuperseded(boolean superseded) { this.superseded = superseded; }
+
+    public Instant getSupersededAt() { return supersededAt; }
+    public void setSupersededAt(Instant supersededAt) { this.supersededAt = supersededAt; }
 
     public Instant getLastPreCachedAt() { return lastPreCachedAt; }
     public void setLastPreCachedAt(Instant lastPreCachedAt) { this.lastPreCachedAt = lastPreCachedAt; }

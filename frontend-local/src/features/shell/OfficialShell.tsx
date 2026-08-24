@@ -7,13 +7,19 @@
 // session is cleared and `onDayClosed` is called so the parent (LoginPage) re-renders back to
 // its logged-out state — R14 purges cached data including credentials on close, so there is
 // nothing left to show here once it succeeds.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import RaceControl from '@/features/race-control/RaceControl';
 import CheckInDesk from '@/features/checkin/CheckInDesk';
-import { closeDay } from '@/lib/api';
+import { closeDay, getDayLifecycleStatus } from '@/lib/api';
 import { clearSession } from '@/lib/auth';
 
 type Tab = 'race-control' | 'checkin';
+
+// U12: how often to check whether this instance's snapshot sync has been rejected as
+// superseded (a device-loss declaration elsewhere has handed the day to a replacement). Slower
+// than the boards' 5s live-data poll — this is a status check, not something officials are
+// staring at, and superseded is a rare, one-time-per-session transition once it happens.
+const SUPERSEDED_POLL_INTERVAL_MS = 30_000;
 
 export interface OfficialShellProps {
   // True once this session has seen a splitBrainWarning from an offline day-open. Sticky for
@@ -32,6 +38,31 @@ export default function OfficialShell({
   const [closing, setClosing] = useState(false);
   const [closeError, setCloseError] = useState<string | null>(null);
   const [pendingSyncCount, setPendingSyncCount] = useState<number | null>(null);
+  const [superseded, setSuperseded] = useState(false);
+
+  // U12: periodically check whether this instance's snapshot sync has been rejected as
+  // superseded — this can happen mid-session (unlike splitBrainWarning, which is only ever known
+  // at open time), so a one-time check at login can't catch it. Stops polling once true; there is
+  // no un-supersede path to watch for.
+  useEffect(() => {
+    if (superseded) return;
+    let cancelled = false;
+    function poll() {
+      getDayLifecycleStatus()
+        .then((status) => {
+          if (!cancelled && status.superseded) setSuperseded(true);
+        })
+        .catch(() => {
+          // Best-effort — leave the last-known state and retry next tick.
+        });
+    }
+    poll();
+    const interval = setInterval(poll, SUPERSEDED_POLL_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [superseded]);
 
   async function handleCloseDay() {
     if (closing) return;
@@ -60,6 +91,18 @@ export default function OfficialShell({
 
   return (
     <div className="flex min-h-screen flex-col">
+      {superseded && (
+        <div
+          role="alert"
+          className="border-b-2 border-red-600 bg-red-50 p-3 text-sm font-semibold text-red-800"
+        >
+          This device has been superseded — a replacement device has taken over this event day
+          (device loss was declared). Everything captured here so far is safe, but this device
+          can no longer sync new results to the cloud. Stop using it for race control and confirm
+          with an admin.
+        </div>
+      )}
+
       {splitBrainWarning && (
         <div
           role="alert"

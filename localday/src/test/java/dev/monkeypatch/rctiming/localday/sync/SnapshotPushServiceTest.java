@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.localday.sync;
 
+import dev.monkeypatch.rctiming.localday.daylifecycle.CloudRequestException;
 import dev.monkeypatch.rctiming.localday.daylifecycle.CloudUnreachableException;
 import dev.monkeypatch.rctiming.localday.daylifecycle.DayLifecycleState;
 import dev.monkeypatch.rctiming.localday.daylifecycle.DayLifecycleStateRepository;
@@ -71,9 +72,11 @@ class SnapshotPushServiceTest {
         raceResultEntryRepository = Mockito.mock(RaceResultEntryRepository.class);
         clock = new MutableClock(Instant.parse("2026-08-24T12:00:00Z"));
 
+        // Real DeviceLossHandler, not mocked — it's pure logic with no I/O, so exercising the
+        // real 409-recognition/superseded-marking behavior is more valuable here than stubbing it.
         service = new SnapshotPushService(client, dayLifecycleStateRepository, snapshotQueueRepository,
                 lapPassingRepository, cachedScheduleEntryRepository, cachedEntryRepository,
-                raceResultEntryRepository, clock, 20L, 300L);
+                raceResultEntryRepository, new DeviceLossHandler(), clock, 20L, 300L);
 
         // Defaults shared by most tests: no schedule/results state, empty repos.
         Mockito.when(cachedScheduleEntryRepository.findAllById(any())).thenReturn(List.of());
@@ -331,6 +334,58 @@ class SnapshotPushServiceTest {
         clock.advance(1); // no meaningful wait needed post-reset
         service.pushNow();
         Mockito.verify(client, Mockito.times(2)).pushSnapshot(anyLong(), any(), any());
+    }
+
+    // --- Device-loss recovery (U12): a 409 marks this instance permanently superseded ---
+
+    @Test
+    void pushNow_alreadySuperseded_neverCallsClient() {
+        DayLifecycleState state = openState();
+        state.setSuperseded(true);
+        Mockito.when(dayLifecycleStateRepository.findById(DayLifecycleState.SINGLETON_ID))
+                .thenReturn(Optional.of(state));
+
+        service.pushNow();
+
+        Mockito.verifyNoInteractions(client);
+    }
+
+    @Test
+    void pushNow_409Response_marksStateSupersededWithoutOrdinaryBackoff() {
+        Mockito.when(dayLifecycleStateRepository.findById(DayLifecycleState.SINGLETON_ID))
+                .thenReturn(Optional.of(openState()));
+        Mockito.when(snapshotQueueRepository.findById(SnapshotQueue.SINGLETON_ID)).thenReturn(Optional.empty());
+        Mockito.when(lapPassingRepository.findAllByIdGreaterThanOrderByIdAsc(0L))
+                .thenReturn(List.of(lap(5L, "1111111")));
+        Mockito.doThrow(new CloudRequestException(409, "superseded", new RuntimeException()))
+                .when(client).pushSnapshot(anyLong(), any(), any());
+
+        service.pushNow();
+
+        ArgumentCaptor<DayLifecycleState> stateCaptor = ArgumentCaptor.forClass(DayLifecycleState.class);
+        Mockito.verify(dayLifecycleStateRepository).save(stateCaptor.capture());
+        assertThat(stateCaptor.getValue().isSuperseded()).isTrue();
+        assertThat(stateCaptor.getValue().getSupersededAt()).isEqualTo(clock.instant());
+        assertThat(stateCaptor.getValue().getPendingSyncCount()).isEqualTo(1);
+    }
+
+    @Test
+    void pushNow_supersededByPriorPush_stopsFurtherAutomaticRetries() {
+        DayLifecycleState state = openState();
+        Mockito.when(dayLifecycleStateRepository.findById(DayLifecycleState.SINGLETON_ID))
+                .thenReturn(Optional.of(state));
+        Mockito.when(snapshotQueueRepository.findById(SnapshotQueue.SINGLETON_ID)).thenReturn(Optional.empty());
+        Mockito.when(lapPassingRepository.findAllByIdGreaterThanOrderByIdAsc(0L)).thenReturn(List.of());
+        Mockito.doThrow(new CloudRequestException(409, "superseded", new RuntimeException()))
+                .when(client).pushSnapshot(anyLong(), any(), any());
+
+        service.pushNow(); // rejected as superseded — mutates the same `state` object in place
+        Mockito.verify(client, Mockito.times(1)).pushSnapshot(anyLong(), any(), any());
+        assertThat(state.isSuperseded()).isTrue();
+
+        clock.advance(600); // long past any ordinary backoff window
+        service.pushNow(); // must not retry — superseded is permanent, not backoff-timed
+        Mockito.verify(client, Mockito.times(1)).pushSnapshot(anyLong(), any(), any());
     }
 
     // --- Immediate push on trigger event, not waiting for the next scheduled tick ---

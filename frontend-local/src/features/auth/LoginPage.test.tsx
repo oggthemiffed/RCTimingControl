@@ -43,6 +43,7 @@ const openStatus = {
   splitBrainWarning: false,
   pendingSyncCount: 0,
   lastPreCachedAt: '2026-08-24T08:00:00Z',
+  superseded: false,
 };
 
 beforeEach(() => {
@@ -182,6 +183,7 @@ describe('LoginPage', () => {
       splitBrainWarning: false,
       pendingSyncCount: 0,
       lastPreCachedAt: null,
+      superseded: false,
     });
 
     render(<LoginPage />);
@@ -199,6 +201,7 @@ describe('LoginPage', () => {
       splitBrainWarning: false,
       pendingSyncCount: 0,
       lastPreCachedAt: '2026-08-24T08:00:00Z',
+      superseded: false,
     });
 
     render(<LoginPage />);
@@ -216,6 +219,7 @@ describe('LoginPage', () => {
       splitBrainWarning: false,
       pendingSyncCount: 0,
       lastPreCachedAt: null,
+      superseded: false,
     });
 
     render(<LoginPage />);
@@ -258,6 +262,7 @@ describe('LoginPage', () => {
       splitBrainWarning: false,
       pendingSyncCount: 0,
       lastPreCachedAt: null,
+      superseded: false,
     });
 
     render(<LoginPage />);

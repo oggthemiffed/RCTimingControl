@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import OfficialShell from './OfficialShell';
+import type { DayLifecycleStatus } from '@/lib/api';
 
 vi.mock('@/lib/api', () => ({
   closeDay: vi.fn(),
+  getDayLifecycleStatus: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -20,13 +22,25 @@ vi.mock('@/features/checkin/CheckInDesk', () => ({
   default: () => <div>Check-in Desk (mocked)</div>,
 }));
 
-import { closeDay } from '@/lib/api';
+import { closeDay, getDayLifecycleStatus } from '@/lib/api';
 import { clearSession } from '@/lib/auth';
+
+const notSuperseded: DayLifecycleStatus = {
+  status: 'OPEN',
+  eventId: 42,
+  generation: 2,
+  splitBrainWarning: false,
+  pendingSyncCount: 0,
+  lastPreCachedAt: '2026-08-23T20:00:00Z',
+  superseded: false,
+};
 
 beforeEach(() => {
   vi.mocked(closeDay).mockReset();
   vi.mocked(clearSession).mockReset();
   vi.mocked(clearSession).mockResolvedValue(undefined);
+  vi.mocked(getDayLifecycleStatus).mockReset();
+  vi.mocked(getDayLifecycleStatus).mockResolvedValue(notSuperseded);
 });
 
 describe('OfficialShell', () => {
@@ -72,5 +86,19 @@ describe('OfficialShell', () => {
   it('does not show the split-brain warning banner by default', () => {
     render(<OfficialShell />);
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('does not show the superseded banner while sync status is not superseded', async () => {
+    render(<OfficialShell />);
+    await waitFor(() => expect(getDayLifecycleStatus).toHaveBeenCalled());
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('shows the superseded banner once the local status reports superseded', async () => {
+    vi.mocked(getDayLifecycleStatus).mockResolvedValue({ ...notSuperseded, superseded: true });
+
+    render(<OfficialShell />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/superseded/i);
   });
 });

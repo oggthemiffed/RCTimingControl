@@ -17,6 +17,7 @@ const notSetUp: DayLifecycleStatus = {
   splitBrainWarning: false,
   pendingSyncCount: 0,
   lastPreCachedAt: null,
+  superseded: false,
 };
 
 const preCached: DayLifecycleStatus = {
@@ -26,6 +27,7 @@ const preCached: DayLifecycleStatus = {
   splitBrainWarning: false,
   pendingSyncCount: 0,
   lastPreCachedAt: '2026-08-23T20:00:00Z',
+  superseded: false,
 };
 
 beforeEach(() => {
@@ -66,6 +68,7 @@ describe('DaySetupScreen', () => {
       splitBrainWarning: false,
       pendingSyncCount: 0,
       lastPreCachedAt: '2026-08-23T20:00:00Z',
+      superseded: false,
     };
     vi.mocked(openDay).mockResolvedValue(openedStatus);
     const onStatusChange = vi.fn();
@@ -93,12 +96,14 @@ describe('DaySetupScreen', () => {
       splitBrainWarning: true,
       pendingSyncCount: 0,
       lastPreCachedAt: '2026-08-23T20:00:00Z',
+      superseded: false,
     };
     vi.mocked(openDay).mockResolvedValue(openedOfflineStatus);
     const onStatusChange = vi.fn();
 
     render(<DaySetupScreen status={preCached} onStatusChange={onStatusChange} />);
 
+    fireEvent.click(screen.getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: /open day \(offline/i }));
 
     await waitFor(() => expect(openDay).toHaveBeenCalledWith(42));
@@ -166,5 +171,20 @@ describe('DaySetupScreen', () => {
   it('pre-fills the event id from status when already pre-cached', () => {
     render(<DaySetupScreen status={preCached} onStatusChange={vi.fn()} />);
     expect(screen.getByLabelText(/event id/i)).toHaveValue(42);
+  });
+
+  it('disables "Open Day (offline)" until the on-site physical-confirmation checkbox is checked', () => {
+    render(<DaySetupScreen status={preCached} onStatusChange={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/event id/i), { target: { value: '42' } });
+
+    const offlineButton = screen.getByRole('button', { name: /open day \(offline/i });
+    expect(offlineButton).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(offlineButton).not.toBeDisabled();
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(offlineButton).toBeDisabled();
+    expect(openDay).not.toHaveBeenCalled();
   });
 });

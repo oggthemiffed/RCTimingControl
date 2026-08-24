@@ -121,6 +121,7 @@ export default function LoginPage() {
       splitBrainWarning: false,
       pendingSyncCount: 0,
       lastPreCachedAt: null,
+      superseded: false,
     });
     setOfficials([]);
     setSplitBrainWarning(false);
@@ -190,6 +191,7 @@ export default function LoginPage() {
               splitBrainWarning: false,
               pendingSyncCount: 0,
               lastPreCachedAt: null,
+              superseded: false,
             })
           }
           className="mt-2 rounded bg-blue-600 px-3 py-2 text-sm text-white"
