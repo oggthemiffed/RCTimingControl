@@ -20,7 +20,12 @@ vi.mock('@/lib/auth', () => ({
 // login/session flow. Coverage of OfficialShell's own tab-switching behavior and RaceControl's
 // behavior live in their own feature directories, not here.
 vi.mock('@/features/shell/OfficialShell', () => ({
-  default: () => <div>Official Shell (mocked)</div>,
+  default: ({ splitBrainWarning }: { splitBrainWarning?: boolean }) => (
+    <div>
+      Official Shell (mocked)
+      {splitBrainWarning && <div role="alert">split-brain warning active</div>}
+    </div>
+  ),
 }));
 
 import { getDayLifecycleStatus, listOfficials, login, recover } from '@/lib/api';
@@ -219,6 +224,48 @@ describe('LoginPage', () => {
     expect(screen.queryByLabelText('Official')).toBeNull();
     expect(screen.queryByText('Set up this event day')).toBeNull();
     expect(listOfficials).not.toHaveBeenCalled();
+  });
+
+  it('carries the split-brain warning into OfficialShell after login when the initial status fetch already had it set (e.g. after a restart mid-day)', async () => {
+    // No stored session (matches the real scenario: the device restarted after an earlier
+    // offline day-open, so the browser session is gone but the server-side flag persists).
+    vi.mocked(getStoredSession).mockResolvedValue(null);
+    vi.mocked(getDayLifecycleStatus).mockResolvedValue({
+      ...openStatus,
+      splitBrainWarning: true,
+    });
+    vi.mocked(login).mockResolvedValue({
+      sessionToken: 'tok-1',
+      officialName: 'Jane Doe',
+      credentialId: 1,
+    });
+
+    render(<LoginPage />);
+
+    await screen.findByText('Jane Doe');
+    selectOfficial(1);
+    fireEvent.change(screen.getByLabelText('PIN'), { target: { value: '123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+
+    await screen.findByText('split-brain warning active');
+  });
+
+  it('shows a "prepare for next event" action on the CLOSED screen that leads back to day setup', async () => {
+    vi.mocked(getDayLifecycleStatus).mockResolvedValue({
+      status: 'CLOSED',
+      eventId: null,
+      generation: null,
+      splitBrainWarning: false,
+      pendingSyncCount: 0,
+      lastPreCachedAt: null,
+    });
+
+    render(<LoginPage />);
+
+    await screen.findByText('This event day is closed');
+    fireEvent.click(screen.getByText('Prepare this device for the next event'));
+
+    await screen.findByText('Set up this event day');
   });
 
   it('falls back to the officials picker if the day-lifecycle status fetch fails', async () => {

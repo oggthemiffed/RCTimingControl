@@ -16,6 +16,7 @@ import {
 
 type SetupError =
   | { kind: 'invalid_credentials' }
+  | { kind: 'credentials_required' }
   | { kind: 'unreachable' }
   | { kind: 'conflict'; message: string }
   | { kind: 'generic' };
@@ -47,6 +48,14 @@ function SetupErrorMessage({ error }: { error: SetupError }) {
     return (
       <p className="text-sm text-red-600">
         Incorrect cloud email or password. Double-check and try again.
+      </p>
+    );
+  }
+  if (error.kind === 'credentials_required') {
+    return (
+      <p className="text-sm text-red-600">
+        Enter your cloud email and password to open the day online, or use "Open Day (offline)"
+        below if there's no connectivity.
       </p>
     );
   }
@@ -102,15 +111,25 @@ export default function DaySetupScreen({ status, onStatusChange }: DaySetupScree
     }
   }
 
+  const credentialsProvided = email.trim() !== '' && password.trim() !== '';
+
   function handlePreCache(e: React.FormEvent) {
     e.preventDefault();
     if (!eventIdValid) return;
+    if (!credentialsProvided) {
+      setError({ kind: 'credentials_required' });
+      return;
+    }
     void runAction('precache', () => preCacheDay(parsedEventId, email, password));
   }
 
   function handleOpen(e: React.FormEvent) {
     e.preventDefault();
     if (!eventIdValid) return;
+    if (!credentialsProvided) {
+      setError({ kind: 'credentials_required' });
+      return;
+    }
     void runAction('open', () => openDay(parsedEventId, email, password));
   }
 

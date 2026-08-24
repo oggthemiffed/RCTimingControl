@@ -143,6 +143,26 @@ describe('DaySetupScreen', () => {
     await screen.findByText('Day already open on another device.');
   });
 
+  it('requires credentials for "Open Day" and does not silently fall through to the offline path', async () => {
+    render(<DaySetupScreen status={notSetUp} onStatusChange={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/event id/i), { target: { value: '42' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /^open day \(start the event day\)$/i }));
+
+    await screen.findByText(/enter your cloud email and password/i);
+    expect(openDay).not.toHaveBeenCalled();
+  });
+
+  it('requires credentials for "Pre-cache now"', async () => {
+    render(<DaySetupScreen status={notSetUp} onStatusChange={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/event id/i), { target: { value: '42' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /pre-cache now/i }));
+
+    await screen.findByText(/enter your cloud email and password/i);
+    expect(preCacheDay).not.toHaveBeenCalled();
+  });
+
   it('pre-fills the event id from status when already pre-cached', () => {
     render(<DaySetupScreen status={preCached} onStatusChange={vi.fn()} />);
     expect(screen.getByLabelText(/event id/i)).toHaveValue(42);

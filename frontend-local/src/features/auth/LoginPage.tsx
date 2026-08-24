@@ -70,6 +70,9 @@ export default function LoginPage() {
           .then((status) => {
             if (cancelled) return;
             setDayStatus(status);
+            if (status.splitBrainWarning) {
+              setSplitBrainWarning(true);
+            }
             // Officials only become available to log in with once the day is OPEN — see
             // DaySetupScreen for NOT_SET_UP/PRE_CACHED, and the CLOSED message below.
             if (status.status === 'OPEN') {
@@ -177,6 +180,22 @@ export default function LoginPage() {
           Cached data for this event has been cleared from this device. Pre-cache the next event
           when it's ready to prepare this device again.
         </p>
+        <button
+          type="button"
+          onClick={() =>
+            setDayStatus({
+              status: 'NOT_SET_UP',
+              eventId: null,
+              generation: null,
+              splitBrainWarning: false,
+              pendingSyncCount: 0,
+              lastPreCachedAt: null,
+            })
+          }
+          className="mt-2 rounded bg-blue-600 px-3 py-2 text-sm text-white"
+        >
+          Prepare this device for the next event
+        </button>
       </div>
     );
   }
