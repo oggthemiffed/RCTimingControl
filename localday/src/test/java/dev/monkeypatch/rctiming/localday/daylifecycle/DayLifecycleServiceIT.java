@@ -263,14 +263,65 @@ class DayLifecycleServiceIT {
         stateRepository.save(state);
     }
 
-    // --- close(): pendingSyncCount == 0 purges everything and sets CLOSED ---
-    // Runs last by design (alphabetically last "z" prefix) since it purges ALL local_credentials/
-    // local_sessions/cached_* rows, including those created by earlier tests in this shared
-    // context — matching the unit's actual purge semantics (close purges everything, not just
-    // what this test itself created).
+    // --- U12: an online open resets a stale superseded flag from a prior event ---
 
     @Test
     @Order(7)
+    void open_online_resetsStaleSupersededFlagFromAPriorEvent() throws Exception {
+        long idBase = 7_000L;
+        when(preCacheClient.login("official@club.test", "hunter2")).thenReturn(loginResponse());
+        when(preCacheClient.preCache(eq(16L), eq("tok-1"), anyString()))
+                .thenReturn(preCacheResponse(idBase, "Fresh Event", "Some Official", "6666"));
+        when(preCacheClient.openLifecycle(eq(16L), eq("tok-1"), anyString()))
+                .thenReturn(new CloudLifecycleOpenResponse(16L, true, null, null, 9L));
+
+        // Simulate this instance having been superseded during an earlier, already-closed event.
+        DayLifecycleState state = stateRepository.findById(DayLifecycleState.SINGLETON_ID).orElseThrow();
+        state.setSuperseded(true);
+        state.setSupersededAt(Instant.parse("2026-08-20T10:00:00Z"));
+        stateRepository.save(state);
+
+        DayLifecycleState after = dayLifecycleService.open(16L, "official@club.test", "hunter2");
+
+        assertThat(after.getStatus()).isEqualTo(DayLifecycleStatus.OPEN);
+        assertThat(after.isSuperseded()).isFalse();
+        assertThat(after.getSupersededAt()).isNull();
+    }
+
+    // --- U12: close() is not blocked forever by a superseded instance's frozen pendingSyncCount ---
+
+    @Test
+    @Order(8)
+    void close_supersededWithFrozenPendingSyncCount_closesAnyway() throws Exception {
+        long idBase = 8_000L;
+        when(preCacheClient.login("official@club.test", "hunter2")).thenReturn(loginResponse());
+        when(preCacheClient.preCache(eq(17L), eq("tok-1"), anyString()))
+                .thenReturn(preCacheResponse(idBase, "Superseded Case", "Some Official", "7777"));
+        dayLifecycleService.preCache(17L, "official@club.test", "hunter2");
+
+        // A superseded instance's pendingSyncCount freezes at whatever it was when the rejected
+        // push last set it — nothing ever attempts another push to drain it back to zero.
+        DayLifecycleState state = stateRepository.findById(DayLifecycleState.SINGLETON_ID).orElseThrow();
+        state.setSuperseded(true);
+        state.setSupersededAt(Instant.parse("2026-08-24T12:00:00Z"));
+        state.setPendingSyncCount(5);
+        stateRepository.save(state);
+
+        DayCloseOutcome outcome = dayLifecycleService.close(true);
+
+        assertThat(outcome).isInstanceOf(DayCloseOutcome.Closed.class);
+        DayLifecycleState after = stateRepository.findById(DayLifecycleState.SINGLETON_ID).orElseThrow();
+        assertThat(after.getStatus()).isEqualTo(DayLifecycleStatus.CLOSED);
+        assertThat(cachedEntryRepository.findByCloudEntryId(idBase)).isEmpty();
+    }
+
+    // --- close(): pendingSyncCount == 0 purges everything and sets CLOSED ---
+    // Runs last by design since it purges ALL local_credentials/local_sessions/cached_* rows,
+    // including those created by earlier tests in this shared context — matching the unit's
+    // actual purge semantics (close purges everything, not just what this test itself created).
+
+    @Test
+    @Order(9)
     void close_withNoPendingSync_purgesCachedDataAndSetsClosed() throws Exception {
         long idBase = 6_000L;
         when(preCacheClient.login("official@club.test", "hunter2")).thenReturn(loginResponse());

@@ -30,6 +30,18 @@ public class DeviceLossHandler {
      * True if {@code failure} is the cloud's KTD4 generation-fencing rejection (a reachable
      * cloud returning {@code 409}), not an unreachable-cloud or other-status failure that should
      * be retried normally.
+     *
+     * <p>This checks the bare status code, not a distinguishing error body — safe today only
+     * because the only caller is {@link SnapshotPushService}, on a failure from
+     * {@link SnapshotSyncClient#pushSnapshot}, and the plan's KTD4 sequence diagram reserves
+     * {@code 409} on <em>that specific endpoint</em> exclusively for "superseded" (its only other
+     * documented outcome is {@code 200}, including the idempotent-replay case). {@code
+     * CloudRequestException} itself is shared more broadly (day-lifecycle open/close also use
+     * {@code 409} for an unrelated "lifecycle conflict") — that's fine as long as nothing routes
+     * one of *those* exceptions through this method. If U14's real snapshot-ingest endpoint ever
+     * needs to return {@code 409} for a second reason, this check must be narrowed then (e.g. by
+     * having {@code SnapshotSyncClient} read a distinguishing error code from the response body)
+     * rather than left as a bare status check.
      */
     public boolean isSuperseded(RuntimeException failure) {
         return failure instanceof CloudRequestException cloudRequestException

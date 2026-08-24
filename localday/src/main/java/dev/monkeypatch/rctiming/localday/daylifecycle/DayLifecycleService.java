@@ -114,6 +114,15 @@ public class DayLifecycleService {
         state.setGeneration(openResponse.generation());
         state.setStatus(DayLifecycleStatus.OPEN);
         state.setSplitBrainWarning(false);
+        // A prior supersession (U12/DeviceLossHandler) was tied to this instance's *old*
+        // generation — an online open always claims a fresh, cloud-confirmed generation higher
+        // than any previously seen for this event, making this instance's sync valid again
+        // regardless of whether that old generation was ever superseded. Deliberately not reset
+        // in openOffline() below: that path never claims a new generation, so a still-stale,
+        // still-actually-superseded instance must keep showing the warning rather than silently
+        // hiding it.
+        state.setSuperseded(false);
+        state.setSupersededAt(null);
         return stateRepository.save(state);
     }
 
@@ -137,17 +146,24 @@ public class DayLifecycleService {
     }
 
     /**
-     * AE2: a pending sync is reported, not silently dropped or falsely promoted to "closed" —
-     * there is no real retry loop to build yet (nothing produces pending syncs until U11), this
-     * just refuses to purge/close while one is outstanding.
+     * AE2: a pending sync is reported, not silently dropped or falsely promoted to "closed" — the
+     * real retry loop (U11's {@code SnapshotPushService}) is what drains
+     * {@link DayLifecycleState#getPendingSyncCount()} back to zero, so this just refuses to
+     * purge/close while one is outstanding.
      *
      * <p>{@code requestedSyncComplete} is deliberately not trusted on its own; the actual gate is
-     * {@link DayLifecycleState#getPendingSyncCount()}.
+     * {@code pendingSyncCount} — except once this instance is {@code superseded} (U12): a
+     * superseded instance's {@code pendingSyncCount} is frozen at whatever it was the moment it
+     * was rejected (nothing ever attempts another push to drain it, by design — see
+     * {@code SnapshotPushService.pushNow()}'s superseded guard), so waiting for it to reach zero
+     * would block this device from ever closing. A superseded device's remaining local backlog is
+     * an accepted, permanent gap (R17's cloud-side incomplete-data flag documents it), not
+     * something this device can still do anything about.
      */
     @Transactional
     public DayCloseOutcome close(boolean requestedSyncComplete) {
         DayLifecycleState state = getOrCreateState();
-        if (state.getPendingSyncCount() > 0) {
+        if (state.getPendingSyncCount() > 0 && !state.isSuperseded()) {
             return new DayCloseOutcome.Pending(state.getPendingSyncCount());
         }
 
