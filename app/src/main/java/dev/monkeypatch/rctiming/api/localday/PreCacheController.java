@@ -25,6 +25,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
 /**
  * Composes the pre-cache payload from the write-side {@link PreCacheService} (officials'
  * credentials + instance secret) and the read-side {@link PreCacheQuery} (entries/schedule via jOOQ).
@@ -80,8 +85,15 @@ public class PreCacheController {
                 .toList();
 
         var eventClasses = eventClassRepository.findByEventId(eventId);
+        var racingClassIds = eventClasses.stream()
+                .map(EventClass::getRacingClassId)
+                .filter(Objects::nonNull)
+                .toList();
+        var racingClassNamesById = StreamSupport
+                .stream(racingClassRepository.findAllById(racingClassIds).spliterator(), false)
+                .collect(Collectors.toMap(RacingClass::getId, RacingClass::getName));
         var formatConfigs = eventClasses.stream()
-                .map(this::toFormatConfigDto)
+                .map(ec -> toFormatConfigDto(ec, racingClassNamesById))
                 .toList();
 
         var officialCredentials = mintResult.officialCredentials().stream()
@@ -94,14 +106,8 @@ public class PreCacheController {
         return new PreCacheResponseDto(eventDto, entries, schedule, formatConfigs, officialCredentials, instanceSecret);
     }
 
-    private PreCacheFormatConfigDto toFormatConfigDto(EventClass eventClass) {
-        String className = null;
-        Long racingClassId = eventClass.getRacingClassId();
-        if (racingClassId != null) {
-            className = racingClassRepository.findById(racingClassId)
-                    .map(RacingClass::getName)
-                    .orElse(null);
-        }
+    private PreCacheFormatConfigDto toFormatConfigDto(EventClass eventClass, Map<Long, String> racingClassNamesById) {
+        String className = racingClassNamesById.get(eventClass.getRacingClassId());
         var effectiveConfig = raceFormatService.getEffectiveConfig(eventClass);
         return new PreCacheFormatConfigDto(eventClass.getId(), className, effectiveConfig);
     }
