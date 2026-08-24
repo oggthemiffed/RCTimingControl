@@ -55,6 +55,13 @@ public class LocalSecurityConfig {
                         .requestMatchers("/api/v1/boards/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/ws/timing", "/ws/timing/**").permitAll()
+                        // U10: pre-cache/open/status must be reachable before any local officials'
+                        // session exists — that's the whole bootstrap problem this unit solves.
+                        // /close deliberately stays under the default-deny rule below: an official
+                        // is always logged in locally by the time they close the day (R9).
+                        .requestMatchers("/api/v1/day-lifecycle/pre-cache").permitAll()
+                        .requestMatchers("/api/v1/day-lifecycle/open").permitAll()
+                        .requestMatchers("/api/v1/day-lifecycle/status").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

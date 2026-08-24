@@ -34,3 +34,8 @@ localday:
   # LocalSecurityConfig). Empty by default — no additional origin is appended to the CSP until a
   # later unit actually wires up cloud sync.
   cloud-sync-origin: ${LOCALDAY_CLOUD_SYNC_ORIGIN:}
+  cloud:
+    # Base URL of the cloud (:app) module that PreCacheClient (U10) calls for login, pre-cache,
+    # and day-lifecycle open/close. Defaults to :app's local dev port for a same-machine setup;
+    # override for a real venue deployment where the cloud runs elsewhere.
+    base-url: ${LOCALDAY_CLOUD_BASE_URL:http://localhost:8080}
