@@ -6,6 +6,7 @@ vi.mock('@/lib/api', () => ({
   listOfficials: vi.fn(),
   login: vi.fn(),
   recover: vi.fn(),
+  getDayLifecycleStatus: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -22,7 +23,7 @@ vi.mock('@/features/shell/OfficialShell', () => ({
   default: () => <div>Official Shell (mocked)</div>,
 }));
 
-import { listOfficials, login, recover } from '@/lib/api';
+import { getDayLifecycleStatus, listOfficials, login, recover } from '@/lib/api';
 import { getStoredSession, storeSession } from '@/lib/auth';
 
 const officials = [
@@ -30,16 +31,29 @@ const officials = [
   { credentialId: 2, officialName: 'John Smith', recovery: true },
 ];
 
+const openStatus = {
+  status: 'OPEN' as const,
+  eventId: 42,
+  generation: 1,
+  splitBrainWarning: false,
+  pendingSyncCount: 0,
+  lastPreCachedAt: '2026-08-24T08:00:00Z',
+};
+
 beforeEach(() => {
   vi.mocked(getStoredSession).mockReset();
   vi.mocked(storeSession).mockReset();
   vi.mocked(listOfficials).mockReset();
   vi.mocked(login).mockReset();
   vi.mocked(recover).mockReset();
+  vi.mocked(getDayLifecycleStatus).mockReset();
 
   vi.mocked(getStoredSession).mockResolvedValue(null);
   vi.mocked(storeSession).mockResolvedValue(undefined);
   vi.mocked(listOfficials).mockResolvedValue(officials);
+  // Existing tests in this file exercise the officials picker/login flow, which only renders
+  // once the day is OPEN — see LoginPage's day-lifecycle branching, covered separately.
+  vi.mocked(getDayLifecycleStatus).mockResolvedValue(openStatus);
 });
 
 function selectOfficial(credentialId: number) {
@@ -153,5 +167,66 @@ describe('LoginPage', () => {
     await screen.findByText('Official Shell (mocked)');
     expect(screen.queryByLabelText('Official')).toBeNull();
     expect(listOfficials).not.toHaveBeenCalled();
+  });
+
+  it('shows the day setup screen instead of the officials picker when NOT_SET_UP', async () => {
+    vi.mocked(getDayLifecycleStatus).mockResolvedValue({
+      status: 'NOT_SET_UP',
+      eventId: null,
+      generation: null,
+      splitBrainWarning: false,
+      pendingSyncCount: 0,
+      lastPreCachedAt: null,
+    });
+
+    render(<LoginPage />);
+
+    await screen.findByText('Set up this event day');
+    expect(screen.queryByLabelText('Official')).toBeNull();
+    expect(listOfficials).not.toHaveBeenCalled();
+  });
+
+  it('shows the day setup screen with open as the primary action when PRE_CACHED', async () => {
+    vi.mocked(getDayLifecycleStatus).mockResolvedValue({
+      status: 'PRE_CACHED',
+      eventId: 7,
+      generation: null,
+      splitBrainWarning: false,
+      pendingSyncCount: 0,
+      lastPreCachedAt: '2026-08-24T08:00:00Z',
+    });
+
+    render(<LoginPage />);
+
+    await screen.findByText('Open this event day');
+    expect(screen.queryByLabelText('Official')).toBeNull();
+    expect(listOfficials).not.toHaveBeenCalled();
+  });
+
+  it('shows a closed message with no picker or setup form when CLOSED', async () => {
+    vi.mocked(getDayLifecycleStatus).mockResolvedValue({
+      status: 'CLOSED',
+      eventId: null,
+      generation: null,
+      splitBrainWarning: false,
+      pendingSyncCount: 0,
+      lastPreCachedAt: null,
+    });
+
+    render(<LoginPage />);
+
+    await screen.findByText('This event day is closed');
+    expect(screen.queryByLabelText('Official')).toBeNull();
+    expect(screen.queryByText('Set up this event day')).toBeNull();
+    expect(listOfficials).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the officials picker if the day-lifecycle status fetch fails', async () => {
+    vi.mocked(getDayLifecycleStatus).mockRejectedValue(new Error('network error'));
+
+    render(<LoginPage />);
+
+    await screen.findByText('Jane Doe');
+    expect(screen.getByLabelText('Official')).toBeInTheDocument();
   });
 });

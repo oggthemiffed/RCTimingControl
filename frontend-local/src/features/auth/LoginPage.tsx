@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import {
+  getDayLifecycleStatus,
   listOfficials,
   login,
   recover,
+  type DayLifecycleStatus,
   type OfficialSummary,
 } from '@/lib/api';
 import { getStoredSession, storeSession, type StoredSession } from '@/lib/auth';
 import OfficialShell from '@/features/shell/OfficialShell';
+import DaySetupScreen from '@/features/day-lifecycle/DaySetupScreen';
 
 type LoginError =
   | { kind: 'invalid_credential' }
@@ -18,6 +21,15 @@ type RecoveryResult = { kind: 'success' } | { kind: 'invalid' } | { kind: 'gener
 export default function LoginPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [session, setSession] = useState<StoredSession | null>(null);
+
+  // Day-lifecycle status. null means "not yet known" while loading, or "status fetch itself
+  // failed" (the local backend should always be reachable — same machine — so on failure we
+  // fall back to today's behavior rather than blocking the page: attempt listOfficials() and
+  // show the picker as if the day were open).
+  const [dayStatus, setDayStatus] = useState<DayLifecycleStatus | null>(null);
+  // Sticky once set — the split-brain warning (from an offline day-open) stays visible for the
+  // rest of this session even after we move on to the officials picker / OfficialShell.
+  const [splitBrainWarning, setSplitBrainWarning] = useState(false);
 
   const [officials, setOfficials] = useState<OfficialSummary[]>([]);
   const [officialsError, setOfficialsError] = useState(false);
@@ -37,20 +49,40 @@ export default function LoginPage() {
   useEffect(() => {
     let cancelled = false;
 
+    function loadOfficials() {
+      return listOfficials()
+        .then((list) => {
+          if (!cancelled) setOfficials(list);
+        })
+        .catch(() => {
+          if (!cancelled) setOfficialsError(true);
+        });
+    }
+
     getStoredSession()
       .then((stored) => {
         if (cancelled) return;
         setSession(stored);
         setCheckingSession(false);
-        if (!stored) {
-          return listOfficials()
-            .then((list) => {
-              if (!cancelled) setOfficials(list);
-            })
-            .catch(() => {
-              if (!cancelled) setOfficialsError(true);
-            });
-        }
+        if (stored) return;
+
+        return getDayLifecycleStatus()
+          .then((status) => {
+            if (cancelled) return;
+            setDayStatus(status);
+            // Officials only become available to log in with once the day is OPEN — see
+            // DaySetupScreen for NOT_SET_UP/PRE_CACHED, and the CLOSED message below.
+            if (status.status === 'OPEN') {
+              return loadOfficials();
+            }
+          })
+          .catch(() => {
+            if (cancelled) return;
+            // Status fetch against our own local backend shouldn't normally fail. Don't block
+            // the whole page on it — fall back to today's behavior.
+            setDayStatus(null);
+            return loadOfficials();
+          });
       })
       .catch(() => {
         if (cancelled) return;
@@ -62,6 +94,34 @@ export default function LoginPage() {
       cancelled = true;
     };
   }, []);
+
+  function handleDayStatusChange(newStatus: DayLifecycleStatus) {
+    setDayStatus(newStatus);
+    if (newStatus.splitBrainWarning) {
+      setSplitBrainWarning(true);
+    }
+    if (newStatus.status === 'OPEN') {
+      listOfficials()
+        .then((list) => setOfficials(list))
+        .catch(() => setOfficialsError(true));
+    }
+  }
+
+  function handleDayClosed() {
+    // The session was already cleared by OfficialShell before calling this. Reset local state
+    // so we fall through to the CLOSED message rather than the (now-empty) officials picker.
+    setSession(null);
+    setDayStatus({
+      status: 'CLOSED',
+      eventId: null,
+      generation: null,
+      splitBrainWarning: false,
+      pendingSyncCount: 0,
+      lastPreCachedAt: null,
+    });
+    setOfficials([]);
+    setSplitBrainWarning(false);
+  }
 
   async function handleLoginSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -106,7 +166,23 @@ export default function LoginPage() {
   }
 
   if (session) {
-    return <OfficialShell />;
+    return <OfficialShell splitBrainWarning={splitBrainWarning} onDayClosed={handleDayClosed} />;
+  }
+
+  if (dayStatus && dayStatus.status === 'CLOSED') {
+    return (
+      <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-3 p-6 text-center">
+        <h1 className="text-xl font-semibold">This event day is closed</h1>
+        <p className="text-sm text-slate-600">
+          Cached data for this event has been cleared from this device. Pre-cache the next event
+          when it's ready to prepare this device again.
+        </p>
+      </div>
+    );
+  }
+
+  if (dayStatus && (dayStatus.status === 'NOT_SET_UP' || dayStatus.status === 'PRE_CACHED')) {
+    return <DaySetupScreen status={dayStatus} onStatusChange={handleDayStatusChange} />;
   }
 
   return (

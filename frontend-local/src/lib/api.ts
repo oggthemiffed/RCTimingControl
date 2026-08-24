@@ -262,3 +262,59 @@ export async function getResults(): Promise<ResultsDto> {
   const { data } = await api.get<ResultsDto>('/api/v1/boards/results');
   return data;
 }
+
+// Day-lifecycle endpoints (U10). Pre-cache/open/status are reachable with no local session —
+// there is nothing to log into until the day is OPEN. Close requires an authenticated session
+// and is called from within OfficialShell, where the request interceptor already attaches the
+// bearer token.
+export type DayLifecycleStatusValue = 'NOT_SET_UP' | 'PRE_CACHED' | 'OPEN' | 'CLOSED';
+
+export interface DayLifecycleStatus {
+  status: DayLifecycleStatusValue;
+  eventId: number | null;
+  generation: number | null;
+  splitBrainWarning: boolean;
+  pendingSyncCount: number;
+  lastPreCachedAt: string | null;
+}
+
+export interface CloseDayResponse {
+  status: 'closed' | 'pending';
+  pendingSyncCount: number;
+}
+
+export async function getDayLifecycleStatus(): Promise<DayLifecycleStatus> {
+  const { data } = await api.get<DayLifecycleStatus>('/api/v1/day-lifecycle/status');
+  return data;
+}
+
+export async function preCacheDay(
+  eventId: number,
+  email: string,
+  password: string,
+): Promise<DayLifecycleStatus> {
+  const { data } = await api.post<DayLifecycleStatus>('/api/v1/day-lifecycle/pre-cache', {
+    eventId,
+    email,
+    password,
+  });
+  return data;
+}
+
+export async function openDay(
+  eventId: number,
+  email?: string,
+  password?: string,
+): Promise<DayLifecycleStatus> {
+  const { data } = await api.post<DayLifecycleStatus>('/api/v1/day-lifecycle/open', {
+    eventId,
+    email,
+    password,
+  });
+  return data;
+}
+
+export async function closeDay(): Promise<CloseDayResponse> {
+  const { data } = await api.post<CloseDayResponse>('/api/v1/day-lifecycle/close');
+  return data;
+}
