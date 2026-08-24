@@ -26,17 +26,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -165,8 +166,15 @@ public class SnapshotPushService implements SmartLifecycle {
      * listener, and by tests) — a no-op if the day isn't open yet, if this instance hasn't
      * finished pre-cache (no instance secret/generation), or if a prior failure's backoff window
      * hasn't elapsed yet.
+     *
+     * <p>Deliberately not {@code @Transactional}: every real call path is self-invocation
+     * ({@code this::tick} from within this same bean), which bypasses the Spring AOP proxy the
+     * annotation relies on — an {@code @Transactional} here would only look atomic without
+     * actually being so. It doesn't need to be: each repository call below is already atomic on
+     * its own, and it's the single-thread scheduler (see {@link #start()}), not a database
+     * transaction boundary, that rules out a concurrent writer racing the queue/state rows
+     * within this one instance.
      */
-    @Transactional
     public void pushNow() {
         Instant now = clock.instant();
         if (now.isBefore(nextAttemptNotBefore)) {
@@ -240,9 +248,25 @@ public class SnapshotPushService implements SmartLifecycle {
     }
 
     private SnapshotPayload buildPayload(Instant capturedAt, List<LapPassing> unsyncedLaps) {
-        Map<Long, CachedScheduleEntry> scheduleById = cachedScheduleEntryRepository.findAll().stream()
+        // Per KTD8, results/standings are resent in full every push, so allResults naturally
+        // grows across the day — that's the intended design, not something to optimize away
+        // here. What must NOT scan the whole table every 20s tick is the *lookup* support for
+        // it: only fetch the specific schedule/entry rows this tick's results and laps actually
+        // reference, by id, rather than every cached_schedule/cached_entries row that exists.
+        List<RaceResultEntry> allResults = raceResultEntryRepository.findAll();
+
+        Set<Long> scheduleIds = new LinkedHashSet<>();
+        allResults.forEach(r -> scheduleIds.add(r.getRaceId()));
+        unsyncedLaps.forEach(l -> {
+            if (l.getCachedScheduleId() != null) {
+                scheduleIds.add(l.getCachedScheduleId());
+            }
+        });
+        Map<Long, CachedScheduleEntry> scheduleById = cachedScheduleEntryRepository.findAllById(scheduleIds).stream()
                 .collect(Collectors.toMap(CachedScheduleEntry::getId, e -> e));
-        Map<Long, CachedEntry> entriesById = cachedEntryRepository.findAll().stream()
+
+        Set<Long> entryIds = allResults.stream().map(RaceResultEntry::getEntryId).collect(Collectors.toSet());
+        Map<Long, CachedEntry> entriesById = cachedEntryRepository.findAllById(entryIds).stream()
                 .collect(Collectors.toMap(CachedEntry::getId, e -> e));
 
         ScheduleSummary current = cachedScheduleEntryRepository.findFirstByStatus(RaceState.RUNNING)
@@ -255,7 +279,6 @@ public class SnapshotPushService implements SmartLifecycle {
                 .findFirstByStatusOrderByFinishedAtDesc(RaceState.FINISHED)
                 .map(SnapshotPushService::toSummary).orElse(null);
 
-        List<RaceResultEntry> allResults = raceResultEntryRepository.findAll();
         List<RaceResultsSummary> results = buildResults(allResults, scheduleById, entriesById);
         List<ClassStanding> standings = buildStandings(allResults, scheduleById, entriesById);
         List<LapPassingSummary> laps = buildLaps(unsyncedLaps, scheduleById);

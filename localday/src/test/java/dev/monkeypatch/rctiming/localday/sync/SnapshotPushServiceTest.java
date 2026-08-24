@@ -76,8 +76,8 @@ class SnapshotPushServiceTest {
                 raceResultEntryRepository, clock, 20L, 300L);
 
         // Defaults shared by most tests: no schedule/results state, empty repos.
-        Mockito.when(cachedScheduleEntryRepository.findAll()).thenReturn(List.of());
-        Mockito.when(cachedEntryRepository.findAll()).thenReturn(List.of());
+        Mockito.when(cachedScheduleEntryRepository.findAllById(any())).thenReturn(List.of());
+        Mockito.when(cachedEntryRepository.findAllById(any())).thenReturn(List.of());
         Mockito.when(cachedScheduleEntryRepository.findFirstByStatus(any())).thenReturn(Optional.empty());
         Mockito.when(cachedScheduleEntryRepository.findFirstByStatusInOrderBySequenceAsc(any()))
                 .thenReturn(Optional.empty());
@@ -203,14 +203,14 @@ class SnapshotPushServiceTest {
         race.setClassName("Touring Stock");
         race.setFinalLetter("A");
         race.setStatus(RaceState.FINISHED);
-        Mockito.when(cachedScheduleEntryRepository.findAll()).thenReturn(List.of(race));
+        Mockito.when(cachedScheduleEntryRepository.findAllById(java.util.Set.of(100L))).thenReturn(List.of(race));
 
         CachedEntry entry = new CachedEntry();
         entry.setId(200L);
         entry.setCloudEntryId(800L);
         entry.setRacerName("Jane Doe");
         entry.setTransponderNumber("1234567");
-        Mockito.when(cachedEntryRepository.findAll()).thenReturn(List.of(entry));
+        Mockito.when(cachedEntryRepository.findAllById(any())).thenReturn(List.of(entry));
 
         RaceResultEntry result = new RaceResultEntry();
         result.setRaceId(100L);
