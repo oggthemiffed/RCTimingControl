@@ -43,6 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -104,6 +105,13 @@ class DayLifecycleServiceIT {
 
     @MockitoBean
     private PreCacheClient preCacheClient;
+
+    // Real SnapshotPushService would attempt a genuine (doomed, since nothing is listening)
+    // HTTP call to the configured cloud base-url on every close() per this class's own fix —
+    // mocked here the same way PreCacheClient is, so tests control and verify that interaction
+    // directly instead of relying on it failing harmlessly.
+    @MockitoBean
+    private dev.monkeypatch.rctiming.localday.sync.SnapshotPushService snapshotPushService;
 
     private CloudLoginResponse loginResponse() {
         return new CloudLoginResponse("tok-1", "1", "official@club.test", "Race", "Director", List.of("ADMIN"));
@@ -315,13 +323,43 @@ class DayLifecycleServiceIT {
         assertThat(cachedEntryRepository.findByCloudEntryId(idBase)).isEmpty();
     }
 
+    // --- close() flushes a synchronous push before evaluating the pending-sync gate ---
+
+    @Test
+    @Order(9)
+    void close_flushesSnapshotPushService_beforeEvaluatingPendingSyncGate() throws Exception {
+        long idBase = 9_000L;
+        when(preCacheClient.login("official@club.test", "hunter2")).thenReturn(loginResponse());
+        when(preCacheClient.preCache(eq(18L), eq("tok-1"), anyString()))
+                .thenReturn(preCacheResponse(idBase, "Flush Case", "Some Official", "8888"));
+        dayLifecycleService.preCache(18L, "official@club.test", "hunter2");
+
+        // Simulate a race-state transition's async event-triggered push not having run yet:
+        // pendingSyncCount is stale (nonzero) until pushNow() is actually invoked.
+        DayLifecycleState state = stateRepository.findById(DayLifecycleState.SINGLETON_ID).orElseThrow();
+        state.setPendingSyncCount(4);
+        stateRepository.save(state);
+
+        doAnswer(invocation -> {
+            DayLifecycleState current = stateRepository.findById(DayLifecycleState.SINGLETON_ID).orElseThrow();
+            current.setPendingSyncCount(0);
+            stateRepository.save(current);
+            return null;
+        }).when(snapshotPushService).pushNow();
+
+        DayCloseOutcome outcome = dayLifecycleService.close(true);
+
+        verify(snapshotPushService).pushNow();
+        assertThat(outcome).isInstanceOf(DayCloseOutcome.Closed.class);
+    }
+
     // --- close(): pendingSyncCount == 0 purges everything and sets CLOSED ---
     // Runs last by design since it purges ALL local_credentials/local_sessions/cached_* rows,
     // including those created by earlier tests in this shared context — matching the unit's
     // actual purge semantics (close purges everything, not just what this test itself created).
 
     @Test
-    @Order(9)
+    @Order(10)
     void close_withNoPendingSync_purgesCachedDataAndSetsClosed() throws Exception {
         long idBase = 6_000L;
         when(preCacheClient.login("official@club.test", "hunter2")).thenReturn(loginResponse());

@@ -370,6 +370,25 @@ class SnapshotPushServiceTest {
     }
 
     @Test
+    void pushNow_401Response_marksStateSupersededWithoutOrdinaryBackoff() {
+        // KTD9: a device-loss declaration invalidates this instance's secret immediately — the
+        // primary rejection signal, distinct from KTD4's 409 generation-fencing backstop.
+        Mockito.when(dayLifecycleStateRepository.findById(DayLifecycleState.SINGLETON_ID))
+                .thenReturn(Optional.of(openState()));
+        Mockito.when(snapshotQueueRepository.findById(SnapshotQueue.SINGLETON_ID)).thenReturn(Optional.empty());
+        Mockito.when(lapPassingRepository.findAllByIdGreaterThanOrderByIdAsc(0L))
+                .thenReturn(List.of(lap(5L, "1111111")));
+        Mockito.doThrow(new CloudRequestException(401, "invalid or invalidated instance secret", new RuntimeException()))
+                .when(client).pushSnapshot(anyLong(), any(), any());
+
+        service.pushNow();
+
+        ArgumentCaptor<DayLifecycleState> stateCaptor = ArgumentCaptor.forClass(DayLifecycleState.class);
+        Mockito.verify(dayLifecycleStateRepository).save(stateCaptor.capture());
+        assertThat(stateCaptor.getValue().isSuperseded()).isTrue();
+    }
+
+    @Test
     void pushNow_supersededByPriorPush_stopsFurtherAutomaticRetries() {
         DayLifecycleState state = openState();
         Mockito.when(dayLifecycleStateRepository.findById(DayLifecycleState.SINGLETON_ID))

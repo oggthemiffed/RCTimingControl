@@ -28,10 +28,19 @@ class DeviceLossHandlerTest {
     }
 
     @Test
+    void isSuperseded_401_true() {
+        // KTD9: DeviceLossController invalidates this instance's sync secret immediately on
+        // declaration, before any replacement instance has necessarily claimed a new generation
+        // — 401 is the primary rejection signal, 409 is the backstop for when it hasn't fired.
+        assertThat(handler.isSuperseded(new CloudRequestException(401, "invalid or invalidated instance secret",
+                new RuntimeException()))).isTrue();
+    }
+
+    @Test
     void isSuperseded_otherStatusCodes_false() {
         assertThat(handler.isSuperseded(new CloudRequestException(500, "server error", new RuntimeException())))
                 .isFalse();
-        assertThat(handler.isSuperseded(new CloudRequestException(401, "unauthorized", new RuntimeException())))
+        assertThat(handler.isSuperseded(new CloudRequestException(403, "forbidden", new RuntimeException())))
                 .isFalse();
         assertThat(handler.isSuperseded(new CloudRequestException(404, "not found", new RuntimeException())))
                 .isFalse();

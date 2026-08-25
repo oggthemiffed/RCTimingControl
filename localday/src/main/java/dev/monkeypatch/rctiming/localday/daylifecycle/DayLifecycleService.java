@@ -19,6 +19,7 @@ import dev.monkeypatch.rctiming.localday.domain.CachedFormatConfigRepository;
 import dev.monkeypatch.rctiming.localday.domain.CachedScheduleEntry;
 import dev.monkeypatch.rctiming.localday.domain.CachedScheduleEntryRepository;
 import dev.monkeypatch.rctiming.localday.race.RaceState;
+import dev.monkeypatch.rctiming.localday.sync.SnapshotPushService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +50,7 @@ public class DayLifecycleService {
     private final LocalSessionRepository localSessionRepository;
     private final PasswordEncoder passwordEncoder;
     private final ObjectMapper objectMapper;
+    private final SnapshotPushService snapshotPushService;
 
     public DayLifecycleService(PreCacheClient preCacheClient,
                                 DayLifecycleStateRepository stateRepository,
@@ -58,7 +60,8 @@ public class DayLifecycleService {
                                 LocalCredentialRepository localCredentialRepository,
                                 LocalSessionRepository localSessionRepository,
                                 PasswordEncoder passwordEncoder,
-                                ObjectMapper objectMapper) {
+                                ObjectMapper objectMapper,
+                                SnapshotPushService snapshotPushService) {
         this.preCacheClient = preCacheClient;
         this.stateRepository = stateRepository;
         this.cachedEntryRepository = cachedEntryRepository;
@@ -68,6 +71,7 @@ public class DayLifecycleService {
         this.localSessionRepository = localSessionRepository;
         this.passwordEncoder = passwordEncoder;
         this.objectMapper = objectMapper;
+        this.snapshotPushService = snapshotPushService;
     }
 
     /**
@@ -159,9 +163,19 @@ public class DayLifecycleService {
      * would block this device from ever closing. A superseded device's remaining local backlog is
      * an accepted, permanent gap (R17's cloud-side incomplete-data flag documents it), not
      * something this device can still do anything about.
+     *
+     * <p>Flushes one synchronous {@link SnapshotPushService#pushNow()} attempt before evaluating
+     * the gate: a race-state transition's push (KTD8) is dispatched onto
+     * {@code SnapshotPushService}'s own background executor and can still be queued or in flight
+     * when this runs — an official closing the day immediately after the last race finishes is
+     * the realistic case this guards, not a hypothetical one. Without this, {@code
+     * pendingSyncCount} could read a stale zero (every lap already synced by earlier periodic
+     * ticks) while that race's just-computed results have not actually reached the cloud yet.
      */
     @Transactional
     public DayCloseOutcome close(boolean requestedSyncComplete) {
+        snapshotPushService.pushNow();
+
         DayLifecycleState state = getOrCreateState();
         if (state.getPendingSyncCount() > 0 && !state.isSuperseded()) {
             return new DayCloseOutcome.Pending(state.getPendingSyncCount());
