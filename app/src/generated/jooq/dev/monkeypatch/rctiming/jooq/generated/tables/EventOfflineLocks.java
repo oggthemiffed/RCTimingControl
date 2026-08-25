@@ -74,6 +74,20 @@ public class EventOfflineLocks extends TableImpl<EventOfflineLocksRecord> {
      */
     public final TableField<EventOfflineLocksRecord, OffsetDateTime> UNLOCKED_AT = createField(DSL.name("unlocked_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
 
+    /**
+     * The column <code>public.event_offline_locks.incomplete_data</code>. R17:
+     * set once by a device-loss declaration (DeviceLossController) and never
+     * cleared -- an unrecoverable local data gap is permanent, unlike R15's
+     * transient outage indicator.
+     */
+    public final TableField<EventOfflineLocksRecord, Boolean> INCOMPLETE_DATA = createField(DSL.name("incomplete_data"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "R17: set once by a device-loss declaration (DeviceLossController) and never cleared -- an unrecoverable local data gap is permanent, unlike R15's transient outage indicator.");
+
+    /**
+     * The column
+     * <code>public.event_offline_locks.incomplete_data_declared_at</code>.
+     */
+    public final TableField<EventOfflineLocksRecord, OffsetDateTime> INCOMPLETE_DATA_DECLARED_AT = createField(DSL.name("incomplete_data_declared_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+
     private EventOfflineLocks(Name alias, Table<EventOfflineLocksRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

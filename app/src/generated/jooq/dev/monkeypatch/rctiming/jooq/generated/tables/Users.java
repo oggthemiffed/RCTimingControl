@@ -8,6 +8,7 @@ import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Cars.CarsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.DeviceLossAudit.DeviceLossAuditPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.EntryAuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials.LocaldayCredentialsPath;
@@ -253,6 +254,19 @@ public class Users extends TableImpl<UsersRecord> {
             _championshipExclusionsDriverIdFkey = new ChampionshipExclusionsPath(this, null, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_DRIVER_ID_FKEY.getInverseKey());
 
         return _championshipExclusionsDriverIdFkey;
+    }
+
+    private transient DeviceLossAuditPath _deviceLossAudit;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.device_loss_audit</code> table
+     */
+    public DeviceLossAuditPath deviceLossAudit() {
+        if (_deviceLossAudit == null)
+            _deviceLossAudit = new DeviceLossAuditPath(this, null, Keys.DEVICE_LOSS_AUDIT__DEVICE_LOSS_AUDIT_ADMIN_USER_ID_FKEY.getInverseKey());
+
+        return _deviceLossAudit;
     }
 
     private transient EntriesPath _entriesMembershipOverrideByFkey;

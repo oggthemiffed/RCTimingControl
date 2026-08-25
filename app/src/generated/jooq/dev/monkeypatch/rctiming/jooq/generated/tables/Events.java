@@ -10,12 +10,15 @@ import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks.ChampionshipEventLinksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships.ChampionshipsPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.DeviceLossAudit.DeviceLossAuditPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventOfflineLocks.EventOfflineLocksPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EventSnapshotState.EventSnapshotStatePath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventSyncGenerations.EventSyncGenerationsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials.LocaldayCredentialsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayInstanceSecrets.LocaldayInstanceSecretsPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldaySnapshots.LocaldaySnapshotsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences.MarshalAbsencesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties.MarshalPenaltiesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions.PracticeSessionsPath;
@@ -246,6 +249,19 @@ public class Events extends TableImpl<EventsRecord> {
         return _championshipExclusions;
     }
 
+    private transient DeviceLossAuditPath _deviceLossAudit;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.device_loss_audit</code> table
+     */
+    public DeviceLossAuditPath deviceLossAudit() {
+        if (_deviceLossAudit == null)
+            _deviceLossAudit = new DeviceLossAuditPath(this, null, Keys.DEVICE_LOSS_AUDIT__DEVICE_LOSS_AUDIT_EVENT_ID_FKEY.getInverseKey());
+
+        return _deviceLossAudit;
+    }
+
     private transient EntriesPath _entries;
 
     /**
@@ -285,6 +301,19 @@ public class Events extends TableImpl<EventsRecord> {
         return _eventOfflineLocks;
     }
 
+    private transient EventSnapshotStatePath _eventSnapshotState;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.event_snapshot_state</code> table
+     */
+    public EventSnapshotStatePath eventSnapshotState() {
+        if (_eventSnapshotState == null)
+            _eventSnapshotState = new EventSnapshotStatePath(this, null, Keys.EVENT_SNAPSHOT_STATE__EVENT_SNAPSHOT_STATE_EVENT_ID_FKEY.getInverseKey());
+
+        return _eventSnapshotState;
+    }
+
     private transient EventSyncGenerationsPath _eventSyncGenerations;
 
     /**
@@ -322,6 +351,19 @@ public class Events extends TableImpl<EventsRecord> {
             _localdayInstanceSecrets = new LocaldayInstanceSecretsPath(this, null, Keys.LOCALDAY_INSTANCE_SECRETS__LOCALDAY_INSTANCE_SECRETS_EVENT_ID_FKEY.getInverseKey());
 
         return _localdayInstanceSecrets;
+    }
+
+    private transient LocaldaySnapshotsPath _localdaySnapshots;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.localday_snapshots</code> table
+     */
+    public LocaldaySnapshotsPath localdaySnapshots() {
+        if (_localdaySnapshots == null)
+            _localdaySnapshots = new LocaldaySnapshotsPath(this, null, Keys.LOCALDAY_SNAPSHOTS__LOCALDAY_SNAPSHOTS_EVENT_ID_FKEY.getInverseKey());
+
+        return _localdaySnapshots;
     }
 
     private transient MarshalAbsencesPath _marshalAbsences;

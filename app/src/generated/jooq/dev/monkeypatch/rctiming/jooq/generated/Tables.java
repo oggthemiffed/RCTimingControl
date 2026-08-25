@@ -14,10 +14,12 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipPointsScale;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DecoderLoops;
+import dev.monkeypatch.rctiming.jooq.generated.tables.DeviceLossAudit;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventOfflineLocks;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EventSnapshotState;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventSyncGenerations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ForwarderToken;
@@ -25,6 +27,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.GoverningBodyAffiliations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayInstanceSecrets;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldaySnapshots;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
@@ -108,6 +111,12 @@ public class Tables {
     public static final DecoderLoops DECODER_LOOPS = DecoderLoops.DECODER_LOOPS;
 
     /**
+     * Mandatory audit record for a device-loss declaration (R16) -- an
+     * irreversible, day-affecting action gated to the ADMIN role.
+     */
+    public static final DeviceLossAudit DEVICE_LOSS_AUDIT = DeviceLossAudit.DEVICE_LOSS_AUDIT;
+
+    /**
      * The table <code>public.entries</code>.
      */
     public static final Entries ENTRIES = Entries.ENTRIES;
@@ -129,6 +138,13 @@ public class Tables {
      * KD4.
      */
     public static final EventOfflineLocks EVENT_OFFLINE_LOCKS = EventOfflineLocks.EVENT_OFFLINE_LOCKS;
+
+    /**
+     * R11/R15: the most recently accepted snapshot payload for an event,
+     * verbatim, plus when it arrived -- last_synced_at is what the public
+     * page's "may be delayed" indicator (R15) is computed from.
+     */
+    public static final EventSnapshotState EVENT_SNAPSHOT_STATE = EventSnapshotState.EVENT_SNAPSHOT_STATE;
 
     /**
      * Stored generation-per-event for a future unit's snapshot-ingest fencing
@@ -181,6 +197,15 @@ public class Tables {
      * device-loss declaration (R16), not used yet.
      */
     public static final LocaldayInstanceSecrets LOCALDAY_INSTANCE_SECRETS = LocaldayInstanceSecrets.LOCALDAY_INSTANCE_SECRETS;
+
+    /**
+     * One row per accepted snapshot push (KTD4) -- exists solely to answer
+     * "have we already processed this exact snapshotId for this event"
+     * idempotently. Rejected (superseded) attempts are not recorded here: their
+     * outcome is deterministic and stable for a given generation, so there is
+     * nothing to remember.
+     */
+    public static final LocaldaySnapshots LOCALDAY_SNAPSHOTS = LocaldaySnapshots.LOCALDAY_SNAPSHOTS;
 
     /**
      * The table <code>public.marshal_absences</code>.

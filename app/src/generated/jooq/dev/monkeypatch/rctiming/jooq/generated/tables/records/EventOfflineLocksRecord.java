@@ -64,6 +64,42 @@ public class EventOfflineLocksRecord extends UpdatableRecordImpl<EventOfflineLoc
         return (OffsetDateTime) get(2);
     }
 
+    /**
+     * Setter for <code>public.event_offline_locks.incomplete_data</code>. R17:
+     * set once by a device-loss declaration (DeviceLossController) and never
+     * cleared -- an unrecoverable local data gap is permanent, unlike R15's
+     * transient outage indicator.
+     */
+    public void setIncompleteData(Boolean value) {
+        set(3, value);
+    }
+
+    /**
+     * Getter for <code>public.event_offline_locks.incomplete_data</code>. R17:
+     * set once by a device-loss declaration (DeviceLossController) and never
+     * cleared -- an unrecoverable local data gap is permanent, unlike R15's
+     * transient outage indicator.
+     */
+    public Boolean getIncompleteData() {
+        return (Boolean) get(3);
+    }
+
+    /**
+     * Setter for
+     * <code>public.event_offline_locks.incomplete_data_declared_at</code>.
+     */
+    public void setIncompleteDataDeclaredAt(OffsetDateTime value) {
+        set(4, value);
+    }
+
+    /**
+     * Getter for
+     * <code>public.event_offline_locks.incomplete_data_declared_at</code>.
+     */
+    public OffsetDateTime getIncompleteDataDeclaredAt() {
+        return (OffsetDateTime) get(4);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -87,12 +123,14 @@ public class EventOfflineLocksRecord extends UpdatableRecordImpl<EventOfflineLoc
     /**
      * Create a detached, initialised EventOfflineLocksRecord
      */
-    public EventOfflineLocksRecord(Long eventId, OffsetDateTime lockedAt, OffsetDateTime unlockedAt) {
+    public EventOfflineLocksRecord(Long eventId, OffsetDateTime lockedAt, OffsetDateTime unlockedAt, Boolean incompleteData, OffsetDateTime incompleteDataDeclaredAt) {
         super(EventOfflineLocks.EVENT_OFFLINE_LOCKS);
 
         setEventId(eventId);
         setLockedAt(lockedAt);
         setUnlockedAt(unlockedAt);
+        setIncompleteData(incompleteData);
+        setIncompleteDataDeclaredAt(incompleteDataDeclaredAt);
         resetChangedOnNotNull();
     }
 }

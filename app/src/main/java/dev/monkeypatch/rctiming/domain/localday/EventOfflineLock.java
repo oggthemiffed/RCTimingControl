@@ -21,6 +21,13 @@ public class EventOfflineLock {
     @Column(name = "unlocked_at")
     private Instant unlockedAt;
 
+    // R17: set once by a device-loss declaration (DeviceLossService) and never cleared.
+    @Column(name = "incomplete_data", nullable = false)
+    private boolean incompleteData = false;
+
+    @Column(name = "incomplete_data_declared_at")
+    private Instant incompleteDataDeclaredAt;
+
     public Long getEventId() { return eventId; }
     public void setEventId(Long eventId) { this.eventId = eventId; }
 
@@ -29,4 +36,10 @@ public class EventOfflineLock {
 
     public Instant getUnlockedAt() { return unlockedAt; }
     public void setUnlockedAt(Instant unlockedAt) { this.unlockedAt = unlockedAt; }
+
+    public boolean isIncompleteData() { return incompleteData; }
+    public void setIncompleteData(boolean incompleteData) { this.incompleteData = incompleteData; }
+
+    public Instant getIncompleteDataDeclaredAt() { return incompleteDataDeclaredAt; }
+    public void setIncompleteDataDeclaredAt(Instant incompleteDataDeclaredAt) { this.incompleteDataDeclaredAt = incompleteDataDeclaredAt; }
 }
