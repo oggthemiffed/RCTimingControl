@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.decoderprotocol.timing;
 import org.junit.jupiter.api.Test;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,5 +50,24 @@ class Rc4TextParserTest {
         Optional<ParsedPassing> result = parser.parse("@\t20\t1\t12345\t12.345\t300\t130\t2\txDEAD");
         assertThat(result).isPresent();
         assertThat(result.get().timeSinceStartSeconds()).isEqualTo(12.345d);
+    }
+
+    @Test
+    void extractsSeqNumFromPassingRecord() {
+        assertThat(parser.extractSeqNum(PASSING_LINE)).isEqualTo(OptionalInt.of(2));
+    }
+
+    @Test
+    void extractsSeqNumFromStatusRecord() {
+        assertThat(parser.extractSeqNum("#\t20\t0\t72\t0\tx6B89")).isEqualTo(OptionalInt.of(0));
+    }
+
+    @Test
+    void extractSeqNumReturnsEmptyForMalformedLine() {
+        assertThat(parser.extractSeqNum("garbage")).isEmpty();
+        assertThat(parser.extractSeqNum("")).isEmpty();
+        assertThat(parser.extractSeqNum(null)).isEmpty();
+        assertThat(parser.extractSeqNum("@\t20")).isEmpty();
+        assertThat(parser.extractSeqNum("@\t20\tnot_a_number")).isEmpty();
     }
 }

@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.decoderprotocol.timing;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * Pure parser for the AMB RC-4 text protocol (FORWARDER-02, D-03).
@@ -33,6 +34,27 @@ public class Rc4TextParser {
             case "#" -> Optional.empty();
             default  -> Optional.empty();
         };
+    }
+
+    /**
+     * Extract the {@code seq_num} field from any record type (PASSING or STATUS), SOH already
+     * stripped. STATUS and PASSING records share a single per-decoder sequence counter
+     * (docs/AMB_DECODER_PROTOCOL.md) — gap detection must observe both record types' seq_num,
+     * not just PASSING's, or every STATUS heartbeat interleaved between two PASSING records
+     * reads as a false missed-record gap.
+     *
+     * @param line the tab-separated line (no leading SOH, no trailing CRLF)
+     * @return the seq_num field for a well-formed PASSING or STATUS record; empty otherwise
+     */
+    public OptionalInt extractSeqNum(String line) {
+        if (line == null || line.isEmpty()) return OptionalInt.empty();
+        String[] f = line.split("\t");
+        if (f.length < 3 || !(f[0].equals("@") || f[0].equals("#"))) return OptionalInt.empty();
+        try {
+            return OptionalInt.of(Integer.parseInt(f[2]));
+        } catch (NumberFormatException e) {
+            return OptionalInt.empty();
+        }
     }
 
     private Optional<ParsedPassing> parsePassing(String[] f) {

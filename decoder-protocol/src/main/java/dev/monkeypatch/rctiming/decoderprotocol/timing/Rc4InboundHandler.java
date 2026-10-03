@@ -44,12 +44,14 @@ public class Rc4InboundHandler extends SimpleChannelInboundHandler<String> {
     protected void channelRead0(ChannelHandlerContext ctx, String line) {
         // Strip SOH (0x01) byte if present — T-05-03 malformed input also handled by parser
         String stripped = (!line.isEmpty() && line.charAt(0) == 0x01) ? line.substring(1) : line;
+        // Gap detection observes both STATUS and PASSING seq_num (shared counter) — must run
+        // regardless of record type, or every STATUS heartbeat reads as a false gap.
+        parser.extractSeqNum(stripped).ifPresent(gapDetector::observe);
         parser.parse(stripped).ifPresent(pp -> {
             if (epochAnchor.detectsRestart(pp.timeSinceStartSeconds())) {
                 log.warn("Decoder restart detected (timeSinceStart regressed) — resetting epoch");
             }
             long rtcMicros = epochAnchor.toRtcTimeMicros(pp.timeSinceStartSeconds());
-            gapDetector.observe(pp.seqNum());
             onPassing.accept(new EpochCorrectedPassing(
                 pp.transponderNumber(), rtcMicros, pp.seqNum(),
                 pp.decoderId(), pp.signalStrength(), pp.hitCount()));
