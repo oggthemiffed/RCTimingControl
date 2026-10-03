@@ -140,7 +140,7 @@ public class EntryService {
 
     public void withdraw(Long entryId, Long userId) {
         Entry entry = entryRepository.findById(entryId)
-                .filter(e -> e.getUserId().equals(userId))
+                .filter(e -> userId.equals(e.getUserId()))
                 .orElseThrow(() -> new EntityNotFoundException("Entry not found: " + entryId));
         if (entry.getStatus() == EntryStatus.WITHDRAWN) {
             throw new IllegalArgumentException("Entry already withdrawn");

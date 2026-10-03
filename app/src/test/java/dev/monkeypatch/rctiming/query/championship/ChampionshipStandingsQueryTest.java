@@ -8,6 +8,9 @@ import dev.monkeypatch.rctiming.domain.championship.ChampionshipPointsScaleEntry
 import dev.monkeypatch.rctiming.domain.championship.ChampionshipPointsScaleRepository;
 import dev.monkeypatch.rctiming.domain.championship.ChampionshipRepository;
 import dev.monkeypatch.rctiming.domain.championship.ScoringSource;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -71,6 +74,12 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    CompetitorService competitorService;
+
+    @Autowired
+    CompetitorRepository competitorRepository;
 
     @Autowired
     EventRepository eventRepository;
@@ -195,8 +204,15 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
     }
 
     private Entry makeEntry(Long userId, Long eventId, Long eventClassId) {
-        Entry e = new Entry();
+        Entry e = makeCompetitorEntry(competitorService.forUser(userId).getId(), eventId, eventClassId);
         e.setUserId(userId);
+        return entryRepository.save(e);
+    }
+
+    /** An entry with a competitor and no login user, as a RaceHub import or walk-in creates. */
+    private Entry makeCompetitorEntry(Long competitorId, Long eventId, Long eventClassId) {
+        Entry e = new Entry();
+        e.setCompetitorId(competitorId);
         e.setEventId(eventId);
         e.setEventClassId(eventClassId);
         e.setTransponderNumberSnapshot("T-" + UUID.randomUUID().toString().substring(0, 8));
@@ -270,7 +286,8 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
         assertThat(standings).hasSize(1);
 
         StandingsRowDto row = standings.get(0);
-        assertThat(row.driverId()).isEqualTo(driver.getId());
+        assertThat(row.driverId()).isEqualTo(competitorService.forUser(driver.getId()).getId());
+        assertThat(row.displayName()).isEqualTo("Alice Drop");
         // Best 2 from 3: 10 + 8 = 18 (4 pts dropped)
         assertThat(row.totalPoints()).isEqualTo(18);
 
@@ -391,7 +408,7 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
 
         // DNS driver should appear
         StandingsRowDto dnsDriverRow = standings.stream()
-                .filter(r -> r.driverId().equals(driver.getId()))
+                .filter(r -> r.driverId().equals(competitorService.forUser(driver.getId()).getId()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("DNS driver not found in standings"));
 
@@ -406,5 +423,45 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
 
         // Total = best 1 from 2 = 8 pts (DNS round with 0 pts is dropped since 0 < 8)
         assertThat(dnsDriverRow.totalPoints()).isEqualTo(8);
+    }
+
+    @Test
+    void competitorWithNoUserAppearsInStandings() {
+        Championship champ = makeChampionship(0, 0, null, null, ScoringSource.FINALS);
+        addPointsScale(champ.getId(), Map.of(1, 10, 2, 8));
+
+        Competitor walkIn = new Competitor();
+        walkIn.setDisplayName("Wendy Walkin");
+        walkIn.setExternalSource("RACEHUB");
+        walkIn.setExternalId("driver-" + UUID.randomUUID());
+        walkIn.setCreatedAt(Instant.now());
+        walkIn.setUpdatedAt(Instant.now());
+        walkIn = competitorRepository.save(walkIn);
+        User loginDriver = makeUser("Larry", "Login");
+
+        Event event = makeEvent("Walk-in event");
+        linkEventToChampionship(champ.getId(), event.getId(), 1);
+        Long ecId = makeEventClass(event.getId());
+        Round round = makeRound(event.getId(), RoundType.FINAL, 1);
+        Race race = makeRace(round.getId(), ecId, "A", 1);
+        Entry walkInEntry = makeCompetitorEntry(walkIn.getId(), event.getId(), ecId);
+        Entry loginEntry = makeEntry(loginDriver.getId(), event.getId(), ecId);
+        makeRaceEntry(race.getId(), walkInEntry.getId());
+        makeRaceEntry(race.getId(), loginEntry.getId());
+
+        makeSnapshot(race.getId(), String.format(
+                "[{\"position\":1,\"entryId\":%d,\"driverName\":\"Wendy Walkin\",\"carNumber\":\"1\","
+                + "\"lapsCompleted\":10,\"totalTimeMs\":60000,\"bestLapMs\":6000,\"gapToLeaderMs\":0},"
+                + "{\"position\":2,\"entryId\":%d,\"driverName\":\"Larry Login\",\"carNumber\":\"2\","
+                + "\"lapsCompleted\":10,\"totalTimeMs\":61000,\"bestLapMs\":6100,\"gapToLeaderMs\":1000}]",
+                walkInEntry.getId(), loginEntry.getId()));
+
+        List<StandingsRowDto> standings = query.computeStandings(champ.getId());
+
+        assertThat(standings).extracting(StandingsRowDto::displayName, StandingsRowDto::totalPoints)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple("Wendy Walkin", 10),
+                        org.assertj.core.groups.Tuple.tuple("Larry Login", 8));
+        assertThat(standings.get(0).driverId()).isEqualTo(walkIn.getId());
     }
 }

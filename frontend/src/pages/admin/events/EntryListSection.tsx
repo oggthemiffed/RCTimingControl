@@ -60,7 +60,7 @@ function WithdrawDialog({
     setReasonError(null);
     try {
       await withdraw.mutateAsync({ entryId: entry.id, reason: reason.trim() });
-      toast.success(`${entry.firstName} ${entry.lastName}'s entry has been withdrawn.`);
+      toast.success(`${entry.displayName ?? 'Unknown driver'}'s entry has been withdrawn.`);
       onOpenChange(false);
       setReason('');
     } catch {
@@ -83,7 +83,7 @@ function WithdrawDialog({
           <DialogTitle>Withdraw entry?</DialogTitle>
           <DialogDescription>
             {entry &&
-              `This will withdraw ${entry.firstName} ${entry.lastName}'s entry for this class. The racer will need to re-enter if entries are still open.`}
+              `This will withdraw ${entry.displayName ?? 'Unknown driver'}'s entry for this class. The racer will need to re-enter if entries are still open.`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-1.5">
@@ -165,7 +165,7 @@ function EntriesTable({
           {entries.map(entry => (
             <TableRow key={entry.id}>
               <TableCell className="font-medium">
-                {entry.firstName} {entry.lastName}
+                {entry.displayName ?? 'Unknown driver'}
               </TableCell>
               <TableCell>
                 {entry.transponderNumber ?? (

@@ -5,7 +5,7 @@ package dev.monkeypatch.rctiming.api.racecontrol.dto;
  * the number of times they failed to marshal at any race in this event (D-21).
  *
  * @param entryId         the entry ID for this driver
- * @param driverName      the driver's display name (first + last name, or email fallback)
+ * @param driverName      the competitor's display name (L5)
  * @param carNumber       the car number/label (null if not recorded in the system)
  * @param missedThisEvent count of marshal_absences records for this entry in this event
  */

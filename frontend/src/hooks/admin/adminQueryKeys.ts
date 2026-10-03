@@ -32,4 +32,7 @@ export const adminQueryKeys = {
   users: {
     all: () => ['admin', 'users'] as const,
   },
+  competitors: {
+    all: () => ['admin', 'competitors'] as const,
+  },
 };

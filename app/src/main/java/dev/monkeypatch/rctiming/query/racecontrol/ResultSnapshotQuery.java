@@ -124,7 +124,7 @@ public class ResultSnapshotQuery {
             // No entries have a car — return positions with empty carTags lists
             return positions.stream()
                     .map(r -> new ResultSnapshotDto.ResultRow(
-                            r.position(), r.entryId(), r.driverName(), r.carNumber(),
+                            r.position(), r.entryId(), r.competitorId(), r.driverName(), r.carNumber(),
                             r.lapsCompleted(), r.totalTimeMs(), r.bestLapMs(), r.gapToLeaderMs(),
                             List.of()))
                     .collect(Collectors.toList());
@@ -153,7 +153,7 @@ public class ResultSnapshotQuery {
         // Re-map positions with carTags
         return positions.stream()
                 .map(r -> new ResultSnapshotDto.ResultRow(
-                        r.position(), r.entryId(), r.driverName(), r.carNumber(),
+                        r.position(), r.entryId(), r.competitorId(), r.driverName(), r.carNumber(),
                         r.lapsCompleted(), r.totalTimeMs(), r.bestLapMs(), r.gapToLeaderMs(),
                         tagsByEntryId.getOrDefault(r.entryId(), List.of())))
                 .collect(Collectors.toList());

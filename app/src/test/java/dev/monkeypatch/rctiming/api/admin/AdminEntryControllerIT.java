@@ -205,10 +205,12 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
         assertThat(entries).isNotEmpty();
         // Find the entry belonging to our racer (userId match) — other tests may add entries to same class
         Map<String, Object> ourEntry = entries.stream()
-                .filter(e -> racer.userId().equals(((Number) e.get("userId")).longValue()))
+                .filter(e -> e.get("userId") != null
+                        && racer.userId().equals(((Number) e.get("userId")).longValue()))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Racer's entry not found in list"));
-        assertThat(ourEntry).containsKey("firstName");
+        assertThat(ourEntry.get("competitorId")).isNotNull();
+        assertThat(ourEntry.get("displayName")).isNotNull();
         assertThat(ourEntry).containsKey("transponderNumber");
         assertThat(ourEntry.get("status")).isEqualTo("CONFIRMED");
     }

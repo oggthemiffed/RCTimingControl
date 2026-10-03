@@ -11,10 +11,10 @@ import dev.monkeypatch.rctiming.domain.race.ResultSnapshot;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotRepository;
 import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
-import dev.monkeypatch.rctiming.domain.user.User;
-import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.LiveRacePosition;
 import dev.monkeypatch.rctiming.timing.LiveRaceState;
@@ -46,7 +46,7 @@ public class ResultSnapshotService {
     private final ObjectMapper objectMapper;
     private final RaceEntryRepository raceEntryRepository;
     private final EntryRepository entryRepository;
-    private final UserRepository userRepository;
+    private final CompetitorRepository competitorRepository;
 
     public ResultSnapshotService(RaceRepository raceRepository,
                                   RoundRepository roundRepository,
@@ -55,7 +55,7 @@ public class ResultSnapshotService {
                                   ObjectMapper objectMapper,
                                   RaceEntryRepository raceEntryRepository,
                                   EntryRepository entryRepository,
-                                  UserRepository userRepository) {
+                                  CompetitorRepository competitorRepository) {
         this.raceRepository = raceRepository;
         this.roundRepository = roundRepository;
         this.lapTimingService = lapTimingService;
@@ -63,7 +63,7 @@ public class ResultSnapshotService {
         this.objectMapper = objectMapper;
         this.raceEntryRepository = raceEntryRepository;
         this.entryRepository = entryRepository;
-        this.userRepository = userRepository;
+        this.competitorRepository = competitorRepository;
     }
 
     /**
@@ -83,7 +83,7 @@ public class ResultSnapshotService {
             LiveRaceState state = stateOpt.get();
             List<LiveTimingRowDto> rows = state.calculatePositions();
 
-            Map<Long, String[]> entryInfo = resolveEntryInfo(raceId);
+            Map<Long, EntryInfo> entryInfo = resolveEntryInfo(raceId);
 
             positions = new ArrayList<>();
             long raceStartMs = 0L;
@@ -93,14 +93,15 @@ public class ResultSnapshotService {
                 log.warn("Race {} has no startedAt — totalTimeMs will be 0 for all positions", raceId);
             }
             for (LiveTimingRowDto row : rows) {
-                String[] info = entryInfo.getOrDefault(row.entryId(), new String[]{"Unknown", null});
+                EntryInfo info = entryInfo.getOrDefault(row.entryId(), EntryInfo.UNKNOWN);
                 long totalTimeMs = (raceStartMs > 0 && row.lastPassingTimeMs() > raceStartMs)
                         ? row.lastPassingTimeMs() - raceStartMs : 0L;
                 positions.add(new ResultSnapshotDto.ResultRow(
                         row.position(),
                         row.entryId(),
-                        info[0],
-                        info[1],
+                        info.competitorId(),
+                        info.driverName(),
+                        info.carNumber(),
                         row.lapsCompleted(),
                         totalTimeMs,
                         row.bestLapMs(),
@@ -140,7 +141,12 @@ public class ResultSnapshotService {
         log.info("Deleted result snapshot for race {}", raceId);
     }
 
-    private Map<Long, String[]> resolveEntryInfo(long raceId) {
+    /** The driver and car number recorded against an entry in the result snapshot. */
+    private record EntryInfo(Long competitorId, String driverName, String carNumber) {
+        static final EntryInfo UNKNOWN = new EntryInfo(null, "Unknown", null);
+    }
+
+    private Map<Long, EntryInfo> resolveEntryInfo(long raceId) {
         List<RaceEntry> raceEntries = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId);
         return raceEntries.stream()
                 .filter(re -> re.getEntryId() != 0L)
@@ -148,11 +154,14 @@ public class ResultSnapshotService {
                         RaceEntry::getEntryId,
                         re -> {
                             Optional<Entry> entry = entryRepository.findById(re.getEntryId());
-                            if (entry.isEmpty()) return new String[]{"Unknown", null};
-                            Optional<User> user = userRepository.findById(entry.get().getUserId());
-                            String name = user.map(u -> u.getFirstName() + " " + u.getLastName()).orElse("Unknown");
+                            if (entry.isEmpty()) return EntryInfo.UNKNOWN;
+                            Long competitorId = entry.get().getCompetitorId();
+                            String name = Optional.ofNullable(competitorId)
+                                    .flatMap(competitorRepository::findById)
+                                    .map(Competitor::getDisplayName)
+                                    .orElse("Unknown");
                             String carNum = re.getCarNumber() != null ? re.getCarNumber().toString() : null;
-                            return new String[]{name, carNum};
+                            return new EntryInfo(competitorId, name, carNum);
                         },
                         (a, b) -> a  // keep first on duplicate real ID (defensive)
                 ));

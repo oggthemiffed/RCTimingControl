@@ -6,6 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.Public;
+import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.CompetitorsRecord;
 
@@ -178,6 +179,19 @@ public class Competitors extends TableImpl<CompetitorsRecord> {
     @Override
     public List<UniqueKey<CompetitorsRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.UQ_COMPETITORS_EXTERNAL);
+    }
+
+    private transient ChampionshipExclusionsPath _championshipExclusions;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.championship_exclusions</code> table
+     */
+    public ChampionshipExclusionsPath championshipExclusions() {
+        if (_championshipExclusions == null)
+            _championshipExclusions = new ChampionshipExclusionsPath(this, null, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_DRIVER_ID_FKEY.getInverseKey());
+
+        return _championshipExclusions;
     }
 
     private transient EntriesPath _entries;

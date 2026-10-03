@@ -4,6 +4,8 @@ import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.auth.LoginRequest;
 import dev.monkeypatch.rctiming.api.auth.RegisterRequest;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
@@ -45,6 +47,9 @@ class ChampionshipControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     EventRepository eventRepository;
+
+    @Autowired
+    CompetitorRepository competitorRepository;
 
     @Autowired
     RacingClassRepository racingClassRepository;
@@ -292,9 +297,8 @@ class ChampionshipControllerIT extends AbstractIntegrationTest {
     void createExclusion_asAdmin_returns201WithAudit() {
         Long champId = createChampionship("Exclusion Audit Championship");
 
-        // Create driver user
-        String driverEmail = "driver-" + UUID.randomUUID() + "@test.com";
-        Long driverId = createAdminUser(driverEmail, "driverPass", Set.of(Role.RACER));
+        // Drivers are competitors (L5); this one has no login
+        Long driverId = createCompetitor("Exclusion Driver");
 
         // Create event
         Long eventId = createEvent("Round 2 Event");
@@ -333,12 +337,44 @@ class ChampionshipControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void createExclusion_forLoginUserIdThatIsNotACompetitor_returns404() {
+        Long champId = createChampionship("Exclusion Unknown Competitor Championship");
+        Long eventId = createEvent("Unknown Competitor Event");
+        restTemplate.exchange(
+                "/api/v1/admin/championships/" + champId + "/events", HttpMethod.POST,
+                new HttpEntity<>(Map.of("eventId", eventId, "roundNumber", 1), adminHeaders()), Map.class);
+
+        // A competitor id that does not exist (well past any id this run creates)
+        Map<String, Object> body = Map.of("driverId", 9_999_999L, "eventId", eventId, "reason", "test");
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/admin/championships/" + champId + "/exclusions", HttpMethod.POST,
+                new HttpEntity<>(body, adminHeaders()), Map.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, resp.getStatusCode());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void listCompetitors_includesCompetitorWithNoLogin() {
+        String name = "Walk-in " + UUID.randomUUID();
+        Long competitorId = createCompetitor(name);
+
+        ResponseEntity<List> resp = restTemplate.exchange(
+                "/api/v1/admin/competitors", HttpMethod.GET,
+                new HttpEntity<>(adminHeaders()), List.class);
+
+        assertEquals(HttpStatus.OK, resp.getStatusCode());
+        List<Map<String, Object>> rows = resp.getBody();
+        assertTrue(rows.stream().anyMatch(r ->
+                ((Number) r.get("id")).longValue() == competitorId && name.equals(r.get("displayName"))));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void deleteExclusion_removesRow_returns204() {
         Long champId = createChampionship("Delete Exclusion Championship");
 
-        String driverEmail = "driver-del-" + UUID.randomUUID() + "@test.com";
-        Long driverId = createAdminUser(driverEmail, "driverPass", Set.of(Role.RACER));
+        Long driverId = createCompetitor("Delete Exclusion Driver");
         Long eventId = createEvent("Delete Round Event");
 
         restTemplate.exchange(
@@ -444,6 +480,15 @@ class ChampionshipControllerIT extends AbstractIntegrationTest {
         event.setCreatedAt(now);
         event.setUpdatedAt(now);
         return eventRepository.save(event).getId();
+    }
+
+    private Long createCompetitor(String displayName) {
+        Competitor competitor = new Competitor();
+        competitor.setDisplayName(displayName);
+        Instant now = Instant.now();
+        competitor.setCreatedAt(now);
+        competitor.setUpdatedAt(now);
+        return competitorRepository.save(competitor).getId();
     }
 
     private Long createAdminUser(String email, String password, Set<Role> roles) {

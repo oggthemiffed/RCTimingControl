@@ -1,10 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getPublicChampionshipStandings, type PublicStandingsRowDto } from '@/lib/raceControlApi';
-
-function fmtDriver(row: PublicStandingsRowDto) {
-  return `${row.firstName} ${row.lastName}`;
-}
+import { getPublicChampionshipStandings } from '@/lib/raceControlApi';
 
 export default function PublicChampionshipPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,7 +40,7 @@ export default function PublicChampionshipPage() {
           {rows.map((row, idx) => (
             <tr key={row.driverId} className="border-b border-border/50">
               <td className="py-2 pr-4 font-mono">{idx + 1}</td>
-              <td className="py-2 pr-4">{fmtDriver(row)}</td>
+              <td className="py-2 pr-4">{row.displayName}</td>
               <td className="py-2 pr-4 text-right font-mono font-bold">{row.totalPoints}</td>
               <td className="py-2 flex flex-wrap gap-1">
                 {row.rounds.map((r) => (

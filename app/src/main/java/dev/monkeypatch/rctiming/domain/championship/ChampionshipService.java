@@ -14,7 +14,7 @@ import dev.monkeypatch.rctiming.api.admin.dto.UpdateChampionshipRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.UpdatePointsScaleRequest;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
-import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class ChampionshipService {
     private final ChampionshipExclusionRepository exclusionRepository;
     private final EventRepository eventRepository;
     private final RacingClassRepository racingClassRepository;
-    private final UserRepository userRepository;
+    private final CompetitorRepository competitorRepository;
 
     public ChampionshipService(ChampionshipRepository championshipRepository,
                                ChampionshipClassRepository classRepository,
@@ -44,7 +44,7 @@ public class ChampionshipService {
                                ChampionshipExclusionRepository exclusionRepository,
                                EventRepository eventRepository,
                                RacingClassRepository racingClassRepository,
-                               UserRepository userRepository) {
+                               CompetitorRepository competitorRepository) {
         this.championshipRepository = championshipRepository;
         this.classRepository = classRepository;
         this.eventLinkRepository = eventLinkRepository;
@@ -52,7 +52,7 @@ public class ChampionshipService {
         this.exclusionRepository = exclusionRepository;
         this.eventRepository = eventRepository;
         this.racingClassRepository = racingClassRepository;
-        this.userRepository = userRepository;
+        this.competitorRepository = competitorRepository;
     }
 
     public ChampionshipDto create(CreateChampionshipRequest request) {
@@ -175,7 +175,7 @@ public class ChampionshipService {
     }
 
     /**
-     * CHAMP-02 + CHAMP-09: exclude a driver from one event and record an audit row.
+     * CHAMP-02 + CHAMP-09: exclude a driver (a competitor, L5) from one event and record an audit row.
      * `actingAdminId` is sourced from the JWT subject at the controller layer — NEVER from the request body.
      */
     public ChampionshipExclusionDto createExclusion(Long championshipId,
@@ -184,8 +184,8 @@ public class ChampionshipService {
         if (!championshipRepository.existsById(championshipId)) {
             throw new EntityNotFoundException("Championship not found: " + championshipId);
         }
-        if (!userRepository.existsById(request.driverId())) {
-            throw new EntityNotFoundException("Driver user not found: " + request.driverId());
+        if (!competitorRepository.existsById(request.driverId())) {
+            throw new EntityNotFoundException("Competitor not found: " + request.driverId());
         }
         if (!eventRepository.existsById(request.eventId())) {
             throw new EntityNotFoundException("Event not found: " + request.eventId());
