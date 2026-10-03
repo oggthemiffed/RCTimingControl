@@ -22,7 +22,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.EventOfflineLocks;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventSnapshotState;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventSyncGenerations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
-import dev.monkeypatch.rctiming.jooq.generated.tables.ForwarderToken;
 import dev.monkeypatch.rctiming.jooq.generated.tables.GoverningBodyAffiliations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials;
@@ -159,11 +158,6 @@ public class Tables {
      * The table <code>public.events</code>.
      */
     public static final Events EVENTS = Events.EVENTS;
-
-    /**
-     * The table <code>public.forwarder_token</code>.
-     */
-    public static final ForwarderToken FORWARDER_TOKEN = ForwarderToken.FORWARDER_TOKEN;
 
     /**
      * The table <code>public.governing_body_affiliations</code>.

@@ -1,0 +1,40 @@
+plugins {
+    java
+    application
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.slf4j:slf4j-api:2.0.13")
+    runtimeOnly("ch.qos.logback:logback-classic:1.5.6")
+
+    testImplementation(project(":decoder-protocol"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
+    testImplementation("org.assertj:assertj-core:3.25.3")
+}
+
+application {
+    mainClass.set("dev.monkeypatch.rctiming.simulator.SimulatorMain")
+}
+
+tasks.register<JavaExec>("runSimulator") {
+    group = "application"
+    description = "Run the AMB RC-4 TCP decoder simulator"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("dev.monkeypatch.rctiming.simulator.SimulatorMain")
+    // Pass-through args: ./gradlew :decoder-simulator:runSimulator --args="--mode=generative --port=5100"
+}
+
+tasks.test {
+    useJUnitPlatform()
+}

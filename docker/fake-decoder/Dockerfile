@@ -5,14 +5,14 @@ COPY gradlew settings.gradle.kts build.gradle.kts VERSION ./
 COPY buildSrc/ buildSrc/
 COPY gradle/ gradle/
 COPY app/ app/
-COPY forwarder/ forwarder/
+COPY decoder-simulator/ decoder-simulator/
 COPY decoder-protocol/ decoder-protocol/
 RUN chmod +x gradlew && \
-    ./gradlew :forwarder:installDist -x test -x generateProto -PcommittedProto --no-daemon
+    ./gradlew :decoder-simulator:installDist -x test --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
-COPY --from=builder /build/forwarder/build/install/forwarder/ .
+COPY --from=builder /build/decoder-simulator/build/install/decoder-simulator/ .
 COPY docker/fake-decoder/simulate.sh /simulate.sh
 RUN chmod +x /simulate.sh
 EXPOSE 5100

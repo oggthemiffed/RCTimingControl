@@ -29,15 +29,12 @@ help:
 	@printf '    make dev         Start backend in dev mode (requires: make up)\n'
 	@printf '    make generate-db Regenerate jOOQ sources from live schema (requires: make up)\n'
 	@printf '    make build       Compile the backend (regenerates jOOQ if sources missing)\n'
-	@printf '    make test        Run all backend + forwarder integration tests\n'
+	@printf '    make test        Run all backend + simulator integration tests\n'
 	@printf '    make test-fast   Run tests skipping jOOQ codegen\n'
 	@printf '\n'
-	@printf '  $(BOLD)Forwarder$(RESET)\n'
-	@printf '    make forwarder   Build and run the forwarder (connects to live AMB decoder)\n'
+	@printf '  $(BOLD)Decoder simulator$(RESET)\n'
 	@printf '    make simulator   Run the fake decoder simulator (generative mode)\n'
 	@printf '    make simulator-playback  Replay a .dump file through the fake decoder\n'
-	@printf '    make forwarder-build     Compile the forwarder module only\n'
-	@printf '    make forwarder-test      Run forwarder unit + integration tests\n'
 	@printf '\n'
 	@printf '  $(BOLD)Frontend$(RESET)\n'
 	@printf '    make ui          Start Vite dev server\n'
@@ -47,7 +44,7 @@ help:
 	@printf '  $(BOLD)Combined$(RESET)\n'
 	@printf '    make dev-start   Full dev environment: docker + backend + frontend\n'
 	@printf '    make start       Same as dev-start (background; logs to /tmp/rc-*.log)\n'
-	@printf '    make stop        Kill backend, frontend, forwarder and docker containers\n'
+	@printf '    make stop        Kill backend, frontend and docker containers\n'
 	@printf '    make clean       Stop everything and wipe build artefacts\n'
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -116,35 +113,23 @@ build:
 
 .PHONY: test
 test:
-	./gradlew :app:test :forwarder:test
+	./gradlew :app:test :decoder-simulator:test
 
 .PHONY: test-fast
 test-fast:
-	./gradlew :app:test :forwarder:test -x generateJooq
+	./gradlew :app:test :decoder-simulator:test -x generateJooq
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Forwarder
+# Decoder simulator
 # ─────────────────────────────────────────────────────────────────────────────
-.PHONY: forwarder-build
-forwarder-build:
-	./gradlew :forwarder:build -x test
-
-.PHONY: forwarder-test
-forwarder-test:
-	./gradlew :forwarder:test
-
-.PHONY: forwarder
-forwarder:
-	./gradlew :forwarder:run
-
 .PHONY: simulator
 simulator:
-	./gradlew :forwarder:runSimulator --args='--mode=generative --transponders=101,102,103,104,105,106 --interval-ms=12500 --jitter-ms=2500'
+	./gradlew :decoder-simulator:runSimulator --args='--mode=generative --transponders=101,102,103,104,105,106 --interval-ms=12500 --jitter-ms=2500'
 
-DUMP_FILE ?= forwarder/src/main/resources/samples/sample-passings.dump
+DUMP_FILE ?= decoder-simulator/src/main/resources/samples/sample-passings.dump
 .PHONY: simulator-playback
 simulator-playback:
-	./gradlew :forwarder:runSimulator --args='--mode=playback --file=$(DUMP_FILE)'
+	./gradlew :decoder-simulator:runSimulator --args='--mode=playback --file=$(DUMP_FILE)'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Frontend
@@ -179,8 +164,8 @@ start: up
 		> /tmp/rc-backend.log 2>&1 & echo $$! > /tmp/rc-backend.pid
 	@printf 'Starting frontend (log: /tmp/rc-frontend.log)…\n'
 	@cd frontend && npm run dev > /tmp/rc-frontend.log 2>&1 & echo $$! > /tmp/rc-frontend.pid
-	@printf 'Services starting — backend on :8080, frontend on :5173, gRPC on :9090\n'
-	@printf 'Run "make forwarder" in a separate terminal to connect the AMB decoder.\n'
+	@printf 'Services starting — backend on :8080, frontend on :5173\n'
+	@printf 'The app reads the AMB decoder directly. Set its host and port in Setup.\n'
 	@printf 'Run "make simulator" to use the fake decoder instead.\n'
 	@printf 'Logs: tail -f /tmp/rc-backend.log  |  tail -f /tmp/rc-frontend.log\n'
 
@@ -191,9 +176,6 @@ stop:
 	fi
 	@if [ -f /tmp/rc-frontend.pid ]; then \
 		kill $$(cat /tmp/rc-frontend.pid) 2>/dev/null || true; rm /tmp/rc-frontend.pid; \
-	fi
-	@if [ -f /tmp/rc-forwarder.pid ]; then \
-		kill $$(cat /tmp/rc-forwarder.pid) 2>/dev/null || true; rm /tmp/rc-forwarder.pid; \
 	fi
 	@timeout 10 ./gradlew --stop >/dev/null 2>&1 || true
 	@pkill -f '[n]ode.*vite' 2>/dev/null || true

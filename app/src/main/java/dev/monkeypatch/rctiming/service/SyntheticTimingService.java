@@ -17,7 +17,7 @@ import java.util.Random;
 /**
  * Dev-only synthetic timing event generator (D-07).
  * Gated to the "dev" Spring profile — bean is not registered in production.
- * This is the only insertion point that Phase 5's forwarder replaces with real AMB P3 events.
+ * This is the synthetic stand-in for the decoder listener's real passings.
  */
 @Service
 @Profile("dev")

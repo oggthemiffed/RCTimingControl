@@ -11,7 +11,6 @@ import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.domain.user.UserService;
-import dev.monkeypatch.rctiming.forwarder.ForwarderTokenService;
 import dev.monkeypatch.rctiming.security.JwtTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,17 +41,13 @@ class SetupServiceTest {
     private TrackRepository trackRepository;
     @Mock
     private RaceFormatTemplateRepository raceFormatTemplateRepository;
-    @Mock
-    private ForwarderTokenService forwarderTokenService;
-
     private SetupService setupService;
 
     @BeforeEach
     void setUp() {
         setupService = new SetupService(
                 clubProfileRepository, userRepository, userService,
-                jwtTokenService, trackRepository, raceFormatTemplateRepository,
-                forwarderTokenService);
+                jwtTokenService, trackRepository, raceFormatTemplateRepository);
     }
 
     @Test

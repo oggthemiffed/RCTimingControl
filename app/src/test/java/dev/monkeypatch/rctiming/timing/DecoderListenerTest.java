@@ -8,7 +8,6 @@ import dev.monkeypatch.rctiming.domain.club.DecoderSettingsChangedEvent;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
-import dev.monkeypatch.rctiming.forwarder.ForwarderStatusPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -39,7 +38,7 @@ class DecoderListenerTest {
     private ClubProfileService clubProfileService;
     private RaceRepository raceRepository;
     private ApplicationEventPublisher eventPublisher;
-    private ForwarderStatusPublisher statusPublisher;
+    private DecoderStatusPublisher statusPublisher;
     private DecoderListener listener;
 
     /** Callbacks for each source the listener creates, in creation order. */
@@ -51,7 +50,7 @@ class DecoderListenerTest {
         clubProfileService = mock(ClubProfileService.class);
         raceRepository = mock(RaceRepository.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
-        statusPublisher = mock(ForwarderStatusPublisher.class);
+        statusPublisher = mock(DecoderStatusPublisher.class);
         when(clubProfileService.getDecoderSettings()).thenReturn(new DecoderSettings(null, null, null));
         listener = new DecoderListener(clubProfileService, raceRepository, eventPublisher, statusPublisher,
                 (host, port, onPassing, onStatus) -> {
@@ -93,7 +92,7 @@ class DecoderListenerTest {
 
         statusCallbacks.get(0).accept(AmbRc4TimingSource.ConnectionState.RECONNECTING);
 
-        verify(statusPublisher).onDirectDecoderStatus("RECONNECTING");
+        verify(statusPublisher).onDecoderStatus("RECONNECTING");
     }
 
     @Test
@@ -113,7 +112,7 @@ class DecoderListenerTest {
 
         listener.start();
 
-        verify(statusPublisher).onDirectDecoderStatus("DISCONNECTED");
+        verify(statusPublisher).onDecoderStatus("DISCONNECTED");
         assertThat(listener.isRunning()).isTrue();
         assertThat(statusCallbacks).isEmpty();
     }
@@ -124,7 +123,7 @@ class DecoderListenerTest {
 
         listener.start();
 
-        verify(statusPublisher).onDirectDecoderStatus("DISCONNECTED");
+        verify(statusPublisher).onDecoderStatus("DISCONNECTED");
         assertThat(statusCallbacks).isEmpty();
     }
 
@@ -132,7 +131,7 @@ class DecoderListenerTest {
     void settingsChanged_whenNotRunning_doesNothing() {
         listener.onSettingsChanged(new DecoderSettingsChangedEvent(new DecoderSettings("localhost", 5100, "RC4")));
 
-        verify(statusPublisher, never()).onDirectDecoderStatus(any());
+        verify(statusPublisher, never()).onDecoderStatus(any());
         assertThat(statusCallbacks).isEmpty();
     }
 
@@ -145,12 +144,12 @@ class DecoderListenerTest {
         // The first source (index 0) was still in flight when it was replaced by index 1.
         statusCallbacks.get(0).accept(AmbRc4TimingSource.ConnectionState.CONNECTED);
         statusCallbacks.get(0).accept(AmbRc4TimingSource.ConnectionState.RECONNECTING);
-        verify(statusPublisher, never()).onDirectDecoderStatus("CONNECTED");
-        verify(statusPublisher, never()).onDirectDecoderStatus("RECONNECTING");
+        verify(statusPublisher, never()).onDecoderStatus("CONNECTED");
+        verify(statusPublisher, never()).onDecoderStatus("RECONNECTING");
 
         // The replacement's status is still applied.
         statusCallbacks.get(1).accept(AmbRc4TimingSource.ConnectionState.CONNECTED);
-        verify(statusPublisher).onDirectDecoderStatus("CONNECTED");
+        verify(statusPublisher).onDecoderStatus("CONNECTED");
     }
 
     @Test
@@ -162,7 +161,7 @@ class DecoderListenerTest {
         statusCallbacks.get(0).accept(AmbRc4TimingSource.ConnectionState.RECONNECTING);
 
         ArgumentCaptor<String> states = ArgumentCaptor.forClass(String.class);
-        verify(statusPublisher, atLeastOnce()).onDirectDecoderStatus(states.capture());
+        verify(statusPublisher, atLeastOnce()).onDecoderStatus(states.capture());
         assertThat(states.getAllValues()).doesNotContain("RECONNECTING");
         assertThat(states.getValue()).isEqualTo("DISCONNECTED");
     }
@@ -176,6 +175,29 @@ class DecoderListenerTest {
         passingCallbacks.get(0).accept(new EpochCorrectedPassing("1234567", 1_000_000L, 1, 1, 63, 1));
 
         verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
+    void reconcile_storedSettingsChangedWithoutEvent_reconnectsToThem() {
+        listener.start();
+        assertThat(statusCallbacks).isEmpty();
+
+        // Settings written directly to the database (for example by the trial seed), with no event.
+        when(clubProfileService.getDecoderSettings()).thenReturn(new DecoderSettings("fake-decoder", 5100, "RC4"));
+        listener.reconcile();
+
+        assertThat(statusCallbacks).hasSize(1);
+    }
+
+    @Test
+    void reconcile_settingsUnchanged_doesNotRebuildSource() {
+        when(clubProfileService.getDecoderSettings()).thenReturn(new DecoderSettings("localhost", 5100, "RC4"));
+        listener.start();
+        assertThat(statusCallbacks).hasSize(1);
+
+        listener.reconcile();
+
+        assertThat(statusCallbacks).hasSize(1);
     }
 
     @Test

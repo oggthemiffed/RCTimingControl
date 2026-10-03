@@ -11,7 +11,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import { useHelp } from '@/context/HelpContext';
-import { ForwarderStatusBar } from './panels/ForwarderStatusBar';
+import { DecoderStatusBar } from './panels/DecoderStatusBar';
 import { RaceControlErrorBoundary } from '@/components/RaceControlErrorBoundary';
 
 export default function RaceControlLayout() {
@@ -95,7 +95,7 @@ export default function RaceControlLayout() {
 
       <Separator />
 
-      <ForwarderStatusBar />
+      <DecoderStatusBar />
 
       {/* Page content fills remaining height */}
       <div className="flex-1 overflow-hidden">

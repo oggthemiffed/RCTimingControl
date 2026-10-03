@@ -2,7 +2,6 @@ plugins {
     id("org.springframework.boot")
     id("io.spring.dependency-management")
     id("nu.studer.jooq")
-    id("com.google.protobuf") version "0.9.4"
     java
 }
 
@@ -70,13 +69,6 @@ dependencies {
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
-
-    // Phase 5: gRPC server for forwarder connection
-    implementation("io.grpc:grpc-stub:1.73.0")
-    implementation("io.grpc:grpc-protobuf:1.73.0")
-    implementation("io.grpc:grpc-netty-shaded:1.73.0")
-    implementation("com.google.protobuf:protobuf-java:3.25.8")
-    compileOnly("javax.annotation:javax.annotation-api:1.3.2")
 
     jooqGenerator("org.postgresql:postgresql")
     jooqGenerator("org.flywaydb:flyway-core")
@@ -222,26 +214,3 @@ tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
 }
 
 sourceSets["main"].java.srcDir("src/generated/jooq")
-// Docker builds skip generateProto (-x generateProto) so the plugin never registers its output dirs.
-// Pass -PcommittedProto to put the committed generated sources on the source path in that case.
-if (project.hasProperty("committedProto")) {
-    sourceSets["main"].java.srcDir("src/generated/proto/main/java")
-    sourceSets["main"].java.srcDir("src/generated/proto/main/grpc")
-}
-
-// Proto/gRPC generated sources are committed at app/src/generated/proto (Docker builds skip codegen with -x generateProto)
-
-// Phase 5: protobuf/gRPC code generation for cloud-side gRPC server
-// Generated sources are committed at app/src/generated/proto for IDE convenience.
-protobuf {
-    protoc { artifact = "com.google.protobuf:protoc:3.25.8" }
-    plugins {
-        create("grpc") { artifact = "io.grpc:protoc-gen-grpc-java:1.73.0" }
-    }
-    generateProtoTasks {
-        all().forEach { task ->
-            task.plugins { create("grpc") }
-        }
-    }
-    generatedFilesBaseDir = "src/generated/proto"
-}

@@ -19,10 +19,10 @@ jobs:
           cache: gradle
 
       # :decoder-protocol and :localday need no Docker/Testcontainers (localday uses an
-      # embedded Postgres), so they run in the same job as :app/:forwarder rather than a
+      # embedded Postgres), so they run in the same job as :app/:decoder-simulator rather than a
       # separate one. -x generateJooq only applies to :app's own task graph.
       - name: Run backend tests
-        run: ./gradlew :app:test :forwarder:test :decoder-protocol:test :localday:test -x generateJooq
+        run: ./gradlew :app:test :decoder-simulator:test :decoder-protocol:test :localday:test -x generateJooq
 
   test-frontend:
     name: Frontend tests (Node 20)

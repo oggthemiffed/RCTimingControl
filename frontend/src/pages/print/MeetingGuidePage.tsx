@@ -16,8 +16,8 @@ export default function MeetingGuidePage() {
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3">1. Pre-Meeting Setup</h2>
         <p className="text-sm mb-3">
-          Before the meeting begins, verify that the event is configured, the decoder forwarder is
-          running, and race control is accessible.
+          Before the meeting begins, verify that the event is configured, the decoder is
+          connected, and race control is accessible.
         </p>
         <ol className="list-decimal list-inside space-y-2 text-sm">
           <li>
@@ -27,10 +27,9 @@ export default function MeetingGuidePage() {
             Event</span> to transition it.
           </li>
           <li>
-            <span className="font-semibold">Start the forwarder agent:</span> On the timing
-            PC, launch the RC Timing Forwarder application. It connects to the AMB decoder
-            on port 5100 (RC-4 text protocol) and streams passings to the cloud service.
-            Confirm the forwarder status shows "Connected" before proceeding.
+            <span className="font-semibold">Check the decoder connection:</span> RCTC connects
+            to the AMB decoder on its own (port 5100 for the RC-4 text protocol). Confirm the
+            DECODER status shows "connected" in the race-control bar before proceeding.
           </li>
           <li>
             <span className="font-semibold">Open Race Control:</span> In the Admin panel,

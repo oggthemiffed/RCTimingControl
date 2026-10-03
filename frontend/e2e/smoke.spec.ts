@@ -53,9 +53,9 @@ test.describe('Admin login and navigation', () => {
     await expect(page.getByRole('heading', { name: 'Club Profile', level: 1 })).toBeVisible();
   });
 
-  test('admin can open forwarder token page', async ({ page }) => {
-    await page.goto('/admin/forwarder');
-    await expect(page.getByRole('heading', { name: /forwarder/i })).toBeVisible();
+  test('admin can open decoder settings page', async ({ page }) => {
+    await page.goto('/admin/decoder');
+    await expect(page.getByRole('heading', { name: /decoder/i })).toBeVisible();
   });
 });
 

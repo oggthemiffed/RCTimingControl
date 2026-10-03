@@ -34,6 +34,13 @@ export type DecoderConfigUpdateRequest = {
   decoderProtocol: 'RC4' | 'P3';
 };
 
+/** Stored decoder settings. Fields are null until the decoder has been configured. */
+export type DecoderConfigDto = {
+  decoderHost: string | null;
+  decoderPort: number | null;
+  decoderProtocol: 'RC4' | 'P3' | null;
+};
+
 export type SetupStaffRequest = {
   firstName: string;
   lastName: string;
@@ -59,6 +66,11 @@ export async function bootstrap(req: BootstrapRequest): Promise<AuthResponse> {
   return data;
 }
 
+export async function getDecoderConfig(): Promise<DecoderConfigDto> {
+  const { data } = await api.get<DecoderConfigDto>('/api/v1/setup/decoder-config');
+  return data;
+}
+
 export async function updateDecoderConfig(req: DecoderConfigUpdateRequest): Promise<SetupProgressDto> {
   const { data } = await api.patch<SetupProgressDto>('/api/v1/setup/decoder-config', req);
   return data;
@@ -68,6 +80,3 @@ export async function createSetupStaff(req: SetupStaffRequest): Promise<void> {
   await api.post('/api/v1/setup/staff', req);
 }
 
-export function downloadForwarderEnvUrl(): string {
-  return '/api/v1/setup/forwarder-config-download';
-}

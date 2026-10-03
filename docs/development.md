@@ -92,7 +92,7 @@ On first run, Flyway applies all migrations and dev seed data automatically:
 - `V19` — result_snapshots (JSONB positions + lap_history)
 
 **Phase 5 (V21–V22):**
-- `V21` — forwarder_token (BCrypt hash, status, timestamps)
+- `V21` — forwarder_token (BCrypt hash, status, timestamps); dropped in `V29`
 - `V22` — unknown_transponder_link (audit of retroactive transponder→entry links)
 
 **Dev seeds (V1000–V1003):**
@@ -209,13 +209,13 @@ The embedded Postgres data directory defaults to `./data/localday-pg` under the 
 
 ### Exercising race control without physical hardware
 
-Use the same fake decoder simulator the cloud forwarder uses — it's a plain TCP server that doesn't care which client connects to it:
+Use the fake decoder simulator. It's a plain TCP server that doesn't care which client connects to it:
 
 ```bash
 make simulator   # fake decoder on :5100 — see docs/forwarder.md
 ```
 
-> **Never run this simulator (or a real decoder) with both `forwarder/` and `localday/` connected to it at once** — see [docs/forwarder.md](forwarder.md#local-race-day-program-exclusivity).
+> **Never run this simulator (or a real decoder) with both RCTC and `localday/` connected to it at once** — see [docs/forwarder.md](forwarder.md#never-connect-two-timing-programs-to-one-decoder).
 
 ### Module structure
 
@@ -321,13 +321,10 @@ Run `make help` to see all targets. Quick reference:
 | `make dev` | Backend only, foreground |
 | `make ui` | Frontend only, foreground |
 | `make build` | Compile backend (no tests, no jOOQ codegen) |
-| `make test` | Full integration test suite — app + forwarder |
+| `make test` | Full integration test suite — app + decoder simulator |
 | `make test-fast` | Tests skipping jOOQ codegen |
-| `make forwarder` | Run the forwarder (connect to decoder or simulator) |
 | `make simulator` | Run fake decoder in generative mode on :5100 |
 | `make simulator-playback` | Replay a .dump file through the fake decoder |
-| `make forwarder-build` | Compile forwarder module only |
-| `make forwarder-test` | Run forwarder unit + integration tests |
 | `make ui-build` | TypeScript check + production bundle |
 | `make ui-lint` | ESLint |
 | `make clean` | Stop everything, `./gradlew clean`, remove `frontend/dist` |
@@ -384,7 +381,7 @@ Flyway applies migrations automatically on backend startup — you do not need t
 gh pr create
 ```
 
-Reference the GitHub Issue number in the PR description (`Closes #N`). PRs should include passing tests — `make test` runs the full suite including forwarder tests.
+Reference the GitHub Issue number in the PR description (`Closes #N`). PRs should include passing tests — `make test` runs the full suite, including the decoder simulator tests.
 
 ### Working with Claude Code
 

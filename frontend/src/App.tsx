@@ -29,7 +29,7 @@ import TracksPage from '@/pages/admin/tracks/TracksPage';
 import FormatsPage from '@/pages/admin/formats/FormatsPage';
 import CarTagCategoriesPage from '@/pages/admin/categories/CarTagCategoriesPage';
 import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
-import ForwarderTokenPage from '@/pages/admin/race-control/ForwarderTokenPage';
+import DecoderSettingsPage from '@/pages/admin/decoder/DecoderSettingsPage';
 import AdminRacersListPage from '@/pages/admin/racers/AdminRacersListPage';
 import AdminRacerDetailPage from '@/pages/admin/racers/AdminRacerDetailPage';
 import RaceControlLayout from '@/pages/race-control/RaceControlLayout';
@@ -87,7 +87,7 @@ const router = createBrowserRouter([
           { path: 'formats', element: <FormatsPage /> },
           { path: 'categories', element: <CarTagCategoriesPage /> },
           { path: 'race-control', element: <RaceControlSelectPage /> },
-          { path: 'forwarder', element: <ForwarderTokenPage /> },
+          { path: 'decoder', element: <DecoderSettingsPage /> },
           { path: 'audio', element: <AdminAudioSettingsPage /> },
           { path: 'racers', element: <AdminRacersListPage /> },
           { path: 'racers/:userId', element: <AdminRacerDetailPage /> },

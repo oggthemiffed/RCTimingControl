@@ -15,7 +15,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Entries;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
-import dev.monkeypatch.rctiming.jooq.generated.tables.ForwarderToken;
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayInstanceSecrets;
@@ -70,7 +69,6 @@ public class Indexes {
     public static final Index IDX_EVENT_CLASSES_RACING_CLASS_ID = Internal.createIndex(DSL.name("idx_event_classes_racing_class_id"), EventClasses.EVENT_CLASSES, new OrderField[] { EventClasses.EVENT_CLASSES.RACING_CLASS_ID }, false);
     public static final Index IDX_EVENTS_STATUS = Internal.createIndex(DSL.name("idx_events_status"), Events.EVENTS, new OrderField[] { Events.EVENTS.STATUS }, false);
     public static final Index IDX_EVENTS_TRACK_ID = Internal.createIndex(DSL.name("idx_events_track_id"), Events.EVENTS, new OrderField[] { Events.EVENTS.TRACK_ID }, false);
-    public static final Index IDX_FORWARDER_TOKEN_STATUS = Internal.createIndex(DSL.name("idx_forwarder_token_status"), ForwarderToken.FORWARDER_TOKEN, new OrderField[] { ForwarderToken.FORWARDER_TOKEN.STATUS }, false);
     public static final Index IDX_INCIDENT_REPORTS_RACE_ID = Internal.createIndex(DSL.name("idx_incident_reports_race_id"), IncidentReports.INCIDENT_REPORTS, new OrderField[] { IncidentReports.INCIDENT_REPORTS.RACE_ID }, false);
     public static final Index IDX_LOCALDAY_CREDENTIALS_EVENT_ID = Internal.createIndex(DSL.name("idx_localday_credentials_event_id"), LocaldayCredentials.LOCALDAY_CREDENTIALS, new OrderField[] { LocaldayCredentials.LOCALDAY_CREDENTIALS.EVENT_ID }, false);
     public static final Index IDX_LOCALDAY_CREDENTIALS_EVENT_USER = Internal.createIndex(DSL.name("idx_localday_credentials_event_user"), LocaldayCredentials.LOCALDAY_CREDENTIALS, new OrderField[] { LocaldayCredentials.LOCALDAY_CREDENTIALS.EVENT_ID, LocaldayCredentials.LOCALDAY_CREDENTIALS.USER_ID }, true);

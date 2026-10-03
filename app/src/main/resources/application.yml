@@ -12,11 +12,9 @@ app:
     secret: ${JWT_SECRET:dGhpcyBpcyBhIGRldmVsb3BtZW50IHNlY3JldCBrZXkgdGhhdCBtdXN0IGJlIGF0IGxlYXN0IDI1NiBiaXRz}
     access-token-ttl-ms: 900000
     refresh-token-ttl-ms: 604800000
-  grpc:
-    port: 9090
   decoder:
     listener:
-      # L1: read the AMB decoder directly over TCP. Set to false to rely on the gRPC forwarder only.
+      # Read the AMB decoder over TCP. Set to false to turn off live timing ingest.
       enabled: ${DECODER_LISTENER_ENABLED:true}
 
 storage:

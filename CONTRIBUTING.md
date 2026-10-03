@@ -50,8 +50,8 @@ This repo uses [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 feat: add PDF export for championship standings
-fix: forwarder reconnects on WATCHDOG timeout
-docs: update forwarder setup guide
+fix: decoder reconnects on WATCHDOG timeout
+docs: update decoder setup guide
 chore: upgrade Spring Boot to 3.5.0
 test: add E2E test for race control login
 ```
@@ -88,7 +88,7 @@ Five jobs run on every push and pull request:
 
 ```mermaid
 flowchart LR
-    Push([Push / PR]) --> B[test-backend\nGradle · Java 21\napp + forwarder + decoder-protocol + localday]
+    Push([Push / PR]) --> B[test-backend\nGradle · Java 21\napp + decoder-simulator + decoder-protocol + localday]
     Push --> C[test-frontend\nNode 20\nVitest]
     Push --> D[test-e2e\nDocker trial stack\nPlaywright · Chromium]
     Push --> F2[test-frontend-local\nNode 20\nVitest]
@@ -106,7 +106,7 @@ flowchart LR
 
 | Job | What it tests | Approx time |
 |-----|--------------|-------------|
-| `test-backend` | JUnit 5 + Testcontainers — cloud API/domain/timing, plus `forwarder`, `decoder-protocol`, and `localday` (the latter two need no Docker — `localday` uses an embedded Postgres) | 3–6 min |
+| `test-backend` | JUnit 5 + Testcontainers — cloud API/domain/timing, plus `decoder-simulator`, `decoder-protocol`, and `localday` (the latter two need no Docker — `localday` uses an embedded Postgres) | 3–6 min |
 | `test-frontend` | Vitest — cloud React components, hooks, utilities | < 1 min |
 | `test-e2e` | Playwright — full Docker trial stack, 13 smoke tests | 8–12 min |
 | `test-frontend-local` | Vitest — Local Race Day Program React components | < 1 min |
@@ -136,7 +136,7 @@ This blocks any direct push to `main` and prevents merging a PR with failing CI.
 
 ```bash
 # Backend tests (requires Docker for Testcontainers)
-./gradlew :app:test :forwarder:test
+./gradlew :app:test :decoder-simulator:test
 
 # Local Race Day Program backend tests (no Docker — embedded Postgres)
 ./gradlew :decoder-protocol:test :localday:test

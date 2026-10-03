@@ -7,7 +7,6 @@ import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
-import dev.monkeypatch.rctiming.forwarder.ForwarderStatusPublisher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * L1 acceptance: the app reads RC-4 records straight from the decoder's TCP port, with no
- * forwarder running. A fake decoder (a plain {@link ServerSocket}) stands in for the hardware.
+ * A fake decoder (a plain {@link ServerSocket}) stands in for the hardware.
  *
  * <p>Covers the three acceptance points: laps reach live timing for a RUNNING race, the decoder
  * status moves between connected, reconnecting and disconnected, and changing the club's decoder
@@ -53,7 +52,7 @@ class DecoderListenerIT extends AbstractIntegrationTest {
     ClubProfileRepository clubProfileRepository;
 
     @Autowired
-    ForwarderStatusPublisher statusPublisher;
+    DecoderStatusPublisher statusPublisher;
 
     @Autowired
     LapTimingService lapTimingService;

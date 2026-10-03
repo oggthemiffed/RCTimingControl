@@ -12,7 +12,7 @@ const items: Item[] = [
   { key: 'track',   label: 'Track',          editHref: '/admin/tracks' },
   { key: 'format',  label: 'Race Format',    editHref: '/admin/formats' },
   { key: 'staff',   label: 'Staff Account',  editHref: '/admin/racers' },
-  { key: 'decoder', label: 'Decoder Config', editHref: '/admin/forwarder' },
+  { key: 'decoder', label: 'Decoder Config', editHref: '/admin/decoder' },
 ];
 
 export default function SetupCompletePage() {

@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 
 /**
- * Pure parser for the AMB RC-4 text protocol (FORWARDER-02, D-03).
+ * Pure parser for the AMB RC-4 text protocol (D-03).
  *
  * <p>This class has no static state and no Spring dependencies. It converts a single
  * RC-4 text line into a {@link ParsedPassing}. The SOH (0x01) prefix byte MUST be

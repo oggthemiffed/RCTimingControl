@@ -5,14 +5,13 @@ COPY gradlew settings.gradle.kts build.gradle.kts VERSION ./
 COPY buildSrc/ buildSrc/
 COPY gradle/ gradle/
 COPY app/ app/
-COPY forwarder/ forwarder/
 COPY decoder-protocol/ decoder-protocol/
 RUN chmod +x gradlew && \
-    ./gradlew :app:bootJar -x test -x generateJooq -x generateProto -PcommittedProto --no-daemon
+    ./gradlew :app:bootJar -x test -x generateJooq --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine AS runtime
 RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=builder /build/app/build/libs/app.jar app.jar
-EXPOSE 8080 9090
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

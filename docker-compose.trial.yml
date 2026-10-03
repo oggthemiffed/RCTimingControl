@@ -89,23 +89,6 @@ services:
       --interval-ms=13000
       --jitter-ms=2500
 
-  forwarder:
-    build:
-      context: .
-      dockerfile: docker/forwarder/Dockerfile
-    environment:
-      FORWARDER_API_TOKEN: ${FORWARDER_API_TOKEN:-DEMO-FORWARDER-TOKEN-CHANGE-BEFORE-PRODUCTION}
-      FORWARDER_DECODER_HOST: fake-decoder
-      FORWARDER_DECODER_PORT: 5100
-      FORWARDER_GRPC_HOST: app
-      FORWARDER_GRPC_PORT: 9090
-      FORWARDER_GRPC_PLAINTEXT: "true"
-    depends_on:
-      app:
-        condition: service_healthy
-      fake-decoder:
-        condition: service_started
-
 volumes:
   pgdata:
   app_uploads:

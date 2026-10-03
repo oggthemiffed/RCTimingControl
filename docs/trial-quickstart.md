@@ -89,7 +89,7 @@ All accounts use the password: **`trial123`**
 1. Go to **Admin** → **Events** to see the championship event and its races
 2. Go to **Admin** → **Championships** to see the points standings
 3. Go to **Admin** → **Club Profile** to see the club profile (you can edit this to match your own club)
-4. Go to **Admin** → **Forwarder Token** to see how the decoder connection is configured
+4. Go to **Admin** → **Decoder** to see how the decoder connection is configured
 
 ### Race control
 
