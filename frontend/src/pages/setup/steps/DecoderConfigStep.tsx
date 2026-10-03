@@ -118,7 +118,7 @@ export default function DecoderConfigStep({ onNext, onBack }: Props) {
   // so this fires reliably once per refetch cycle regardless of TanStack Query's structural sharing.
   useEffect(() => {
     if (!polling || statusQuery.dataUpdatedAt === 0) return;
-    if (statusQuery.data?.forwarderState === 'CONNECTED') {
+    if (statusQuery.data?.decoderState === 'CONNECTED') {
       setTestResult('connected');
       setPolling(false);
     } else {
@@ -178,7 +178,7 @@ export default function DecoderConfigStep({ onNext, onBack }: Props) {
     <div>
       <h1 className="text-2xl font-semibold mb-2">Decoder Config</h1>
       <p className="text-sm text-muted-foreground mb-6">
-        Configure your AMB decoder connection so the forwarder can send live lap data.
+        Configure your AMB decoder connection so RCTC can read live lap data.
       </p>
 
       <Form {...form}>
@@ -375,7 +375,7 @@ export default function DecoderConfigStep({ onNext, onBack }: Props) {
               <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50 border">
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
                 <p className="text-sm">
-                  Forwarder not yet connected. Make sure the forwarder JAR is running with the downloaded config.
+                  Decoder not yet connected. Check the decoder address and that the decoder is powered on.
                 </p>
               </div>
             )}

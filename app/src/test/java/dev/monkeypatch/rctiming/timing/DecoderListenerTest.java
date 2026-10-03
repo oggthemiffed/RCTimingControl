@@ -14,20 +14,25 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link DecoderListener} that never open a socket. The socket path is covered by
- * {@code DecoderListenerIT}.
+ * Unit tests for {@link DecoderListener} that never open a socket. The source factory is
+ * replaced with one that records each source's callbacks, so tests can drive them directly.
+ * The socket path is covered by {@code DecoderListenerIT}.
  */
 class DecoderListenerTest {
 
@@ -37,13 +42,23 @@ class DecoderListenerTest {
     private ForwarderStatusPublisher statusPublisher;
     private DecoderListener listener;
 
+    /** Callbacks for each source the listener creates, in creation order. */
+    private final List<Consumer<EpochCorrectedPassing>> passingCallbacks = new ArrayList<>();
+    private final List<Consumer<AmbRc4TimingSource.ConnectionState>> statusCallbacks = new ArrayList<>();
+
     @BeforeEach
     void setUp() {
         clubProfileService = mock(ClubProfileService.class);
         raceRepository = mock(RaceRepository.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
         statusPublisher = mock(ForwarderStatusPublisher.class);
-        listener = new DecoderListener(clubProfileService, raceRepository, eventPublisher, statusPublisher);
+        when(clubProfileService.getDecoderSettings()).thenReturn(new DecoderSettings(null, null, null));
+        listener = new DecoderListener(clubProfileService, raceRepository, eventPublisher, statusPublisher,
+                (host, port, onPassing, onStatus) -> {
+                    passingCallbacks.add(onPassing);
+                    statusCallbacks.add(onStatus);
+                    return mock(AmbRc4TimingSource.class);
+                });
     }
 
     @Test
@@ -72,10 +87,24 @@ class DecoderListenerTest {
     }
 
     @Test
-    void onStatus_publishesDecoderStateToStatusPublisher() {
-        listener.onStatus(AmbRc4TimingSource.ConnectionState.RECONNECTING);
+    void currentSourceStatus_isPublishedToStatusPublisher() {
+        listener.start();
+        configure("localhost", 5100, "RC4");
 
-        verify(statusPublisher).onDecoderStatus("RECONNECTING");
+        statusCallbacks.get(0).accept(AmbRc4TimingSource.ConnectionState.RECONNECTING);
+
+        verify(statusPublisher).onDirectDecoderStatus("RECONNECTING");
+    }
+
+    @Test
+    void currentSourcePassing_isPublishedAsLapPassingEvent() {
+        when(raceRepository.findFirstByStatus(RaceStatus.RUNNING)).thenReturn(Optional.empty());
+        listener.start();
+        configure("localhost", 5100, "RC4");
+
+        passingCallbacks.get(0).accept(new EpochCorrectedPassing("1234567", 3_000_000L, 1, 1, 63, 1));
+
+        verify(eventPublisher).publishEvent(new LapPassingEvent(0L, "1234567", 3_000_000L));
     }
 
     @Test
@@ -84,8 +113,9 @@ class DecoderListenerTest {
 
         listener.start();
 
-        verify(statusPublisher).onDecoderStatus("DISCONNECTED");
+        verify(statusPublisher).onDirectDecoderStatus("DISCONNECTED");
         assertThat(listener.isRunning()).isTrue();
+        assertThat(statusCallbacks).isEmpty();
     }
 
     @Test
@@ -94,14 +124,58 @@ class DecoderListenerTest {
 
         listener.start();
 
-        verify(statusPublisher).onDecoderStatus("DISCONNECTED");
+        verify(statusPublisher).onDirectDecoderStatus("DISCONNECTED");
+        assertThat(statusCallbacks).isEmpty();
     }
 
     @Test
     void settingsChanged_whenNotRunning_doesNothing() {
         listener.onSettingsChanged(new DecoderSettingsChangedEvent(new DecoderSettings("localhost", 5100, "RC4")));
 
-        verify(statusPublisher, never()).onDecoderStatus(any());
+        verify(statusPublisher, never()).onDirectDecoderStatus(any());
+        assertThat(statusCallbacks).isEmpty();
+    }
+
+    @Test
+    void lateStatusFromRetiredSource_afterAddressChange_isIgnored() {
+        listener.start();
+        configure("localhost", 5100, "RC4");
+        configure("localhost", 5200, "RC4");
+
+        // The first source (index 0) was still in flight when it was replaced by index 1.
+        statusCallbacks.get(0).accept(AmbRc4TimingSource.ConnectionState.CONNECTED);
+        statusCallbacks.get(0).accept(AmbRc4TimingSource.ConnectionState.RECONNECTING);
+        verify(statusPublisher, never()).onDirectDecoderStatus("CONNECTED");
+        verify(statusPublisher, never()).onDirectDecoderStatus("RECONNECTING");
+
+        // The replacement's status is still applied.
+        statusCallbacks.get(1).accept(AmbRc4TimingSource.ConnectionState.CONNECTED);
+        verify(statusPublisher).onDirectDecoderStatus("CONNECTED");
+    }
+
+    @Test
+    void lateReconnectingFromRetiredSource_afterSettingsCleared_doesNotOverwriteDisconnected() {
+        listener.start();
+        configure("localhost", 5100, "RC4");
+
+        configure(null, null, null);
+        statusCallbacks.get(0).accept(AmbRc4TimingSource.ConnectionState.RECONNECTING);
+
+        ArgumentCaptor<String> states = ArgumentCaptor.forClass(String.class);
+        verify(statusPublisher, atLeastOnce()).onDirectDecoderStatus(states.capture());
+        assertThat(states.getAllValues()).doesNotContain("RECONNECTING");
+        assertThat(states.getValue()).isEqualTo("DISCONNECTED");
+    }
+
+    @Test
+    void latePassingFromRetiredSource_isNotPublished() {
+        listener.start();
+        configure("localhost", 5100, "RC4");
+        configure("localhost", 5200, "RC4");
+
+        passingCallbacks.get(0).accept(new EpochCorrectedPassing("1234567", 1_000_000L, 1, 1, 63, 1));
+
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
@@ -112,5 +186,10 @@ class DecoderListenerTest {
 
         assertThat(invoked).isTrue();
         assertThat(listener.isRunning()).isFalse();
+    }
+
+    /** Simulates the club profile being saved, as {@code ClubProfileService} does after commit. */
+    private void configure(String host, Integer port, String protocol) {
+        listener.onSettingsChanged(new DecoderSettingsChangedEvent(new DecoderSettings(host, port, protocol)));
     }
 }

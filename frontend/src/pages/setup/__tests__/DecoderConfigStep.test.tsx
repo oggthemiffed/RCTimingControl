@@ -64,9 +64,9 @@ describe('DecoderConfigStep (Wave 0 stub — enabled in Plan 06)', () => {
     expect(callCount).toBeLessThanOrEqual(16);
   });
 
-  it('shows Connected badge when forwarder status returns CONNECTED', async () => {
+  it('shows Connected badge when the decoder reports CONNECTED, with no forwarder', async () => {
     vi.mocked(raceControlApi.fetchForwarderStatus).mockResolvedValue({
-      forwarderState: 'CONNECTED',
+      forwarderState: 'DISCONNECTED',
       decoderState: 'CONNECTED',
     });
 
@@ -97,7 +97,7 @@ describe('DecoderConfigStep (Wave 0 stub — enabled in Plan 06)', () => {
       });
     }
 
-    expect(screen.getByText(/Forwarder not yet connected/i)).toBeInTheDocument();
+    expect(screen.getByText(/Decoder not yet connected/i)).toBeInTheDocument();
   });
 
   it('Download forwarder.env button disabled when no token exists', async () => {
