@@ -13,9 +13,7 @@ import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
 import dev.monkeypatch.rctiming.domain.transponder.Transponder;
 import dev.monkeypatch.rctiming.domain.transponder.TransponderRepository;
-import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserGoverningBodyMembershipRepository;
-import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.jooq.DSLContext;
 import org.springframework.http.HttpStatus;
@@ -42,7 +40,6 @@ public class EntryService {
     private final UserGoverningBodyMembershipRepository membershipRepository;
     private final EntryAuditLogRepository auditLogRepository;
     private final ObjectMapper objectMapper;
-    private final UserRepository userRepository;
     private final CompetitorService competitorService;
 
     public EntryService(EntryRepository entryRepository,
@@ -53,7 +50,6 @@ public class EntryService {
                         UserGoverningBodyMembershipRepository membershipRepository,
                         EntryAuditLogRepository auditLogRepository,
                         ObjectMapper objectMapper,
-                        UserRepository userRepository,
                         CompetitorService competitorService) {
         this.entryRepository = entryRepository;
         this.eventRepository = eventRepository;
@@ -63,7 +59,6 @@ public class EntryService {
         this.membershipRepository = membershipRepository;
         this.auditLogRepository = auditLogRepository;
         this.objectMapper = objectMapper;
-        this.userRepository = userRepository;
         this.competitorService = competitorService;
     }
 
@@ -111,11 +106,9 @@ public class EntryService {
         }
 
         Instant now = Instant.now();
-        User racer = userRepository.findById(userId)
-                .orElseThrow(() -> new EntityNotFoundException("Racer not found"));
         Entry entry = new Entry();
         entry.setUserId(userId);
-        entry.setCompetitorId(competitorService.forUser(racer).getId());
+        entry.setCompetitorId(competitorService.forUser(userId).getId());
         entry.setEventId(event.getId());
         entry.setEventClassId(req.eventClassId());
         entry.setCarId(car.getId());

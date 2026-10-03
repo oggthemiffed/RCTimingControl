@@ -14,6 +14,9 @@ spring:
       mail.smtp.starttls.enable: false
   flyway:
     locations: classpath:db/migration,classpath:db/seed
+    # Dev seeds are versioned 1000+, so a seeded dev database has a higher version than new
+    # migrations. Out-of-order lets migrations added after the seed (V30 onward) still apply.
+    out-of-order: true
   jpa:
     hibernate:
       ddl-auto: validate
