@@ -35,6 +35,8 @@ bin/
 # Playwright
 frontend/playwright-report/
 frontend/test-results/
+frontend-local/playwright-report/
+frontend-local/test-results/
 
 # Local-only ops notes (never commit)
 docs/local-*.md

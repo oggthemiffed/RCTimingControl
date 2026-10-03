@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.localday.auth.LocalSessionAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -39,9 +40,12 @@ import org.springframework.util.StringUtils;
 public class LocalSecurityConfig {
 
     private final String cloudSyncOrigin;
+    private final Environment environment;
 
-    public LocalSecurityConfig(@Value("${localday.cloud-sync-origin:}") String cloudSyncOrigin) {
+    public LocalSecurityConfig(@Value("${localday.cloud-sync-origin:}") String cloudSyncOrigin,
+                                Environment environment) {
         this.cloudSyncOrigin = cloudSyncOrigin;
+        this.environment = environment;
     }
 
     @Bean
@@ -50,8 +54,8 @@ public class LocalSecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/local-auth/**").permitAll()
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/api/v1/local-auth/**").permitAll()
                         .requestMatchers("/api/v1/boards/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/ws/timing", "/ws/timing/**").permitAll()
@@ -61,9 +65,16 @@ public class LocalSecurityConfig {
                         // is always logged in locally by the time they close the day (R9).
                         .requestMatchers("/api/v1/day-lifecycle/pre-cache").permitAll()
                         .requestMatchers("/api/v1/day-lifecycle/open").permitAll()
-                        .requestMatchers("/api/v1/day-lifecycle/status").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .requestMatchers("/api/v1/day-lifecycle/status").permitAll();
+                    // Only reachable at all under the "e2e" profile (E2eSeedController isn't even
+                    // registered as a bean otherwise) — permitted here too, under the same
+                    // profile gate, so Playwright's fixture setup can call it before any local
+                    // session exists.
+                    if (environment.matchesProfiles("e2e")) {
+                        auth.requestMatchers("/api/v1/test-support/**").permitAll();
+                    }
+                    auth.anyRequest().authenticated();
+                })
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .headers(headers -> headers.contentSecurityPolicy(csp -> csp.policyDirectives(buildCspDirectives())))
