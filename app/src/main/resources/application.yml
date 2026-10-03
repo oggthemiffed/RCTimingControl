@@ -14,6 +14,10 @@ app:
     refresh-token-ttl-ms: 604800000
   grpc:
     port: 9090
+  decoder:
+    listener:
+      # L1: read the AMB decoder directly over TCP. Set to false to rely on the gRPC forwarder only.
+      enabled: ${DECODER_LISTENER_ENABLED:true}
 
 storage:
   local-path: ${STORAGE_LOCAL_PATH:./data/uploads}

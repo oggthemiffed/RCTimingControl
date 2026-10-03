@@ -24,12 +24,12 @@ describe('ForwarderStatusBar', () => {
     vi.clearAllMocks();
   });
 
-  it('renders both DECODER and FORWARDER pills', () => {
+  it('renders only the DECODER pill', () => {
     mockUseStomp.mockReturnValue({ data: null, status: 'disconnected' });
     render(<ForwarderStatusBar />, { wrapper });
 
     expect(screen.getByLabelText(/DECODER connection status/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/FORWARDER connection status/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/FORWARDER connection status/i)).not.toBeInTheDocument();
   });
 
   it('shows green styling when CONNECTED', () => {

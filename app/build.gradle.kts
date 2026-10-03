@@ -58,6 +58,9 @@ dependencies {
 
     implementation("org.jooq:jooq")
 
+    // L1: the app reads the decoder directly (DecoderListener) using the shared RC-4 parser
+    implementation(project(":decoder-protocol"))
+
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.11")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
 
