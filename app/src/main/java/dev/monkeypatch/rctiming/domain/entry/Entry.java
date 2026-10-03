@@ -19,8 +19,13 @@ public class Entry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
+    /** The racer's login, when the entry came from the racer portal. Null for competitor-only entries. */
+    @Column(name = "user_id")
     private Long userId;
+
+    /** The driver this entry is for. Required on every new entry (L4, #12). */
+    @Column(name = "competitor_id")
+    private Long competitorId;
 
     @Column(name = "event_id", nullable = false)
     private Long eventId;
@@ -70,6 +75,9 @@ public class Entry {
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
+
+    public Long getCompetitorId() { return competitorId; }
+    public void setCompetitorId(Long competitorId) { this.competitorId = competitorId; }
 
     public Long getEventId() { return eventId; }
     public void setEventId(Long eventId) { this.eventId = eventId; }

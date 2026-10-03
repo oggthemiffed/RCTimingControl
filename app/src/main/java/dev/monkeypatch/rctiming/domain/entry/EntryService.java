@@ -7,12 +7,15 @@ import dev.monkeypatch.rctiming.api.racer.dto.EntryResult;
 import dev.monkeypatch.rctiming.api.racer.dto.SubmitEntryRequest;
 import dev.monkeypatch.rctiming.domain.car.Car;
 import dev.monkeypatch.rctiming.domain.car.CarRepository;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
 import dev.monkeypatch.rctiming.domain.transponder.Transponder;
 import dev.monkeypatch.rctiming.domain.transponder.TransponderRepository;
+import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserGoverningBodyMembershipRepository;
+import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.jooq.DSLContext;
 import org.springframework.http.HttpStatus;
@@ -39,6 +42,8 @@ public class EntryService {
     private final UserGoverningBodyMembershipRepository membershipRepository;
     private final EntryAuditLogRepository auditLogRepository;
     private final ObjectMapper objectMapper;
+    private final UserRepository userRepository;
+    private final CompetitorService competitorService;
 
     public EntryService(EntryRepository entryRepository,
                         EventRepository eventRepository,
@@ -47,7 +52,9 @@ public class EntryService {
                         TransponderRepository transponderRepository,
                         UserGoverningBodyMembershipRepository membershipRepository,
                         EntryAuditLogRepository auditLogRepository,
-                        ObjectMapper objectMapper) {
+                        ObjectMapper objectMapper,
+                        UserRepository userRepository,
+                        CompetitorService competitorService) {
         this.entryRepository = entryRepository;
         this.eventRepository = eventRepository;
         this.dsl = dsl;
@@ -56,6 +63,8 @@ public class EntryService {
         this.membershipRepository = membershipRepository;
         this.auditLogRepository = auditLogRepository;
         this.objectMapper = objectMapper;
+        this.userRepository = userRepository;
+        this.competitorService = competitorService;
     }
 
     public EntryResult submitEntry(Long userId, SubmitEntryRequest req) {
@@ -102,8 +111,11 @@ public class EntryService {
         }
 
         Instant now = Instant.now();
+        User racer = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Racer not found"));
         Entry entry = new Entry();
         entry.setUserId(userId);
+        entry.setCompetitorId(competitorService.forUser(racer).getId());
         entry.setEventId(event.getId());
         entry.setEventClassId(req.eventClassId());
         entry.setCarId(car.getId());

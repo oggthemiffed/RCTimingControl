@@ -8,6 +8,7 @@ import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Cars.CarsPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.CompetitorsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.EntryAuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
@@ -84,7 +85,7 @@ public class Entries extends TableImpl<EntriesRecord> {
     /**
      * The column <code>public.entries.user_id</code>.
      */
-    public final TableField<EntriesRecord, Long> USER_ID = createField(DSL.name("user_id"), SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<EntriesRecord, Long> USER_ID = createField(DSL.name("user_id"), SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>public.entries.event_id</code>.
@@ -161,6 +162,11 @@ public class Entries extends TableImpl<EntriesRecord> {
      */
     public final TableField<EntriesRecord, OffsetDateTime> WITHDRAWN_AT = createField(DSL.name("withdrawn_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
 
+    /**
+     * The column <code>public.entries.competitor_id</code>.
+     */
+    public final TableField<EntriesRecord, Long> COMPETITOR_ID = createField(DSL.name("competitor_id"), SQLDataType.BIGINT, this, "");
+
     private Entries(Name alias, Table<EntriesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -230,7 +236,7 @@ public class Entries extends TableImpl<EntriesRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.IDX_ENTRIES_EVENT_ID, Indexes.IDX_ENTRIES_NO_DUPLICATE, Indexes.IDX_ENTRIES_USER_ID);
+        return Arrays.asList(Indexes.IDX_ENTRIES_COMPETITOR_ID, Indexes.IDX_ENTRIES_EVENT_ID, Indexes.IDX_ENTRIES_NO_DUPLICATE, Indexes.IDX_ENTRIES_USER_ID);
     }
 
     @Override
@@ -245,7 +251,7 @@ public class Entries extends TableImpl<EntriesRecord> {
 
     @Override
     public List<ForeignKey<EntriesRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.ENTRIES__ENTRIES_CAR_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_CLASS_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_ID_FKEY, Keys.ENTRIES__ENTRIES_MEMBERSHIP_OVERRIDE_BY_FKEY, Keys.ENTRIES__ENTRIES_TRANSPONDER_ID_FKEY, Keys.ENTRIES__ENTRIES_USER_ID_FKEY);
+        return Arrays.asList(Keys.ENTRIES__ENTRIES_CAR_ID_FKEY, Keys.ENTRIES__ENTRIES_COMPETITOR_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_CLASS_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_ID_FKEY, Keys.ENTRIES__ENTRIES_MEMBERSHIP_OVERRIDE_BY_FKEY, Keys.ENTRIES__ENTRIES_TRANSPONDER_ID_FKEY, Keys.ENTRIES__ENTRIES_USER_ID_FKEY);
     }
 
     private transient CarsPath _cars;
@@ -258,6 +264,18 @@ public class Entries extends TableImpl<EntriesRecord> {
             _cars = new CarsPath(this, Keys.ENTRIES__ENTRIES_CAR_ID_FKEY, null);
 
         return _cars;
+    }
+
+    private transient CompetitorsPath _competitors;
+
+    /**
+     * Get the implicit join path to the <code>public.competitors</code> table.
+     */
+    public CompetitorsPath competitors() {
+        if (_competitors == null)
+            _competitors = new CompetitorsPath(this, Keys.ENTRIES__ENTRIES_COMPETITOR_ID_FKEY, null);
+
+        return _competitors;
     }
 
     private transient EventClassesPath _eventClasses;

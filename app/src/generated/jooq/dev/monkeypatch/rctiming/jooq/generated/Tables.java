@@ -13,6 +13,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipPointsScale;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles;
+import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DecoderLoops;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DeviceLossAudit;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries;
@@ -103,6 +104,11 @@ public class Tables {
      * The table <code>public.club_profiles</code>.
      */
     public static final ClubProfiles CLUB_PROFILES = ClubProfiles.CLUB_PROFILES;
+
+    /**
+     * The table <code>public.competitors</code>.
+     */
+    public static final Competitors COMPETITORS = Competitors.COMPETITORS;
 
     /**
      * The table <code>public.decoder_loops</code>.
