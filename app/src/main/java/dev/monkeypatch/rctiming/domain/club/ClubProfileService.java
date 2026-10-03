@@ -5,6 +5,7 @@ import dev.monkeypatch.rctiming.api.admin.dto.CreateClubProfileRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateGoverningBodyRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.GoverningBodyAffiliationDto;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +19,23 @@ public class ClubProfileService {
 
     private final ClubProfileRepository clubProfileRepository;
     private final GoverningBodyAffiliationRepository affiliationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ClubProfileService(ClubProfileRepository clubProfileRepository,
-                               GoverningBodyAffiliationRepository affiliationRepository) {
+                               GoverningBodyAffiliationRepository affiliationRepository,
+                               ApplicationEventPublisher eventPublisher) {
         this.clubProfileRepository = clubProfileRepository;
         this.affiliationRepository = affiliationRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    @Transactional(readOnly = true)
+    public DecoderSettings getDecoderSettings() {
+        return clubProfileRepository.findAll().stream()
+                .findFirst()
+                .map(profile -> new DecoderSettings(
+                        profile.getDecoderHost(), profile.getDecoderPort(), profile.getDecoderProtocol()))
+                .orElseGet(() -> new DecoderSettings(null, null, null));
     }
 
     @Transactional(readOnly = true)
@@ -117,6 +130,8 @@ public class ClubProfileService {
         profile.setDecoderPort(port);
         profile.setDecoderProtocol(protocol);
         profile.setUpdatedAt(Instant.now());
-        return clubProfileRepository.save(profile);
+        ClubProfile saved = clubProfileRepository.save(profile);
+        eventPublisher.publishEvent(new DecoderSettingsChangedEvent(new DecoderSettings(host, port, protocol)));
+        return saved;
     }
 }

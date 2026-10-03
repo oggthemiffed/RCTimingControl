@@ -66,8 +66,8 @@ function StatusPill({ component, state }: StatusPillProps) {
 }
 
 export function ForwarderStatusBar() {
+  // L1: the decoder is read directly by the app, so only the decoder connection is shown.
   const [decoderState, setDecoderState] = useState<ConnectionState | null>(null);
-  const [forwarderState, setForwarderState] = useState<ConnectionState | null>(null);
 
   // Seed initial state from REST on mount and re-poll every 5s to catch missed STOMP disconnects
   const { data: initialStatus } = useQuery({
@@ -80,7 +80,6 @@ export function ForwarderStatusBar() {
   useEffect(() => {
     if (initialStatus) {
       setDecoderState(initialStatus.decoderState);
-      setForwarderState(initialStatus.forwarderState);
     }
   }, [initialStatus]);
 
@@ -90,14 +89,12 @@ export function ForwarderStatusBar() {
   useEffect(() => {
     if (stompData) {
       setDecoderState(stompData.decoderState);
-      setForwarderState(stompData.forwarderState);
     }
   }, [stompData]);
 
   return (
     <div className="flex h-8 items-center gap-3 px-4 bg-card border-b shrink-0">
       <StatusPill component="DECODER" state={decoderState} />
-      <StatusPill component="FORWARDER" state={forwarderState} />
     </div>
   );
 }

@@ -12,7 +12,8 @@ import org.springframework.stereotype.Component;
  *
  * <p>Decoder and forwarder states are tracked independently:
  * - forwarder state changes when the gRPC stream opens/closes
- * - decoder state changes when the forwarder reports TCP connection changes via ReportStatus RPC
+ * - decoder state is set by the direct {@code DecoderListener} (L1) or, on the legacy path, by the
+ *   forwarder's ReportStatus RPC
  * - forwarder disconnect resets decoder to DISCONNECTED (no decoder info without a forwarder)
  */
 @Component
