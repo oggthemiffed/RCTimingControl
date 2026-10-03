@@ -75,7 +75,10 @@ export type DecoderTestResult = { ok: boolean; message: string };
 
 /** Tests a decoder address without saving it or changing the live listener. */
 export async function testDecoderConfig(req: DecoderConfigUpdateRequest): Promise<DecoderTestResult> {
-  const { data } = await api.post<DecoderTestResult>('/api/v1/setup/decoder-config/test', req);
+  // The server waits up to 5 s to connect and 8 s for a record. Allow a little more than that.
+  const { data } = await api.post<DecoderTestResult>('/api/v1/setup/decoder-config/test', req, {
+    timeout: 15_000,
+  });
   return data;
 }
 
