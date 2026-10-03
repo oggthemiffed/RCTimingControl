@@ -258,6 +258,20 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         return (OffsetDateTime) get(16);
     }
 
+    /**
+     * Setter for <code>public.entries.competitor_id</code>.
+     */
+    public void setCompetitorId(Long value) {
+        set(17, value);
+    }
+
+    /**
+     * Getter for <code>public.entries.competitor_id</code>.
+     */
+    public Long getCompetitorId() {
+        return (Long) get(17);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -281,7 +295,7 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
     /**
      * Create a detached, initialised EntriesRecord
      */
-    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Boolean membershipOverride, Long membershipOverrideBy, OffsetDateTime membershipOverrideAt, String membershipOverrideNote, OffsetDateTime submittedAt, OffsetDateTime updatedAt, Long carId, Long transponderId, OffsetDateTime confirmedAt, OffsetDateTime withdrawnAt) {
+    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Boolean membershipOverride, Long membershipOverrideBy, OffsetDateTime membershipOverrideAt, String membershipOverrideNote, OffsetDateTime submittedAt, OffsetDateTime updatedAt, Long carId, Long transponderId, OffsetDateTime confirmedAt, OffsetDateTime withdrawnAt, Long competitorId) {
         super(Entries.ENTRIES);
 
         setId(id);
@@ -301,6 +315,7 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         setTransponderId(transponderId);
         setConfirmedAt(confirmedAt);
         setWithdrawnAt(withdrawnAt);
+        setCompetitorId(competitorId);
         resetChangedOnNotNull();
     }
 }

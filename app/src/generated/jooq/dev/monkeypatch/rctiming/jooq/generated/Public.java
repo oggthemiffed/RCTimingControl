@@ -13,6 +13,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipPointsScale;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles;
+import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DecoderLoops;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DeviceLossAudit;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries;
@@ -117,6 +118,11 @@ public class Public extends SchemaImpl {
      * The table <code>public.club_profiles</code>.
      */
     public final ClubProfiles CLUB_PROFILES = ClubProfiles.CLUB_PROFILES;
+
+    /**
+     * The table <code>public.competitors</code>.
+     */
+    public final Competitors COMPETITORS = Competitors.COMPETITORS;
 
     /**
      * The table <code>public.decoder_loops</code>.
@@ -360,6 +366,7 @@ public class Public extends SchemaImpl {
             ChampionshipPointsScale.CHAMPIONSHIP_POINTS_SCALE,
             Championships.CHAMPIONSHIPS,
             ClubProfiles.CLUB_PROFILES,
+            Competitors.COMPETITORS,
             DecoderLoops.DECODER_LOOPS,
             DeviceLossAudit.DEVICE_LOSS_AUDIT,
             Entries.ENTRIES,

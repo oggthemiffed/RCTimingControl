@@ -7,6 +7,7 @@ import dev.monkeypatch.rctiming.api.racer.dto.EntryResult;
 import dev.monkeypatch.rctiming.api.racer.dto.SubmitEntryRequest;
 import dev.monkeypatch.rctiming.domain.car.Car;
 import dev.monkeypatch.rctiming.domain.car.CarRepository;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
@@ -39,6 +40,7 @@ public class EntryService {
     private final UserGoverningBodyMembershipRepository membershipRepository;
     private final EntryAuditLogRepository auditLogRepository;
     private final ObjectMapper objectMapper;
+    private final CompetitorService competitorService;
 
     public EntryService(EntryRepository entryRepository,
                         EventRepository eventRepository,
@@ -47,7 +49,8 @@ public class EntryService {
                         TransponderRepository transponderRepository,
                         UserGoverningBodyMembershipRepository membershipRepository,
                         EntryAuditLogRepository auditLogRepository,
-                        ObjectMapper objectMapper) {
+                        ObjectMapper objectMapper,
+                        CompetitorService competitorService) {
         this.entryRepository = entryRepository;
         this.eventRepository = eventRepository;
         this.dsl = dsl;
@@ -56,6 +59,7 @@ public class EntryService {
         this.membershipRepository = membershipRepository;
         this.auditLogRepository = auditLogRepository;
         this.objectMapper = objectMapper;
+        this.competitorService = competitorService;
     }
 
     public EntryResult submitEntry(Long userId, SubmitEntryRequest req) {
@@ -104,6 +108,7 @@ public class EntryService {
         Instant now = Instant.now();
         Entry entry = new Entry();
         entry.setUserId(userId);
+        entry.setCompetitorId(competitorService.forUser(userId).getId());
         entry.setEventId(event.getId());
         entry.setEventClassId(req.eventClassId());
         entry.setCarId(car.getId());
