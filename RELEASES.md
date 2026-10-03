@@ -46,14 +46,14 @@ git commit -m "chore: bump version to 0.2.0"
 
 ### 5. Verify CI is green
 
-Check that the CI workflow passes on `master` before tagging:
+Check that the CI workflow passes on `main` before tagging:
 https://github.com/oggthemiffed/RCTimingControl/actions
 
 ### 6. Tag and push
 
 ```bash
 git tag v0.2.0
-git push origin master
+git push origin main
 git push origin v0.2.0
 ```
 
@@ -105,10 +105,10 @@ git tag v0.1.1
 git push origin hotfix/0.1.1
 git push origin v0.1.1
 
-# Merge the fix back into master
-git checkout master
+# Merge the fix back into main
+git checkout main
 git merge hotfix/0.1.1
-git push origin master
+git push origin main
 ```
 
 ---
@@ -119,9 +119,11 @@ git push origin master
 
 | Job | What it runs |
 |-----|-------------|
-| `test-backend` | Gradle test suite — JUnit 5 + Testcontainers (Java 21) |
+| `test-backend` | Gradle test suite — JUnit 5 + Testcontainers (Java 21); also runs `decoder-protocol` and `localday` (no Docker needed for either) |
 | `test-frontend` | Vitest unit tests (Node 20) |
 | `test-e2e` | Playwright smoke tests against the full `docker-compose.trial.yml` stack |
+| `test-frontend-local` | Vitest unit tests for the Local Race Day Program frontend (Node 20) |
+| `test-e2e-localday` | Playwright against a live `:localday` (`e2e` profile) + `frontend-local` dev server |
 
 ### On `v*` tag push (`publish-trial-images.yml`)
 

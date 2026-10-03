@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A web-based RC club management and race timing system replacing RCResults. Two user roles: **racers** (self-service portal for profile, cars, transponders, online event entry) and **officials** (browser-based race control client for running a full meeting). Live lap timing is received from AMB/MyLaps decoder hardware over TCP via a separate forwarder application.
 
-See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUIREMENTS.md` for the full v1 requirement list (88 requirements across AUTH, RACER, CLUB, TRACK, EVENT, FORMAT, FORWARDER, TIMING, CTRL, AUDIO, OFFICIAL, PRACTICE, CHAMP, RESULT domains).
+See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUIREMENTS.md` for the full v1 requirement list (109 requirements across AUTH, RACER, CLUB, TRACK, EVENT, FORMAT, FORWARDER, TIMING, CTRL, AUDIO, OFFICIAL, PRACTICE, CHAMP, RESULT, and LOCALDAY domains — the last covering the independent Local Race Day Program, `localday/` + `frontend-local/`; see `docs/architecture.md`).
 
 ## Planned Stack
 
@@ -29,9 +29,9 @@ See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUI
 - `/topic/race/{raceId}/state` — race lifecycle changes
 - `/topic/race/{raceId}/marshal` — marshal lap adjustments
 
-**TCP decoder client:** Netty 4.1.x. Two protocols must be supported: (1) **RC-4 text** (`LineBasedFrameDecoder`, port 5100) for firmware < 4.5 decoders — the dominant club hardware; (2) **AMB P3 binary** (`ByteToMessageDecoder`, 0x8E/0x8F delimiters, TLV body, 0x8D byte-stuffing, port 5403) for firmware ≥ 4.5. See `docs/AMB_DECODER_PROTOCOL.md`.
+**TCP decoder client:** Netty 4.1.x. Two protocols must be supported: (1) **RC-4 text** (`LineBasedFrameDecoder`, port 5100) for firmware < 4.5 decoders — the dominant club hardware; (2) **AMB P3 binary** (`ByteToMessageDecoder`, 0x8E/0x8F delimiters, TLV body, 0x8D byte-stuffing, port 5403) for firmware ≥ 4.5. See `docs/AMB_DECODER_PROTOCOL.md`. Protocol parsing itself lives in the shared `decoder-protocol/` module (pure, Spring-free `byte[] → LapPassingEvent`), used by both `forwarder/` and `localday/`.
 
-**Forwarder:** Separate Java Gradle submodule. Connects to the AMB decoder via TCP, forwards timing events to the cloud service via gRPC bidirectional streaming. Shares domain model classes with the main application.
+**Forwarder:** Separate Java Gradle submodule. Connects to the AMB decoder via TCP (via `decoder-protocol/`), forwards timing events to the cloud service via gRPC bidirectional streaming.
 
 **Testing:** JUnit 5 + Mockito + Testcontainers (backend); Vitest + React Testing Library (frontend)
 
@@ -49,7 +49,7 @@ See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUI
 
 ## Architecture
 
-**Modular monolith** — one Spring Boot process, single PostgreSQL database, single deployment.
+**Modular monolith** — one Spring Boot process, single PostgreSQL database, single deployment. This describes the **cloud app** (`app/`, `frontend/`, `forwarder/`). A second, independent application — the **Local Race Day Program** (`localday/`, `frontend-local/`) — exists alongside it; see [Local Race Day Program (split architecture)](#local-race-day-program-split-architecture) below before touching either `localday/` or `frontend-local/`.
 
 ### Component Boundaries
 
@@ -106,6 +106,19 @@ Staff roles are **stackable** — a single user account can hold any combination
 - Transponder numbers are unique system-wide. Entry records a transponder snapshot at submission time.
 - Race format config is snapshot-at-assignment — template edits do not affect existing events (FORMAT-06).
 
+### Local Race Day Program (split architecture)
+
+`localday/` + `frontend-local/` is a **separate, independent application** — its own Spring Boot backend (with its own embedded PostgreSQL, no Docker) and its own React frontend. It is **not** a module of the cloud app above: no shared domain entities, no shared frontend, no cross-module imports in either direction. The only code shared with the cloud app is `decoder-protocol/` — a pure, Spring-free `byte[] → LapPassingEvent` parser used by both `forwarder/` and `localday/`.
+
+Full rationale, requirements (`LOCALDAY-01`–`18`), and decisions: `docs/plans/2026-08-06-001-feat-offline-race-day-resilience-split-plan.md`. Summary for working in this area:
+
+- The cloud (`app/`) stays authoritative for event/championship organization and hands `localday/` a pre-cache snapshot (entries, schedule, format config, officials' day-scoped PIN credentials) before the day opens. From day-open, `localday/` is sole authority for that event day and never depends on the cloud to keep running.
+- `localday/` reimplements race control (state machine, grid progression, decoder ingestion, live timing) independently rather than sharing `app/`'s implementation — a deliberate drift-risk trade accepted to avoid porting the cloud's race-control engine behind a shared abstraction. Do not try to "fix" this by extracting shared code between the two.
+- Sync back to the cloud is periodic result/status snapshots (`SnapshotPushService` → `SnapshotIngestController`), not fine-grained event mirroring. The cloud always recomputes final standings from synced raw laps/results.
+- Local officials' auth is a day-scoped session (`LocalSessionService`), independent of the cloud's JWT model — see `localday/.../auth/`.
+- **Never run `forwarder/` and `localday/` against the same decoder at the same venue** — see `docs/forwarder.md`.
+- Module map: `localday/.../auth`, `daylifecycle`, `domain` (cached entries/schedule/races), `race` (state machine, round generation, bump-up — the last has no wired endpoint yet, see `LOCALDAY-06`), `checkin`, `boards` (anonymous read API), `timing`, `sync`, `testsupport` (e2e-profile-only Playwright fixture seeding).
+
 ## AMB Decoder Protocol (Two Protocols — Choose by Firmware)
 
 See `docs/AMB_DECODER_PROTOCOL.md` for the full reference. Summary:
@@ -130,7 +143,9 @@ See `docs/AMB_DECODER_PROTOCOL.md` for the full reference. Summary:
 
 **Before starting the forwarder:** Build a TCP simulator (fake decoder) emitting RC-4 text records for development without physical hardware. Wireshark captures from the club's RCResults installation confirm the port in use.
 
-## Build Order (Planned)
+## Build Order
+
+All ten originally-planned phases below are complete (see `README.md` for the current feature-area breakdown):
 
 1. Domain Foundation — entities, Flyway, basic CRUD, no UI
 2. Racer Portal — auth, event entry, self-service frontend
@@ -139,6 +154,11 @@ See `docs/AMB_DECODER_PROTOCOL.md` for the full reference. Summary:
 5. WebSocket Live Timing Infrastructure — STOMP config, domain event → broadcast (use synthetic events)
 6. Forwarder + AMB TCP Receiver — Netty parser, gRPC streaming, simulator for testing
 7. Results & Championship Standings — result snapshots, best-X-from-Y scoring, PDF export
+8. First-run setup wizard
+9. User manual & in-app documentation
+10. Docker trial environment
+
+A later, separate initiative extracted the shared decoder-protocol parser (`decoder-protocol/`) and built the independent **Local Race Day Program** (`localday/` + `frontend-local/`) — see [Local Race Day Program (split architecture)](#local-race-day-program-split-architecture) above. Its own implementation units (U1–U14) are tracked in `docs/plans/2026-08-06-001-feat-offline-race-day-resilience-split-plan.md`.
 
 ## General Good Developer Rules
 

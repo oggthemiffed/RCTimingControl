@@ -2,7 +2,7 @@
 
 **Defined:** 2026-04-15
 **Updated:** 2026-04-16
-**Core Value:** Racers can enter events online and manage their own car/transponder details, while officials run a full race meeting from any Windows or Linux machine — with live timing fed directly from AMB/MyLaps hardware via a local forwarder agent to a cloud-hosted service.
+**Core Value:** Racers can enter events online and manage their own car/transponder details, while officials run a full race meeting from any Windows or Linux machine — with live timing fed directly from AMB/MyLaps hardware via a local forwarder agent to a cloud-hosted service, or entirely locally with zero connectivity via the independent Local Race Day Program (see LOCALDAY-01–18).
 
 ## v1 Requirements
 
@@ -158,6 +158,29 @@
 - [x] **RESULT-04**: Printed/PDF results optionally display a racer's car tag values beneath their name; controlled by an admin display setting
 - [x] **RESULT-05**: Result records include full individual lap time data (every lap, not just totals and best lap)
 
+### Local Race Day Program (offline race-day resilience)
+
+A separate, independent application (`localday/` + `frontend-local/`) — not a module of the cloud `app/`/`frontend/` above. Full rationale, decisions, and acceptance examples: `docs/plans/2026-08-06-001-feat-offline-race-day-resilience-split-plan.md`. Supersedes the "Offline mode" line previously in Out of Scope below.
+
+- [x] **LOCALDAY-01**: An official can explicitly open an event day at the venue, which pulls or confirms the pre-cached entries, schedule, and format config, and hands sole local authority for that day to the Local Race Day Program
+- [x] **LOCALDAY-02**: Once a day is open, the cloud does not accept direct edits to that event's organization data until the official explicitly closes the day and sync is confirmed complete
+- [x] **LOCALDAY-03**: An official can explicitly close an event day once racing concludes; if not all local data has synced, the official is warned rather than told the close is complete, and the system keeps retrying the sync in the background
+- [x] **LOCALDAY-04**: Each event day is opened and closed independently; the Local Race Day Program is not required to preserve local authority continuously across multiple calendar days
+- [x] **LOCALDAY-05**: Check-in / attendance confirmation for pre-entered racers works independent of cloud connectivity, including barcode/QR/webcam scanning directly in the browser; NFC/serial scanning depends on a per-kiosk helper agent in a future multi-station build
+- [x] **LOCALDAY-06**: The full race-control workflow (state machine, multi-round grid progression, live timing, live results display) runs independently of the cloud, as its own codebase — **except bump-up/finals promotion across a whole class's qualifying standings** (`BumpUpSeedingService`), which is implemented but has no wired-up HTTP endpoint or UI trigger yet; round-to-round grid propagation for non-bump-up formats is fully wired up and covered by `frontend-local/e2e/race-control.spec.ts`
+- [x] **LOCALDAY-07**: Current heat/race, next-up schedule, and results are served to attendees over the venue LAN via multi-monitor kiosk boards, matching RCResults' now/next capability, independent of cloud connectivity
+- [x] **LOCALDAY-08**: Officials can reassign a transponder to an existing entry locally during the event, without cloud connectivity
+- [x] **LOCALDAY-09**: Race-control write actions require an authenticated local official session, distinct from the anonymous read-only board/attendee view
+- [x] **LOCALDAY-10**: Lap passings are durably persisted locally as they're captured, independent of cloud transmission
+- [x] **LOCALDAY-11**: While connectivity exists, result/status snapshots are periodically pushed to the cloud; the cloud always recomputes final standings itself from synced raw laps/results rather than trusting the local program's synced standings
+- [x] **LOCALDAY-12**: When connectivity resumes, previously-unsent snapshots flow to the cloud automatically, with no manual export/import step
+- [x] **LOCALDAY-13**: The cloud rejects a snapshot from a local instance superseded by a device-loss declaration, rather than letting it silently overwrite newer data
+- [x] **LOCALDAY-14**: Before a day is opened, entries/schedule/format config/officials' local-login credentials can be pre-cached while still connected; pre-cached data at rest is protected and deleted/expired once the day closes and sync is confirmed complete
+- [x] **LOCALDAY-15**: The public cloud event/results page remains reachable during a venue outage, showing the most recently synced data with a delay indicator
+- [x] **LOCALDAY-16**: An elevated (`ADMIN`) official can manually declare a Local Race Day Program instance lost from the cloud, unlocking the day for a replacement instance
+- [x] **LOCALDAY-17**: A device-loss declaration permanently flags the event day with a known, unrecoverable data gap, propagated to results/standings/reports — this flag never auto-clears
+- [x] **LOCALDAY-18**: The sync/pre-cache channel uses an authenticated, per-day-instance identity distinct from officials' local session auth, over an encrypted transport
+
 ## v2 Requirements
 
 ### Governing Body Integration
@@ -190,7 +213,7 @@
 |---------|--------|
 | Payment processing | PCI compliance burden; club collects fees at the track |
 | Native mobile app | Browser-based UI is mobile-responsive; dedicated app adds no v1 value |
-| Offline mode | System requires network at the venue; no offline race control |
+| ~~Offline mode~~ | **Superseded** — see LOCALDAY-01–18. What's actually still out of scope: multi-day continuous local authority without a close/reopen cycle, and brand-new walk-up entries while fully offline |
 | Public entry list | Not requested; reduces racer privacy before an event |
 | Social / community features | Not a social platform — timing and management only |
 | Kafka / message broker | Single-club deployment; in-process STOMP broker is sufficient |
@@ -308,12 +331,31 @@
 | RESULT-03 | Phase 7 | Complete |
 | RESULT-04 | Phase 7 | Complete |
 | RESULT-05 | Phase 7 | Complete |
+| LOCALDAY-01 | Local Race Day Program | Complete |
+| LOCALDAY-02 | Local Race Day Program | Complete |
+| LOCALDAY-03 | Local Race Day Program | Complete |
+| LOCALDAY-04 | Local Race Day Program | Complete |
+| LOCALDAY-05 | Local Race Day Program | Complete |
+| LOCALDAY-06 | Local Race Day Program | Complete (bump-up promotion built but not wired to an endpoint — see note above) |
+| LOCALDAY-07 | Local Race Day Program | Complete |
+| LOCALDAY-08 | Local Race Day Program | Complete |
+| LOCALDAY-09 | Local Race Day Program | Complete |
+| LOCALDAY-10 | Local Race Day Program | Complete |
+| LOCALDAY-11 | Local Race Day Program | Complete |
+| LOCALDAY-12 | Local Race Day Program | Complete |
+| LOCALDAY-13 | Local Race Day Program | Complete |
+| LOCALDAY-14 | Local Race Day Program | Complete |
+| LOCALDAY-15 | Local Race Day Program | Complete |
+| LOCALDAY-16 | Local Race Day Program | Complete |
+| LOCALDAY-17 | Local Race Day Program | Complete |
+| LOCALDAY-18 | Local Race Day Program | Complete |
 
 **Coverage:**
-- v1 requirements: 91 total
-- Mapped to phases: 91 ✓
+- v1 requirements: 109 total (91 cloud + 18 Local Race Day Program)
+- Mapped to phases: 109 ✓
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-04-16 — added track entity (TRACK-01–03), EVENT-07 (track association), governing body membership (RACER-13–14, CLUB-01); removed min/max lap times from FORMAT section (moved to track config); renumbered FORMAT-10–13; removed FORMAT-03 (Reedy — deferred post-v1); added FORMAT-14 (race config JSON import/export); added AUTH-05 (stackable roles: ADMIN/RACE_DIRECTOR/REFEREE); added CLUB-02 (club profile); renumbered v2 CLUB-02→CLUB-03; updated TRACK-01 (optional track length); added TRACK-04 (decoder loop configuration); traceability populated (roadmap created)*
+*Last updated: 2026-10-03 — added Local Race Day Program domain (LOCALDAY-01–18, offline race-day resilience split architecture); removed "Offline mode" from Out of Scope (superseded)*
+*Previously updated: 2026-04-16 — added track entity (TRACK-01–03), EVENT-07 (track association), governing body membership (RACER-13–14, CLUB-01); removed min/max lap times from FORMAT section (moved to track config); renumbered FORMAT-10–13; removed FORMAT-03 (Reedy — deferred post-v1); added FORMAT-14 (race config JSON import/export); added AUTH-05 (stackable roles: ADMIN/RACE_DIRECTOR/REFEREE); added CLUB-02 (club profile); renumbered v2 CLUB-02→CLUB-03; updated TRACK-01 (optional track length); added TRACK-04 (decoder loop configuration); traceability populated (roadmap created)*
