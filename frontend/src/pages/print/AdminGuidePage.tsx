@@ -315,7 +315,7 @@ export default function AdminGuidePage() {
           <li>
             <span className="font-semibold">Step 5 — Decoder Config:</span> Enter the
             IP address and port for the AMB decoder (default port 5100 for RC-4 text
-            protocol). The forwarder agent uses this configuration to connect.
+            protocol). RCTC uses this configuration to connect to the decoder.
           </li>
           <li>
             <span className="font-semibold">Navigate the wizard:</span> Click each step

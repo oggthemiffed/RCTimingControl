@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
- * RC-4 text protocol TCP client (TIMING-05, FORWARDER-01, D-01).
+ * RC-4 text protocol TCP client (TIMING-05, D-01).
  *
  * <p><strong>TIMING-06 / FIRST_CONTACT:</strong> The RC-4 protocol has NO client handshake.
  * The AMB decoder begins streaming STATUS and PASSING frames immediately upon TCP connection.

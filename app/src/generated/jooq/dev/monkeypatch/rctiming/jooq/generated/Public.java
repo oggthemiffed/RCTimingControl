@@ -22,7 +22,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.EventOfflineLocks;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventSnapshotState;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventSyncGenerations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
-import dev.monkeypatch.rctiming.jooq.generated.tables.ForwarderToken;
 import dev.monkeypatch.rctiming.jooq.generated.tables.GoverningBodyAffiliations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials;
@@ -173,11 +172,6 @@ public class Public extends SchemaImpl {
      * The table <code>public.events</code>.
      */
     public final Events EVENTS = Events.EVENTS;
-
-    /**
-     * The table <code>public.forwarder_token</code>.
-     */
-    public final ForwarderToken FORWARDER_TOKEN = ForwarderToken.FORWARDER_TOKEN;
 
     /**
      * The table <code>public.governing_body_affiliations</code>.
@@ -375,7 +369,6 @@ public class Public extends SchemaImpl {
             EventSnapshotState.EVENT_SNAPSHOT_STATE,
             EventSyncGenerations.EVENT_SYNC_GENERATIONS,
             Events.EVENTS,
-            ForwarderToken.FORWARDER_TOKEN,
             GoverningBodyAffiliations.GOVERNING_BODY_AFFILIATIONS,
             IncidentReports.INCIDENT_REPORTS,
             LocaldayCredentials.LOCALDAY_CREDENTIALS,

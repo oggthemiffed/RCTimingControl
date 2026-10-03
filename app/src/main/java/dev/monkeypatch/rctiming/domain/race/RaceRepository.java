@@ -18,7 +18,7 @@ public interface RaceRepository extends JpaRepository<Race, Long> {
     // For BumpUpSeedingService: find a specific final letter race for a class
     List<Race> findByEventClassIdAndFinalLetter(Long eventClassId, String finalLetter);
 
-    // Phase 5: ForwarderGrpcService queries for the currently running race to resolve raceId
+    // DecoderListener queries for the currently running race to resolve raceId
     Optional<Race> findFirstByStatus(RaceStatus status);
 
     // For PreCacheService: all races for an event, reached via Round (Race has no direct eventId)

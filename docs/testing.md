@@ -40,7 +40,7 @@ npm run lint          # ESLint
 Independent of the suites above — no Docker required for any of these (no Testcontainers; `localday/` uses an embedded PostgreSQL).
 
 ```bash
-# Shared protocol parser — used by both forwarder/ and localday/
+# Shared protocol parser — used by app/, decoder-simulator/ and localday/
 ./gradlew :decoder-protocol:test
 
 # Local Race Day Program backend — unit + integration
@@ -76,7 +76,7 @@ Runs with a single worker (`fullyParallel: false`, `workers: 1` in `playwright.c
 Two checks from the Local Race Day Program's plan remain manual (the plan's own Verification Contract calls both "automated where possible, manual otherwise" or explicitly manual):
 
 - **Embedded-Postgres durability under a hard kill.** `RestartPersistenceIT` (in `:localday:test`) proves data survives a graceful restart against the same data directory. Proving survival after `pg_ctl stop -m immediate` (or killing the JVM) mid-write or mid-migration is not yet scripted — do this by hand against a throwaway `LOCALDAY_PG_DATA_DIR` before a high-stakes event if you've changed anything in the persistence path.
-- **Decoder ingestion against the simulator.** `./gradlew :forwarder:runSimulator --args="--mode=generative --port=5100 ..."` (same simulator the forwarder uses — see [docs/forwarder.md](forwarder.md)) against a running `:localday` confirms RC-4 lines parse and lap data lands without exceptions. Not wired into CI; run it manually after touching `decoder-protocol/` or `localday/.../timing/`.
+- **Decoder ingestion against the simulator.** `./gradlew :decoder-simulator:runSimulator --args="--mode=generative --port=5100 ..."` (the decoder simulator — see [docs/forwarder.md](forwarder.md)) against a running `:localday` confirms RC-4 lines parse and lap data lands without exceptions. Not wired into CI; run it manually after touching `decoder-protocol/` or `localday/.../timing/`.
 
 ---
 

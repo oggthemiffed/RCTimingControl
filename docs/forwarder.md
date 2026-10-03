@@ -1,196 +1,119 @@
-# Forwarder Setup Guide
+# Connecting the decoder
 
-The forwarder is a separate Java process that connects to the AMB/MyLaps decoder hardware over TCP and streams timing data to the cloud app via gRPC. In development you use the built-in **fake decoder simulator** instead of real hardware.
+RCTC reads live laps straight from the AMB/MyLaps decoder over TCP. There is no separate forwarder process and no token to set up. You point RCTC at the decoder once, and it reconnects on its own if the link drops.
 
-> **This guide is about `forwarder/` (the cloud path).** The **Local Race Day Program** (`localday/`) has its own, independent decoder client built on the same shared `decoder-protocol/` parser — see [architecture.md](architecture.md#local-race-day-program-split-architecture). The simulator described below works for either one.
+In development you use the built-in **fake decoder simulator** in place of hardware.
+
+> **Local Race Day Program:** `localday/` has its own decoder client built on the same shared `decoder-protocol/` parser. See [architecture.md](architecture.md#local-race-day-program-split-architecture).
 
 ---
 
-## Local Race Day Program exclusivity
+## Never connect two timing programs to one decoder
 
-**Never run `forwarder/` and `localday/` connected to the same decoder (or the same simulator instance) at the same time.** Both are passive TCP clients that dial out to the decoder — the RC-4 text protocol's tolerance for multiple simultaneous client connections is unconfirmed, so running both risks one silently starving the other of PASSING records. When migrating a venue from the forwarder/cloud setup to the Local Race Day Program, disable or uninstall the forwarder first (or vice versa, if rolling back). This is operator discipline — neither process technically detects or prevents the other connecting to the same port.
+**Never run RCTC and `localday/` connected to the same decoder (or the same simulator instance) at the same time.** Both dial out to the decoder's TCP port. The RC-4 text protocol's tolerance for several clients at once is unconfirmed, so one may silently stop receiving PASSING records. Neither program can detect the other. This is operator discipline.
 
 ---
 
 ## How it fits together
 
 ```
-AMB Decoder (TCP :5100)          Fake Decoder Simulator
-        │                                │
-        └──────────┬─────────────────────┘
+AMB Decoder (TCP :5100)  or  Fake Decoder Simulator
+                   │
+                   │  RCTC dials out to the decoder
                    ▼
-          Forwarder process
-          (connects out to decoder,
-           connects out to app gRPC)
-                   │  gRPC :9090
-                   ▼
-          Spring Boot app
+          Spring Boot app (RCTC)
                    │  STOMP WebSocket
                    ▼
              Browser clients
 ```
 
-The forwarder is a passive client in both directions — it dials out to the decoder and dials out to the app. Nothing connects in to the forwarder.
-
----
-
-## Prerequisites
-
-Same as the main app: **Java 21**, **Docker**, **`make`**.
+RCTC is the only client that connects to the decoder. Nothing connects in to RCTC except browsers.
 
 ---
 
 ## Step 1 — Start the app
 
-The Spring Boot app must be running before the forwarder tries to connect (it needs the gRPC server on port 9090).
-
 ```bash
 make up     # PostgreSQL
-make dev    # Spring Boot — REST on :8080, gRPC on :9090
+make dev    # Spring Boot on :8080
 ```
 
 ---
 
-## Step 2 — Generate an API token
+## Step 2 — Set the decoder address
 
-The forwarder authenticates to the app with a pre-shared token. Generate one through the admin UI:
+In the app, go to **Admin → Decoder** (`/admin/decoder`), or use the setup wizard on first run.
 
-1. Log in as an **ADMIN** user (dev seed: `admin@example.com` / `password` — see [testing.md](testing.md))
-2. Navigate to **Admin Panel → Forwarder Token** (`/admin/forwarder`)
-3. Click **Generate Token**
-4. Copy the token from the one-time reveal panel (it is shown **once only**)
-5. Click **Done**
+- **Decoder Host:** the decoder's IP address on your venue LAN, or `localhost` for the simulator.
+- **Protocol:** `RC4` for firmware below 4.5 (port 5100). Most club decoders use this. `P3` is not supported yet.
+- **Port:** fills in from the protocol. Change it only if your decoder uses another port.
 
----
-
-## Step 3 — Configure the forwarder
-
-Open `forwarder/src/main/resources/forwarder.properties` and paste the token:
-
-```properties
-# Token generated in the admin UI (Step 2)
-forwarder.api-token=<paste token here>
-
-# Decoder connection — use localhost when running the simulator
-forwarder.decoder.host=localhost
-forwarder.decoder.port=5100
-
-# App gRPC server
-forwarder.grpc.host=localhost
-forwarder.grpc.port=9090
-forwarder.grpc.plaintext=true
-```
-
-> **Note:** `forwarder.properties` is gitignored. Your token is never committed.
+Click **Test Connection**. It shows **Connected** once the decoder is streaming.
 
 ---
 
-## Step 4 — Start the decoder (simulator or real hardware)
+## Step 3 — Start the decoder (simulator or real hardware)
 
 ### Using the simulator (development)
 
-The simulator emulates an AMB decoder. Start it **before** the forwarder — it must be listening on `:5100` first.
+The simulator emulates an AMB decoder on `:5100`. Start it before you test the connection.
 
 ```bash
-# Generative mode — emits synthetic PASSING records continuously
-# Default: 6 transponders (matching dev seed), ~10–15 s laps with ±2.5 s jitter
+# Generative mode: synthetic PASSING records, 6 transponders, ~10–15 s laps with jitter
 make simulator
 
-# Playback mode — replays a captured .dump file
+# Playback mode: replays a captured .dump file
 make simulator-playback
 
-# Playback with a custom dump file
+# Playback from a custom dump file
 make simulator-playback DUMP_FILE=path/to/capture.dump
 ```
 
-Generative mode options (pass via `--args` directly if needed):
-- `--transponders=101,102,...` — comma-separated transponder IDs (default matches dev seed: 101–106)
-- `--interval-ms=12500` — base lap time in milliseconds
-- `--jitter-ms=2500` — each lap is `intervalMs ± rand(0, jitterMs)` giving realistic variation
+Generative mode options (pass them with `--args` if you run the module directly):
+- `--transponders=101,102,...`: transponder IDs (default matches the dev seed, 101–106)
+- `--interval-ms=12500`: base lap time in milliseconds
+- `--jitter-ms=2500`: each lap is `intervalMs ± rand(0, jitterMs)`
 
-The simulator prints each emitted PASSING record to stdout so you can see what the forwarder will receive.
+The simulator prints each PASSING record to stdout.
 
 ### Using real hardware
 
-Point `forwarder.decoder.host` at the IP address of the AMB decoder on your venue LAN:
-
-```properties
-forwarder.decoder.host=192.168.1.100   # your decoder's IP
-forwarder.decoder.port=5100            # RC-4 text protocol (firmware < 4.5)
-```
-
-Confirm the port in use with your decoder firmware. Port 5100 is standard for RC-4 text protocol (firmware ≤ 4.4). See [AMB_DECODER_PROTOCOL.md](AMB_DECODER_PROTOCOL.md) for protocol details.
+Set the decoder's IP address as the host in **Admin → Decoder**. Port 5100 is the RC-4 text protocol (firmware ≤ 4.4). See [AMB_DECODER_PROTOCOL.md](AMB_DECODER_PROTOCOL.md) for protocol details.
 
 ---
 
-## Step 5 — Start the forwarder
+## Status
 
-```bash
-make forwarder
-```
+The race-control bar shows **DECODER** in one of three states:
 
-On startup you should see:
-
-```
-Connected to decoder at localhost:5100
-Connected to app gRPC at localhost:9090
-Streaming passings...
-```
-
-The **Forwarder Status Bar** in the race control cockpit will show green pills for both DECODER and FORWARDER once both connections are established.
-
----
-
-## Full startup order (summary)
-
-| Order | Terminal | Command | Waits for |
-|-------|----------|---------|-----------|
-| 1 | Any | `make up` | — |
-| 2 | Terminal 1 | `make dev` | Docker up |
-| 3 | Terminal 2 | `make simulator` | — |
-| 4 | Terminal 3 | `make forwarder` | App gRPC ready + simulator listening |
-| 5 | Terminal 4 | `make ui` | — (can start anytime) |
-
-The forwarder will retry the decoder connection automatically (exponential backoff, 1 s → 30 s) if it starts before the simulator, so the order between steps 3 and 4 is forgiving in practice.
+| State | Meaning |
+|-------|---------|
+| Connected (green) | Streaming PASSING records |
+| Reconnecting (amber) | The link dropped. RCTC retries with backoff, 1 s up to 30 s. |
+| Disconnected (red) | No decoder configured, or RCTC is not connected |
 
 ---
 
 ## Troubleshooting
 
-### Forwarder exits immediately with "UNAUTHENTICATED"
+### DECODER stays red after Test Connection
 
-The token in `forwarder.properties` is missing, wrong, or has been revoked. Regenerate a token in the admin UI and update the file.
+Check that the simulator is running, or that the decoder is powered on and reachable from the timing PC. Confirm the host and port in **Admin → Decoder**. Ping the decoder to confirm the network path.
 
-### Status bar shows FORWARDER green but DECODER red
+### DECODER shows reconnecting
 
-The forwarder connected to the app but cannot reach the decoder (or simulator). Check that `make simulator` is running and that `forwarder.decoder.host/port` are correct.
+The connection dropped, or the decoder is not accepting connections. RCTC retries on its own. If it stays amber, check the decoder and the network.
 
-### Status bar shows DECODER green but FORWARDER red (or disconnected)
+### Unknown transponder alerts appear in race control
 
-The app's gRPC server is not reachable. Confirm `make dev` is running and that `app.grpc.port=9090` is in `app/src/main/resources/application.properties`.
-
-### Unknown transponder alerts appear in the cockpit
-
-A PASSING record arrived for a transponder number not assigned to any entry in the current race. Use the **Link to entry** button in the cockpit to retroactively assign it — laps already counted will be credited to the entry automatically.
-
-### Re-running jOOQ codegen after schema changes
-
-Phase 5 adds two new migrations (V21, V22). If you pulled these and see `package ... does not exist` compile errors:
-
-```bash
-make up
-./gradlew :app:generateJooq
-```
+A PASSING record arrived for a transponder number not assigned to any entry in the current race. Use **Link to entry** in race control to assign it. Laps already counted are credited to the entry automatically.
 
 ---
 
-## Forwarder Makefile targets
+## Decoder Makefile targets
 
 | Target | Description |
 |--------|-------------|
-| `make forwarder` | Run the forwarder (connects to real or simulated decoder) |
-| `make simulator` | Run FakeDecoderServer in generative mode on :5100 |
-| `make simulator-playback` | Replay `sample-passings.dump` through FakeDecoderServer |
+| `make simulator` | Run the fake decoder in generative mode on :5100 |
+| `make simulator-playback` | Replay `sample-passings.dump` through the fake decoder |
 | `make simulator-playback DUMP_FILE=…` | Replay a custom dump file |
-| `make forwarder-build` | Compile the forwarder module without running it |
-| `make forwarder-test` | Run forwarder unit + integration tests |

@@ -23,7 +23,7 @@ export function SetupWizardHelp() {
           All five steps must be completed before you can access the Admin Panel and Race
           Control. If you need to come back later, use the "Skip wizard" link at the bottom
           of the sidebar (only visible once setup is complete). The decoder connection test
-          requires the forwarder service to be running on the local network.
+          requires the AMB decoder to be reachable on the local network.
         </p>
       </div>
 

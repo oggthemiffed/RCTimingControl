@@ -1,7 +1,6 @@
 # Without this, `COPY app/ app/` etc. in docker/*/Dockerfile send local Gradle/npm build
 # output into the build context — slow, and can produce duplicate-class errors when a stale
-# forwarder/build/generated/source/proto/** collides with the checked-in
-# forwarder/src/generated/proto/** used by the -PcommittedProto Docker build path.
+# build directory is copied in alongside the sources.
 #
 # Deliberately NOT **/build/ — that also matches the legitimate source package directory
 # buildSrc/src/main/java/dev/monkeypatch/build/, excluding it from the build context entirely
@@ -9,7 +8,7 @@
 .git/
 /build/
 app/build/
-forwarder/build/
+decoder-simulator/build/
 decoder-protocol/build/
 localday/build/
 buildSrc/build/

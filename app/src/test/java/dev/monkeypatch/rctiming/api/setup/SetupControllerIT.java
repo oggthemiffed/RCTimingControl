@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.api.setup;
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.setup.dto.BootstrapRequest;
+import dev.monkeypatch.rctiming.api.setup.dto.DecoderConfigDto;
 import dev.monkeypatch.rctiming.api.setup.dto.SetupProgressDto;
 import dev.monkeypatch.rctiming.api.setup.dto.SetupStatusDto;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
@@ -121,53 +122,29 @@ class SetupControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void downloadForwarderConfig_returnsEnvAttachment() {
-        // Bootstrap an admin user to get a JWT
+    void getDecoderConfig_returnsStoredSettings() {
         BootstrapRequest req = new BootstrapRequest("Admin", "User", "admin@test.com", "password123");
         ResponseEntity<AuthResponse> bootstrapResp = restTemplate.postForEntity("/api/v1/setup/bootstrap", req, AuthResponse.class);
         assertThat(bootstrapResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         String jwt = bootstrapResp.getBody().accessToken();
 
-        // GET /api/v1/setup/forwarder-config-download with admin JWT
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(jwt);
-        ResponseEntity<byte[]> response = restTemplate.exchange(
-                "/api/v1/setup/forwarder-config-download",
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                byte[].class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
-                .contains("attachment")
-                .contains("forwarder.env");
-
-        String body = new String(response.getBody(), java.nio.charset.StandardCharsets.UTF_8);
-        assertThat(body).contains("APP_SERVER_URL=");
-        assertThat(body).contains("APP_DECODER_HOST=");
-    }
-
-    @Test
-    void downloadForwarderConfig_includesNoTokenMessage_whenNoTokenGenerated() {
-        // Before any token is generated, env file should indicate the operator needs to generate one
-        BootstrapRequest req = new BootstrapRequest("Admin", "User", "admin@test.com", "password123");
-        ResponseEntity<AuthResponse> bootstrapResp = restTemplate.postForEntity("/api/v1/setup/bootstrap", req, AuthResponse.class);
-        assertThat(bootstrapResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        String jwt = bootstrapResp.getBody().accessToken();
+        // Saved straight to the repository so no decoder listener connection is attempted.
+        ClubProfile club = minimalClub();
+        club.setDecoderHost("192.168.1.50");
+        club.setDecoderPort(5100);
+        club.setDecoderProtocol("RC4");
+        clubProfileRepository.save(club);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(jwt);
-        ResponseEntity<byte[]> response = restTemplate.exchange(
-                "/api/v1/setup/forwarder-config-download",
+        ResponseEntity<DecoderConfigDto> resp = restTemplate.exchange(
+                "/api/v1/setup/decoder-config",
                 HttpMethod.GET,
                 new HttpEntity<>(headers),
-                byte[].class);
+                DecoderConfigDto.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        String body = new String(response.getBody(), java.nio.charset.StandardCharsets.UTF_8);
-
-        // No token generated yet — env file carries the no-token sentinel
-        assertThat(body).contains("APP_FORWARDER_TOKEN=<no-token-generate-one-first>");
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp.getBody()).isEqualTo(new DecoderConfigDto("192.168.1.50", 5100, "RC4"));
     }
 
     // --- helpers ---

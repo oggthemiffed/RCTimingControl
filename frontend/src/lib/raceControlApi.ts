@@ -230,33 +230,6 @@ export async function getLiveTimingSnapshot(raceId: number): Promise<LiveTimingR
   return data;
 }
 
-// ── Phase 5: Admin Forwarder Token Management ────────────────────────────────
-
-export type ForwarderTokenStatus = 'ACTIVE' | 'REVOKED' | 'NONE';
-
-export type ForwarderTokenStatusResponse = {
-  status: ForwarderTokenStatus;
-  generatedAt: string | null;
-};
-
-export type GenerateTokenResponse = {
-  token: string;
-};
-
-export async function getForwarderTokenStatus(): Promise<ForwarderTokenStatusResponse> {
-  const { data } = await api.get<ForwarderTokenStatusResponse>('/api/v1/admin/forwarder/token');
-  return data;
-}
-
-export async function generateForwarderToken(): Promise<GenerateTokenResponse> {
-  const { data } = await api.post<GenerateTokenResponse>('/api/v1/admin/forwarder/token', {});
-  return data;
-}
-
-export async function revokeForwarderToken(): Promise<void> {
-  await api.delete('/api/v1/admin/forwarder/token');
-}
-
 // ── Public (no-auth) API functions ───────────────────────────────────────────
 
 export async function getPublicResultSnapshot(raceId: number): Promise<ResultSnapshotDto> {
@@ -308,16 +281,15 @@ export async function getEventSchedule(): Promise<EventScheduleDto[]> {
   return data;
 }
 
-// ── Forwarder status ───────────────────────────────────────────────────────
+// ── Decoder status ─────────────────────────────────────────────────────────
 
 export type ConnectionState = 'CONNECTED' | 'RECONNECTING' | 'DISCONNECTED';
 
-export type ForwarderStatusDto = {
+export type DecoderStatusDto = {
   decoderState: ConnectionState;
-  forwarderState: ConnectionState;
 };
 
-export async function fetchForwarderStatus(): Promise<ForwarderStatusDto> {
-  const { data } = await api.get<ForwarderStatusDto>('/api/v1/race-control/forwarder/status');
+export async function fetchDecoderStatus(): Promise<DecoderStatusDto> {
+  const { data } = await api.get<DecoderStatusDto>('/api/v1/race-control/decoder/status');
   return data;
 }

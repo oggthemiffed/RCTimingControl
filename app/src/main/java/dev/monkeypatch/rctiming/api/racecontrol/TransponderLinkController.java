@@ -1,9 +1,9 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
 import dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto;
-import dev.monkeypatch.rctiming.forwarder.UnknownTransponderLinkAudit;
-import dev.monkeypatch.rctiming.forwarder.UnknownTransponderLinkAuditRepository;
-import dev.monkeypatch.rctiming.forwarder.dto.LinkTransponderRequestDto;
+import dev.monkeypatch.rctiming.timing.UnknownTransponderLinkAudit;
+import dev.monkeypatch.rctiming.timing.UnknownTransponderLinkAuditRepository;
+import dev.monkeypatch.rctiming.timing.dto.LinkTransponderRequestDto;
 import dev.monkeypatch.rctiming.query.racecontrol.RaceEntriesQuery;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;

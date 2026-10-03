@@ -22,7 +22,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.EventOfflineLocks;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventSnapshotState;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventSyncGenerations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
-import dev.monkeypatch.rctiming.jooq.generated.tables.ForwarderToken;
 import dev.monkeypatch.rctiming.jooq.generated.tables.GoverningBodyAffiliations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials;
@@ -70,7 +69,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.records.EventOfflineLocksR
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.EventSnapshotStateRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.EventSyncGenerationsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.EventsRecord;
-import dev.monkeypatch.rctiming.jooq.generated.tables.records.ForwarderTokenRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.GoverningBodyAffiliationsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.IncidentReportsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.LocaldayCredentialsRecord;
@@ -142,7 +140,6 @@ public class Keys {
     public static final UniqueKey<EventSnapshotStateRecord> EVENT_SNAPSHOT_STATE_PKEY = Internal.createUniqueKey(EventSnapshotState.EVENT_SNAPSHOT_STATE, DSL.name("event_snapshot_state_pkey"), new TableField[] { EventSnapshotState.EVENT_SNAPSHOT_STATE.EVENT_ID }, true);
     public static final UniqueKey<EventSyncGenerationsRecord> EVENT_SYNC_GENERATIONS_PKEY = Internal.createUniqueKey(EventSyncGenerations.EVENT_SYNC_GENERATIONS, DSL.name("event_sync_generations_pkey"), new TableField[] { EventSyncGenerations.EVENT_SYNC_GENERATIONS.EVENT_ID }, true);
     public static final UniqueKey<EventsRecord> EVENTS_PKEY = Internal.createUniqueKey(Events.EVENTS, DSL.name("events_pkey"), new TableField[] { Events.EVENTS.ID }, true);
-    public static final UniqueKey<ForwarderTokenRecord> FORWARDER_TOKEN_PKEY = Internal.createUniqueKey(ForwarderToken.FORWARDER_TOKEN, DSL.name("forwarder_token_pkey"), new TableField[] { ForwarderToken.FORWARDER_TOKEN.ID }, true);
     public static final UniqueKey<GoverningBodyAffiliationsRecord> GOVERNING_BODY_AFFILIATIONS_CODE_KEY = Internal.createUniqueKey(GoverningBodyAffiliations.GOVERNING_BODY_AFFILIATIONS, DSL.name("governing_body_affiliations_code_key"), new TableField[] { GoverningBodyAffiliations.GOVERNING_BODY_AFFILIATIONS.CODE }, true);
     public static final UniqueKey<GoverningBodyAffiliationsRecord> GOVERNING_BODY_AFFILIATIONS_PKEY = Internal.createUniqueKey(GoverningBodyAffiliations.GOVERNING_BODY_AFFILIATIONS, DSL.name("governing_body_affiliations_pkey"), new TableField[] { GoverningBodyAffiliations.GOVERNING_BODY_AFFILIATIONS.ID }, true);
     public static final UniqueKey<IncidentReportsRecord> INCIDENT_REPORTS_PKEY = Internal.createUniqueKey(IncidentReports.INCIDENT_REPORTS, DSL.name("incident_reports_pkey"), new TableField[] { IncidentReports.INCIDENT_REPORTS.ID }, true);

@@ -18,8 +18,6 @@ jobs:
             dockerfile: docker/app/Dockerfile
           - image: frontend
             dockerfile: docker/frontend/Dockerfile
-          - image: forwarder
-            dockerfile: docker/forwarder/Dockerfile
           - image: fake-decoder
             dockerfile: docker/fake-decoder/Dockerfile
           - image: seed
@@ -103,8 +101,7 @@ jobs:
 
             First-time setup after the stack is healthy:
             1. Browse to **http://your-server-ip** and create the admin account
-            2. Go to **Admin → Forwarder Token**, generate a token, and paste it into `.env` as `FORWARDER_API_TOKEN`
-            3. `docker compose -f docker-compose.production.yml restart forwarder`
+            2. In the setup wizard, enter the AMB decoder's IP address and port (Setup → Decoder)
 
             ---
 
@@ -114,7 +111,6 @@ jobs:
             |-------|-----|
             | `ghcr.io/oggthemiffed/rctimingcontrol/app` | `${{ steps.version.outputs.version }}` |
             | `ghcr.io/oggthemiffed/rctimingcontrol/frontend` | `${{ steps.version.outputs.version }}` |
-            | `ghcr.io/oggthemiffed/rctimingcontrol/forwarder` | `${{ steps.version.outputs.version }}` |
             | `ghcr.io/oggthemiffed/rctimingcontrol/fake-decoder` | `${{ steps.version.outputs.version }}` |
             | `ghcr.io/oggthemiffed/rctimingcontrol/seed` | `${{ steps.version.outputs.version }}` |
           files: |

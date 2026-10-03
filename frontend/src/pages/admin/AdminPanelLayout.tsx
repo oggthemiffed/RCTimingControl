@@ -31,7 +31,7 @@ const eventsGroup = [
 
 const operationsGroup = [
   { to: '/admin/race-control', label: 'Race Control', Icon: Flag },
-  { to: '/admin/forwarder', label: 'Forwarder Token', Icon: Radio },
+  { to: '/admin/decoder', label: 'Decoder', Icon: Radio },
   { to: '/admin/racers', label: 'Racers', Icon: Users },
   { to: '/setup', label: 'Setup Wizard', Icon: Wand2 },
 ] as const;

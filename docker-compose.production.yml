@@ -60,20 +60,6 @@ services:
       --voice en_GB-cori-high
       --voice en_US-amy-medium
 
-  forwarder:
-    image: ghcr.io/oggthemiffed/rctimingcontrol/forwarder:${RCTIMING_VERSION}
-    restart: unless-stopped
-    environment:
-      FORWARDER_API_TOKEN: ${FORWARDER_API_TOKEN:?Set FORWARDER_API_TOKEN in .env}
-      FORWARDER_DECODER_HOST: ${DECODER_HOST:?Set DECODER_HOST to your AMB decoder IP in .env}
-      FORWARDER_DECODER_PORT: ${DECODER_PORT:-5100}
-      FORWARDER_GRPC_HOST: app
-      FORWARDER_GRPC_PORT: 9090
-      FORWARDER_GRPC_PLAINTEXT: "true"
-    depends_on:
-      app:
-        condition: service_healthy
-
 volumes:
   pgdata:
   app_uploads:

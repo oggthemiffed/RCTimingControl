@@ -5,10 +5,12 @@ import DecoderConfigStep from '../steps/DecoderConfigStep';
 import * as raceControlApi from '@/lib/raceControlApi';
 
 vi.mock('@/lib/raceControlApi', () => ({
-  fetchForwarderStatus: vi.fn(),
-  getForwarderTokenStatus: vi.fn(),
-  generateForwarderToken: vi.fn(),
-  revokeForwarderToken: vi.fn(),
+  fetchDecoderStatus: vi.fn(),
+}));
+
+vi.mock('@/lib/setupApi', () => ({
+  getDecoderConfig: vi.fn().mockResolvedValue({ decoderHost: null, decoderPort: null, decoderProtocol: null }),
+  updateDecoderConfig: vi.fn(),
 }));
 
 function makeClient() {
@@ -24,14 +26,7 @@ function renderStep() {
 }
 
 beforeEach(() => {
-  vi.mocked(raceControlApi.getForwarderTokenStatus).mockResolvedValue({
-    status: 'NONE',
-    generatedAt: null,
-  });
-  vi.mocked(raceControlApi.fetchForwarderStatus).mockResolvedValue({
-    forwarderState: 'DISCONNECTED',
-    decoderState: 'DISCONNECTED',
-  });
+  vi.mocked(raceControlApi.fetchDecoderStatus).mockResolvedValue({ decoderState: 'DISCONNECTED' });
 });
 
 afterEach(() => {
@@ -39,13 +34,9 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('DecoderConfigStep (Wave 0 stub — enabled in Plan 06)', () => {
+describe('DecoderConfigStep', () => {
   it('Test Connection polls every 2s up to 15 attempts (30s timeout per D-17)', async () => {
     vi.useFakeTimers();
-    vi.mocked(raceControlApi.fetchForwarderStatus).mockResolvedValue({
-      forwarderState: 'DISCONNECTED',
-      decoderState: 'DISCONNECTED',
-    });
 
     renderStep();
 
@@ -59,16 +50,13 @@ describe('DecoderConfigStep (Wave 0 stub — enabled in Plan 06)', () => {
       });
     }
 
-    const callCount = vi.mocked(raceControlApi.fetchForwarderStatus).mock.calls.length;
+    const callCount = vi.mocked(raceControlApi.fetchDecoderStatus).mock.calls.length;
     expect(callCount).toBeGreaterThanOrEqual(14);
     expect(callCount).toBeLessThanOrEqual(16);
   });
 
-  it('shows Connected badge when the decoder reports CONNECTED, with no forwarder', async () => {
-    vi.mocked(raceControlApi.fetchForwarderStatus).mockResolvedValue({
-      forwarderState: 'DISCONNECTED',
-      decoderState: 'CONNECTED',
-    });
+  it('shows Connected when the decoder reports CONNECTED, with no forwarder involved', async () => {
+    vi.mocked(raceControlApi.fetchDecoderStatus).mockResolvedValue({ decoderState: 'CONNECTED' });
 
     renderStep();
 
@@ -80,10 +68,6 @@ describe('DecoderConfigStep (Wave 0 stub — enabled in Plan 06)', () => {
 
   it('shows timeout alert after 15 failed attempts', async () => {
     vi.useFakeTimers();
-    vi.mocked(raceControlApi.fetchForwarderStatus).mockResolvedValue({
-      forwarderState: 'DISCONNECTED',
-      decoderState: 'DISCONNECTED',
-    });
 
     renderStep();
 
@@ -100,14 +84,9 @@ describe('DecoderConfigStep (Wave 0 stub — enabled in Plan 06)', () => {
     expect(screen.getByText(/Decoder not yet connected/i)).toBeInTheDocument();
   });
 
-  it('Download forwarder.env button disabled when no token exists', async () => {
+  it('has no forwarder token or forwarder.env download', () => {
     renderStep();
 
-    await waitFor(() =>
-      expect(screen.getByText('Download forwarder.env')).toBeInTheDocument(),
-    );
-
-    const btn = screen.getByText('Download forwarder.env').closest('button');
-    expect(btn).toBeDisabled();
+    expect(screen.queryByText(/forwarder/i)).not.toBeInTheDocument();
   });
 });

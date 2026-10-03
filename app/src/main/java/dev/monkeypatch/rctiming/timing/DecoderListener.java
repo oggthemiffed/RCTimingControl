@@ -8,13 +8,13 @@ import dev.monkeypatch.rctiming.domain.club.DecoderSettingsChangedEvent;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
-import dev.monkeypatch.rctiming.forwarder.ForwarderStatusPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.SmartLifecycle;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -22,16 +22,15 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import java.util.function.Consumer;
 
 /**
- * L1: reads the AMB decoder directly over TCP, replacing the gRPC hop through the forwarder.
+ * Reads the AMB decoder directly over TCP. This is the only source of live timing.
  *
  * <p>Connection settings come from the club profile ({@code decoder_host}, {@code decoder_port},
  * {@code decoder_protocol}). {@link AmbRc4TimingSource} owns the socket and reconnects with
  * backoff when it drops. When the settings change, the listener retires the current source and
  * starts a new one against the new address.
  *
- * <p>Each passing is published as the same {@link LapPassingEvent} the gRPC path publishes, with
- * the same active-race lookup, so {@link LapTimingService} and the practice timing service
- * need no changes. Disable with {@code app.decoder.listener.enabled=false}.
+ * <p>Each passing is published as a {@link LapPassingEvent}, using the active-race lookup
+ * (0 when no race is running). {@link LapTimingService} and the practice timing service consume it. Disable with {@code app.decoder.listener.enabled=false}.
  *
  * <p>Only the RC-4 text protocol is supported. A P3 binary configuration leaves the listener
  * idle and reports the decoder as disconnected (see O5 in the local-timing plan).
@@ -58,11 +57,12 @@ public class DecoderListener implements SmartLifecycle {
     private final ClubProfileService clubProfileService;
     private final RaceRepository raceRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final ForwarderStatusPublisher statusPublisher;
+    private final DecoderStatusPublisher statusPublisher;
     private final SourceFactory sourceFactory;
 
     // Guarded by this. Settings changes and lifecycle calls both take the lock.
     private AmbRc4TimingSource source;
+    private DecoderSettings currentSettings;
     private boolean running = false;
     // Written only while holding this lock. Read without it by the Netty callbacks.
     private volatile int generation = 0;
@@ -71,14 +71,14 @@ public class DecoderListener implements SmartLifecycle {
     public DecoderListener(ClubProfileService clubProfileService,
                            RaceRepository raceRepository,
                            ApplicationEventPublisher eventPublisher,
-                           ForwarderStatusPublisher statusPublisher) {
+                           DecoderStatusPublisher statusPublisher) {
         this(clubProfileService, raceRepository, eventPublisher, statusPublisher, AmbRc4TimingSource::new);
     }
 
     DecoderListener(ClubProfileService clubProfileService,
                     RaceRepository raceRepository,
                     ApplicationEventPublisher eventPublisher,
-                    ForwarderStatusPublisher statusPublisher,
+                    DecoderStatusPublisher statusPublisher,
                     SourceFactory sourceFactory) {
         this.clubProfileService = clubProfileService;
         this.raceRepository = raceRepository;
@@ -125,18 +125,35 @@ public class DecoderListener implements SmartLifecycle {
         applySettings(event.settings());
     }
 
+    /**
+     * Catches settings written without an event, such as a database seed or a manual SQL change.
+     * Reconnects if the stored settings differ from the ones the current source was built for.
+     */
+    @Scheduled(initialDelay = 15_000, fixedDelay = 15_000)
+    public synchronized void reconcile() {
+        if (!running) {
+            return;
+        }
+        DecoderSettings latest = clubProfileService.getDecoderSettings();
+        if (!latest.equals(currentSettings)) {
+            log.info("Stored decoder settings differ from the active listener — reconnecting");
+            applySettings(latest);
+        }
+    }
+
     private void applySettings(DecoderSettings settings) {
         stopSource();
+        currentSettings = settings;
 
         if (!settings.isConfigured()) {
             log.info("Decoder not configured — direct decoder listener idle");
-            statusPublisher.onDirectDecoderStatus(AmbRc4TimingSource.ConnectionState.DISCONNECTED.name());
+            statusPublisher.onDecoderStatus(AmbRc4TimingSource.ConnectionState.DISCONNECTED.name());
             return;
         }
         if (!"RC4".equals(settings.protocol())) {
             log.warn("Decoder protocol {} is not supported by the direct listener yet (RC4 only) — listener idle",
                      settings.protocol());
-            statusPublisher.onDirectDecoderStatus(AmbRc4TimingSource.ConnectionState.DISCONNECTED.name());
+            statusPublisher.onDecoderStatus(AmbRc4TimingSource.ConnectionState.DISCONNECTED.name());
             return;
         }
 
@@ -169,7 +186,7 @@ public class DecoderListener implements SmartLifecycle {
             if (sourceGeneration != generation) {
                 return;
             }
-            statusPublisher.onDirectDecoderStatus(state.name());
+            statusPublisher.onDecoderStatus(state.name());
         }
     }
 

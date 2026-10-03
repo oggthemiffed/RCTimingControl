@@ -469,14 +469,5 @@ BEGIN
         '{}'::jsonb
     );
 
-    -- =========================================================================
-    -- 17. forwarder_token — demo token matching FORWARDER_API_TOKEN in .env.example
-    -- =========================================================================
-    INSERT INTO forwarder_token (token_hash, token_value, status, generated_at)
-    VALUES ('demo-not-used-for-validation',
-            'DEMO-FORWARDER-TOKEN-CHANGE-BEFORE-PRODUCTION',
-            'ACTIVE',
-            NOW());
-
     RAISE NOTICE 'Wyvern RC Club seed complete';
 END $$;

@@ -2,18 +2,17 @@ package dev.monkeypatch.rctiming.api.setup;
 
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.setup.dto.BootstrapRequest;
+import dev.monkeypatch.rctiming.api.setup.dto.DecoderConfigDto;
 import dev.monkeypatch.rctiming.api.setup.dto.DecoderConfigUpdateRequest;
 import dev.monkeypatch.rctiming.api.setup.dto.SetupProgressDto;
 import dev.monkeypatch.rctiming.api.setup.dto.SetupStaffRequest;
 import dev.monkeypatch.rctiming.api.setup.dto.SetupStatusDto;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
+import dev.monkeypatch.rctiming.domain.club.DecoderSettings;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -64,6 +62,13 @@ public class SetupController {
         return setupService.getProgress();
     }
 
+    @GetMapping("/decoder-config")
+    @PreAuthorize("hasRole('ADMIN')")
+    public DecoderConfigDto getDecoderConfig() {
+        DecoderSettings settings = clubProfileService.getDecoderSettings();
+        return new DecoderConfigDto(settings.host(), settings.port(), settings.protocol());
+    }
+
     @PatchMapping("/decoder-config")
     @PreAuthorize("hasRole('ADMIN')")
     public SetupProgressDto updateDecoderConfig(@RequestBody @Valid DecoderConfigUpdateRequest req) {
@@ -79,14 +84,5 @@ public class SetupController {
                 .map(Role::valueOf)
                 .collect(Collectors.toSet());
         userService.createStaff(req.email(), req.password(), req.firstName(), req.lastName(), roles);
-    }
-
-    @GetMapping("/forwarder-config-download")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<byte[]> downloadForwarderConfig(HttpServletRequest request) {
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"forwarder.env\"")
-                .contentType(MediaType.TEXT_PLAIN)
-                .body(setupService.generateForwarderEnv(request).getBytes(StandardCharsets.UTF_8));
     }
 }
