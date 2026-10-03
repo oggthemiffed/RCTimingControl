@@ -13,33 +13,6 @@ services:
       timeout: 3s
       retries: 10
 
-  minio:
-    image: minio/minio:latest
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  minio-init:
-    image: minio/mc:latest
-    restart: on-failure
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minioadmin} ${MINIO_ROOT_PASSWORD:-minioadmin} &&
-      mc mb --ignore-existing local/rctiming &&
-      mc anonymous set download local/rctiming
-      "
-
   demo-seed:
     build:
       context: .
@@ -63,12 +36,8 @@ services:
       SPRING_DATASOURCE_USERNAME: rctiming
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-rctiming_trial}
       JWT_SECRET: ${JWT_SECRET:-dGhpcyBpcyBhIGRldmVsb3BtZW50IHNlY3JldCBrZXkgdGhhdCBtdXN0IGJlIGF0IGxlYXN0IDI1NiBiaXRz}
-      STORAGE_ENDPOINT: http://minio:9000
-      STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
-      STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
-      STORAGE_REGION: us-east-1
-      STORAGE_BUCKET: rctiming
-      STORAGE_PUBLIC_BASE_URL: http://localhost/storage/rctiming
+      STORAGE_LOCAL_PATH: /app/data/uploads
+      STORAGE_PUBLIC_BASE_URL: http://localhost/storage
       TTS_ENDPOINT: piper:10200
       TTS_DEFAULT_VOICE: en_GB-alan-medium
       TTS_ENABLED: "true"
@@ -76,13 +45,11 @@ services:
       SPRING_MAIL_PORT: 25
       SPRING_MAIL_TEST_CONNECTION: "false"
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+    volumes:
+      - app_uploads:/app/data/uploads
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
       piper:
         condition: service_started
     healthcheck:
@@ -141,5 +108,5 @@ services:
 
 volumes:
   pgdata:
-  minio_data:
+  app_uploads:
   piper_data:

@@ -104,12 +104,10 @@ make dev-start
 make stop
 
 # Or run each service manually in separate terminals:
-make up                                                             # Terminal 1: PostgreSQL + Mailpit + MinIO
+make up                                                             # Terminal 1: PostgreSQL + Mailpit
 ./gradlew :app:bootRun --args='--spring.profiles.active=dev'       # Terminal 2: backend
 cd frontend && npm run dev                                          # Terminal 3: frontend
 ```
-
-MinIO console: http://localhost:9001 (user: `minioadmin`, pass: `minioadmin`)
 
 **Dev seed accounts** (created automatically when `dev` profile is active):
 

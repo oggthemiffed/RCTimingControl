@@ -71,7 +71,7 @@ class AudioPreGenerationServiceTest {
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(Collections.emptyList());
         when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString()))
-                .thenReturn("http://minio/clip.wav");
+                .thenReturn("http://localhost:8080/storage/clip.wav");
 
         service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
 
@@ -101,7 +101,7 @@ class AudioPreGenerationServiceTest {
         when(entryRepository.findById(anyLong())).thenReturn(Optional.empty()); // no entry data needed for car clip
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
         when(clipService.generateCarNumberClip(anyLong(), anyInt(), anyString(), anyString()))
-                .thenReturn("http://minio/car.wav");
+                .thenReturn("http://localhost:8080/storage/car.wav");
 
         service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
 
@@ -134,7 +134,7 @@ class AudioPreGenerationServiceTest {
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
         when(clipService.generateCarNumberClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
         when(clipService.generateFinishClip(anyLong(), anyLong(), anyString(), anyString()))
-                .thenReturn("http://minio/finish.wav");
+                .thenReturn("http://localhost:8080/storage/finish.wav");
 
         service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
 
@@ -179,7 +179,7 @@ class AudioPreGenerationServiceTest {
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(Collections.emptyList());
         when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString()))
-                .thenReturn("http://minio/clip.wav");
+                .thenReturn("http://localhost:8080/storage/clip.wav");
 
         service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
 

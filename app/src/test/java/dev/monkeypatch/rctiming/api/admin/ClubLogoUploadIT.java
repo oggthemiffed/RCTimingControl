@@ -9,6 +9,7 @@ import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.io.ByteArrayResource;
@@ -23,10 +24,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.testcontainers.containers.MinIOContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
@@ -36,22 +35,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Testcontainers
 class ClubLogoUploadIT extends AbstractIntegrationTest {
 
-    @Container
-    static MinIOContainer minio = new MinIOContainer("minio/minio:latest")
-            .withUserName("minioadmin")
-            .withPassword("minioadmin");
+    @TempDir
+    static Path uploadDir;
 
     @DynamicPropertySource
     static void configureStorage(DynamicPropertyRegistry registry) {
-        registry.add("storage.endpoint", minio::getS3URL);
-        registry.add("storage.accessKey", minio::getUserName);
-        registry.add("storage.secretKey", minio::getPassword);
-        registry.add("storage.region", () -> "us-east-1");
-        registry.add("storage.bucket", () -> "rctiming-test");
-        registry.add("storage.publicBaseUrl", () -> minio.getS3URL() + "/rctiming-test");
+        registry.add("storage.local-path", () -> uploadDir.toString());
+        registry.add("storage.public-base-url", () -> "http://localhost:8080/storage");
     }
 
     @Autowired

@@ -67,12 +67,6 @@ dependencies {
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
-    testImplementation("org.testcontainers:minio")
-
-    // D-22: MinIO-backed object storage via AWS S3 SDK v2 (also works against AWS S3)
-    implementation(platform("software.amazon.awssdk:bom:2.25.60"))
-    implementation("software.amazon.awssdk:s3")
-    implementation("software.amazon.awssdk:auth")
 
     // Phase 5: gRPC server for forwarder connection
     implementation("io.grpc:grpc-stub:1.73.0")
@@ -144,7 +138,12 @@ val waitForJooqDb by tasks.registering(Exec::class) {
     onlyIf { !useExternalDb }
     commandLine(
         "bash", "-c",
-        "for i in \$(seq 1 30); do docker exec $jooqContainerName pg_isready -U $jooqJdbcUser -d jooq -q && exit 0; sleep 1; done; echo 'Postgres not ready' >&2; exit 1"
+        // The extra `sleep 1` after pg_isready first succeeds is a deliberate settle buffer:
+        // pg_isready can return true a moment before the server reliably completes the SSL
+        // negotiation byte on a freshly accepted connection, which the JDBC driver's default
+        // sslmode=prefer always sends first — observed as a connection reset immediately after
+        // a zero-buffer pg_isready success.
+        "for i in \$(seq 1 30); do docker exec $jooqContainerName pg_isready -U $jooqJdbcUser -d jooq -q && sleep 1 && exit 0; sleep 1; done; echo 'Postgres not ready' >&2; exit 1"
     )
 }
 

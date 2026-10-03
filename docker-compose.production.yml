@@ -14,34 +14,6 @@ services:
       timeout: 3s
       retries: 10
 
-  minio:
-    image: minio/minio:latest
-    restart: unless-stopped
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?Set MINIO_ROOT_USER in .env}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?Set MINIO_ROOT_PASSWORD in .env}
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  minio-init:
-    image: minio/mc:latest
-    restart: on-failure
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
-      mc mb --ignore-existing local/rctiming &&
-      mc anonymous set download local/rctiming
-      "
-
   app:
     image: ghcr.io/oggthemiffed/rctimingcontrol/app:${RCTIMING_VERSION:?Set RCTIMING_VERSION in .env}
     restart: unless-stopped
@@ -50,22 +22,16 @@ services:
       SPRING_DATASOURCE_USERNAME: rctiming
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
-      STORAGE_ENDPOINT: http://minio:9000
-      STORAGE_ACCESS_KEY: ${MINIO_ROOT_USER}
-      STORAGE_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
-      STORAGE_REGION: us-east-1
-      STORAGE_BUCKET: rctiming
+      STORAGE_LOCAL_PATH: /app/data/uploads
       STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:?Set STORAGE_PUBLIC_BASE_URL in .env}
       TTS_ENDPOINT: piper:10200
       TTS_DEFAULT_VOICE: ${TTS_DEFAULT_VOICE:-en_GB-alan-medium}
       TTS_ENABLED: ${TTS_ENABLED:-true}
+    volumes:
+      - app_uploads:/app/data/uploads
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
       piper:
         condition: service_started
     healthcheck:
@@ -110,5 +76,5 @@ services:
 
 volumes:
   pgdata:
-  minio_data:
+  app_uploads:
   piper_data:

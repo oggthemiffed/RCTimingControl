@@ -6,6 +6,7 @@ COPY buildSrc/ buildSrc/
 COPY gradle/ gradle/
 COPY app/ app/
 COPY forwarder/ forwarder/
+COPY decoder-protocol/ decoder-protocol/
 RUN chmod +x gradlew && \
     ./gradlew :forwarder:installDist -x test -x generateProto -PcommittedProto --no-daemon
 
