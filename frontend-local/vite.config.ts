@@ -21,6 +21,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    exclude: ['node_modules'],
+    // e2e/ holds Playwright specs (test()/test.describe() from @playwright/test, not Vitest's) —
+    // without this, Vitest's default include glob picks them up and fails since Playwright
+    // Test's test() rejects being called outside a Playwright-driven run.
+    exclude: ['node_modules', 'e2e'],
   },
 });
