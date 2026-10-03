@@ -36,6 +36,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/results/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/championships/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/about").permitAll()
+                        // Club logos and TTS clips are public content served from local disk —
+                        // see FilesystemObjectStorageService / StaticStorageConfig.
+                        .requestMatchers(HttpMethod.GET, "/storage/**").permitAll()
                         // Machine auth, not user JWT: SnapshotIngestController verifies the
                         // per-day-instance secret (KTD9) itself, before its own generation check
                         // runs — see its class Javadoc.

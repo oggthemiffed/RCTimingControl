@@ -36,13 +36,13 @@ class TtsClipServiceTest {
     }
 
     @Test
-    void generateNameClip_storesInMinIO_returnsUrl() {
+    void generateNameClip_storesClip_returnsUrl() {
         when(piperClient.synthesize("Alan Smith", "en_GB-alan-medium")).thenReturn(FAKE_WAV);
         when(storageService.upload(
                 eq("audio/racer/42/name-en_GB-alan-medium.wav"),
                 eq(FAKE_WAV),
                 eq("audio/wav")))
-                .thenReturn("http://minio/rctiming/audio/racer/42/name-en_GB-alan-medium.wav");
+                .thenReturn("http://localhost:8080/storage/rctiming/audio/racer/42/name-en_GB-alan-medium.wav");
 
         String url = service.generateNameClip(42L, "Alan Smith", null); // null → default voice
 
@@ -60,7 +60,7 @@ class TtsClipServiceTest {
         when(storageService.upload(
                 eq("audio/racer/7/name-en_GB-cori-high.wav"),
                 any(), any()))
-                .thenReturn("http://minio/rctiming/audio/racer/7/name-en_GB-cori-high.wav");
+                .thenReturn("http://localhost:8080/storage/rctiming/audio/racer/7/name-en_GB-cori-high.wav");
 
         String url = service.generateNameClip(7L, "Bob Jones", "en_GB-cori-high");
 
@@ -86,7 +86,7 @@ class TtsClipServiceTest {
         when(storageService.upload(
                 eq("audio/race/10/countdown-300-en_GB-alan-medium.wav"),
                 any(), any()))
-                .thenReturn("http://minio/rctiming/audio/race/10/countdown-300-en_GB-alan-medium.wav");
+                .thenReturn("http://localhost:8080/storage/rctiming/audio/race/10/countdown-300-en_GB-alan-medium.wav");
 
         String url = service.generateCountdownClip(10L, 300, "Race Finals, 5 minutes", null);
 
@@ -102,7 +102,7 @@ class TtsClipServiceTest {
         when(storageService.upload(
                 eq("audio/race/5/car-42-en_GB-alan-medium.wav"),
                 any(), any()))
-                .thenReturn("http://minio/");
+                .thenReturn("http://localhost:8080/storage/");
 
         service.generateCarNumberClip(5L, 42, "Car 42", null);
 

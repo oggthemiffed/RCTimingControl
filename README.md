@@ -30,7 +30,7 @@ Open **http://localhost** — demo data and a live fake decoder are included. Se
 | `decoder-protocol/` | Shared AMB/MyLaps decoder protocol parsing (RC-4 text + P3 binary) — used by both `forwarder/` and `localday/` |
 | `localday/` | Independent Spring Boot backend — the **Local Race Day Program**: runs a full event day (check-in, race control, timing, results, public boards) with zero cloud dependency. See [Local Race Day Program](#local-race-day-program) below. |
 | `frontend-local/` | React 18 + Vite frontend for `localday/` — officials' race-control UI and anonymous spectator boards |
-| `docker-compose.yml` | PostgreSQL 16 + Mailpit (dev email) + MinIO (object storage) — cloud app only; `localday/` uses its own embedded PostgreSQL |
+| `docker-compose.yml` | PostgreSQL 16 + Mailpit (dev email) — cloud app only; `localday/` uses its own embedded PostgreSQL. Club logos and TTS clips are stored on local disk, no object-storage server needed. |
 
 ### Quick start (dev)
 
@@ -47,8 +47,6 @@ Starts PostgreSQL + Mailpit, the Spring Boot backend (dev profile), and the Vite
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:8080 |
 | Mailpit (dev email) | http://localhost:8025 |
-| MinIO S3 API | http://localhost:9000 |
-| MinIO Console | http://localhost:9001 (user: `minioadmin`, pass: `minioadmin`) |
 
 ```bash
 make stop       # shut everything down

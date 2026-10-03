@@ -26,15 +26,15 @@ public class AudioClipController {
     }
 
     /**
-     * Returns a map of clip key → MinIO URL for all pre-generated clips for this race.
+     * Returns a map of clip key → storage URL for all pre-generated clips for this race.
      * <p>
      * Example response:
      * <pre>{@code
      * {
-     *   "countdown-600": "http://minio/audio/race/1/countdown-600-en_GB-alan-medium.wav",
-     *   "countdown-30":  "http://minio/audio/race/1/countdown-30-en_GB-alan-medium.wav",
-     *   "car-1":         "http://minio/audio/race/1/car-1-en_GB-alan-medium.wav",
-     *   "finish-200":    "http://minio/audio/race/1/finish-200-en_GB-alan-medium.wav"
+     *   "countdown-600": "http://localhost:8080/storage/audio/race/1/countdown-600-en_GB-alan-medium.wav",
+     *   "countdown-30":  "http://localhost:8080/storage/audio/race/1/countdown-30-en_GB-alan-medium.wav",
+     *   "car-1":         "http://localhost:8080/storage/audio/race/1/car-1-en_GB-alan-medium.wav",
+     *   "finish-200":    "http://localhost:8080/storage/audio/race/1/finish-200-en_GB-alan-medium.wav"
      * }
      * }</pre>
      * Returns an empty object {@code {}} if clips have not yet been generated (race not in GRID).

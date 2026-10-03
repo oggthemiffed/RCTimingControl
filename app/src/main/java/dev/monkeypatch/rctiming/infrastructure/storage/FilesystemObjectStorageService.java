@@ -1,0 +1,52 @@
+package dev.monkeypatch.rctiming.infrastructure.storage;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+/**
+ * Stores uploads on local disk under {@code storage.local-path}, served back over HTTP by
+ * {@link dev.monkeypatch.rctiming.config.StaticStorageConfig}'s resource handler. Replaces the
+ * former MinIO/S3-backed implementation — a single-instance venue deployment has no need for a
+ * separate object-storage server, and it removes a dependency on an external image registry
+ * entirely (the prior MinIO image became unpullable from Docker Hub).
+ */
+@Service
+public class FilesystemObjectStorageService implements ObjectStorageService {
+
+    private final Path rootDir;
+    private final String publicBaseUrl;
+
+    public FilesystemObjectStorageService(@Value("${storage.local-path}") String localPath,
+                                           @Value("${storage.public-base-url}") String publicBaseUrl) {
+        this.rootDir = Path.of(localPath).toAbsolutePath().normalize();
+        this.publicBaseUrl = publicBaseUrl.replaceAll("/$", "");
+        try {
+            Files.createDirectories(rootDir);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not create storage directory: " + rootDir, e);
+        }
+    }
+
+    @Override
+    public String upload(String key, byte[] content, String contentType) {
+        Path target = rootDir.resolve(key).normalize();
+        // Keys are built server-side (LogoUploadService, TtsClipService) from fixed prefixes
+        // plus numeric IDs, never from raw user input — this guard is defense in depth against
+        // a future caller passing an unsanitized key, not a response to an observed attack path.
+        if (!target.startsWith(rootDir)) {
+            throw new IllegalArgumentException("Invalid storage key: " + key);
+        }
+        try {
+            Files.createDirectories(target.getParent());
+            Files.write(target, content);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not write object: " + key, e);
+        }
+        return publicBaseUrl + "/" + key;
+    }
+}

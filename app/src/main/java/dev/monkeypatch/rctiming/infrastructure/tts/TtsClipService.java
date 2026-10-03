@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * Generates TTS name clips and other audio clips, storing them in MinIO via ObjectStorageService.
+ * Generates TTS name clips and other audio clips, storing them via storage via ObjectStorageService.
  * <p>
  * Key conventions:
  * <ul>
@@ -36,12 +36,12 @@ public class TtsClipService {
     }
 
     /**
-     * Generate and store a racer name clip in MinIO.
+     * Generate and store a racer name clip via storage.
      *
      * @param racerId  database ID of the racer
      * @param text     text to synthesize (display name or phonetic name)
      * @param voiceId  Piper voice model name, or null to use default
-     * @return MinIO public URL, or null if Piper was unavailable
+     * @return storage public URL, or null if Piper was unavailable
      */
     public String generateNameClip(Long racerId, String text, String voiceId) {
         String effectiveVoice = resolve(voiceId);
@@ -57,7 +57,7 @@ public class TtsClipService {
      * @param seconds  seconds remaining to announce (e.g. 300, 120, 60, 30)
      * @param text     full announcement text (e.g. "Race Finals, 5 minutes")
      * @param voiceId  Piper voice model name, or null to use default
-     * @return MinIO public URL, or null if Piper was unavailable
+     * @return storage public URL, or null if Piper was unavailable
      */
     public String generateCountdownClip(Long raceId, int seconds, String text, String voiceId) {
         String effectiveVoice = resolve(voiceId);
@@ -73,7 +73,7 @@ public class TtsClipService {
      * @param carNumber car number to announce
      * @param text      announcement text (e.g. "Car 42")
      * @param voiceId   Piper voice model name, or null to use default
-     * @return MinIO public URL, or null if Piper was unavailable
+     * @return storage public URL, or null if Piper was unavailable
      */
     public String generateCarNumberClip(Long raceId, int carNumber, String text, String voiceId) {
         String effectiveVoice = resolve(voiceId);
@@ -89,7 +89,7 @@ public class TtsClipService {
      * @param racerId   database ID of the racer
      * @param text      announcement text (e.g. "Alan Smith has finished")
      * @param voiceId   Piper voice model name, or null to use default
-     * @return MinIO public URL, or null if Piper was unavailable
+     * @return storage public URL, or null if Piper was unavailable
      */
     public String generateFinishClip(Long raceId, Long racerId, String text, String voiceId) {
         String effectiveVoice = resolve(voiceId);
@@ -99,7 +99,7 @@ public class TtsClipService {
     }
 
     /**
-     * Generate a preview clip without storing it in MinIO.
+     * Generate a preview clip without storing it via storage.
      * Returns raw WAV bytes for direct HTTP response.
      *
      * @throws TtsUnavailableException if Piper is unavailable

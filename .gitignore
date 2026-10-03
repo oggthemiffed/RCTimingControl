@@ -26,6 +26,9 @@ Thumbs.db
 # localday: embedded PostgreSQL data directory (real on-disk race-day data, never committed)
 localday/data/
 
+# app: local filesystem object storage (club logos, TTS clips) — see FilesystemObjectStorageService
+app/data/
+
 # Node / frontend
 node_modules/
 frontend/dist/

@@ -52,7 +52,8 @@ make up
 This starts:
 - **PostgreSQL 16** on `localhost:5432` — database `rctiming_dev`, user/pass `rctiming`
 - **Mailpit** on `localhost:1025` (SMTP) / `localhost:8025` (web UI) — catches all outgoing email
-- **MinIO** on `localhost:9000` (S3 API) / `localhost:9001` (console) — object storage for club logos
+
+Club logos and TTS clips are stored on local disk under `storage.local-path` (defaults to `./data/uploads`, overridable via `STORAGE_LOCAL_PATH`) and served back by the app itself at `/storage/**` — no object-storage server to start.
 
 ### 2. Backend
 
@@ -82,7 +83,7 @@ On first run, Flyway applies all migrations and dev seed data automatically:
 - `V14` — entry audit log
 
 **Phase 3 (V15–V16):**
-- `V15` — event track FK, event class racing_class FK, combined race groups, MinIO logo URL
+- `V15` — event track FK, event class racing_class FK, combined race groups, club logo URL
 - `V16` — championships
 
 **Phase 4 (V17–V19):**
