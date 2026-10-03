@@ -62,10 +62,6 @@ public class BumpUpSeedingService {
         // Sort by finalLetter DESC: C before B before A (lowest final first for assignment)
         finals.sort(Comparator.comparing(Race::getFinalLetter).reversed());
 
-        // We assign standings from the bottom (slowest) upward.
-        // standings position pointer: we'll track how many we've assigned
-        int assigned = 0;
-
         // Build assignment list for each final (from lowest to highest letter)
         // Lowest final: positions 1..carsPerFinal = ranks (qualifyingStandings.size()-carsPerFinal+1)..last
         // Higher finals: positions 1..(carsPerFinal-bumpCount) = next block of regular qualifiers
@@ -78,24 +74,43 @@ public class BumpUpSeedingService {
             regularSlots[fi] = isLowestFinal ? carsPerFinal : carsPerFinal - bumpCount;
         }
 
-        // Total regular slots = sum of all regular slots
-        // We assign from bottom of standings upward (lowest final gets the worst qualifiers)
-        int totalRegular = 0;
-        for (int s : regularSlots) totalRegular += s;
+        // Two independent pointers: the lowest final draws its regular slots from the
+        // worst-ranked end of standings; every other ("non-lowest") final draws from the
+        // best-ranked end, processed from the top final downward so the fastest qualifiers
+        // always land in the top final first, not in whichever final happens to be processed
+        // first. (A single bottom-up pointer shared across every final — the original
+        // implementation — silently drops the very top qualifiers once bump reservations
+        // shrink total regular capacity below the qualifying field size.)
+        List<List<Long>> slotEntriesByFinal = new ArrayList<>(finals.size());
+        for (int fi = 0; fi < finals.size(); fi++) {
+            slotEntriesByFinal.add(null);
+        }
 
-        // Start assigning from the bottom of the standings
-        int standingsPtr = qualifyingStandings.size() - 1;
+        int bottomPtr = qualifyingStandings.size() - 1;
+        int lowestSlots = regularSlots[0];
+        List<Long> lowestEntries = new ArrayList<>(lowestSlots);
+        for (int s = 0; s < lowestSlots && bottomPtr >= 0; s++) {
+            lowestEntries.add(0, qualifyingStandings.get(bottomPtr--)); // prepend to reverse order
+        }
+        slotEntriesByFinal.set(0, lowestEntries);
+
+        // Bound the top pass at bottomPtr (its value *after* the bottom pass above already
+        // ran) so the two passes can never claim the same standings entry twice when the
+        // qualifying field is smaller than total regular capacity.
+        int topPtr = 0;
+        for (int fi = finals.size() - 1; fi >= 1; fi--) {
+            int slots = regularSlots[fi];
+            List<Long> entries = new ArrayList<>(slots);
+            for (int s = 0; s < slots && topPtr <= bottomPtr; s++) {
+                entries.add(qualifyingStandings.get(topPtr++));
+            }
+            slotEntriesByFinal.set(fi, entries);
+        }
 
         for (int fi = 0; fi < finals.size(); fi++) {
             Race finalRace = finals.get(fi);
             boolean isLowestFinal = (fi == 0);
-            int slots = regularSlots[fi];
-
-            // Collect regular slot entries (slowest first, then reverse so best qualifier = pos 1)
-            List<Long> slotEntries = new ArrayList<>(slots);
-            for (int s = 0; s < slots && standingsPtr >= 0; s++) {
-                slotEntries.add(0, qualifyingStandings.get(standingsPtr--)); // prepend to reverse order
-            }
+            List<Long> slotEntries = slotEntriesByFinal.get(fi);
 
             // Remove placeholder entries for this final race
             List<RaceEntry> existing = raceEntryRepository.findByRaceIdOrderByGridPosition(finalRace.getId());
@@ -120,7 +135,7 @@ public class BumpUpSeedingService {
                     RaceEntry bumpEntry = new RaceEntry();
                     bumpEntry.setRaceId(finalRace.getId());
                     bumpEntry.setEntryId(0L); // placeholder until applyBumpUpResults fills it
-                    bumpEntry.setGridPosition(slots + 1 + bump);
+                    bumpEntry.setGridPosition(regularSlots[fi] + 1 + bump);
                     bumpEntry.setCarNumber(null);  // bump-up drivers receive car_number after applyBumpUpResults
                     bumpEntry.setBumped(true);
                     raceEntryRepository.save(bumpEntry);

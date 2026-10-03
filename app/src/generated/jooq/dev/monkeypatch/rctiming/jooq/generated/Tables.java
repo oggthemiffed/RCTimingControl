@@ -14,13 +14,20 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipPointsScale;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DecoderLoops;
+import dev.monkeypatch.rctiming.jooq.generated.tables.DeviceLossAudit;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EventOfflineLocks;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EventSnapshotState;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EventSyncGenerations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ForwarderToken;
 import dev.monkeypatch.rctiming.jooq.generated.tables.GoverningBodyAffiliations;
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayInstanceSecrets;
+import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldaySnapshots;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
@@ -104,6 +111,12 @@ public class Tables {
     public static final DecoderLoops DECODER_LOOPS = DecoderLoops.DECODER_LOOPS;
 
     /**
+     * Mandatory audit record for a device-loss declaration (R16) -- an
+     * irreversible, day-affecting action gated to the ADMIN role.
+     */
+    public static final DeviceLossAudit DEVICE_LOSS_AUDIT = DeviceLossAudit.DEVICE_LOSS_AUDIT;
+
+    /**
      * The table <code>public.entries</code>.
      */
     public static final Entries ENTRIES = Entries.ENTRIES;
@@ -117,6 +130,30 @@ public class Tables {
      * The table <code>public.event_classes</code>.
      */
     public static final EventClasses EVENT_CLASSES = EventClasses.EVENT_CLASSES;
+
+    /**
+     * Static open/closed lock for an event handed to the Local Race Day Program
+     * (KD4/R2) -- set at day-open, cleared at day-close once :localday confirms
+     * its own sync is complete. Not a live-monitored lock -- no heartbeat, per
+     * KD4.
+     */
+    public static final EventOfflineLocks EVENT_OFFLINE_LOCKS = EventOfflineLocks.EVENT_OFFLINE_LOCKS;
+
+    /**
+     * R11/R15: the most recently accepted snapshot payload for an event,
+     * verbatim, plus when it arrived -- last_synced_at is what the public
+     * page's "may be delayed" indicator (R15) is computed from.
+     */
+    public static final EventSnapshotState EVENT_SNAPSHOT_STATE = EventSnapshotState.EVENT_SNAPSHOT_STATE;
+
+    /**
+     * Stored generation-per-event for a future unit's snapshot-ingest fencing
+     * (KTD4). Each pre-cache call atomically increments this and hands the new
+     * value to the calling :localday instance as its claimed generation for the
+     * session. The compare-and-reject logic on snapshot ingest itself is a
+     * future unit -- this table only tracks the counter.
+     */
+    public static final EventSyncGenerations EVENT_SYNC_GENERATIONS = EventSyncGenerations.EVENT_SYNC_GENERATIONS;
 
     /**
      * The table <code>public.events</code>.
@@ -137,6 +174,38 @@ public class Tables {
      * The table <code>public.incident_reports</code>.
      */
     public static final IncidentReports INCIDENT_REPORTS = IncidentReports.INCIDENT_REPORTS;
+
+    /**
+     * Day-scoped local login credentials minted at pre-cache time (KTD5) for
+     * officials working an event with the Local Race Day Program. secret_hash
+     * is a BCrypt hash of a randomly generated 6-digit PIN -- the plaintext PIN
+     * is returned once in the pre-cache response and never stored. Distinct
+     * from users.password_hash (the cloud login credential) per KTD5.
+     * Re-calling pre-cache for the same (event, user) replaces the row -- the
+     * previous PIN stops being mintable/re-showable, which is why the unique
+     * index exists.
+     */
+    public static final LocaldayCredentials LOCALDAY_CREDENTIALS = LocaldayCredentials.LOCALDAY_CREDENTIALS;
+
+    /**
+     * Per-day-instance sync-channel secret (KTD9), minted alongside officials'
+     * credentials at pre-cache time, keyed by the calling :localday instance's
+     * own self-generated instance_id (a stable UUID string the local install
+     * generates once and keeps for its lifetime). Machine-to-machine identity
+     * distinct from officials' local session auth (KTD5) -- authenticates a
+     * future snapshot-push channel. invalidated_at is set by a future
+     * device-loss declaration (R16), not used yet.
+     */
+    public static final LocaldayInstanceSecrets LOCALDAY_INSTANCE_SECRETS = LocaldayInstanceSecrets.LOCALDAY_INSTANCE_SECRETS;
+
+    /**
+     * One row per accepted snapshot push (KTD4) -- exists solely to answer
+     * "have we already processed this exact snapshotId for this event"
+     * idempotently. Rejected (superseded) attempts are not recorded here: their
+     * outcome is deterministic and stable for a given generation, so there is
+     * nothing to remember.
+     */
+    public static final LocaldaySnapshots LOCALDAY_SNAPSHOTS = LocaldaySnapshots.LOCALDAY_SNAPSHOTS;
 
     /**
      * The table <code>public.marshal_absences</code>.

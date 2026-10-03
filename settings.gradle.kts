@@ -1,2 +1,2 @@
 rootProject.name = "rctiming"
-include(":app", ":forwarder")
+include(":app", ":forwarder", ":decoder-protocol", ":localday")

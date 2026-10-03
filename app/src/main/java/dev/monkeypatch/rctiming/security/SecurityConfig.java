@@ -36,6 +36,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/results/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/championships/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/about").permitAll()
+                        // Machine auth, not user JWT: SnapshotIngestController verifies the
+                        // per-day-instance secret (KTD9) itself, before its own generation check
+                        // runs — see its class Javadoc.
+                        .requestMatchers(HttpMethod.POST, "/api/v1/localday/events/*/snapshots").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "RACE_DIRECTOR", "REFEREE")
                         .requestMatchers("/ws/timing", "/ws/timing/**").permitAll()
                         .anyRequest().authenticated()

@@ -1,5 +1,7 @@
 # AMB Decoder Protocol Reference
 
+> **Implementation status:** both protocols described below are implemented once, in the shared `decoder-protocol/` module (`Rc4TextParser`, `EpochAnchor`, `SeqGapDetector`, and the P3 binary decoder) — used by both `forwarder/` (cloud path) and `localday/` (Local Race Day Program path). See [architecture.md](architecture.md#local-race-day-program-split-architecture).
+
 ## Overview
 
 AMB/MyLaps RC timing decoders have used two distinct TCP protocols over their hardware lifecycle:

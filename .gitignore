@@ -23,6 +23,9 @@ Thumbs.db
 .env
 .env.local
 
+# localday: embedded PostgreSQL data directory (real on-disk race-day data, never committed)
+localday/data/
+
 # Node / frontend
 node_modules/
 frontend/dist/
@@ -32,7 +35,12 @@ bin/
 # Playwright
 frontend/playwright-report/
 frontend/test-results/
+frontend-local/playwright-report/
+frontend-local/test-results/
 
 # Local-only ops notes (never commit)
 docs/local-*.md
 *.local.md
+
+# Compound Engineering per-machine config
+.compound-engineering/*.local.yaml

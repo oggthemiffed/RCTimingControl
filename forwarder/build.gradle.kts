@@ -15,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.netty:netty-all:4.1.121.Final")
+    implementation(project(":decoder-protocol"))
     implementation("io.grpc:grpc-stub:1.73.0")
     implementation("io.grpc:grpc-protobuf:1.73.0")
     implementation("io.grpc:grpc-netty-shaded:1.73.0")

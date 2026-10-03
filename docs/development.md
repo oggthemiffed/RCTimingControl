@@ -186,6 +186,81 @@ app/src/main/java/dev/monkeypatch/rctiming/
 
 ---
 
+## Local Race Day Program (`localday/` + `frontend-local/`)
+
+An independent application — its own Spring Boot backend and its own React frontend, sharing no code with `app/`/`frontend/` except the pure protocol parser in `decoder-protocol/`. See [architecture.md](architecture.md#local-race-day-program-split-architecture) for the design rationale.
+
+### Quick start
+
+No Docker needed — `localday/` ships an **embedded PostgreSQL** (durable, on-disk, not in-memory) so it can run on a bare laptop with nothing pre-installed beyond Java.
+
+```bash
+# Terminal 1 — backend (embedded Postgres starts automatically; Flyway migrates on boot)
+./gradlew :localday:bootRun
+
+# Terminal 2 — frontend (Vite proxies /api and /ws to localhost:8081)
+cd frontend-local && npm run dev
+```
+
+Open **http://localhost:5173**. The officials' login screen walks you through day setup — pre-cache an event from the cloud (requires `app/` running and reachable), or open offline if this instance already has a usable cache from an earlier pre-cache/open.
+
+The embedded Postgres data directory defaults to `./data/localday-pg` under the module's working directory; override with `LOCALDAY_PG_DATA_DIR`. The decoder host/port default to `localhost:5100` (RC-4 text); override with `LOCALDAY_DECODER_HOST` / `LOCALDAY_DECODER_PORT`.
+
+### Exercising race control without physical hardware
+
+Use the same fake decoder simulator the cloud forwarder uses — it's a plain TCP server that doesn't care which client connects to it:
+
+```bash
+make simulator   # fake decoder on :5100 — see docs/forwarder.md
+```
+
+> **Never run this simulator (or a real decoder) with both `forwarder/` and `localday/` connected to it at once** — see [docs/forwarder.md](forwarder.md#local-race-day-program-exclusivity).
+
+### Module structure
+
+```
+localday/src/main/java/dev/monkeypatch/rctiming/localday/
+├── auth/            # LocalSessionService, LocalCredential — day-scoped picker+PIN login
+├── daylifecycle/    # PreCacheClient, DayLifecycleService — pre-cache pull, open/close
+├── domain/          # CachedEntry, CachedScheduleEntry, CachedRaceEntry, LapPassing (JPA)
+├── race/            # RaceStateMachineService, RoundGeneratorService, BumpUpSeedingService,
+│                    # MarshalAdjustment, RaceResultEntry, RaceControlController
+├── checkin/         # CheckInController, TransponderReassignmentController
+├── boards/          # BoardController — anonymous now/next + results read API
+├── timing/          # LapTimingService, LiveRaceState — in-memory live positions
+├── sync/            # SnapshotPushService, SnapshotQueueRepository — periodic cloud push
+├── config/          # LocalSecurityConfig, WebSocketConfig
+└── testsupport/      # E2eSeedController — e2e-profile-only Playwright fixture seeding
+```
+
+### Running its tests
+
+```bash
+./gradlew :decoder-protocol:test   # shared protocol parser — no infra needed
+./gradlew :localday:test           # unit + integration — embedded Postgres, no Docker
+cd frontend-local && npm test      # Vitest
+```
+
+See [testing.md](testing.md#local-race-day-program-localday--frontend-local--decoder-protocol) for the full matrix, including the Playwright e2e suite.
+
+### The `e2e` Spring profile
+
+`frontend-local/e2e/` is a Playwright suite that drives a real `:localday` instance end to end. It needs a day already open with a seeded official and race schedule, but the whole point of these tests is proving the system works with **zero cloud connectivity** — so rather than standing up `app/` just to fake a pre-cache, the suite seeds `:localday`'s database directly via a test-only endpoint:
+
+```bash
+./gradlew :localday:bootRun --args="--spring.profiles.active=e2e"
+```
+
+Under the `e2e` profile only, `E2eSeedController` registers `POST /api/v1/test-support/seed` (permitted unauthenticated in `LocalSecurityConfig`, same way — this endpoint and its permission do not exist at all outside this profile). It's idempotent: each call clears and re-inserts a fresh day-open + official + two-round race schedule, so several spec files can share one running instance. See `localday/src/main/java/.../testsupport/E2eSeedController.java` for exactly what it seeds.
+
+```bash
+cd frontend-local
+npx playwright install chromium   # once
+npm run test:e2e                  # BASE_URL defaults to http://localhost:5173
+```
+
+---
+
 ## Running tests
 
 ### Unit tests (no Docker)
@@ -288,8 +363,8 @@ Password reset emails are caught by Mailpit. Open `http://localhost:8025` to vie
 1. Start the dev environment: `make dev-start`
 2. Implement the change, following the patterns in `CLAUDE.md` (domain module for writes, jOOQ query module for reads, no cross-module Hibernate)
 3. If adding a database column or table, add a Flyway migration (`V{next}__description.sql`) and re-run `./gradlew :app:generateJooq`
-4. Write or update tests — backend integration tests in `app/src/test/`, frontend unit tests in `frontend/src/`
-5. Run `make test-fast` (backend) and `npm test` in `frontend/` before pushing
+4. Write or update tests — backend integration tests in `app/src/test/`, frontend unit tests in `frontend/src/` (or `localday/src/test/` and `frontend-local/src/` for the Local Race Day Program)
+5. Run `make test-fast` (backend) and `npm test` in `frontend/` before pushing — add `./gradlew :localday:test :decoder-protocol:test` and `npm test` in `frontend-local/` if you touched either of those modules
 
 ### Schema changes
 
@@ -318,5 +393,6 @@ Key docs to reference in a session:
 - `CLAUDE.md` — stack, architecture, module boundaries, rules
 - `docs/PROJECT.md` — what the system is and its requirements
 - `docs/REQUIREMENTS.md` — full requirement list (AUTH, RACER, EVENT, etc.)
-- `docs/architecture.md` — deeper architecture notes
+- `docs/architecture.md` — deeper architecture notes, including the Local Race Day Program split
+- `docs/plans/2026-08-06-001-feat-offline-race-day-resilience-split-plan.md` — the Local Race Day Program's requirements, decisions, and implementation units
 - `.planning/phases/` — historical decision log per phase (useful if you hit an unexpected behaviour)

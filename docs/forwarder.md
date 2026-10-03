@@ -2,6 +2,14 @@
 
 The forwarder is a separate Java process that connects to the AMB/MyLaps decoder hardware over TCP and streams timing data to the cloud app via gRPC. In development you use the built-in **fake decoder simulator** instead of real hardware.
 
+> **This guide is about `forwarder/` (the cloud path).** The **Local Race Day Program** (`localday/`) has its own, independent decoder client built on the same shared `decoder-protocol/` parser — see [architecture.md](architecture.md#local-race-day-program-split-architecture). The simulator described below works for either one.
+
+---
+
+## Local Race Day Program exclusivity
+
+**Never run `forwarder/` and `localday/` connected to the same decoder (or the same simulator instance) at the same time.** Both are passive TCP clients that dial out to the decoder — the RC-4 text protocol's tolerance for multiple simultaneous client connections is unconfirmed, so running both risks one silently starving the other of PASSING records. When migrating a venue from the forwarder/cloud setup to the Local Race Day Program, disable or uninstall the forwarder first (or vice versa, if rolling back). This is operator discipline — neither process technically detects or prevents the other connecting to the same port.
+
 ---
 
 ## How it fits together

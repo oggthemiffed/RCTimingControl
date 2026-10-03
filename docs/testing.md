@@ -35,6 +35,51 @@ npm run lint          # ESLint
 
 ---
 
+## Local Race Day Program (`localday/` + `frontend-local/` + `decoder-protocol/`)
+
+Independent of the suites above — no Docker required for any of these (no Testcontainers; `localday/` uses an embedded PostgreSQL).
+
+```bash
+# Shared protocol parser — used by both forwarder/ and localday/
+./gradlew :decoder-protocol:test
+
+# Local Race Day Program backend — unit + integration
+./gradlew :localday:test
+
+# Its frontend — Vitest
+cd frontend-local && npm test
+npm run build   # Type-check + bundle
+npm run lint    # ESLint
+```
+
+### End-to-end (Playwright)
+
+`frontend-local/e2e/` drives a real `:localday` instance through the full offline workflow — login, grid call, start, marshal adjustments, stop, advance-round, and the spectator boards — plus the auth-guard checks that an unauthenticated device cannot perform a race-control write. It never talks to the cloud: fixture data is seeded directly into `:localday`'s database via a test-only endpoint that only exists under the `e2e` Spring profile (see [development.md](development.md#the-e2e-spring-profile)).
+
+```bash
+# Terminal 1
+./gradlew :localday:bootRun --args="--spring.profiles.active=e2e"
+
+# Terminal 2
+cd frontend-local
+npx playwright install chromium   # once
+npm run dev -- --port 5173
+
+# Terminal 3
+cd frontend-local && npm run test:e2e
+```
+
+Runs with a single worker (`fullyParallel: false`, `workers: 1` in `playwright.config.ts`) — the backend is one shared, stateful instance (one open day, one race schedule), so specs run sequentially rather than racing each other's state. This mirrors `test-e2e-localday` in `.github/workflows/ci.yml`, which runs the same three steps against a CI-started `:localday` and `frontend-local` dev server.
+
+### Manual checks not yet automated
+
+Two checks from the Local Race Day Program's plan remain manual (the plan's own Verification Contract calls both "automated where possible, manual otherwise" or explicitly manual):
+
+- **Embedded-Postgres durability under a hard kill.** `RestartPersistenceIT` (in `:localday:test`) proves data survives a graceful restart against the same data directory. Proving survival after `pg_ctl stop -m immediate` (or killing the JVM) mid-write or mid-migration is not yet scripted — do this by hand against a throwaway `LOCALDAY_PG_DATA_DIR` before a high-stakes event if you've changed anything in the persistence path.
+- **Decoder ingestion against the simulator.** `./gradlew :forwarder:runSimulator --args="--mode=generative --port=5100 ..."` (same simulator the forwarder uses — see [docs/forwarder.md](forwarder.md)) against a running `:localday` confirms RC-4 lines parse and lap data lands without exceptions. Not wired into CI; run it manually after touching `decoder-protocol/` or `localday/.../timing/`.
+
+---
+
 ## Starting the full dev environment
 
 Always use the `dev` profile — it loads the datasource config from `application-dev.yml`. Running without it causes an immediate "Failed to configure a DataSource" error.

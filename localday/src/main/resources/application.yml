@@ -1,0 +1,48 @@
+# localday: the offline race-day application. Runs standalone on a venue laptop with no
+# internet connectivity and no dependency on the app/ module's database or migrations.
+server:
+  port: 8081
+
+spring:
+  application:
+    name: localday
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  lifecycle:
+    # Generous shutdown timeout — the embedded PostgreSQL bean needs time to stop cleanly
+    # (pg_ctl stop) before the JVM exits, or a laptop lid-close could still corrupt data.
+    timeout-per-shutdown-phase: 30s
+
+localday:
+  datasource:
+    embedded-postgres:
+      # Real on-disk path under the module's runtime working directory — NOT tmpfs/in-memory.
+      # Durability across an unclean shutdown is the entire reason embedded Postgres was chosen
+      # over H2 for this module; an in-memory data directory would defeat that purpose.
+      data-directory: ${LOCALDAY_PG_DATA_DIR:./data/localday-pg}
+  decoder:
+    # RC-4 text protocol (firmware < 4.5) — port 5100 is the confirmed club-hardware default,
+    # matching forwarder.properties' forwarder.decoder.port default.
+    host: ${LOCALDAY_DECODER_HOST:localhost}
+    port: ${LOCALDAY_DECODER_PORT:5100}
+  # Extra CSP connect-src origin for the future cloud-sync channel (U6 local auth's
+  # LocalSecurityConfig). Empty by default — no additional origin is appended to the CSP until a
+  # later unit actually wires up cloud sync.
+  cloud-sync-origin: ${LOCALDAY_CLOUD_SYNC_ORIGIN:}
+  cloud:
+    # Base URL of the cloud (:app) module that PreCacheClient (U10) calls for login, pre-cache,
+    # and day-lifecycle open/close. Defaults to :app's local dev port for a same-machine setup;
+    # override for a real venue deployment where the cloud runs elsewhere.
+    base-url: ${LOCALDAY_CLOUD_BASE_URL:http://localhost:8080}
+  sync:
+    # KTD8: periodic snapshot push interval to the cloud while connected, plus immediate pushes
+    # on race-state transitions and check-ins (SnapshotPushService, U11).
+    push-interval-seconds: ${LOCALDAY_SYNC_PUSH_INTERVAL_SECONDS:20}
+    # Backoff cap for repeated push failures (unreachable cloud, or a rejected snapshot) — avoids
+    # hammering an unreachable cloud every tick during a sustained outage.
+    max-backoff-seconds: ${LOCALDAY_SYNC_MAX_BACKOFF_SECONDS:300}
