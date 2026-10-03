@@ -1,87 +1,106 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import DecoderConfigStep from '../steps/DecoderConfigStep';
-import * as raceControlApi from '@/lib/raceControlApi';
-
-vi.mock('@/lib/raceControlApi', () => ({
-  fetchDecoderStatus: vi.fn(),
-}));
+import * as setupApi from '@/lib/setupApi';
 
 vi.mock('@/lib/setupApi', () => ({
-  getDecoderConfig: vi.fn().mockResolvedValue({ decoderHost: null, decoderPort: null, decoderProtocol: null }),
+  getDecoderConfig: vi.fn(),
   updateDecoderConfig: vi.fn(),
+  testDecoderConfig: vi.fn(),
 }));
 
-function makeClient() {
-  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
-}
-
 function renderStep() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <QueryClientProvider client={makeClient()}>
+    <QueryClientProvider client={client}>
       <DecoderConfigStep onNext={vi.fn()} onBack={vi.fn()} />
     </QueryClientProvider>,
   );
 }
 
+function enterHost(host: string) {
+  fireEvent.change(screen.getByPlaceholderText('e.g. 192.168.1.50'), { target: { value: host } });
+}
+
 beforeEach(() => {
-  vi.mocked(raceControlApi.fetchDecoderStatus).mockResolvedValue({ decoderState: 'DISCONNECTED' });
-});
-
-afterEach(() => {
   vi.clearAllMocks();
-  vi.useRealTimers();
+  vi.mocked(setupApi.getDecoderConfig).mockResolvedValue({
+    decoderHost: null,
+    decoderPort: null,
+    decoderProtocol: null,
+  });
 });
 
-describe('DecoderConfigStep', () => {
-  it('Test Connection polls every 2s up to 15 attempts (30s timeout per D-17)', async () => {
-    vi.useFakeTimers();
-
+describe('DecoderConfigStep connection test', () => {
+  it('tests the host, port and protocol on the form and shows Connected', async () => {
+    vi.mocked(setupApi.testDecoderConfig).mockResolvedValue({
+      ok: true,
+      message: 'Decoder found at 192.168.1.50:5100.',
+    });
     renderStep();
 
-    await act(async () => {
-      fireEvent.click(screen.getByText('Test Connection'));
+    enterHost('192.168.1.50');
+    fireEvent.click(screen.getByText('Test Connection'));
+
+    await waitFor(() => expect(screen.getByText('Connected')).toBeInTheDocument());
+    expect(setupApi.testDecoderConfig).toHaveBeenCalledWith({
+      decoderHost: '192.168.1.50',
+      decoderPort: 5100,
+      decoderProtocol: 'RC4',
     });
-
-    for (let i = 0; i < 16; i++) {
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(2000);
-      });
-    }
-
-    const callCount = vi.mocked(raceControlApi.fetchDecoderStatus).mock.calls.length;
-    expect(callCount).toBeGreaterThanOrEqual(14);
-    expect(callCount).toBeLessThanOrEqual(16);
+    expect(screen.getByText('Decoder found at 192.168.1.50:5100.')).toBeInTheDocument();
   });
 
-  it('shows Connected when the decoder reports CONNECTED, with no forwarder involved', async () => {
-    vi.mocked(raceControlApi.fetchDecoderStatus).mockResolvedValue({ decoderState: 'CONNECTED' });
+  it('shows the reason when the decoder is not found', async () => {
+    vi.mocked(setupApi.testDecoderConfig).mockResolvedValue({
+      ok: false,
+      message: 'Could not connect to 192.168.1.50:5100. Check the address and that the decoder is on.',
+    });
+    renderStep();
 
+    enterHost('192.168.1.50');
+    fireEvent.click(screen.getByText('Test Connection'));
+
+    await waitFor(() =>
+      expect(screen.getByText(/Could not connect to 192.168.1.50:5100/)).toBeInTheDocument(),
+    );
+    expect(screen.queryByText('Connected')).not.toBeInTheDocument();
+  });
+
+  it('shows a fallback message when the test request itself fails', async () => {
+    vi.mocked(setupApi.testDecoderConfig).mockRejectedValue(new Error('500'));
+    renderStep();
+
+    enterHost('192.168.1.50');
+    fireEvent.click(screen.getByText('Test Connection'));
+
+    await waitFor(() =>
+      expect(screen.getByText('Could not run the connection test. Try again.')).toBeInTheDocument(),
+    );
+  });
+
+  it('does not call the server when the host is empty', async () => {
     renderStep();
 
     fireEvent.click(screen.getByText('Test Connection'));
 
-    await waitFor(() => expect(screen.getByText('Connected')).toBeInTheDocument());
-    expect(screen.getByText(/Connection confirmed/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Decoder host required')).toBeInTheDocument());
+    expect(setupApi.testDecoderConfig).not.toHaveBeenCalled();
   });
 
-  it('shows timeout alert after 15 failed attempts', async () => {
-    vi.useFakeTimers();
-
+  it('keeps a saved non-standard port when the form loads', async () => {
+    vi.mocked(setupApi.getDecoderConfig).mockResolvedValue({
+      decoderHost: '10.0.0.5',
+      decoderPort: 5403,
+      decoderProtocol: 'RC4',
+    });
     renderStep();
 
-    await act(async () => {
-      fireEvent.click(screen.getByText('Test Connection'));
-    });
-
-    for (let i = 0; i < 16; i++) {
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(2000);
-      });
-    }
-
-    expect(screen.getByText(/Decoder not yet connected/i)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByDisplayValue('10.0.0.5')).toBeInTheDocument(),
+    );
+    expect(screen.getByDisplayValue('5403')).toBeInTheDocument();
   });
 
   it('has no forwarder token or forwarder.env download', () => {

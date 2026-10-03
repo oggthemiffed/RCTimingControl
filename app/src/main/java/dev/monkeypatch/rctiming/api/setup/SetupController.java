@@ -11,12 +11,14 @@ import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.domain.club.DecoderSettings;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.UserService;
+import dev.monkeypatch.rctiming.timing.DecoderProbe;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,13 +35,16 @@ public class SetupController {
     private final SetupService setupService;
     private final ClubProfileService clubProfileService;
     private final UserService userService;
+    private final DecoderProbe decoderProbe;
 
     public SetupController(SetupService setupService,
                            ClubProfileService clubProfileService,
-                           UserService userService) {
+                           UserService userService,
+                           DecoderProbe decoderProbe) {
         this.setupService = setupService;
         this.clubProfileService = clubProfileService;
         this.userService = userService;
+        this.decoderProbe = decoderProbe;
     }
 
     @GetMapping("/status")
@@ -67,6 +72,13 @@ public class SetupController {
     public DecoderConfigDto getDecoderConfig() {
         DecoderSettings settings = clubProfileService.getDecoderSettings();
         return new DecoderConfigDto(settings.host(), settings.port(), settings.protocol());
+    }
+
+    /** Tests the decoder address on the form. Does not save it or change the live listener. */
+    @PostMapping("/decoder-config/test")
+    @PreAuthorize("hasRole('ADMIN')")
+    public DecoderProbe.Result testDecoderConfig(@RequestBody @Valid DecoderConfigUpdateRequest req) {
+        return decoderProbe.probe(req.decoderHost(), req.decoderPort(), req.decoderProtocol());
     }
 
     @PatchMapping("/decoder-config")

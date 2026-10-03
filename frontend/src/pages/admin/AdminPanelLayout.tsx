@@ -31,9 +31,13 @@ const eventsGroup = [
 
 const operationsGroup = [
   { to: '/admin/race-control', label: 'Race Control', Icon: Flag },
-  { to: '/admin/decoder', label: 'Decoder', Icon: Radio },
   { to: '/admin/racers', label: 'Racers', Icon: Users },
   { to: '/setup', label: 'Setup Wizard', Icon: Wand2 },
+] as const;
+
+// Decoder settings are admin-only, so this item is shown only to ADMIN users.
+const adminOnlyOperations = [
+  { to: '/admin/decoder', label: 'Decoder', Icon: Radio },
 ] as const;
 
 const configGroup = [
@@ -110,6 +114,10 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         {operationsGroup.map(({ to, label, Icon }) => (
           <NavItem key={to} to={to} label={label} Icon={Icon} onClick={onNavClick} />
         ))}
+        {user?.roles.includes('ADMIN') &&
+          adminOnlyOperations.map(({ to, label, Icon }) => (
+            <NavItem key={to} to={to} label={label} Icon={Icon} onClick={onNavClick} />
+          ))}
 
         <div className="pt-4">
           <Separator />

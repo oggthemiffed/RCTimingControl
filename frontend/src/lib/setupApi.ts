@@ -71,6 +71,14 @@ export async function getDecoderConfig(): Promise<DecoderConfigDto> {
   return data;
 }
 
+export type DecoderTestResult = { ok: boolean; message: string };
+
+/** Tests a decoder address without saving it or changing the live listener. */
+export async function testDecoderConfig(req: DecoderConfigUpdateRequest): Promise<DecoderTestResult> {
+  const { data } = await api.post<DecoderTestResult>('/api/v1/setup/decoder-config/test', req);
+  return data;
+}
+
 export async function updateDecoderConfig(req: DecoderConfigUpdateRequest): Promise<SetupProgressDto> {
   const { data } = await api.patch<SetupProgressDto>('/api/v1/setup/decoder-config', req);
   return data;
