@@ -32,8 +32,11 @@ describe('AdminPanelLayout (Wave 0 stub — enabled in Plan 04)', () => {
       </MemoryRouter>,
     );
 
-    const link = screen.getByRole('link', { name: /Setup Wizard/i });
-    expect(link).toBeTruthy();
-    expect(link.getAttribute('href')).toMatch(/\/setup$/);
+    // The desktop sidebar and the mobile shortcut bar both link to the wizard.
+    const links = screen.getAllByRole('link', { name: /Setup Wizard/i });
+    expect(links.length).toBeGreaterThan(0);
+    for (const link of links) {
+      expect(link.getAttribute('href')).toMatch(/\/setup$/);
+    }
   });
 });

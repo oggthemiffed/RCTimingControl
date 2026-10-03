@@ -87,7 +87,7 @@ const router = createBrowserRouter([
           { path: 'formats', element: <FormatsPage /> },
           { path: 'categories', element: <CarTagCategoriesPage /> },
           { path: 'race-control', element: <RaceControlSelectPage /> },
-          { path: 'decoder', element: <DecoderSettingsPage /> },
+          { path: 'decoder', element: <ProtectedRoute roles={['ADMIN']}><DecoderSettingsPage /></ProtectedRoute> },
           { path: 'audio', element: <AdminAudioSettingsPage /> },
           { path: 'racers', element: <AdminRacersListPage /> },
           { path: 'racers/:userId', element: <AdminRacerDetailPage /> },

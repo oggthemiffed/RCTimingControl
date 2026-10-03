@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,11 +23,15 @@ import {
   FormControl,
   FormMessage,
 } from '@/components/ui/form';
-import { fetchDecoderStatus } from '@/lib/raceControlApi';
-import { getDecoderConfig, updateDecoderConfig } from '@/lib/setupApi';
+import {
+  getDecoderConfig,
+  testDecoderConfig,
+  updateDecoderConfig,
+  type DecoderConfigUpdateRequest,
+  type DecoderTestResult,
+} from '@/lib/setupApi';
 
 const PORT_DEFAULTS: Record<string, number> = { RC4: 5100, P3: 5403 };
-const MAX_ATTEMPTS = 15;
 
 const schema = z.object({
   decoderHost: z.string().min(1, 'Decoder host required').max(255),
@@ -69,7 +73,8 @@ export function DecoderSettingsForm({ onSaved, onBack, onSkip, saveLabel = 'Save
     }
   }, [watchedProtocol, form]);
 
-  // Pre-fill from the saved settings. A saved port is kept rather than replaced by the protocol default.
+  // Pre-fill from the saved settings. A saved port counts as user-edited only when it differs from
+  // the standard port for its protocol. Otherwise switching protocol still moves the port.
   const configQuery = useQuery({
     queryKey: ['decoder-config'],
     queryFn: getDecoderConfig,
@@ -78,7 +83,7 @@ export function DecoderSettingsForm({ onSaved, onBack, onSkip, saveLabel = 'Save
   useEffect(() => {
     const saved = configQuery.data;
     if (saved?.decoderHost && saved.decoderPort && saved.decoderProtocol) {
-      userEditedPortRef.current = true;
+      userEditedPortRef.current = saved.decoderPort !== PORT_DEFAULTS[saved.decoderProtocol];
       form.reset({
         decoderHost: saved.decoderHost,
         decoderPort: saved.decoderPort,
@@ -87,42 +92,24 @@ export function DecoderSettingsForm({ onSaved, onBack, onSkip, saveLabel = 'Save
     }
   }, [configQuery.data, form]);
 
-  // ── Test Connection polling ────────────────────────────────────────────────
-  const [polling, setPolling] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const [testResult, setTestResult] = useState<'idle' | 'connected' | 'timeout'>('idle');
+  // ── Test Connection ───────────────────────────────────────────────────────
+  // Tests the values on the form, not the saved listener. The server opens its own connection.
+  const [testResult, setTestResult] = useState<DecoderTestResult | null>(null);
 
-  const statusQuery = useQuery({
-    queryKey: ['decoder-status-test'],
-    queryFn: fetchDecoderStatus,
-    enabled: polling && attempts < MAX_ATTEMPTS,
-    refetchInterval: polling && attempts < MAX_ATTEMPTS ? 2000 : false,
-    staleTime: 0,
+  const testMutation = useMutation({
+    mutationFn: (req: DecoderConfigUpdateRequest) => testDecoderConfig(req),
+    onMutate: () => setTestResult(null),
+    onSuccess: (result) => setTestResult(result),
+    onError: () => setTestResult({ ok: false, message: 'Could not run the connection test. Try again.' }),
   });
 
-  // dataUpdatedAt changes on every successful fetch (even when structural data is unchanged),
-  // so this fires reliably once per refetch cycle regardless of TanStack Query's structural sharing.
-  useEffect(() => {
-    if (!polling || statusQuery.dataUpdatedAt === 0) return;
-    if (statusQuery.data?.decoderState === 'CONNECTED') {
-      setTestResult('connected');
-      setPolling(false);
-    } else {
-      setAttempts(a => {
-        const next = a + 1;
-        if (next >= MAX_ATTEMPTS) {
-          setTestResult('timeout');
-          setPolling(false);
-        }
-        return next;
-      });
-    }
-  }, [statusQuery.dataUpdatedAt, polling]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const onTestConnection = () => {
-    setAttempts(0);
-    setTestResult('idle');
-    setPolling(true);
+    const parsed = schema.safeParse(form.getValues());
+    if (!parsed.success) {
+      void form.trigger();
+      return;
+    }
+    testMutation.mutate(parsed.data);
   };
 
   // ── Save ───────────────────────────────────────────────────────────────────
@@ -204,23 +191,26 @@ export function DecoderSettingsForm({ onSaved, onBack, onSkip, saveLabel = 'Save
 
         {/* Test Connection */}
         <div className="space-y-2">
-          <Button type="button" variant="outline" onClick={onTestConnection} disabled={polling}>
-            {polling ? 'Testing…' : 'Test Connection'}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onTestConnection}
+            disabled={testMutation.isPending}
+          >
+            {testMutation.isPending ? 'Testing… (up to 8 s)' : 'Test Connection'}
           </Button>
-          {testResult === 'connected' && (
+          {testResult?.ok && (
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-[var(--flag-green)] border-[var(--flag-green)]">
                 Connected
               </Badge>
-              <span className="text-sm text-muted-foreground">Connection confirmed. You can proceed.</span>
+              <span className="text-sm text-muted-foreground">{testResult.message}</span>
             </div>
           )}
-          {testResult === 'timeout' && (
+          {testResult && !testResult.ok && (
             <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50 border">
               <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
-              <p className="text-sm">
-                Decoder not yet connected. Check the decoder address and that the decoder is powered on.
-              </p>
+              <p className="text-sm">{testResult.message}</p>
             </div>
           )}
         </div>
