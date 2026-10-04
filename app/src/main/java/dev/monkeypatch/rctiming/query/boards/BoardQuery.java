@@ -19,7 +19,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Races.RACES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
 
 /**
- * jOOQ read side of the spectator boards (L12, ported from localday's BoardController).
+ * jOOQ read side of the spectator boards (L12).
  * Everything is scoped to one event, which is the one asked for or, by default, the event
  * that is racing now.
  */

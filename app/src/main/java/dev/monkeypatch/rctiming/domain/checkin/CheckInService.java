@@ -10,7 +10,7 @@ import java.time.Instant;
 import java.util.Objects;
 
 /**
- * Check-in at the desk on the day (L11, ported from localday's CheckInService).
+ * Check-in at the desk on the day (L11).
  * Check-in here is authoritative; RaceHub's arrival mark is never changed by it.
  */
 @Service

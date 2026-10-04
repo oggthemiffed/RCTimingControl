@@ -1,4 +1,4 @@
-// Manual roster search (L11, ported from frontend-local), shared by CheckInDesk (fallback for
+// Manual roster search (L11), shared by CheckInDesk (fallback for
 // unmatched scans, and a lookup path of its own) and TransponderSwap (finding the entry).
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';

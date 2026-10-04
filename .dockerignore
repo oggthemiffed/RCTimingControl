@@ -10,11 +10,8 @@
 app/build/
 decoder-simulator/build/
 decoder-protocol/build/
-localday/build/
 buildSrc/build/
 **/.gradle/
 **/node_modules/
 frontend/dist/
-frontend-local/dist/
-localday/data/
 app/data/

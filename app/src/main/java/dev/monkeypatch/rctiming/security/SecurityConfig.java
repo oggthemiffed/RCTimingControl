@@ -40,10 +40,6 @@ public class SecurityConfig {
                         // Club logos and TTS clips are public content served from local disk —
                         // see FilesystemObjectStorageService / StaticStorageConfig.
                         .requestMatchers(HttpMethod.GET, "/storage/**").permitAll()
-                        // Machine auth, not user JWT: SnapshotIngestController verifies the
-                        // per-day-instance secret (KTD9) itself, before its own generation check
-                        // runs — see its class Javadoc.
-                        .requestMatchers(HttpMethod.POST, "/api/v1/localday/events/*/snapshots").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "RACE_DIRECTOR", "REFEREE")
                         .requestMatchers("/ws/timing", "/ws/timing/**").permitAll()
                         // Only officials sign in (L10, #18)

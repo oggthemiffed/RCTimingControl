@@ -17,26 +17,6 @@ function entryAvailabilityBadge(availability: EventScheduleDto['entryAvailabilit
   }
 }
 
-// R15/R17: only rendered for an event that has synced via the Local Race Day Program at least
-// once (lastSyncedAt !== null) — an event never run offline has nothing to say here.
-function syncStatusBadges(event: EventScheduleDto) {
-  if (event.lastSyncedAt === null && !event.incompleteData) {
-    return null;
-  }
-  return (
-    <>
-      {event.syncDelayed && (
-        <Badge variant="secondary" title={`Last synced ${new Date(event.lastSyncedAt!).toLocaleString()}`}>
-          Live data may be delayed
-        </Badge>
-      )}
-      {event.incompleteData && (
-        <Badge variant="destructive">Incomplete data — device loss declared</Badge>
-      )}
-    </>
-  );
-}
-
 export default function EventSchedulePage() {
   const { data: events, isLoading, isError } = useQuery({
     queryKey: ['public', 'events'],
@@ -87,9 +67,8 @@ export default function EventSchedulePage() {
                   )}
                 </p>
               </div>
-              <div className="flex-shrink-0 flex flex-col items-end gap-1">
+              <div className="flex-shrink-0">
                 {entryAvailabilityBadge(event.entryAvailability)}
-                {syncStatusBadges(event)}
               </div>
             </div>
 

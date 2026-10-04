@@ -4,13 +4,11 @@ RCTC reads live laps straight from the AMB/MyLaps decoder over TCP. There is no 
 
 In development you use the built-in **fake decoder simulator** in place of hardware.
 
-> **Local Race Day Program:** `localday/` has its own decoder client built on the same shared `decoder-protocol/` parser. See [architecture.md](architecture.md#local-race-day-program-split-architecture).
-
 ---
 
 ## Never connect two timing programs to one decoder
 
-**Never run RCTC and `localday/` connected to the same decoder (or the same simulator instance) at the same time.** Both dial out to the decoder's TCP port. The RC-4 text protocol's tolerance for several clients at once is unconfirmed, so one may silently stop receiving PASSING records. Neither program can detect the other. This is operator discipline.
+**Never connect RCTC and another timing program (such as RCResults) to the same decoder, or the same simulator instance, at the same time.** Both dial out to the decoder's TCP port. The RC-4 text protocol's tolerance for several clients at once is unconfirmed, so one may silently stop receiving PASSING records. Neither program can detect the other. This is operator discipline.
 
 ---
 

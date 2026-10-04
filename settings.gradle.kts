@@ -1,2 +1,2 @@
 rootProject.name = "rctiming"
-include(":app", ":decoder-protocol", ":decoder-simulator", ":localday")
+include(":app", ":decoder-protocol", ":decoder-simulator")

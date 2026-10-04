@@ -84,21 +84,17 @@ flowchart TD
 
 ## CI pipeline
 
-Five jobs run on every push and pull request:
+Three jobs run on every push and pull request:
 
 ```mermaid
 flowchart LR
-    Push([Push / PR]) --> B[test-backend\nGradle · Java 21\napp + decoder-simulator + decoder-protocol + localday]
+    Push([Push / PR]) --> B[test-backend\nGradle · Java 21\napp + decoder-simulator + decoder-protocol]
     Push --> C[test-frontend\nNode 20\nVitest]
     Push --> D[test-e2e\nDocker trial stack\nPlaywright · Chromium]
-    Push --> F2[test-frontend-local\nNode 20\nVitest]
-    Push --> D2[test-e2e-localday\n:localday e2e profile\nPlaywright · Chromium]
 
     B --> E{All green?}
     C --> E
     D --> E
-    F2 --> E
-    D2 --> E
 
     E -- Yes --> F([Safe to merge])
     E -- No --> G([Fix before merging])
@@ -106,13 +102,11 @@ flowchart LR
 
 | Job | What it tests | Approx time |
 |-----|--------------|-------------|
-| `test-backend` | JUnit 5 + Testcontainers — cloud API/domain/timing, plus `decoder-simulator`, `decoder-protocol`, and `localday` (the latter two need no Docker — `localday` uses an embedded Postgres) | 3–6 min |
+| `test-backend` | JUnit 5 + Testcontainers — cloud API/domain/timing, plus `decoder-simulator` and `decoder-protocol` (the latter needs no Docker) | 3–6 min |
 | `test-frontend` | Vitest — cloud React components, hooks, utilities | < 1 min |
 | `test-e2e` | Playwright — full Docker trial stack, 13 smoke tests | 8–12 min |
-| `test-frontend-local` | Vitest — Local Race Day Program React components | < 1 min |
-| `test-e2e-localday` | Playwright against a live `:localday` (`e2e` profile) + `frontend-local` dev server — full offline race-control flow and auth-guard checks | 2–4 min |
 
-Playwright reports are uploaded as a GitHub Actions artifact on every run (retained 14 days) — `playwright-report` for the cloud trial stack, `playwright-report-localday` for the Local Race Day Program.
+Playwright reports are uploaded as a GitHub Actions artifact on every run (retained 14 days) as `playwright-report`.
 
 ---
 
@@ -124,7 +118,7 @@ To enforce this workflow automatically, enable branch protection on `main`:
 2. Click **Add rule** → Branch name pattern: `main`
 3. Enable:
    - **Require a pull request before merging**
-   - **Require status checks to pass** → select `test-backend`, `test-frontend`, `test-e2e`, `test-frontend-local`, `test-e2e-localday`
+   - **Require status checks to pass** → select `test-backend`, `test-frontend`, `test-e2e`
    - **Require branches to be up to date before merging**
 4. Save
 
@@ -138,21 +132,16 @@ This blocks any direct push to `main` and prevents merging a PR with failing CI.
 # Backend tests (requires Docker for Testcontainers)
 ./gradlew :app:test :decoder-simulator:test
 
-# Local Race Day Program backend tests (no Docker — embedded Postgres)
-./gradlew :decoder-protocol:test :localday:test
+# Decoder protocol parser tests (no Docker)
+./gradlew :decoder-protocol:test
 
 # Frontend unit tests
 cd frontend && npm test
-cd frontend-local && npm test
 
-# E2E tests — cloud (requires the trial stack to be running on localhost)
+# E2E tests (requires the trial stack to be running on localhost)
 cp .env.example .env
 docker compose -f docker-compose.trial.yml up -d
 cd frontend && npm run test:e2e
-
-# E2E tests — Local Race Day Program (requires :localday running with --spring.profiles.active=e2e,
-# and frontend-local's dev server running — see docs/development.md and docs/testing.md)
-cd frontend-local && npm run test:e2e
 
 # Interactive Playwright UI (great for writing new tests)
 cd frontend && npm run test:e2e:ui

@@ -104,9 +104,14 @@ class AnonymousLiveTimingIT extends AbstractIntegrationTest {
         assertThat(rows).as("live timing frame for an anonymous subscriber").isNotNull();
         assertThat(rows).extracting(r -> r.get("driverName")).contains(driver);
 
-        liveTimingHub.broadcastStateChange(race.getId(), RaceStatus.STOPPED);
-        Map change = (Map) state.poll(5, TimeUnit.SECONDS);
-        assertThat(change).isNotNull();
+        // The broker may register SUBSCRIBEs out of order, so the state subscription can still be
+        // settling after the first timing frame lands: keep broadcasting until one arrives
+        Map change = null;
+        for (int i = 0; i < 25 && change == null; i++) {
+            liveTimingHub.broadcastStateChange(race.getId(), RaceStatus.STOPPED);
+            change = (Map) state.poll(200, TimeUnit.MILLISECONDS);
+        }
+        assertThat(change).as("race state frame for an anonymous subscriber").isNotNull();
         assertThat(change.get("newStatus")).isEqualTo("STOPPED");
     }
 

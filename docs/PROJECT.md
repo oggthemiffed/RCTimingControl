@@ -4,7 +4,7 @@
 
 A web-based RC club management and race timing system built to replace RCResults. It gives racers a self-service portal to manage their profiles, cars, and transponders, and lets them enter events online. Race officials run events and championships from a browser-based control client that connects to AMB/MyLaps decoders over TCP, with live results visible to anyone on the network.
 
-The system is split into two independent products: the **cloud app** (`app/`, `frontend/`) handles event/championship organization, registration, and reporting; the **Local Race Day Program** (`localday/`, `frontend-local/`) is a separate, independent web application that becomes sole authority for running an event day once an official opens it, with zero cloud dependency. See [architecture.md](architecture.md#local-race-day-program-split-architecture).
+Booking and event entry are moving to RaceHub, and RCTC is becoming timing and race control that runs on a laptop at the venue (the local-only timing plan, tracking issue #8).
 
 ## Core Value
 
@@ -25,7 +25,7 @@ Racers can enter events online and manage their own car/transponder details, whi
 - [x] Race results published and visible after each race, with individual lap times — Validated in Phase 7
 - [x] Championship standings (points table) visible on the web without login — Validated in Phase 7
 - [x] Per-racer result history viewable on the racer portal — Validated in Phase 7
-- [x] A full event day (check-in, race control, live timing, results, spectator boards) can run with zero cloud/internet connectivity at the venue, picking back up automatically once connectivity returns — Validated in the Local Race Day Program split (see Key Decisions)
+- [x] A full event day (check-in, race control, live timing, results, spectator boards) can run with zero cloud/internet connectivity at the venue, picking back up automatically once connectivity returns — first delivered by a separate offline app (retired in #21); now moving into RCTC itself, run locally at the venue (#8)
 
 ### Active
 
@@ -48,7 +48,7 @@ Racers can enter events online and manage their own car/transponder details, whi
 
 - Native mobile app — web is accessible on mobile devices; a dedicated app adds no value for v1
 - Windows-only installer — must run cross-platform (Windows + Linux)
-- ~~Offline-only mode — system requires network connectivity at the venue~~ — **superseded**: the Local Race Day Program now runs a full event day with zero venue connectivity (see Key Decisions). What remains out of scope is multi-day continuous local authority spanning more than one calendar day without a close/reopen cycle, and creating brand-new walk-up entries while fully offline (transponder reassignment for existing entries is in scope).
+- ~~Offline-only mode — system requires network connectivity at the venue~~ — **superseded**: race day runs locally at the venue and needs no internet connection (local-only timing plan, tracking issue #8).
 
 ## Context
 
@@ -72,7 +72,7 @@ Racers can enter events online and manage their own car/transponder details, whi
 | Browser-based race control client | Avoids platform-specific desktop app; works on Windows and Linux from any browser | — Pending |
 | AMB/MyLaps TCP integration | Club uses AMB/MyLaps hardware; must read their proprietary TCP protocol | — Pending |
 | "Best X from Y" championship scoring | Club's primary format; configurable so other clubs can adapt | — Pending |
-| Split into two independent products (cloud + Local Race Day Program) rather than one hybrid system | A venue network outage previously took race control down with it, since the cloud-only design ran race control server-side with in-memory-only live positions. RCResults — the system being replaced — already proves a fully local, resilient pattern works in the field. A prior hybrid plan (shared `racecontrol-core` module, dual gRPC channels, per-instance signing-key trust registry) generated far more net-new infrastructure than the split, for the same target behavior. | Shipped — see `docs/plans/2026-08-06-001-feat-offline-race-day-resilience-split-plan.md` |
+| Split into two independent products (cloud + Local Race Day Program) rather than one hybrid system | A venue network outage previously took race control down with it, since the cloud-only design ran race control server-side with in-memory-only live positions. RCResults — the system being replaced — already proves a fully local, resilient pattern works in the field. A prior hybrid plan (shared `racecontrol-core` module, dual gRPC channels, per-instance signing-key trust registry) generated far more net-new infrastructure than the split, for the same target behavior. | Shipped, then retired in #21 in favour of local-only timing in RCTC itself (#8). Plan archived at `docs/plans/archive/2026-08-06-001-feat-offline-race-day-resilience-split-plan.md` |
 
 ## Evolution
 
@@ -92,4 +92,4 @@ Keep this document accurate as the project changes.
 4. Update Context to reflect current state
 
 ---
-*Last updated: 2026-10-03 — Local Race Day Program split architecture shipped (offline race-day resilience); "Offline-only mode" moved from Out of Scope to Validated*
+*Last updated: 2026-10-04 — separate offline race-day app retired (#21); race day moves to RCTC run locally at the venue (#8)*

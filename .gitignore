@@ -23,9 +23,6 @@ Thumbs.db
 .env
 .env.local
 
-# localday: embedded PostgreSQL data directory (real on-disk race-day data, never committed)
-localday/data/
-
 # app: local filesystem object storage (club logos, TTS clips) — see FilesystemObjectStorageService
 app/data/
 
@@ -38,8 +35,6 @@ bin/
 # Playwright
 frontend/playwright-report/
 frontend/test-results/
-frontend-local/playwright-report/
-frontend-local/test-results/
 
 # Local-only ops notes (never commit)
 docs/local-*.md

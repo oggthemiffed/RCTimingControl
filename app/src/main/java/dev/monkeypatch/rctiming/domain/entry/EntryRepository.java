@@ -14,9 +14,6 @@ public interface EntryRepository extends JpaRepository<Entry, Long> {
     // For round generator: load CONFIRMED entries for a specific event class
     List<Entry> findByEventClassIdAndStatus(Long eventClassId, EntryStatus status);
 
-    // For PreCacheService: confirmed entries for a whole event, for the pre-cache payload
-    List<Entry> findByEventIdAndStatus(Long eventId, EntryStatus status);
-
     // For the RaceHub import (L7): upsert by the source's entry id
     Optional<Entry> findByExternalSourceAndExternalEntryId(String externalSource, String externalEntryId);
 
