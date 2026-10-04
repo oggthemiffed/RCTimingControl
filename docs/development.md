@@ -307,7 +307,7 @@ Everywhere else the code stays database-neutral:
 - Repositories use derived queries or JPQL, never `nativeQuery = true`, and entities carry no `columnDefinition`.
 - A vendor-specific statement that can't be avoided goes behind an interface in `persistence/vendor/`, with one implementation per database.
 
-`PersistencePortabilityTest` scans the main sources and fails the build if any of this slips in.
+`PersistencePortabilityTest` scans the main sources, and the compiled classes for any jOOQ method marked `@PlainSQL` (so SQL in a variable is caught too), and fails the build if any of this slips in.
 
 Moving to another database means:
 
