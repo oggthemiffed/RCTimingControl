@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router-dom';
-import axios from 'axios';
+import axios, { AxiosError, AxiosHeaders } from 'axios';
 
 import LoginPage from './LoginPage';
 import { AuthProvider } from '@/providers/AuthProvider';
@@ -63,6 +63,19 @@ describe('LoginPage', () => {
 
     expect(await screen.findByText('This sign-in is for race officials only.')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
+  });
+
+  it('shows the officials-only message when the server refuses the account', async () => {
+    vi.mocked(api.post).mockRejectedValue(
+      new AxiosError('Forbidden', 'ERR_BAD_REQUEST', undefined, null, {
+        status: 403, statusText: 'Forbidden', data: {}, headers: {}, config: { headers: new AxiosHeaders() },
+      }),
+    );
+    renderLogin();
+
+    await signIn();
+
+    expect(await screen.findByText('This sign-in is for race officials only.')).toBeInTheDocument();
   });
 
   it('offers no self-registration or password reset links', async () => {

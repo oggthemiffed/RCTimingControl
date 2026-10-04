@@ -44,7 +44,8 @@ export default function LoginPage() {
     try {
       await login(values.email, values.password, redirectTo);
     } catch (err) {
-      if (err instanceof NotAnOfficialError) {
+      // The server answers 403 for an account with no official role
+      if (err instanceof NotAnOfficialError || (isAxiosError(err) && err.response?.status === 403)) {
         form.setError('password', { message: 'This sign-in is for race officials only.' });
       } else if (isAxiosError(err) && err.response?.status === 401) {
         form.setError('password', { message: 'Invalid email or password' });
