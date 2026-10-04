@@ -369,6 +369,31 @@ Requires `ADMIN` or `RACE_DIRECTOR`. Marks the entry `WITHDRAWN` and writes an a
 
 ---
 
+## Race control — Check-in & transponder swap
+
+Open to any official (`ADMIN`, `RACE_DIRECTOR` or `REFEREE`). Withdrawn entries are never returned. Check-in recorded here is authoritative on the day; `racehubArrival` is RaceHub's arrival mark, shown read-only (`ARRIVED`, `NOT_ARRIVED`, or null for entries not imported).
+
+```http
+POST /race-control/events/{eventId}/check-in/resolve   { "transponderNumber": "1234567" }
+GET  /race-control/events/{eventId}/check-in/search?query=jane
+POST /race-control/events/{eventId}/check-in/entries/{entryId}/confirm
+```
+
+`resolve` matches the primary or secondary transponder and returns a list, because one competitor may use a transponder in more than one class. Each item is `{ "entryId": 101, "competitorName": "Jane Doe", "className": "Stock Buggy", "transponderNumber": "1234567", "secondaryTransponderNumber": null, "checkedIn": false, "checkedInAt": null, "racehubArrival": "ARRIVED" }`. **404** `{ "error": "not_found" }` when nothing matches. `search` is a case-insensitive name match. `confirm` returns `{ "entry": {...}, "alreadyCheckedIn": false }` and is idempotent: a repeat keeps the first check-in time. **409** `entry_withdrawn`.
+
+```http
+POST /race-control/events/{eventId}/entries/{entryId}/transponder-swap
+Content-Type: application/json
+
+{ "slot": "PRIMARY", "newTransponderNumber": "7654321" }
+```
+
+`slot` is `PRIMARY` or `SECONDARY`. A blank number removes the secondary. **200 OK** with `{ "entryId": 101, "slot": "PRIMARY", "oldTransponderNumber": "1234567", "newTransponderNumber": "7654321" }`; the change is written to the entry audit log as `TRANSPONDER_SWAP`, and laps count on the new number from the next passing. **409** `transponder_already_assigned` if another competitor's entry in the event uses the number (the same competitor's other entries may share it), or `entry_withdrawn`. **400** `same_as_other_transponder` or `primary_required`.
+
+The pre-race readiness grid call (`GET /race-control/race/{raceId}/pre-race-readiness`) carries `checkedIn` and `racehubArrival` on each slot.
+
+---
+
 ## Cloud — Local Race Day Program lifecycle & sync
 
 The endpoints below are the cloud (`app/`) side of the independent **Local Race Day Program** (`localday/` + `frontend-local/`) — see [architecture.md](architecture.md#local-race-day-program-split-architecture). Unlike everything above, authentication here is split into two different models by design: the lifecycle/pre-cache endpoints use the normal `Authorization: Bearer <access_token>` (an `ADMIN` or `RACE_DIRECTOR` logged into the cloud), while the snapshot-ingest endpoint uses a separate per-day-instance secret, because its caller is a venue machine, not a logged-in browser session.

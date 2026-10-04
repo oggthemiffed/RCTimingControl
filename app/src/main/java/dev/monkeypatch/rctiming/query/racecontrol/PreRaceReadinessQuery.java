@@ -24,7 +24,8 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
 /**
  * jOOQ read-side query for the pre-race readiness view (CTRL-02, CTRL-07).
  * Produces a PreRaceReadinessDto for a given raceId, containing:
- * - gridCall: drivers due on track in grid order for the target race
+ * - gridCall: drivers due on track in grid order for the target race, with whether each has
+ *   checked in (L11) and RaceHub's arrival mark
  * - marshalDuty: drivers from the immediately preceding race with per-event absence counts
  *
  * No Hibernate or JPA is used — all reads go through DSLContext.
@@ -141,7 +142,9 @@ public class PreRaceReadinessQuery {
                         RACE_ENTRIES.ENTRY_ID,
                         RACE_ENTRIES.GRID_POSITION,
                         DSL.coalesce(COMPETITORS.DISPLAY_NAME, DSL.val("Unknown")).as("driverName"),
-                        RACING_CLASSES.NAME.as("className"))
+                        RACING_CLASSES.NAME.as("className"),
+                        ENTRIES.CHECKED_IN_AT,
+                        ENTRIES.RACEHUB_ARRIVAL)
                 .from(RACE_ENTRIES)
                 .join(RACES).on(RACES.ID.eq(RACE_ENTRIES.RACE_ID))
                 .join(ENTRIES).on(ENTRIES.ID.eq(RACE_ENTRIES.ENTRY_ID))
@@ -157,7 +160,9 @@ public class PreRaceReadinessQuery {
                         r.get(RACE_ENTRIES.ENTRY_ID),
                         r.get("driverName", String.class),
                         null, // car_number not yet on Entry — tracked as gap, see REQUIREMENTS.md ENTRY-03
-                        r.get("className", String.class)
+                        r.get("className", String.class),
+                        r.get(ENTRIES.CHECKED_IN_AT) != null,
+                        r.get(ENTRIES.RACEHUB_ARRIVAL)
                 ));
 
         return new PreRaceReadinessDto(raceId, raceLabel, firstRaceOfEvent, gridCall, marshalDuty);

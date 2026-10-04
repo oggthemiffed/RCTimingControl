@@ -211,17 +211,30 @@ public class Users extends TableImpl<UsersRecord> {
         return _deviceLossAudit;
     }
 
-    private transient EntriesPath _entries;
+    private transient EntriesPath _entriesCheckedInByUserIdFkey;
 
     /**
      * Get the implicit to-many join path to the <code>public.entries</code>
-     * table
+     * table, via the <code>entries_checked_in_by_user_id_fkey</code> key
      */
-    public EntriesPath entries() {
-        if (_entries == null)
-            _entries = new EntriesPath(this, null, Keys.ENTRIES__ENTRIES_USER_ID_FKEY.getInverseKey());
+    public EntriesPath entriesCheckedInByUserIdFkey() {
+        if (_entriesCheckedInByUserIdFkey == null)
+            _entriesCheckedInByUserIdFkey = new EntriesPath(this, null, Keys.ENTRIES__ENTRIES_CHECKED_IN_BY_USER_ID_FKEY.getInverseKey());
 
-        return _entries;
+        return _entriesCheckedInByUserIdFkey;
+    }
+
+    private transient EntriesPath _entriesUserIdFkey;
+
+    /**
+     * Get the implicit to-many join path to the <code>public.entries</code>
+     * table, via the <code>entries_user_id_fkey</code> key
+     */
+    public EntriesPath entriesUserIdFkey() {
+        if (_entriesUserIdFkey == null)
+            _entriesUserIdFkey = new EntriesPath(this, null, Keys.ENTRIES__ENTRIES_USER_ID_FKEY.getInverseKey());
+
+        return _entriesUserIdFkey;
     }
 
     private transient EntryAuditLogPath _entryAuditLog;

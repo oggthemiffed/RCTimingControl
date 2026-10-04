@@ -258,6 +258,34 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         return (String) get(16);
     }
 
+    /**
+     * Setter for <code>public.entries.checked_in_at</code>.
+     */
+    public void setCheckedInAt(OffsetDateTime value) {
+        set(17, value);
+    }
+
+    /**
+     * Getter for <code>public.entries.checked_in_at</code>.
+     */
+    public OffsetDateTime getCheckedInAt() {
+        return (OffsetDateTime) get(17);
+    }
+
+    /**
+     * Setter for <code>public.entries.checked_in_by_user_id</code>.
+     */
+    public void setCheckedInByUserId(Long value) {
+        set(18, value);
+    }
+
+    /**
+     * Getter for <code>public.entries.checked_in_by_user_id</code>.
+     */
+    public Long getCheckedInByUserId() {
+        return (Long) get(18);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -281,7 +309,7 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
     /**
      * Create a detached, initialised EntriesRecord
      */
-    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, OffsetDateTime submittedAt, OffsetDateTime updatedAt, OffsetDateTime confirmedAt, OffsetDateTime withdrawnAt, Long competitorId, String secondaryTransponderNumber, String externalSource, String externalEntryId, Long externalEntryVersion, String racehubArrival) {
+    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, OffsetDateTime submittedAt, OffsetDateTime updatedAt, OffsetDateTime confirmedAt, OffsetDateTime withdrawnAt, Long competitorId, String secondaryTransponderNumber, String externalSource, String externalEntryId, Long externalEntryVersion, String racehubArrival, OffsetDateTime checkedInAt, Long checkedInByUserId) {
         super(Entries.ENTRIES);
 
         setId(id);
@@ -301,6 +329,8 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         setExternalEntryId(externalEntryId);
         setExternalEntryVersion(externalEntryVersion);
         setRacehubArrival(racehubArrival);
+        setCheckedInAt(checkedInAt);
+        setCheckedInByUserId(checkedInByUserId);
         resetChangedOnNotNull();
     }
 }

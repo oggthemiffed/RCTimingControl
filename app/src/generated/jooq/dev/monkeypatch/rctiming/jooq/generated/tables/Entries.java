@@ -160,6 +160,16 @@ public class Entries extends TableImpl<EntriesRecord> {
      */
     public final TableField<EntriesRecord, String> RACEHUB_ARRIVAL = createField(DSL.name("racehub_arrival"), SQLDataType.VARCHAR(20), this, "");
 
+    /**
+     * The column <code>public.entries.checked_in_at</code>.
+     */
+    public final TableField<EntriesRecord, OffsetDateTime> CHECKED_IN_AT = createField(DSL.name("checked_in_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+
+    /**
+     * The column <code>public.entries.checked_in_by_user_id</code>.
+     */
+    public final TableField<EntriesRecord, Long> CHECKED_IN_BY_USER_ID = createField(DSL.name("checked_in_by_user_id"), SQLDataType.BIGINT, this, "");
+
     private Entries(Name alias, Table<EntriesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -244,7 +254,20 @@ public class Entries extends TableImpl<EntriesRecord> {
 
     @Override
     public List<ForeignKey<EntriesRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.ENTRIES__ENTRIES_COMPETITOR_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_CLASS_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_ID_FKEY, Keys.ENTRIES__ENTRIES_USER_ID_FKEY);
+        return Arrays.asList(Keys.ENTRIES__ENTRIES_CHECKED_IN_BY_USER_ID_FKEY, Keys.ENTRIES__ENTRIES_COMPETITOR_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_CLASS_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_ID_FKEY, Keys.ENTRIES__ENTRIES_USER_ID_FKEY);
+    }
+
+    private transient UsersPath _entriesCheckedInByUserIdFkey;
+
+    /**
+     * Get the implicit join path to the <code>public.users</code> table, via
+     * the <code>entries_checked_in_by_user_id_fkey</code> key.
+     */
+    public UsersPath entriesCheckedInByUserIdFkey() {
+        if (_entriesCheckedInByUserIdFkey == null)
+            _entriesCheckedInByUserIdFkey = new UsersPath(this, Keys.ENTRIES__ENTRIES_CHECKED_IN_BY_USER_ID_FKEY, null);
+
+        return _entriesCheckedInByUserIdFkey;
     }
 
     private transient CompetitorsPath _competitors;
@@ -284,16 +307,17 @@ public class Entries extends TableImpl<EntriesRecord> {
         return _events;
     }
 
-    private transient UsersPath _users;
+    private transient UsersPath _entriesUserIdFkey;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table.
+     * Get the implicit join path to the <code>public.users</code> table, via
+     * the <code>entries_user_id_fkey</code> key.
      */
-    public UsersPath users() {
-        if (_users == null)
-            _users = new UsersPath(this, Keys.ENTRIES__ENTRIES_USER_ID_FKEY, null);
+    public UsersPath entriesUserIdFkey() {
+        if (_entriesUserIdFkey == null)
+            _entriesUserIdFkey = new UsersPath(this, Keys.ENTRIES__ENTRIES_USER_ID_FKEY, null);
 
-        return _users;
+        return _entriesUserIdFkey;
     }
 
     private transient EntryAuditLogPath _entryAuditLog;

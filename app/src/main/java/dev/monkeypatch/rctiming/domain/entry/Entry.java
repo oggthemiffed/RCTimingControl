@@ -76,6 +76,14 @@ public class Entry {
     @Column(name = "racehub_arrival", length = 20)
     private String racehubArrival;
 
+    /** When the competitor checked in at the desk (L11). Null until they do. */
+    @Column(name = "checked_in_at")
+    private Instant checkedInAt;
+
+    /** The official who checked them in. */
+    @Column(name = "checked_in_by_user_id")
+    private Long checkedInByUserId;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -126,4 +134,10 @@ public class Entry {
 
     public String getRacehubArrival() { return racehubArrival; }
     public void setRacehubArrival(String racehubArrival) { this.racehubArrival = racehubArrival; }
+
+    public Instant getCheckedInAt() { return checkedInAt; }
+    public void setCheckedInAt(Instant checkedInAt) { this.checkedInAt = checkedInAt; }
+
+    public Long getCheckedInByUserId() { return checkedInByUserId; }
+    public void setCheckedInByUserId(Long checkedInByUserId) { this.checkedInByUserId = checkedInByUserId; }
 }

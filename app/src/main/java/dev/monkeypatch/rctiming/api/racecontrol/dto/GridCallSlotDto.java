@@ -8,11 +8,15 @@ package dev.monkeypatch.rctiming.api.racecontrol.dto;
  * @param driverName   the competitor's display name (L5)
  * @param carNumber    the car number/label (null if not recorded in the system)
  * @param className    the racing class name for this event class
+ * @param checkedIn      whether the competitor has checked in at the desk (L11)
+ * @param racehubArrival RaceHub's arrival mark (NOT_ARRIVED / ARRIVED), read-only; null if not imported
  */
 public record GridCallSlotDto(
         int gridPosition,
         long entryId,
         String driverName,
         String carNumber,
-        String className
+        String className,
+        boolean checkedIn,
+        String racehubArrival
 ) {}

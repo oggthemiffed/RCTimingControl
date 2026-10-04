@@ -21,6 +21,7 @@ import FormatsPage from '@/pages/admin/formats/FormatsPage';
 import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
 import DecoderSettingsPage from '@/pages/admin/decoder/DecoderSettingsPage';
 import CompetitorsPage from '@/pages/admin/competitors/CompetitorsPage';
+import CheckInPage from '@/pages/race-control/check-in/CheckInPage';
 import RaceControlLayout from '@/pages/race-control/RaceControlLayout';
 import CockpitPage from '@/pages/race-control/CockpitPage';
 import RefereePage from '@/pages/race-control/RefereePage';
@@ -86,6 +87,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <CockpitPage /> },
           { path: 'practice', element: <PracticeLandingPage /> },
+          { path: 'check-in', element: <CheckInPage /> },
           { path: 'referee', element: <RefereePage /> },
           { path: 'results/:raceId', element: <PrintResultsPage /> },
         ],
