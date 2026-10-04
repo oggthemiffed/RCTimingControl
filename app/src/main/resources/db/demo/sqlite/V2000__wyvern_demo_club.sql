@@ -39,9 +39,9 @@ INSERT INTO racing_classes (name, description) VALUES
 
 -- 6. race format templates
 INSERT INTO race_format_templates (name, config) VALUES
-    ('Timed 5-min', '{"type":"TIMED","durationMinutes":5}'),
-    ('Bump-up Finals', '{"type":"BUMP_UP","heatSize":8,"bumpCount":2}'),
-    ('Points Finals', '{"type":"POINTS_FINALS","finalsCount":3}');
+    ('Timed 5-min', '{"type":"TIMED","durationMinutes":5,"startType":"ROLLING","qualifyingType":"FASTEST_LAP","racePaddingMinutes":1,"staggerIntervalSeconds":5}'),
+    ('Bump-up Finals', '{"type":"BUMP_UP","qualifyingHeats":3,"heatDurationMinutes":5,"bestHeatsCount":2,"gridSize":8,"bumpSpots":2,"qualifyingStartType":"STAGGER","finalsStartType":"GRID","qualifyingType":"FTQ","racePaddingMinutes":2,"staggerIntervalSeconds":5}'),
+    ('Points Finals', '{"type":"POINTS_FINALS","qualifyingHeats":3,"finalsCount":3,"finalDurationMinutes":5,"heatDurationMinutes":5,"qualifyingStartType":"STAGGER","finalsStartType":"GRID","qualifyingType":"FTQ","racePaddingMinutes":2,"staggerIntervalSeconds":5}');
 
 -- 7. events: Round 4 is open for entries, Round 3 is completed
 INSERT INTO events (name, event_date, status, track_id) VALUES
@@ -50,7 +50,7 @@ INSERT INTO events (name, event_date, status, track_id) VALUES
 
 -- 8. event classes
 INSERT INTO event_classes (config_snapshot, template_id, event_id, racing_class_id, finals_count, cars_per_final, bump_count)
-SELECT '{"type":"TIMED","durationMinutes":5}', (SELECT id FROM race_format_templates WHERE name = 'Timed 5-min'), e.id, (SELECT id FROM racing_classes WHERE name = '13.5 Touring'), 1, 8, 0
+SELECT (SELECT config FROM race_format_templates WHERE name = 'Timed 5-min'), (SELECT id FROM race_format_templates WHERE name = 'Timed 5-min'), e.id, (SELECT id FROM racing_classes WHERE name = '13.5 Touring'), 1, 8, 0
 FROM events e WHERE e.name IN ('Wyvern Winter Series Round 4', 'Wyvern Winter Series Round 3') ORDER BY e.id;
 
 -- 9. competitors, one per racer
@@ -101,15 +101,26 @@ FROM rounds r JOIN event_classes ec ON ec.event_id = r.event_id WHERE r.event_id
 INSERT INTO race_entries (race_id, entry_id, grid_position, car_number)
 SELECT ra.id, en.id, CAST(en.transponder_number AS INTEGER) - 100, CAST(en.transponder_number AS INTEGER) - 100
 FROM races ra JOIN rounds r ON r.id = ra.round_id JOIN entries en ON en.event_id = r.event_id WHERE r.event_id = (SELECT id FROM events WHERE name = 'Wyvern Winter Series Round 3');
+-- The snapshot has the shape ResultSnapshotService writes: one row per entry, keyed by entry id
 INSERT INTO result_snapshots (race_id, finished_at, positions_json, lap_history_json)
-SELECT ra.id, CAST(unixepoch('2026-05-09 13:05:30') * 1000000 AS INTEGER), '[
-  {"position":1,"driverName":"Sam Speed","laps":14,"transponderNumber":"102"},
-  {"position":2,"driverName":"Nina Pole","laps":14,"transponderNumber":"108"},
-  {"position":3,"driverName":"Dave Quick","laps":13,"transponderNumber":"101"},
-  {"position":4,"driverName":"Kim Apex","laps":13,"transponderNumber":"105"},
-  {"position":5,"driverName":"Jo Turner","laps":12,"transponderNumber":"103"},
-  {"position":6,"driverName":"Pat Drift","laps":12,"transponderNumber":"104"},
-  {"position":7,"driverName":"Max Lap","laps":11,"transponderNumber":"107"},
-  {"position":8,"driverName":"Lee Grid","laps":11,"transponderNumber":"106"}
-]', '{}'
-FROM races ra JOIN rounds r ON r.id = ra.round_id WHERE r.event_id = (SELECT id FROM events WHERE name = 'Wyvern Winter Series Round 3');
+SELECT ra.id, CAST(unixepoch('2026-05-09 13:05:30') * 1000000 AS INTEGER),
+       (SELECT json_group_array(json(row)) FROM (SELECT json_object(
+                   'position', f.position, 'entryId', en.id, 'competitorId', c.id, 'driverName', c.display_name,
+                   'carNumber', CAST(re.car_number AS TEXT), 'lapsCompleted', f.laps, 'totalTimeMs', f.total_ms,
+                   'bestLapMs', f.best_ms, 'gapToLeaderMs', f.gap_ms) AS row
+        FROM (SELECT * FROM (
+                  SELECT 1 AS position, '102' AS transponder, 14 AS laps, 326400 AS total_ms, 22810 AS best_ms, NULL AS gap_ms
+                  UNION ALL SELECT 2, '108', 14, 329150, 22940, 2750
+                  UNION ALL SELECT 3, '101', 13, 318900, 23480, NULL
+                  UNION ALL SELECT 4, '105', 13, 324700, 23720, NULL
+                  UNION ALL SELECT 5, '103', 12, 312300, 24610, NULL
+                  UNION ALL SELECT 6, '104', 12, 321800, 24900, NULL
+                  UNION ALL SELECT 7, '107', 11, 309500, 26120, NULL
+                  UNION ALL SELECT 8, '106', 11, 318200, 26480, NULL)) f
+        JOIN entries en ON en.event_id = r.event_id AND en.transponder_number = f.transponder
+        JOIN competitors c ON c.id = en.competitor_id
+        JOIN race_entries re ON re.race_id = ra.id AND re.entry_id = en.id
+        ORDER BY f.position)),
+       '[]'
+FROM races ra JOIN rounds r ON r.id = ra.round_id
+WHERE r.event_id = (SELECT id FROM events WHERE name = 'Wyvern Winter Series Round 3');
