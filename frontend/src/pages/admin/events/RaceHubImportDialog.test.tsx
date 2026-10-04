@@ -77,7 +77,8 @@ function chooseFile(file: File) {
 
 describe('RaceHubImportDialog', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    // Reset, not just clear: an unused mockResolvedValueOnce must not leak into the next test
+    vi.resetAllMocks();
     api.listRaceHubClassMappings.mockResolvedValue([]);
     api.listRacingClasses.mockResolvedValue([
       { id: 101, name: '2WD Buggy', description: null },
@@ -156,7 +157,10 @@ describe('RaceHubImportDialog', () => {
     const onOpenChange = renderDialog();
 
     chooseFile(exportFile());
-    fireEvent.click(await screen.findByRole('button', { name: 'Import entries' }));
+    await screen.findByTestId('racehub-preview');
+    const importButton = screen.getByRole('button', { name: 'Import entries' });
+    await waitFor(() => expect(importButton).toBeEnabled());
+    fireEvent.click(importButton);
 
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     expect(api.importRaceHubEntries).toHaveBeenLastCalledWith(5, { schema_version: 1, entries: [] }, false);
