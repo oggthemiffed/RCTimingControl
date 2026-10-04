@@ -105,6 +105,11 @@ class RaceHubImportIT extends AbstractIntegrationTest {
 
         // Withdrawn and never imported: nothing to create
         assertThat(findEntry("c3")).isNull();
+
+        // The event records when it was imported and from which revision (L8)
+        var event = jdbc.queryForMap("select racehub_last_import_at, racehub_last_revision from events where id = ?", eventId);
+        assertThat(((Number) event.get("racehub_last_revision")).longValue()).isEqualTo(4);
+        assertThat(event.get("racehub_last_import_at")).isNotNull();
     }
 
     @Test
@@ -117,6 +122,8 @@ class RaceHubImportIT extends AbstractIntegrationTest {
         assertSummary(resp.getBody(), 2, 0, 0, 0, 0, 1);
         assertThat(findEntry("a1")).isNull();
         assertThat(competitorRepository.findByExternalSourceAndExternalId("RACEHUB", "drv-ada-" + run)).isEmpty();
+        assertThat(jdbc.queryForObject("select racehub_last_revision from events where id = ?", Long.class, eventId))
+                .isNull();
     }
 
     @Test

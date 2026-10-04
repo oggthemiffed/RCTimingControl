@@ -5,6 +5,7 @@ import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
+import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository.EventClassRef;
@@ -74,9 +75,8 @@ public class RaceHubImportService {
 
     @Transactional
     public RaceHubImportResult importEntries(Long eventId, RaceHubEntryExport export, boolean dryRun) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new EntityNotFoundException("Event not found");
-        }
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
         if (export == null || !Objects.equals(export.schemaVersion(), SUPPORTED_SCHEMA_VERSION)) {
             throw new IllegalArgumentException("Unsupported RaceHub export schema_version: expected "
                     + SUPPORTED_SCHEMA_VERSION + ", got " + (export == null ? null : export.schemaVersion()));
@@ -159,6 +159,9 @@ public class RaceHubImportService {
             entryRepository.flush();
             plan.stream().filter(p -> p.action != Action.WITHDRAW)
                     .forEach(p -> savedIds.put(p, applyRow(eventId, p, competitors)));
+            event.setRacehubLastImportAt(Instant.now());
+            event.setRacehubLastRevision(export.revision());
+            eventRepository.save(event);
         }
 
         List<Row> rows = new ArrayList<>();

@@ -147,6 +147,34 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
         return (Long) get(8);
     }
 
+    /**
+     * Setter for <code>public.events.racehub_last_import_at</code>.
+     */
+    public void setRacehubLastImportAt(OffsetDateTime value) {
+        set(9, value);
+    }
+
+    /**
+     * Getter for <code>public.events.racehub_last_import_at</code>.
+     */
+    public OffsetDateTime getRacehubLastImportAt() {
+        return (OffsetDateTime) get(9);
+    }
+
+    /**
+     * Setter for <code>public.events.racehub_last_revision</code>.
+     */
+    public void setRacehubLastRevision(Long value) {
+        set(10, value);
+    }
+
+    /**
+     * Getter for <code>public.events.racehub_last_revision</code>.
+     */
+    public Long getRacehubLastRevision() {
+        return (Long) get(10);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -170,7 +198,7 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
     /**
      * Create a detached, initialised EventsRecord
      */
-    public EventsRecord(Long id, String name, LocalDate eventDate, String status, OffsetDateTime createdAt, OffsetDateTime updatedAt, OffsetDateTime entryOpensAt, OffsetDateTime entryClosesAt, Long trackId) {
+    public EventsRecord(Long id, String name, LocalDate eventDate, String status, OffsetDateTime createdAt, OffsetDateTime updatedAt, OffsetDateTime entryOpensAt, OffsetDateTime entryClosesAt, Long trackId, OffsetDateTime racehubLastImportAt, Long racehubLastRevision) {
         super(Events.EVENTS);
 
         setId(id);
@@ -182,6 +210,8 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
         setEntryOpensAt(entryOpensAt);
         setEntryClosesAt(entryClosesAt);
         setTrackId(trackId);
+        setRacehubLastImportAt(racehubLastImportAt);
+        setRacehubLastRevision(racehubLastRevision);
         resetChangedOnNotNull();
     }
 }
