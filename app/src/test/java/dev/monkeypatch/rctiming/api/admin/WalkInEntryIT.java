@@ -179,6 +179,31 @@ class WalkInEntryIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void rejectsACompetitorIdAndANameTogether() {
+        long competitorId = createCompetitor("Both " + run);
+        var resp = create(Map.of("competitorId", competitorId, "competitorName", "Someone Else " + run,
+                "primaryTransponder", "72" + run));
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(entryRepository.findByEventId(eventId)).isEmpty();
+    }
+
+    @Test
+    void rejectsTheSameTransponderAsPrimaryAndSecondary() {
+        var resp = create(Map.of("competitorName", "Same " + run, "primaryTransponder", "73" + run,
+                "secondaryTransponder", " 73" + run + " "));
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(entryRepository.findByEventId(eventId)).isEmpty();
+    }
+
+    @Test
+    void rejectsAWalkInForACompletedEvent() {
+        jdbc.update("update events set status = 'COMPLETED' where id = ?", eventId);
+        var resp = create(Map.of("competitorName", "Late " + run, "primaryTransponder", "74" + run));
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(entryRepository.findByEventId(eventId)).isEmpty();
+    }
+
+    @Test
     void rejectsAClassFromAnotherEvent() {
         Map<String, Object> body = new HashMap<>(Map.of(
                 "eventId", eventId, "eventClassId", 2001L, "competitorName", "Wrong " + run,

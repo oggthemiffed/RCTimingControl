@@ -32,10 +32,10 @@ function type(label: string, value: string) {
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 }
 
-function conflict(detail: string) {
+function httpError(status: number, detail: string) {
   const headers = new AxiosHeaders();
-  return new AxiosError('Conflict', 'ERR_BAD_REQUEST', { headers }, null, {
-    status: 409, statusText: 'Conflict', data: { detail }, headers, config: { headers },
+  return new AxiosError('Request failed', 'ERR_BAD_REQUEST', { headers }, null, {
+    status, statusText: 'Error', data: { detail }, headers, config: { headers },
   });
 }
 
@@ -88,7 +88,7 @@ describe('AddWalkInEntryDialog', () => {
   });
 
   it('shows the duplicate-entry message from the server and stays open', async () => {
-    api.createWalkInEntry.mockRejectedValue(conflict('Ada Lovelace already has an entry in this class'));
+    api.createWalkInEntry.mockRejectedValue(httpError(409, 'Ada Lovelace already has an entry in this class'));
     const onOpenChange = renderDialog();
 
     type('Driver', 'ada');
@@ -98,6 +98,25 @@ describe('AddWalkInEntryDialog', () => {
 
     expect(await screen.findByText('Ada Lovelace already has an entry in this class')).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it('shows the server message when the event is completed', async () => {
+    api.createWalkInEntry.mockRejectedValue(httpError(422, 'Event is completed'));
+    renderDialog();
+
+    type('Driver', 'New Person');
+    type('Primary transponder', '1234');
+    fireEvent.click(screen.getByRole('button', { name: 'Add entry' }));
+
+    expect(await screen.findByText('Event is completed')).toBeInTheDocument();
+  });
+
+  it('warns when the typed name matches an existing driver who was not picked', async () => {
+    renderDialog();
+
+    type('Driver', 'grace hopper');
+    expect(await screen.findByText(/Grace Hopper is already a driver/)).toBeInTheDocument();
+    expect(screen.queryByText(/will be added as a new driver/)).not.toBeInTheDocument();
   });
 
   it('needs a driver and a primary transponder before calling the server', async () => {

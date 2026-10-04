@@ -53,7 +53,7 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
   const matches = selected || !query
     ? []
     : competitors.filter(c => c.displayName.toLowerCase().includes(query)).slice(0, MAX_MATCHES);
-  const exactMatch = competitors.some(c => c.displayName.trim().toLowerCase() === query);
+  const exactMatch = competitors.find(c => c.displayName.trim().toLowerCase() === query);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -82,7 +82,7 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 409) {
         setError(err.response.data?.detail ?? 'This driver already has an entry in this class.');
-      } else if (axios.isAxiosError(err) && err.response?.status === 400) {
+      } else if (axios.isAxiosError(err) && (err.response?.status === 400 || err.response?.status === 422)) {
         setError(err.response.data?.detail ?? 'Check the details and try again.');
       } else {
         setError('Could not add the entry. Check your connection and try again.');
@@ -139,6 +139,12 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
                 {query && !exactMatch && (
                   <p className="text-xs text-muted-foreground">
                     “{driverText.trim()}” will be added as a new driver.
+                  </p>
+                )}
+                {exactMatch && (
+                  <p className="text-xs text-amber-700 dark:text-amber-400">
+                    {exactMatch.displayName} is already a driver. Pick them from the list to use their record, or
+                    “{driverText.trim()}” will be added as a separate new driver.
                   </p>
                 )}
               </>

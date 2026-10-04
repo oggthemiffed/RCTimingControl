@@ -172,11 +172,15 @@ public class EntryService {
             throw new IllegalArgumentException("The secondary transponder must differ from the primary");
         }
 
+        boolean hasName = req.competitorName() != null && !req.competitorName().isBlank();
+        if (req.competitorId() != null && hasName) {
+            throw new IllegalArgumentException("Give either an existing competitor or a new name, not both");
+        }
         Competitor competitor;
         if (req.competitorId() != null) {
             competitor = competitorRepository.findById(req.competitorId())
                     .orElseThrow(() -> new EntityNotFoundException("Competitor not found: " + req.competitorId()));
-        } else if (req.competitorName() != null && !req.competitorName().isBlank()) {
+        } else if (hasName) {
             competitor = competitorService.createWalkIn(req.competitorName());
         } else {
             throw new IllegalArgumentException("Choose a competitor or enter a name");

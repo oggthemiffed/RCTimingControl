@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 
 import { useEntriesForClass, useWithdrawEntry } from '@/hooks/admin/useAdminEntries';
 import type { AdminEntryDto, EventClassDto } from '@/lib/adminApi';
+import { useAuth } from '@/hooks/useAuth';
 import AddWalkInEntryDialog from './AddWalkInEntryDialog';
 
 // ── Entry status colors ───────────────────────────────────────────────────
@@ -230,6 +231,9 @@ interface EntryListSectionProps {
 export default function EntryListSection({ eventId, classes }: EntryListSectionProps) {
   const [selectedClassIdx, setSelectedClassIdx] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
+  const { user } = useAuth();
+  // The add-entry endpoint is for admins and race directors; referees can see entries but not add them
+  const canAddEntries = !!user?.roles.some(r => r === 'ADMIN' || r === 'RACE_DIRECTOR');
 
   if (classes.length === 0) {
     return (
@@ -264,20 +268,24 @@ export default function EntryListSection({ eventId, classes }: EntryListSectionP
       {/* Entries for selected class */}
       {selectedClass && (
         <>
-          <div className="flex justify-end">
-            <Button size="sm" onClick={() => setAddOpen(true)}>
-              Add entry
-            </Button>
-          </div>
+          {canAddEntries && (
+            <div className="flex justify-end">
+              <Button size="sm" onClick={() => setAddOpen(true)}>
+                Add entry
+              </Button>
+            </div>
+          )}
           <div className="rounded-lg border">
             <EntriesTable eventId={eventId} classId={selectedClass.id} />
           </div>
-          <AddWalkInEntryDialog
-            eventId={eventId}
-            classId={selectedClass.id}
-            open={addOpen}
-            onOpenChange={setAddOpen}
-          />
+          {canAddEntries && (
+            <AddWalkInEntryDialog
+              eventId={eventId}
+              classId={selectedClass.id}
+              open={addOpen}
+              onOpenChange={setAddOpen}
+            />
+          )}
         </>
       )}
     </div>
