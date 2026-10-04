@@ -286,6 +286,21 @@ export interface StandingsRowDto {
   rounds: RoundResultDto[];
 }
 
+export interface CreateWalkInEntryRequest {
+  eventId: number;
+  eventClassId: number;
+  /** An existing competitor, or leave out and give competitorName for a new one. */
+  competitorId?: number;
+  competitorName?: string;
+  primaryTransponder: string;
+  secondaryTransponder?: string;
+}
+
+export interface CreateWalkInEntryResult {
+  entry: { id: number; status: string; transponderNumberSnapshot: string };
+  warnings: string[];
+}
+
 export interface CompetitorSummaryDto {
   id: number;
   displayName: string;
@@ -430,6 +445,9 @@ export const adminApi = {
         `/api/v1/admin/entries/events/${eventId}/classes/${classId}`
       )
       .then(r => r.data),
+
+  createWalkInEntry: (body: CreateWalkInEntryRequest) =>
+    api.post<CreateWalkInEntryResult>('/api/v1/admin/entries', body).then(r => r.data),
 
   withdrawEntry: (entryId: number, reason: string) =>
     api
