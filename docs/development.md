@@ -96,10 +96,12 @@ On first run, Flyway applies all migrations and dev seed data automatically:
 
 **Local-only (V30 onward):** competitors (`V30`–`V31`), secondary transponders (`V32`), RaceHub import (`V33`–`V34`), racer-portal schema dropped (`V35`).
 
-**Dev seeds (V1000–V1003):**
-- `V1000` — admin1 account
+**Dev seeds (V1000+):**
 - `V1001/V1002` — racing classes and corrected race format templates
-- `V1003` — full race day: 6 competitors with entries (transponders 101–106), RACE_DIRECTOR account, club profile, "Club Championship Round 1" event (IN_PROGRESS), 6 rounds (P1/P2/Q1/Q2/Q3/Final A), races and race entries
+- `V1004` — competitors for entries seeded by the retired V1003 (a no-op on a fresh database)
+- `V1005` — admin1 and race director accounts, club profile, "Club Championship Round 1" event (IN_PROGRESS) with 6 competitors and entries (transponders 101–106), 6 rounds (P1/P2/Q1/Q2/Q3/Final A), races and race entries
+
+`V1000` and `V1003` seeded racer accounts with cars and transponders; they were retired when sign-in became officials-only (L10). The dev profile ignores them in an existing database's history (`ignore-migration-patterns`), so no reset is needed.
 
 The dev profile connects to `localhost:5432/rctiming_dev`. No additional setup needed.
 

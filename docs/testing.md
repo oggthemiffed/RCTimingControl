@@ -117,7 +117,7 @@ cd frontend && npm run dev                                          # Terminal 3
 
 Only officials have accounts. The six drivers in the seed event are competitors, not users.
 
-**Seed event** (V1003): "Club Championship Round 1" (IN_PROGRESS) with 6 Mod Buggy competitors (transponders 101–106), run order: P1 → P2 → Q1 → Q2 → Q3 → Final A. Navigate to Race Control via **Admin → Race Control** in the sidebar, or directly: `/race-control/event/1`.
+**Seed event** (V1005): "Club Championship Round 1" (IN_PROGRESS) with 6 Mod Buggy competitors (transponders 101–106), run order: P1 → P2 → Q1 → Q2 → Q3 → Final A. Navigate to Race Control via **Admin → Race Control** in the sidebar, or directly: `/race-control/event/1`.
 
 ---
 
