@@ -119,14 +119,7 @@ export default function PublicResultsPage() {
                 onClick={() => setExpandedEntryId(expandedEntryId === row.entryId ? null : row.entryId)}
               >
                 <td className="py-2 pr-4 font-mono">{row.position}</td>
-                <td className="py-2 pr-4">
-                  <div>{row.driverName}</div>
-                  {row.carTags && row.carTags.length > 0 && (
-                    <div className="text-xs text-muted-foreground font-normal">
-                      {row.carTags.map(t => `${t.key}: ${t.value}`).join(' · ')}
-                    </div>
-                  )}
-                </td>
+                <td className="py-2 pr-4">{row.driverName}</td>
                 <td className="py-2 pr-4 text-right font-mono">{row.carNumber ?? '—'}</td>
                 <td className="py-2 pr-4 text-right font-mono">{row.lapsCompleted}</td>
                 <td className="py-2 pr-4 text-right font-mono">

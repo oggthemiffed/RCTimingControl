@@ -11,11 +11,10 @@ Requires Docker (Testcontainers spins up a real PostgreSQL container automatical
 ./gradlew :app:test
 
 # Run a specific test class
-./gradlew :app:test --tests "dev.monkeypatch.rctiming.api.racer.CarControllerIT"
+./gradlew :app:test --tests "dev.monkeypatch.rctiming.api.auth.AuthControllerIT"
 
 # Run tests scoped to a phase
 ./gradlew :app:test --tests "dev.monkeypatch.rctiming.api.admin.*"        # Phase 3 — admin panel
-./gradlew :app:test --tests "*racer*"                                      # Phase 2 — racer portal
 ./gradlew :app:test --tests "dev.monkeypatch.rctiming.api.racecontrol.*"  # Phase 4 — race control
 
 # Skip jOOQ codegen (faster when schema hasn't changed)
@@ -115,14 +114,10 @@ cd frontend && npm run dev                                          # Terminal 3
 |-------|----------|------|
 | `director@example.com` | `Racer1Pass!` | RACE_DIRECTOR + REFEREE |
 | `admin1@example.com` | `Admin1Pass!` | ADMIN |
-| `racer1@example.com` | `Racer1Pass!` | RACER |
-| `racer2@example.com` | `Racer2Pass!` | RACER |
-| `racer3@example.com` | `Racer1Pass!` | RACER |
-| `racer4@example.com` | `Racer1Pass!` | RACER |
-| `racer5@example.com` | `Racer1Pass!` | RACER |
-| `racer6@example.com` | `Racer1Pass!` | RACER |
 
-**Seed event** (V1003): "Club Championship Round 1" (IN_PROGRESS) with 6 Mod Buggy drivers, run order: P1 → P2 → Q1 → Q2 → Q3 → Final A. Navigate to Race Control via **Admin → Race Control** in the sidebar, or directly: `/race-control/event/1`.
+Only officials have accounts. The six drivers in the seed event are competitors, not users.
+
+**Seed event** (V1005): "Club Championship Round 1" (IN_PROGRESS) with 6 Mod Buggy competitors (transponders 101–106), run order: P1 → P2 → Q1 → Q2 → Q3 → Final A. Navigate to Race Control via **Admin → Race Control** in the sidebar, or directly: `/race-control/event/1`.
 
 ---
 

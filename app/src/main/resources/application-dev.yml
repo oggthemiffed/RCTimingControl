@@ -11,6 +11,9 @@ spring:
     # Dev seeds are versioned 1000+, so a seeded dev database has a higher version than new
     # migrations. Out-of-order lets migrations added after the seed (V30 onward) still apply.
     out-of-order: true
+    # V1000 and V1003 seeded racer accounts and were retired in L10 (#18), replaced by V1005.
+    # Ignoring missing seeds lets a dev database that applied them keep migrating.
+    ignore-migration-patterns: "*:missing,*:future"
   jpa:
     hibernate:
       ddl-auto: validate

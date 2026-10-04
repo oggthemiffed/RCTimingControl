@@ -33,12 +33,6 @@ public class Entry {
     @Column(name = "event_class_id")
     private Long eventClassId;
 
-    @Column(name = "car_id")
-    private Long carId;
-
-    @Column(name = "transponder_id")
-    private Long transponderId;
-
     // Snapshot columns — captured at submit time (RACER-07)
     // V13 names these transponder_number and transponder_label (no _snapshot suffix)
     @Column(name = "transponder_number", nullable = false, length = 20)
@@ -50,13 +44,6 @@ public class Entry {
     /** Optional second transponder for this entry (L6). Laps from either number count. */
     @Column(name = "secondary_transponder_number", length = 20)
     private String secondaryTransponderNumber;
-
-    // Membership override — stored via membership_override_by FK column (RACER-14)
-    @Column(name = "membership_override_by")
-    private Long membershipOverrideByAdminId;
-
-    @Column(name = "membership_override", nullable = false)
-    private boolean membershipOverride = false;
 
     @Column(nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
@@ -104,12 +91,6 @@ public class Entry {
     public Long getEventClassId() { return eventClassId; }
     public void setEventClassId(Long eventClassId) { this.eventClassId = eventClassId; }
 
-    public Long getCarId() { return carId; }
-    public void setCarId(Long carId) { this.carId = carId; }
-
-    public Long getTransponderId() { return transponderId; }
-    public void setTransponderId(Long transponderId) { this.transponderId = transponderId; }
-
     public String getTransponderNumberSnapshot() { return transponderNumberSnapshot; }
     public void setTransponderNumberSnapshot(String transponderNumberSnapshot) { this.transponderNumberSnapshot = transponderNumberSnapshot; }
 
@@ -118,15 +99,6 @@ public class Entry {
 
     public String getTransponderLabelSnapshot() { return transponderLabelSnapshot; }
     public void setTransponderLabelSnapshot(String transponderLabelSnapshot) { this.transponderLabelSnapshot = transponderLabelSnapshot; }
-
-    public Long getMembershipOverrideByAdminId() { return membershipOverrideByAdminId; }
-    public void setMembershipOverrideByAdminId(Long membershipOverrideByAdminId) {
-        this.membershipOverrideByAdminId = membershipOverrideByAdminId;
-        this.membershipOverride = (membershipOverrideByAdminId != null);
-    }
-
-    public boolean isMembershipOverride() { return membershipOverride; }
-    public void setMembershipOverride(boolean membershipOverride) { this.membershipOverride = membershipOverride; }
 
     public EntryStatus getStatus() { return status; }
     public void setStatus(EntryStatus status) { this.status = status; }

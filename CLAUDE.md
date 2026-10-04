@@ -94,7 +94,7 @@ Staff roles are **stackable** — a single user account can hold any combination
 | `ADMIN` | Club config, user/role management, event and championship setup, all entries |
 | `RACE_DIRECTOR` | Race control client — start/stop races, call grid, marshal laps, abandon/skip |
 | `REFEREE` | Apply lap/time penalties, link unknown transponders, raise incident reports |
-| `RACER` | Own profile, cars, transponders, entries only |
+| Competitors | No account (L10, #18): entries come from the RaceHub import or are added as walk-ins |
 | Anonymous | Event schedule, live timing, results, championship standings |
 
 ### Key Data Design Notes

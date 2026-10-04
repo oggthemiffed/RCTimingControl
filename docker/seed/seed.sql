@@ -1,7 +1,7 @@
 -- Wyvern RC Club demo seed data
 -- Idempotent: skips all inserts if club already exists.
 -- Run order: after Flyway migrations have completed (schema must exist).
--- FK-safe insertion order matches V1..V26 migration dependency chain.
+-- FK-safe insertion order matches the migration dependency chain (V1..V35).
 
 DO $$
 DECLARE
@@ -38,15 +38,9 @@ DECLARE
     v_ec_round4_id   bigint;
     v_ec_round3_id   bigint;
 
-    -- cars
-    v_dave_car_id    bigint;
-    v_sam_car_id     bigint;
-    v_jo_car_id      bigint;
-    v_pat_car_id     bigint;
-    v_kim_car_id     bigint;
-    v_lee_car_id     bigint;
-    v_max_car_id     bigint;
-    v_nina_car_id    bigint;
+    -- competitor loop
+    v_racer          record;
+    v_competitor_id  bigint;
 
     -- entries (round 4 open event)
     v_entry_dave_r4  bigint;
@@ -142,23 +136,16 @@ BEGIN
     INSERT INTO user_roles (user_id, role) VALUES (v_admin_id, 'ADMIN');
     INSERT INTO user_roles (user_id, role) VALUES (v_admin_id, 'RACE_DIRECTOR');
     INSERT INTO user_roles (user_id, role) VALUES (v_admin_id, 'REFEREE');
+    -- The racers hold no role: only officials sign in (L10, #18). dave.racer is kept so the
+    -- e2e suite can check that a racer is turned away.
 
-    INSERT INTO user_roles (user_id, role) VALUES (v_dave_id,  'RACER');
-    INSERT INTO user_roles (user_id, role) VALUES (v_sam_id,   'RACER');
-    INSERT INTO user_roles (user_id, role) VALUES (v_jo_id,    'RACER');
-    INSERT INTO user_roles (user_id, role) VALUES (v_pat_id,   'RACER');
-    INSERT INTO user_roles (user_id, role) VALUES (v_kim_id,   'RACER');
-    INSERT INTO user_roles (user_id, role) VALUES (v_lee_id,   'RACER');
-    INSERT INTO user_roles (user_id, role) VALUES (v_max_id,   'RACER');
-    INSERT INTO user_roles (user_id, role) VALUES (v_nina_id,  'RACER');
 
     -- =========================================================================
     -- 3. club_profiles
     -- =========================================================================
-    INSERT INTO club_profiles (name, email, timezone, decoder_host, decoder_port, decoder_protocol,
-                               show_car_tags_in_results)
+    INSERT INTO club_profiles (name, email, timezone, decoder_host, decoder_port, decoder_protocol)
     VALUES ('Wyvern RC Club', 'info@example.com', 'Europe/London',
-            'fake-decoder', 5100, 'RC4', false);
+            'fake-decoder', 5100, 'RC4');
 
     -- =========================================================================
     -- 4. tracks + decoder_loops
@@ -236,68 +223,6 @@ BEGIN
     VALUES ('{"type":"TIMED","durationMinutes":5}'::jsonb,
             v_timed5_id, v_round3_id, v_touring_id, 1, 8, 0)
     RETURNING id INTO v_ec_round3_id;
-
-    -- =========================================================================
-    -- 9. cars (one per racer, 13.5 Touring)
-    -- =========================================================================
-    INSERT INTO cars (user_id, name, primary_class_id)
-    VALUES (v_dave_id, 'Dave''s TC', v_touring_id)
-    RETURNING id INTO v_dave_car_id;
-
-    INSERT INTO cars (user_id, name, primary_class_id)
-    VALUES (v_sam_id, 'Sam''s TC', v_touring_id)
-    RETURNING id INTO v_sam_car_id;
-
-    INSERT INTO cars (user_id, name, primary_class_id)
-    VALUES (v_jo_id, 'Jo''s TC', v_touring_id)
-    RETURNING id INTO v_jo_car_id;
-
-    INSERT INTO cars (user_id, name, primary_class_id)
-    VALUES (v_pat_id, 'Pat''s TC', v_touring_id)
-    RETURNING id INTO v_pat_car_id;
-
-    INSERT INTO cars (user_id, name, primary_class_id)
-    VALUES (v_kim_id, 'Kim''s TC', v_touring_id)
-    RETURNING id INTO v_kim_car_id;
-
-    INSERT INTO cars (user_id, name, primary_class_id)
-    VALUES (v_lee_id, 'Lee''s TC', v_touring_id)
-    RETURNING id INTO v_lee_car_id;
-
-    INSERT INTO cars (user_id, name, primary_class_id)
-    VALUES (v_max_id, 'Max''s TC', v_touring_id)
-    RETURNING id INTO v_max_car_id;
-
-    INSERT INTO cars (user_id, name, primary_class_id)
-    VALUES (v_nina_id, 'Nina''s TC', v_touring_id)
-    RETURNING id INTO v_nina_car_id;
-
-    -- =========================================================================
-    -- 10. transponders (one per racer, IDs 101-108)
-    -- =========================================================================
-    INSERT INTO transponders (user_id, transponder_number, label)
-    VALUES (v_dave_id, '101', 'Dave #101');
-
-    INSERT INTO transponders (user_id, transponder_number, label)
-    VALUES (v_sam_id, '102', 'Sam #102');
-
-    INSERT INTO transponders (user_id, transponder_number, label)
-    VALUES (v_jo_id, '103', 'Jo #103');
-
-    INSERT INTO transponders (user_id, transponder_number, label)
-    VALUES (v_pat_id, '104', 'Pat #104');
-
-    INSERT INTO transponders (user_id, transponder_number, label)
-    VALUES (v_kim_id, '105', 'Kim #105');
-
-    INSERT INTO transponders (user_id, transponder_number, label)
-    VALUES (v_lee_id, '106', 'Lee #106');
-
-    INSERT INTO transponders (user_id, transponder_number, label)
-    VALUES (v_max_id, '107', 'Max #107');
-
-    INSERT INTO transponders (user_id, transponder_number, label)
-    VALUES (v_nina_id, '108', 'Nina #108');
 
     -- =========================================================================
     -- 11. entries — Round 4 (OPEN) event
@@ -468,6 +393,21 @@ BEGIN
         ]'::jsonb,
         '{}'::jsonb
     );
+
+    -- =========================================================================
+    -- 17. competitors: one per racer, linked to their entries (entries key on competitor)
+    -- =========================================================================
+    FOR v_racer IN
+        SELECT DISTINCT u.id, u.first_name, u.last_name
+        FROM users u JOIN entries e ON e.user_id = u.id
+        WHERE e.competitor_id IS NULL
+    LOOP
+        INSERT INTO competitors (display_name, created_at, updated_at)
+        VALUES (trim(v_racer.first_name || ' ' || v_racer.last_name), now(), now())
+        RETURNING id INTO v_competitor_id;
+
+        UPDATE entries SET competitor_id = v_competitor_id WHERE user_id = v_racer.id;
+    END LOOP;
 
     RAISE NOTICE 'Wyvern RC Club seed complete';
 END $$;

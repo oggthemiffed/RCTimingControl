@@ -53,9 +53,6 @@ public class ClubProfile {
     @Column(name = "default_voice_id", length = 100)
     private String defaultVoiceId = "en_GB-alan-medium";
 
-    @Column(name = "show_car_tags_in_results", nullable = false)
-    private boolean showCarTagsInResults = false;
-
     @Column(name = "decoder_host", length = 255)
     private String decoderHost;
 
@@ -119,8 +116,6 @@ public class ClubProfile {
     public String getDefaultVoiceId() { return defaultVoiceId; }
     public void setDefaultVoiceId(String defaultVoiceId) { this.defaultVoiceId = defaultVoiceId; }
 
-    public boolean isShowCarTagsInResults() { return showCarTagsInResults; }
-    public void setShowCarTagsInResults(boolean showCarTagsInResults) { this.showCarTagsInResults = showCarTagsInResults; }
 
     public String getDecoderHost() { return decoderHost; }
     public void setDecoderHost(String decoderHost) { this.decoderHost = decoderHost; }

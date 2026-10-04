@@ -4,9 +4,6 @@
 package dev.monkeypatch.rctiming.jooq.generated;
 
 
-import dev.monkeypatch.rctiming.jooq.generated.tables.CarTagCategories;
-import dev.monkeypatch.rctiming.jooq.generated.tables.CarTagValues;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Cars;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
@@ -31,7 +28,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldaySnapshots;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
-import dev.monkeypatch.rctiming.jooq.generated.tables.PasswordResetTokens;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions;
@@ -46,11 +42,8 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.TrackLapThresholds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Transponders;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLinks;
-import dev.monkeypatch.rctiming.jooq.generated.tables.UserClassRatings;
-import dev.monkeypatch.rctiming.jooq.generated.tables.UserGoverningBodyMemberships;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UserRoles;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users;
 
@@ -74,21 +67,6 @@ public class Public extends SchemaImpl {
      * The reference instance of <code>public</code>
      */
     public static final Public PUBLIC = new Public();
-
-    /**
-     * The table <code>public.car_tag_categories</code>.
-     */
-    public final CarTagCategories CAR_TAG_CATEGORIES = CarTagCategories.CAR_TAG_CATEGORIES;
-
-    /**
-     * The table <code>public.car_tag_values</code>.
-     */
-    public final CarTagValues CAR_TAG_VALUES = CarTagValues.CAR_TAG_VALUES;
-
-    /**
-     * The table <code>public.cars</code>.
-     */
-    public final Cars CARS = Cars.CARS;
 
     /**
      * The table <code>public.championship_classes</code>.
@@ -238,11 +216,6 @@ public class Public extends SchemaImpl {
     public final MarshalPenalties MARSHAL_PENALTIES = MarshalPenalties.MARSHAL_PENALTIES;
 
     /**
-     * The table <code>public.password_reset_tokens</code>.
-     */
-    public final PasswordResetTokens PASSWORD_RESET_TOKENS = PasswordResetTokens.PASSWORD_RESET_TOKENS;
-
-    /**
      * The table <code>public.penalties</code>.
      */
     public final Penalties PENALTIES = Penalties.PENALTIES;
@@ -313,11 +286,6 @@ public class Public extends SchemaImpl {
     public final Tracks TRACKS = Tracks.TRACKS;
 
     /**
-     * The table <code>public.transponders</code>.
-     */
-    public final Transponders TRANSPONDERS = Transponders.TRANSPONDERS;
-
-    /**
      * The table <code>public.unknown_transponder_link</code>.
      */
     public final UnknownTransponderLink UNKNOWN_TRANSPONDER_LINK = UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK;
@@ -326,16 +294,6 @@ public class Public extends SchemaImpl {
      * The table <code>public.unknown_transponder_links</code>.
      */
     public final UnknownTransponderLinks UNKNOWN_TRANSPONDER_LINKS = UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS;
-
-    /**
-     * The table <code>public.user_class_ratings</code>.
-     */
-    public final UserClassRatings USER_CLASS_RATINGS = UserClassRatings.USER_CLASS_RATINGS;
-
-    /**
-     * The table <code>public.user_governing_body_memberships</code>.
-     */
-    public final UserGoverningBodyMemberships USER_GOVERNING_BODY_MEMBERSHIPS = UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS;
 
     /**
      * The table <code>public.user_roles</code>.
@@ -363,9 +321,6 @@ public class Public extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            CarTagCategories.CAR_TAG_CATEGORIES,
-            CarTagValues.CAR_TAG_VALUES,
-            Cars.CARS,
             ChampionshipClasses.CHAMPIONSHIP_CLASSES,
             ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS,
             ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS,
@@ -390,7 +345,6 @@ public class Public extends SchemaImpl {
             MarshalAbsences.MARSHAL_ABSENCES,
             MarshalAdjustments.MARSHAL_ADJUSTMENTS,
             MarshalPenalties.MARSHAL_PENALTIES,
-            PasswordResetTokens.PASSWORD_RESET_TOKENS,
             Penalties.PENALTIES,
             PracticeLaps.PRACTICE_LAPS,
             PracticeSessions.PRACTICE_SESSIONS,
@@ -405,11 +359,8 @@ public class Public extends SchemaImpl {
             Rounds.ROUNDS,
             TrackLapThresholds.TRACK_LAP_THRESHOLDS,
             Tracks.TRACKS,
-            Transponders.TRANSPONDERS,
             UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK,
             UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS,
-            UserClassRatings.USER_CLASS_RATINGS,
-            UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS,
             UserRoles.USER_ROLES,
             Users.USERS
         );

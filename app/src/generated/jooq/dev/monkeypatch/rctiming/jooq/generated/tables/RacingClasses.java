@@ -6,14 +6,11 @@ package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.Public;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Cars.CarsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses.ChampionshipClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships.ChampionshipsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.TrackLapThresholds.TrackLapThresholdsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks.TracksPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.UserClassRatings.UserClassRatingsPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RacingClassesRecord;
 
 import java.time.OffsetDateTime;
@@ -172,18 +169,6 @@ public class RacingClasses extends TableImpl<RacingClassesRecord> {
         return Arrays.asList(Keys.RACING_CLASSES_NAME_KEY);
     }
 
-    private transient CarsPath _cars;
-
-    /**
-     * Get the implicit to-many join path to the <code>public.cars</code> table
-     */
-    public CarsPath cars() {
-        if (_cars == null)
-            _cars = new CarsPath(this, null, Keys.CARS__CARS_PRIMARY_CLASS_ID_FKEY.getInverseKey());
-
-        return _cars;
-    }
-
     private transient ChampionshipClassesPath _championshipClasses;
 
     /**
@@ -223,19 +208,6 @@ public class RacingClasses extends TableImpl<RacingClassesRecord> {
         return _trackLapThresholds;
     }
 
-    private transient UserClassRatingsPath _userClassRatings;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.user_class_ratings</code> table
-     */
-    public UserClassRatingsPath userClassRatings() {
-        if (_userClassRatings == null)
-            _userClassRatings = new UserClassRatingsPath(this, null, Keys.USER_CLASS_RATINGS__USER_CLASS_RATINGS_RACING_CLASS_ID_FKEY.getInverseKey());
-
-        return _userClassRatings;
-    }
-
     /**
      * Get the implicit many-to-many join path to the
      * <code>public.championships</code> table
@@ -250,14 +222,6 @@ public class RacingClasses extends TableImpl<RacingClassesRecord> {
      */
     public TracksPath tracks() {
         return trackLapThresholds().tracks();
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the <code>public.users</code>
-     * table
-     */
-    public UsersPath users() {
-        return userClassRatings().users();
     }
 
     @Override

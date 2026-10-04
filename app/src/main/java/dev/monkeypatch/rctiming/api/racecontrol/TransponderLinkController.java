@@ -27,7 +27,7 @@ import java.util.Map;
  * Race director or admin can link an unknown transponder number to an existing entry,
  * retroactively crediting all passings since race start (D-12).
  *
- * <p>T-05-18: endpoint is protected by @PreAuthorize — RACER role receives HTTP 403.
+ * <p>T-05-18: endpoint is protected by @PreAuthorize — accounts without the required role receive HTTP 403.
  * T-05-16: audit record persisted with actor userId, raceId, entryId, linkedAt.
  */
 @RestController

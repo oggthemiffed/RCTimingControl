@@ -118,76 +118,6 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
         return (OffsetDateTime) get(6);
     }
 
-    /**
-     * Setter for <code>public.users.phone_number</code>.
-     */
-    public void setPhoneNumber(String value) {
-        set(7, value);
-    }
-
-    /**
-     * Getter for <code>public.users.phone_number</code>.
-     */
-    public String getPhoneNumber() {
-        return (String) get(7);
-    }
-
-    /**
-     * Setter for <code>public.users.emergency_contact_name</code>.
-     */
-    public void setEmergencyContactName(String value) {
-        set(8, value);
-    }
-
-    /**
-     * Getter for <code>public.users.emergency_contact_name</code>.
-     */
-    public String getEmergencyContactName() {
-        return (String) get(8);
-    }
-
-    /**
-     * Setter for <code>public.users.emergency_contact_phone</code>.
-     */
-    public void setEmergencyContactPhone(String value) {
-        set(9, value);
-    }
-
-    /**
-     * Getter for <code>public.users.emergency_contact_phone</code>.
-     */
-    public String getEmergencyContactPhone() {
-        return (String) get(9);
-    }
-
-    /**
-     * Setter for <code>public.users.phonetic_name</code>.
-     */
-    public void setPhoneticName(String value) {
-        set(10, value);
-    }
-
-    /**
-     * Getter for <code>public.users.phonetic_name</code>.
-     */
-    public String getPhoneticName() {
-        return (String) get(10);
-    }
-
-    /**
-     * Setter for <code>public.users.preferred_voice_id</code>.
-     */
-    public void setPreferredVoiceId(String value) {
-        set(11, value);
-    }
-
-    /**
-     * Getter for <code>public.users.preferred_voice_id</code>.
-     */
-    public String getPreferredVoiceId() {
-        return (String) get(11);
-    }
-
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -211,7 +141,7 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
     /**
      * Create a detached, initialised UsersRecord
      */
-    public UsersRecord(Long id, String email, String passwordHash, String firstName, String lastName, OffsetDateTime createdAt, OffsetDateTime updatedAt, String phoneNumber, String emergencyContactName, String emergencyContactPhone, String phoneticName, String preferredVoiceId) {
+    public UsersRecord(Long id, String email, String passwordHash, String firstName, String lastName, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
         super(Users.USERS);
 
         setId(id);
@@ -221,11 +151,6 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
         setLastName(lastName);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
-        setPhoneNumber(phoneNumber);
-        setEmergencyContactName(emergencyContactName);
-        setEmergencyContactPhone(emergencyContactPhone);
-        setPhoneticName(phoneticName);
-        setPreferredVoiceId(preferredVoiceId);
         resetChangedOnNotNull();
     }
 }
