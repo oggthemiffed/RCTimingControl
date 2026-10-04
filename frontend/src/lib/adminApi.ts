@@ -76,6 +76,49 @@ export interface EventDetailDto {
   status: EventStatus;
   trackId: number | null;
   classes: EventClassDto[];
+  racehubLastImportAt: string | null;
+  racehubLastRevision: number | null;
+}
+
+// RaceHub Entry Export v1 import (L7/L8)
+
+export type RaceHubImportAction = 'CREATE' | 'UPDATE' | 'WITHDRAW' | 'UNCHANGED' | 'STALE' | 'SKIP';
+
+export interface RaceHubImportResult {
+  dryRun: boolean;
+  blocked: boolean;
+  applied: boolean;
+  racehubEventName: string | null;
+  revision: number | null;
+  summary: {
+    created: number;
+    updated: number;
+    withdrawn: number;
+    unchanged: number;
+    stale: number;
+    skipped: number;
+  };
+  unmappedClasses: {
+    racehubEventClassId: string;
+    rcClassName: string | null;
+    className: string | null;
+    entryCount: number;
+  }[];
+  errors: string[];
+  warnings: string[];
+  rows: {
+    entryId: string;
+    entryVersion: number;
+    driverDisplayName: string | null;
+    action: RaceHubImportAction;
+    eventClassId: number | null;
+    rctcEntryId: number | null;
+  }[];
+}
+
+export interface RaceHubClassMappingDto {
+  racehubEventClassId: string;
+  eventClassId: number;
 }
 
 export interface AdminEntryDto {
@@ -294,6 +337,26 @@ export interface CarTagCategoryDto {
 // ── API client ─────────────────────────────────────────────────────────────
 
 export const adminApi = {
+  // RaceHub import. A blocked import answers 422 with the same preview body, so return it.
+  importRaceHubEntries: (eventId: number, exportDocument: unknown, dryRun: boolean) =>
+    api
+      .post<RaceHubImportResult>(
+        `/api/v1/admin/events/${eventId}/racehub-import`,
+        exportDocument,
+        { params: { dryRun }, validateStatus: s => (s >= 200 && s < 300) || s === 422 },
+      )
+      .then(r => r.data),
+
+  listRaceHubClassMappings: (eventId: number) =>
+    api
+      .get<RaceHubClassMappingDto[]>(`/api/v1/admin/events/${eventId}/racehub-class-mappings`)
+      .then(r => r.data),
+
+  replaceRaceHubClassMappings: (eventId: number, mappings: RaceHubClassMappingDto[]) =>
+    api
+      .put<RaceHubClassMappingDto[]>(`/api/v1/admin/events/${eventId}/racehub-class-mappings`, mappings)
+      .then(r => r.data),
+
   // Events
   listEvents: () =>
     api.get<AdminEventListDto[]>('/api/v1/admin/events').then(r => r.data),
