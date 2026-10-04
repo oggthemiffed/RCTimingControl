@@ -34,6 +34,10 @@ interface AuthResponse {
 
 const OFFICIAL_ROLES: AuthUser['roles'][number][] = ['ADMIN', 'RACE_DIRECTOR', 'REFEREE'];
 
+function isOfficial(roles: AuthUser['roles']): boolean {
+  return roles.some((r) => OFFICIAL_ROLES.includes(r));
+}
+
 function authResponseToUser(data: AuthResponse): AuthUser {
   return { id: data.id, email: data.email, firstName: data.firstName, lastName: data.lastName, roles: data.roles };
 }
@@ -52,6 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     axios
       .post<AuthResponse>('/api/v1/auth/refresh', {}, { withCredentials: true })
       .then(({ data }) => {
+        // A refresh cookie from an account with no official role does not restore a session
+        if (!isOfficial(data.roles)) return;
         setAccessToken(data.accessToken);
         setAccessTokenState(data.accessToken);
         setUser(authResponseToUser(data));
@@ -67,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string, redirectTo?: string): Promise<void> => {
     const { data } = await api.post<AuthResponse>('/api/v1/auth/login', { email, password });
     const authUser = authResponseToUser(data);
-    if (!authUser.roles.some((r) => OFFICIAL_ROLES.includes(r))) {
+    if (!isOfficial(authUser.roles)) {
       throw new NotAnOfficialError();
     }
     setAccessToken(data.accessToken);
