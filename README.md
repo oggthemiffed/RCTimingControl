@@ -68,6 +68,10 @@ Then set the decoder host to `localhost` and click **Test Connection**. See the 
 
 > **Never run RCTC and `localday/` against the same decoder at the same time** — see [Local Race Day Program](#local-race-day-program) below.
 
+### Spectator boards
+
+Point a TV's browser at `/boards/now-next` (the race on track with live timing, then what's next) or `/boards/results` (the last finished race). No login is needed. Add `?event=ID` to pin a board to one event; otherwise it follows the event that is racing.
+
 ### Running tests
 
 ```bash

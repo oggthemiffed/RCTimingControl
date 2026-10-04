@@ -394,6 +394,29 @@ The pre-race readiness grid call (`GET /race-control/race/{raceId}/pre-race-read
 
 ---
 
+## Spectator boards
+
+No authentication: these are the read-only feeds behind the venue TV boards at `/boards/now-next` and `/boards/results`. Each takes an optional `eventId`; without it the board shows the event with a race on track, or failing that the most recent event in progress. An unknown event, or no event racing, gives an empty board (all fields `null`).
+
+```http
+GET /boards/now-next?eventId=7
+```
+**200 OK** — `{ "eventId": 7, "eventName": "Club Round 3", "currentRace": {...} | null, "nextRace": {...} | null, "lastCompletedRace": {...} | null }`. Each race is `{ "raceId": 501, "label": "Qualifying 1 — Stock Buggy — Heat 2", "roundType": "QUALIFIER", "roundNumber": 1, "className": "Stock Buggy", "heatNumber": 2, "finalLetter": null, "status": "RUNNING" }`. `currentRace` is the `RUNNING` race, falling back to a `STOPPED` one; `nextRace` is the first `PENDING`/`GRID` race in run order; `lastCompletedRace` is the most recently finished.
+
+```http
+GET /boards/results?eventId=7
+```
+**200 OK** — `{ "eventId": 7, "eventName": "Club Round 3", "race": {...} | null, "results": [ResultRow] }`: the last finished race and its result snapshot rows (the same rows as `GET /results/{raceId}`). `results` is empty until the snapshot is written.
+
+```http
+GET /boards/races/{raceId}/live-timing
+```
+**200 OK** — the race's current live timing rows (the same shape as the `/topic/race/{raceId}/timing` frames), or `[]` before the first passing. Boards use it once to fill the table, then follow STOMP.
+
+**Anonymous STOMP.** A client may `CONNECT` to `/ws/timing` with no `Authorization` header. Such a session may only `SUBSCRIBE` to `/topic/race/{raceId}/timing` and `/topic/race/{raceId}/state`; any other subscription and every `SEND` is dropped. A `CONNECT` carrying a token that does not validate is still refused.
+
+---
+
 ## Cloud — Local Race Day Program lifecycle & sync
 
 The endpoints below are the cloud (`app/`) side of the independent **Local Race Day Program** (`localday/` + `frontend-local/`) — see [architecture.md](architecture.md#local-race-day-program-split-architecture). Unlike everything above, authentication here is split into two different models by design: the lifecycle/pre-cache endpoints use the normal `Authorization: Bearer <access_token>` (an `ADMIN` or `RACE_DIRECTOR` logged into the cloud), while the snapshot-ingest endpoint uses a separate per-day-instance secret, because its caller is a venue machine, not a logged-in browser session.
