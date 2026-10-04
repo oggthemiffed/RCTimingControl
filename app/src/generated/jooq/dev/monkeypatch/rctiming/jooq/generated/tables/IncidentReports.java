@@ -4,14 +4,15 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.IncidentReportsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +50,7 @@ public class IncidentReports extends TableImpl<IncidentReportsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.incident_reports</code>
+     * The reference instance of <code>incident_reports</code>
      */
     public static final IncidentReports INCIDENT_REPORTS = new IncidentReports();
 
@@ -62,39 +63,39 @@ public class IncidentReports extends TableImpl<IncidentReportsRecord> {
     }
 
     /**
-     * The column <code>public.incident_reports.id</code>.
+     * The column <code>incident_reports.id</code>.
      */
-    public final TableField<IncidentReportsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<IncidentReportsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.incident_reports.race_id</code>.
+     * The column <code>incident_reports.race_id</code>.
      */
     public final TableField<IncidentReportsRecord, Long> RACE_ID = createField(DSL.name("race_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.incident_reports.entry_id</code>.
+     * The column <code>incident_reports.entry_id</code>.
      */
     public final TableField<IncidentReportsRecord, Long> ENTRY_ID = createField(DSL.name("entry_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.incident_reports.incident_type</code>.
+     * The column <code>incident_reports.incident_type</code>.
      */
     public final TableField<IncidentReportsRecord, String> INCIDENT_TYPE = createField(DSL.name("incident_type"), SQLDataType.VARCHAR(50).nullable(false), this, "");
 
     /**
-     * The column <code>public.incident_reports.description</code>.
+     * The column <code>incident_reports.description</code>.
      */
     public final TableField<IncidentReportsRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>public.incident_reports.raised_by</code>.
+     * The column <code>incident_reports.raised_by</code>.
      */
     public final TableField<IncidentReportsRecord, Long> RAISED_BY = createField(DSL.name("raised_by"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.incident_reports.raised_at</code>.
+     * The column <code>incident_reports.raised_at</code>.
      */
-    public final TableField<IncidentReportsRecord, OffsetDateTime> RAISED_AT = createField(DSL.name("raised_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<IncidentReportsRecord, Instant> RAISED_AT = createField(DSL.name("raised_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private IncidentReports(Name alias, Table<IncidentReportsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -105,21 +106,21 @@ public class IncidentReports extends TableImpl<IncidentReportsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.incident_reports</code> table reference
+     * Create an aliased <code>incident_reports</code> table reference
      */
     public IncidentReports(String alias) {
         this(DSL.name(alias), INCIDENT_REPORTS);
     }
 
     /**
-     * Create an aliased <code>public.incident_reports</code> table reference
+     * Create an aliased <code>incident_reports</code> table reference
      */
     public IncidentReports(Name alias) {
         this(alias, INCIDENT_REPORTS);
     }
 
     /**
-     * Create a <code>public.incident_reports</code> table reference
+     * Create a <code>incident_reports</code> table reference
      */
     public IncidentReports() {
         this(DSL.name("incident_reports"), null);
@@ -160,7 +161,7 @@ public class IncidentReports extends TableImpl<IncidentReportsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -175,7 +176,7 @@ public class IncidentReports extends TableImpl<IncidentReportsRecord> {
 
     @Override
     public UniqueKey<IncidentReportsRecord> getPrimaryKey() {
-        return Keys.INCIDENT_REPORTS_PKEY;
+        return Keys.INCIDENT_REPORTS__PK_INCIDENT_REPORTS;
     }
 
     @Override
@@ -186,7 +187,7 @@ public class IncidentReports extends TableImpl<IncidentReportsRecord> {
     private transient EntriesPath _entries;
 
     /**
-     * Get the implicit join path to the <code>public.entries</code> table.
+     * Get the implicit join path to the <code>entries</code> table.
      */
     public EntriesPath entries() {
         if (_entries == null)
@@ -198,7 +199,7 @@ public class IncidentReports extends TableImpl<IncidentReportsRecord> {
     private transient RacesPath _races;
 
     /**
-     * Get the implicit join path to the <code>public.races</code> table.
+     * Get the implicit join path to the <code>races</code> table.
      */
     public RacesPath races() {
         if (_races == null)

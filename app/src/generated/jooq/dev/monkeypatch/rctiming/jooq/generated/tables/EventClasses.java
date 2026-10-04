@@ -4,9 +4,9 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceFormatTemplates.RaceFormatTemplatesPath;
@@ -14,8 +14,9 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.RacehubClassMappings.Raceh
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RacingClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.EventClassesRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +27,6 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.InverseForeignKey;
-import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Path;
 import org.jooq.PlainSQL;
@@ -54,7 +54,7 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.event_classes</code>
+     * The reference instance of <code>event_classes</code>
      */
     public static final EventClasses EVENT_CLASSES = new EventClasses();
 
@@ -67,62 +67,62 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
     }
 
     /**
-     * The column <code>public.event_classes.id</code>.
+     * The column <code>event_classes.id</code>.
      */
-    public final TableField<EventClassesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<EventClassesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.event_classes.config_snapshot</code>.
+     * The column <code>event_classes.config_snapshot</code>.
      */
-    public final TableField<EventClassesRecord, JSONB> CONFIG_SNAPSHOT = createField(DSL.name("config_snapshot"), SQLDataType.JSONB.nullable(false), this, "");
+    public final TableField<EventClassesRecord, String> CONFIG_SNAPSHOT = createField(DSL.name("config_snapshot"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>public.event_classes.config_override</code>.
+     * The column <code>event_classes.config_override</code>.
      */
-    public final TableField<EventClassesRecord, JSONB> CONFIG_OVERRIDE = createField(DSL.name("config_override"), SQLDataType.JSONB, this, "");
+    public final TableField<EventClassesRecord, String> CONFIG_OVERRIDE = createField(DSL.name("config_override"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>public.event_classes.template_id</code>.
+     * The column <code>event_classes.template_id</code>.
      */
     public final TableField<EventClassesRecord, Long> TEMPLATE_ID = createField(DSL.name("template_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.event_classes.created_at</code>.
+     * The column <code>event_classes.created_at</code>.
      */
-    public final TableField<EventClassesRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<EventClassesRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.event_classes.updated_at</code>.
+     * The column <code>event_classes.updated_at</code>.
      */
-    public final TableField<EventClassesRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<EventClassesRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.event_classes.event_id</code>.
+     * The column <code>event_classes.event_id</code>.
      */
     public final TableField<EventClassesRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.event_classes.racing_class_id</code>.
+     * The column <code>event_classes.racing_class_id</code>.
      */
     public final TableField<EventClassesRecord, Long> RACING_CLASS_ID = createField(DSL.name("racing_class_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.event_classes.combined_race_group</code>.
+     * The column <code>event_classes.combined_race_group</code>.
      */
     public final TableField<EventClassesRecord, Long> COMBINED_RACE_GROUP = createField(DSL.name("combined_race_group"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.event_classes.finals_count</code>.
+     * The column <code>event_classes.finals_count</code>.
      */
     public final TableField<EventClassesRecord, Integer> FINALS_COUNT = createField(DSL.name("finals_count"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>public.event_classes.cars_per_final</code>.
+     * The column <code>event_classes.cars_per_final</code>.
      */
     public final TableField<EventClassesRecord, Integer> CARS_PER_FINAL = createField(DSL.name("cars_per_final"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>public.event_classes.bump_count</code>.
+     * The column <code>event_classes.bump_count</code>.
      */
     public final TableField<EventClassesRecord, Integer> BUMP_COUNT = createField(DSL.name("bump_count"), SQLDataType.INTEGER, this, "");
 
@@ -135,21 +135,21 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.event_classes</code> table reference
+     * Create an aliased <code>event_classes</code> table reference
      */
     public EventClasses(String alias) {
         this(DSL.name(alias), EVENT_CLASSES);
     }
 
     /**
-     * Create an aliased <code>public.event_classes</code> table reference
+     * Create an aliased <code>event_classes</code> table reference
      */
     public EventClasses(Name alias) {
         this(alias, EVENT_CLASSES);
     }
 
     /**
-     * Create a <code>public.event_classes</code> table reference
+     * Create a <code>event_classes</code> table reference
      */
     public EventClasses() {
         this(DSL.name("event_classes"), null);
@@ -190,7 +190,7 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -205,7 +205,7 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
 
     @Override
     public UniqueKey<EventClassesRecord> getPrimaryKey() {
-        return Keys.EVENT_CLASSES_PKEY;
+        return Keys.EVENT_CLASSES__PK_EVENT_CLASSES;
     }
 
     @Override
@@ -216,7 +216,7 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
     private transient EventsPath _events;
 
     /**
-     * Get the implicit join path to the <code>public.events</code> table.
+     * Get the implicit join path to the <code>events</code> table.
      */
     public EventsPath events() {
         if (_events == null)
@@ -228,8 +228,7 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
     private transient RacingClassesPath _racingClasses;
 
     /**
-     * Get the implicit join path to the <code>public.racing_classes</code>
-     * table.
+     * Get the implicit join path to the <code>racing_classes</code> table.
      */
     public RacingClassesPath racingClasses() {
         if (_racingClasses == null)
@@ -241,8 +240,8 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
     private transient RaceFormatTemplatesPath _raceFormatTemplates;
 
     /**
-     * Get the implicit join path to the
-     * <code>public.race_format_templates</code> table.
+     * Get the implicit join path to the <code>race_format_templates</code>
+     * table.
      */
     public RaceFormatTemplatesPath raceFormatTemplates() {
         if (_raceFormatTemplates == null)
@@ -254,8 +253,7 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
     private transient EntriesPath _entries;
 
     /**
-     * Get the implicit to-many join path to the <code>public.entries</code>
-     * table
+     * Get the implicit to-many join path to the <code>entries</code> table
      */
     public EntriesPath entries() {
         if (_entries == null)
@@ -268,7 +266,7 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.racehub_class_mappings</code> table
+     * <code>racehub_class_mappings</code> table
      */
     public RacehubClassMappingsPath racehubClassMappings() {
         if (_racehubClassMappings == null)
@@ -280,7 +278,7 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
     private transient RacesPath _races;
 
     /**
-     * Get the implicit to-many join path to the <code>public.races</code> table
+     * Get the implicit to-many join path to the <code>races</code> table
      */
     public RacesPath races() {
         if (_races == null)

@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.TrackLapThresholds;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,87 +21,87 @@ public class TrackLapThresholdsRecord extends UpdatableRecordImpl<TrackLapThresh
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.track_lap_thresholds.id</code>.
+     * Setter for <code>track_lap_thresholds.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.track_lap_thresholds.id</code>.
+     * Getter for <code>track_lap_thresholds.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.track_lap_thresholds.track_id</code>.
+     * Setter for <code>track_lap_thresholds.track_id</code>.
      */
     public void setTrackId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.track_lap_thresholds.track_id</code>.
+     * Getter for <code>track_lap_thresholds.track_id</code>.
      */
     public Long getTrackId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.track_lap_thresholds.racing_class_id</code>.
+     * Setter for <code>track_lap_thresholds.racing_class_id</code>.
      */
     public void setRacingClassId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.track_lap_thresholds.racing_class_id</code>.
+     * Getter for <code>track_lap_thresholds.racing_class_id</code>.
      */
     public Long getRacingClassId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.track_lap_thresholds.min_lap_ms</code>.
+     * Setter for <code>track_lap_thresholds.min_lap_ms</code>.
      */
     public void setMinLapMs(Integer value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.track_lap_thresholds.min_lap_ms</code>.
+     * Getter for <code>track_lap_thresholds.min_lap_ms</code>.
      */
     public Integer getMinLapMs() {
         return (Integer) get(3);
     }
 
     /**
-     * Setter for <code>public.track_lap_thresholds.max_last_lap_ms</code>.
+     * Setter for <code>track_lap_thresholds.max_last_lap_ms</code>.
      */
     public void setMaxLastLapMs(Integer value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.track_lap_thresholds.max_last_lap_ms</code>.
+     * Getter for <code>track_lap_thresholds.max_last_lap_ms</code>.
      */
     public Integer getMaxLastLapMs() {
         return (Integer) get(4);
     }
 
     /**
-     * Setter for <code>public.track_lap_thresholds.created_at</code>.
+     * Setter for <code>track_lap_thresholds.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.track_lap_thresholds.created_at</code>.
+     * Getter for <code>track_lap_thresholds.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(5);
+    public Instant getCreatedAt() {
+        return (Instant) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -127,7 +127,7 @@ public class TrackLapThresholdsRecord extends UpdatableRecordImpl<TrackLapThresh
     /**
      * Create a detached, initialised TrackLapThresholdsRecord
      */
-    public TrackLapThresholdsRecord(Long id, Long trackId, Long racingClassId, Integer minLapMs, Integer maxLastLapMs, OffsetDateTime createdAt) {
+    public TrackLapThresholdsRecord(Long id, Long trackId, Long racingClassId, Integer minLapMs, Integer maxLastLapMs, Instant createdAt) {
         super(TrackLapThresholds.TRACK_LAP_THRESHOLDS);
 
         setId(id);

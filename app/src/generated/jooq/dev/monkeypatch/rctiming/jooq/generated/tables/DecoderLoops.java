@@ -4,12 +4,13 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks.TracksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.DecoderLoopsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +47,7 @@ public class DecoderLoops extends TableImpl<DecoderLoopsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.decoder_loops</code>
+     * The reference instance of <code>decoder_loops</code>
      */
     public static final DecoderLoops DECODER_LOOPS = new DecoderLoops();
 
@@ -59,39 +60,39 @@ public class DecoderLoops extends TableImpl<DecoderLoopsRecord> {
     }
 
     /**
-     * The column <code>public.decoder_loops.id</code>.
+     * The column <code>decoder_loops.id</code>.
      */
-    public final TableField<DecoderLoopsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<DecoderLoopsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.decoder_loops.track_id</code>.
+     * The column <code>decoder_loops.track_id</code>.
      */
     public final TableField<DecoderLoopsRecord, Long> TRACK_ID = createField(DSL.name("track_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.decoder_loops.loop_id</code>.
+     * The column <code>decoder_loops.loop_id</code>.
      */
     public final TableField<DecoderLoopsRecord, String> LOOP_ID = createField(DSL.name("loop_id"), SQLDataType.VARCHAR(50).nullable(false), this, "");
 
     /**
-     * The column <code>public.decoder_loops.display_name</code>.
+     * The column <code>decoder_loops.display_name</code>.
      */
     public final TableField<DecoderLoopsRecord, String> DISPLAY_NAME = createField(DSL.name("display_name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.decoder_loops.loop_type</code>.
+     * The column <code>decoder_loops.loop_type</code>.
      */
-    public final TableField<DecoderLoopsRecord, String> LOOP_TYPE = createField(DSL.name("loop_type"), SQLDataType.VARCHAR(50).nullable(false).defaultValue(DSL.field(DSL.raw("'FINISH_LINE'::character varying"), SQLDataType.VARCHAR)), this, "");
+    public final TableField<DecoderLoopsRecord, String> LOOP_TYPE = createField(DSL.name("loop_type"), SQLDataType.VARCHAR(50).nullable(false).defaultValue(DSL.field(DSL.raw("'FINISH_LINE'"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.decoder_loops.is_scoring_loop</code>.
+     * The column <code>decoder_loops.is_scoring_loop</code>.
      */
-    public final TableField<DecoderLoopsRecord, Boolean> IS_SCORING_LOOP = createField(DSL.name("is_scoring_loop"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("true"), SQLDataType.BOOLEAN)), this, "");
+    public final TableField<DecoderLoopsRecord, Boolean> IS_SCORING_LOOP = createField(DSL.name("is_scoring_loop"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("1"), SQLDataType.BOOLEAN)), this, "");
 
     /**
-     * The column <code>public.decoder_loops.created_at</code>.
+     * The column <code>decoder_loops.created_at</code>.
      */
-    public final TableField<DecoderLoopsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<DecoderLoopsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private DecoderLoops(Name alias, Table<DecoderLoopsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -102,21 +103,21 @@ public class DecoderLoops extends TableImpl<DecoderLoopsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.decoder_loops</code> table reference
+     * Create an aliased <code>decoder_loops</code> table reference
      */
     public DecoderLoops(String alias) {
         this(DSL.name(alias), DECODER_LOOPS);
     }
 
     /**
-     * Create an aliased <code>public.decoder_loops</code> table reference
+     * Create an aliased <code>decoder_loops</code> table reference
      */
     public DecoderLoops(Name alias) {
         this(alias, DECODER_LOOPS);
     }
 
     /**
-     * Create a <code>public.decoder_loops</code> table reference
+     * Create a <code>decoder_loops</code> table reference
      */
     public DecoderLoops() {
         this(DSL.name("decoder_loops"), null);
@@ -157,7 +158,7 @@ public class DecoderLoops extends TableImpl<DecoderLoopsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -167,7 +168,7 @@ public class DecoderLoops extends TableImpl<DecoderLoopsRecord> {
 
     @Override
     public UniqueKey<DecoderLoopsRecord> getPrimaryKey() {
-        return Keys.DECODER_LOOPS_PKEY;
+        return Keys.DECODER_LOOPS__PK_DECODER_LOOPS;
     }
 
     @Override
@@ -178,7 +179,7 @@ public class DecoderLoops extends TableImpl<DecoderLoopsRecord> {
     private transient TracksPath _tracks;
 
     /**
-     * Get the implicit join path to the <code>public.tracks</code> table.
+     * Get the implicit join path to the <code>tracks</code> table.
      */
     public TracksPath tracks() {
         if (_tracks == null)

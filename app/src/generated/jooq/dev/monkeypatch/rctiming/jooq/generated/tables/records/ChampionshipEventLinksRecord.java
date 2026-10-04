@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,73 +21,73 @@ public class ChampionshipEventLinksRecord extends UpdatableRecordImpl<Championsh
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.championship_event_links.id</code>.
+     * Setter for <code>championship_event_links.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.championship_event_links.id</code>.
+     * Getter for <code>championship_event_links.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.championship_event_links.championship_id</code>.
+     * Setter for <code>championship_event_links.championship_id</code>.
      */
     public void setChampionshipId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.championship_event_links.championship_id</code>.
+     * Getter for <code>championship_event_links.championship_id</code>.
      */
     public Long getChampionshipId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.championship_event_links.event_id</code>.
+     * Setter for <code>championship_event_links.event_id</code>.
      */
     public void setEventId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.championship_event_links.event_id</code>.
+     * Getter for <code>championship_event_links.event_id</code>.
      */
     public Long getEventId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.championship_event_links.round_number</code>.
+     * Setter for <code>championship_event_links.round_number</code>.
      */
     public void setRoundNumber(Integer value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.championship_event_links.round_number</code>.
+     * Getter for <code>championship_event_links.round_number</code>.
      */
     public Integer getRoundNumber() {
         return (Integer) get(3);
     }
 
     /**
-     * Setter for <code>public.championship_event_links.created_at</code>.
+     * Setter for <code>championship_event_links.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.championship_event_links.created_at</code>.
+     * Getter for <code>championship_event_links.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(4);
+    public Instant getCreatedAt() {
+        return (Instant) get(4);
     }
 
     // -------------------------------------------------------------------------
@@ -113,7 +113,7 @@ public class ChampionshipEventLinksRecord extends UpdatableRecordImpl<Championsh
     /**
      * Create a detached, initialised ChampionshipEventLinksRecord
      */
-    public ChampionshipEventLinksRecord(Long id, Long championshipId, Long eventId, Integer roundNumber, OffsetDateTime createdAt) {
+    public ChampionshipEventLinksRecord(Long id, Long championshipId, Long eventId, Integer roundNumber, Instant createdAt) {
         super(ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS);
 
         setId(id);

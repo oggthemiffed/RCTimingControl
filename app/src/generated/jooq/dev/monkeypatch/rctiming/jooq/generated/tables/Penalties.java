@@ -4,20 +4,20 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PenaltiesRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -38,7 +38,6 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -52,7 +51,7 @@ public class Penalties extends TableImpl<PenaltiesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.penalties</code>
+     * The reference instance of <code>penalties</code>
      */
     public static final Penalties PENALTIES = new Penalties();
 
@@ -65,44 +64,44 @@ public class Penalties extends TableImpl<PenaltiesRecord> {
     }
 
     /**
-     * The column <code>public.penalties.id</code>.
+     * The column <code>penalties.id</code>.
      */
-    public final TableField<PenaltiesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<PenaltiesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.penalties.race_id</code>.
+     * The column <code>penalties.race_id</code>.
      */
     public final TableField<PenaltiesRecord, Long> RACE_ID = createField(DSL.name("race_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.penalties.entry_id</code>.
+     * The column <code>penalties.entry_id</code>.
      */
     public final TableField<PenaltiesRecord, Long> ENTRY_ID = createField(DSL.name("entry_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.penalties.penalty_type</code>.
+     * The column <code>penalties.penalty_type</code>.
      */
     public final TableField<PenaltiesRecord, String> PENALTY_TYPE = createField(DSL.name("penalty_type"), SQLDataType.VARCHAR(20).nullable(false), this, "");
 
     /**
-     * The column <code>public.penalties.value</code>.
+     * The column <code>penalties.value</code>.
      */
     public final TableField<PenaltiesRecord, BigDecimal> VALUE = createField(DSL.name("value"), SQLDataType.NUMERIC.nullable(false), this, "");
 
     /**
-     * The column <code>public.penalties.reason</code>.
+     * The column <code>penalties.reason</code>.
      */
     public final TableField<PenaltiesRecord, String> REASON = createField(DSL.name("reason"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>public.penalties.applied_by</code>.
+     * The column <code>penalties.applied_by</code>.
      */
     public final TableField<PenaltiesRecord, Long> APPLIED_BY = createField(DSL.name("applied_by"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.penalties.applied_at</code>.
+     * The column <code>penalties.applied_at</code>.
      */
-    public final TableField<PenaltiesRecord, OffsetDateTime> APPLIED_AT = createField(DSL.name("applied_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<PenaltiesRecord, Instant> APPLIED_AT = createField(DSL.name("applied_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private Penalties(Name alias, Table<PenaltiesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -113,21 +112,21 @@ public class Penalties extends TableImpl<PenaltiesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.penalties</code> table reference
+     * Create an aliased <code>penalties</code> table reference
      */
     public Penalties(String alias) {
         this(DSL.name(alias), PENALTIES);
     }
 
     /**
-     * Create an aliased <code>public.penalties</code> table reference
+     * Create an aliased <code>penalties</code> table reference
      */
     public Penalties(Name alias) {
         this(alias, PENALTIES);
     }
 
     /**
-     * Create a <code>public.penalties</code> table reference
+     * Create a <code>penalties</code> table reference
      */
     public Penalties() {
         this(DSL.name("penalties"), null);
@@ -168,7 +167,7 @@ public class Penalties extends TableImpl<PenaltiesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -183,7 +182,7 @@ public class Penalties extends TableImpl<PenaltiesRecord> {
 
     @Override
     public UniqueKey<PenaltiesRecord> getPrimaryKey() {
-        return Keys.PENALTIES_PKEY;
+        return Keys.PENALTIES__PK_PENALTIES;
     }
 
     @Override
@@ -194,7 +193,7 @@ public class Penalties extends TableImpl<PenaltiesRecord> {
     private transient EntriesPath _entries;
 
     /**
-     * Get the implicit join path to the <code>public.entries</code> table.
+     * Get the implicit join path to the <code>entries</code> table.
      */
     public EntriesPath entries() {
         if (_entries == null)
@@ -206,20 +205,13 @@ public class Penalties extends TableImpl<PenaltiesRecord> {
     private transient RacesPath _races;
 
     /**
-     * Get the implicit join path to the <code>public.races</code> table.
+     * Get the implicit join path to the <code>races</code> table.
      */
     public RacesPath races() {
         if (_races == null)
             _races = new RacesPath(this, Keys.PENALTIES__PENALTIES_RACE_ID_FKEY, null);
 
         return _races;
-    }
-
-    @Override
-    public List<Check<PenaltiesRecord>> getChecks() {
-        return Arrays.asList(
-            Internal.createCheck(this, DSL.name("penalties_penalty_type_check"), "(((penalty_type)::text = ANY ((ARRAY['LAP'::character varying, 'TIME'::character varying])::text[])))", true)
-        );
     }
 
     @Override

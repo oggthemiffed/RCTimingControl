@@ -19,42 +19,42 @@ public class ChampionshipPointsScaleRecord extends UpdatableRecordImpl<Champions
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.championship_points_scale.championship_id</code>.
+     * Setter for <code>championship_points_scale.championship_id</code>.
      */
     public void setChampionshipId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.championship_points_scale.championship_id</code>.
+     * Getter for <code>championship_points_scale.championship_id</code>.
      */
     public Long getChampionshipId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.championship_points_scale.position</code>.
+     * Setter for <code>championship_points_scale.position</code>.
      */
     public void setPosition(Integer value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.championship_points_scale.position</code>.
+     * Getter for <code>championship_points_scale.position</code>.
      */
     public Integer getPosition() {
         return (Integer) get(1);
     }
 
     /**
-     * Setter for <code>public.championship_points_scale.points</code>.
+     * Setter for <code>championship_points_scale.points</code>.
      */
     public void setPoints(Integer value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.championship_points_scale.points</code>.
+     * Getter for <code>championship_points_scale.points</code>.
      */
     public Integer getPoints() {
         return (Integer) get(2);

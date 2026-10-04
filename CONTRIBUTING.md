@@ -102,7 +102,7 @@ flowchart LR
 
 | Job | What it tests | Approx time |
 |-----|--------------|-------------|
-| `test-backend` | JUnit 5 + Testcontainers — cloud API/domain/timing, plus `decoder-simulator` and `decoder-protocol` (the latter needs no Docker) | 3–6 min |
+| `test-backend` | JUnit 5 on temporary SQLite databases (no Docker) — API/domain/timing, plus `decoder-simulator` and `decoder-protocol` | 3–6 min |
 | `test-frontend` | Vitest — cloud React components, hooks, utilities | < 1 min |
 | `test-e2e` | Playwright — full Docker trial stack, 13 smoke tests | 8–12 min |
 
@@ -129,7 +129,7 @@ This blocks any direct push to `main` and prevents merging a PR with failing CI.
 ## Local test commands
 
 ```bash
-# Backend tests (requires Docker for Testcontainers)
+# Backend tests (no Docker needed)
 ./gradlew :app:test :decoder-simulator:test
 
 # Decoder protocol parser tests (no Docker)

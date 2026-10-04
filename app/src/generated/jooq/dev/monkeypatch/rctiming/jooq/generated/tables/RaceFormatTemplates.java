@@ -4,21 +4,24 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RaceFormatTemplatesRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
+import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.InverseForeignKey;
-import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Path;
 import org.jooq.PlainSQL;
@@ -33,6 +36,7 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -46,7 +50,7 @@ public class RaceFormatTemplates extends TableImpl<RaceFormatTemplatesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.race_format_templates</code>
+     * The reference instance of <code>race_format_templates</code>
      */
     public static final RaceFormatTemplates RACE_FORMAT_TEMPLATES = new RaceFormatTemplates();
 
@@ -59,29 +63,29 @@ public class RaceFormatTemplates extends TableImpl<RaceFormatTemplatesRecord> {
     }
 
     /**
-     * The column <code>public.race_format_templates.id</code>.
+     * The column <code>race_format_templates.id</code>.
      */
-    public final TableField<RaceFormatTemplatesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<RaceFormatTemplatesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.race_format_templates.name</code>.
+     * The column <code>race_format_templates.name</code>.
      */
     public final TableField<RaceFormatTemplatesRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.race_format_templates.config</code>.
+     * The column <code>race_format_templates.config</code>.
      */
-    public final TableField<RaceFormatTemplatesRecord, JSONB> CONFIG = createField(DSL.name("config"), SQLDataType.JSONB.nullable(false), this, "");
+    public final TableField<RaceFormatTemplatesRecord, String> CONFIG = createField(DSL.name("config"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>public.race_format_templates.created_at</code>.
+     * The column <code>race_format_templates.created_at</code>.
      */
-    public final TableField<RaceFormatTemplatesRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RaceFormatTemplatesRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.race_format_templates.updated_at</code>.
+     * The column <code>race_format_templates.updated_at</code>.
      */
-    public final TableField<RaceFormatTemplatesRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RaceFormatTemplatesRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private RaceFormatTemplates(Name alias, Table<RaceFormatTemplatesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -92,23 +96,21 @@ public class RaceFormatTemplates extends TableImpl<RaceFormatTemplatesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.race_format_templates</code> table
-     * reference
+     * Create an aliased <code>race_format_templates</code> table reference
      */
     public RaceFormatTemplates(String alias) {
         this(DSL.name(alias), RACE_FORMAT_TEMPLATES);
     }
 
     /**
-     * Create an aliased <code>public.race_format_templates</code> table
-     * reference
+     * Create an aliased <code>race_format_templates</code> table reference
      */
     public RaceFormatTemplates(Name alias) {
         this(alias, RACE_FORMAT_TEMPLATES);
     }
 
     /**
-     * Create a <code>public.race_format_templates</code> table reference
+     * Create a <code>race_format_templates</code> table reference
      */
     public RaceFormatTemplates() {
         this(DSL.name("race_format_templates"), null);
@@ -149,7 +151,7 @@ public class RaceFormatTemplates extends TableImpl<RaceFormatTemplatesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -159,14 +161,14 @@ public class RaceFormatTemplates extends TableImpl<RaceFormatTemplatesRecord> {
 
     @Override
     public UniqueKey<RaceFormatTemplatesRecord> getPrimaryKey() {
-        return Keys.RACE_FORMAT_TEMPLATES_PKEY;
+        return Keys.RACE_FORMAT_TEMPLATES__PK_RACE_FORMAT_TEMPLATES;
     }
 
     private transient EventClassesPath _eventClasses;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.event_classes</code> table
+     * Get the implicit to-many join path to the <code>event_classes</code>
+     * table
      */
     public EventClassesPath eventClasses() {
         if (_eventClasses == null)
@@ -178,13 +180,20 @@ public class RaceFormatTemplates extends TableImpl<RaceFormatTemplatesRecord> {
     private transient RacesPath _races;
 
     /**
-     * Get the implicit to-many join path to the <code>public.races</code> table
+     * Get the implicit to-many join path to the <code>races</code> table
      */
     public RacesPath races() {
         if (_races == null)
             _races = new RacesPath(this, null, Keys.RACES__RACES_FORMAT_ID_FKEY.getInverseKey());
 
         return _races;
+    }
+
+    @Override
+    public List<Check<RaceFormatTemplatesRecord>> getChecks() {
+        return Arrays.asList(
+            Internal.createCheck(this, DSL.name(""), "case (config is json) when (1 = 1) then 1 when (1 = 0) then 0 end <> 0", true)
+        );
     }
 
     @Override

@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,115 +21,115 @@ public class PracticeLapsRecord extends UpdatableRecordImpl<PracticeLapsRecord> 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.practice_laps.id</code>.
+     * Setter for <code>practice_laps.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.practice_laps.id</code>.
+     * Getter for <code>practice_laps.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.practice_laps.practice_session_id</code>.
+     * Setter for <code>practice_laps.practice_session_id</code>.
      */
     public void setPracticeSessionId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.practice_laps.practice_session_id</code>.
+     * Getter for <code>practice_laps.practice_session_id</code>.
      */
     public Long getPracticeSessionId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.practice_laps.transponder_number</code>.
+     * Setter for <code>practice_laps.transponder_number</code>.
      */
     public void setTransponderNumber(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.practice_laps.transponder_number</code>.
+     * Getter for <code>practice_laps.transponder_number</code>.
      */
     public String getTransponderNumber() {
         return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.practice_laps.user_id</code>.
+     * Setter for <code>practice_laps.user_id</code>.
      */
     public void setUserId(Long value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.practice_laps.user_id</code>.
+     * Getter for <code>practice_laps.user_id</code>.
      */
     public Long getUserId() {
         return (Long) get(3);
     }
 
     /**
-     * Setter for <code>public.practice_laps.lap_number</code>.
+     * Setter for <code>practice_laps.lap_number</code>.
      */
     public void setLapNumber(Integer value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.practice_laps.lap_number</code>.
+     * Getter for <code>practice_laps.lap_number</code>.
      */
     public Integer getLapNumber() {
         return (Integer) get(4);
     }
 
     /**
-     * Setter for <code>public.practice_laps.lap_time_ms</code>.
+     * Setter for <code>practice_laps.lap_time_ms</code>.
      */
     public void setLapTimeMs(Long value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.practice_laps.lap_time_ms</code>.
+     * Getter for <code>practice_laps.lap_time_ms</code>.
      */
     public Long getLapTimeMs() {
         return (Long) get(5);
     }
 
     /**
-     * Setter for <code>public.practice_laps.crossing_time</code>.
+     * Setter for <code>practice_laps.crossing_time</code>.
      */
-    public void setCrossingTime(OffsetDateTime value) {
+    public void setCrossingTime(Instant value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.practice_laps.crossing_time</code>.
+     * Getter for <code>practice_laps.crossing_time</code>.
      */
-    public OffsetDateTime getCrossingTime() {
-        return (OffsetDateTime) get(6);
+    public Instant getCrossingTime() {
+        return (Instant) get(6);
     }
 
     /**
-     * Setter for <code>public.practice_laps.created_at</code>.
+     * Setter for <code>practice_laps.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.practice_laps.created_at</code>.
+     * Getter for <code>practice_laps.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(7);
+    public Instant getCreatedAt() {
+        return (Instant) get(7);
     }
 
     // -------------------------------------------------------------------------
@@ -155,7 +155,7 @@ public class PracticeLapsRecord extends UpdatableRecordImpl<PracticeLapsRecord> 
     /**
      * Create a detached, initialised PracticeLapsRecord
      */
-    public PracticeLapsRecord(Long id, Long practiceSessionId, String transponderNumber, Long userId, Integer lapNumber, Long lapTimeMs, OffsetDateTime crossingTime, OffsetDateTime createdAt) {
+    public PracticeLapsRecord(Long id, Long practiceSessionId, String transponderNumber, Long userId, Integer lapNumber, Long lapTimeMs, Instant crossingTime, Instant createdAt) {
         super(PracticeLaps.PRACTICE_LAPS);
 
         setId(id);

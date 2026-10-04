@@ -63,8 +63,8 @@ class RaceHubImportIT extends AbstractIntegrationTest {
         adminToken = loginAs(Set.of(Role.ADMIN));
 
         eventId = jdbc.queryForObject("""
-                insert into events (name, event_date, status, created_at, updated_at)
-                values (?, current_date + 14, 'OPEN', now(), now()) returning id""",
+                insert into events (name, event_date, status)
+                values (?, date('now', '+14 days'), 'OPEN') returning id""",
                 Long.class, "RaceHub import " + run);
         buggyClassId = createEventClass("RH Buggy " + run);
         truckClassId = createEventClass("RH Truck " + run);
@@ -331,11 +331,11 @@ class RaceHubImportIT extends AbstractIntegrationTest {
 
     private long createEventClass(String racingClassName) {
         long racingClassId = jdbc.queryForObject("""
-                insert into racing_classes (name, created_at, updated_at) values (?, now(), now()) returning id""",
+                insert into racing_classes (name) values (?) returning id""",
                 Long.class, racingClassName);
         return jdbc.queryForObject("""
-                insert into event_classes (event_id, racing_class_id, config_snapshot, created_at, updated_at)
-                values (?, ?, '{"type":"TIMED"}'::jsonb, now(), now()) returning id""",
+                insert into event_classes (event_id, racing_class_id, config_snapshot)
+                values (?, ?, '{"type":"TIMED"}') returning id""",
                 Long.class, eventId, racingClassId);
     }
 

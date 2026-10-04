@@ -4,14 +4,15 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions.PracticeSessionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PracticeLapsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +50,7 @@ public class PracticeLaps extends TableImpl<PracticeLapsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.practice_laps</code>
+     * The reference instance of <code>practice_laps</code>
      */
     public static final PracticeLaps PRACTICE_LAPS = new PracticeLaps();
 
@@ -62,44 +63,44 @@ public class PracticeLaps extends TableImpl<PracticeLapsRecord> {
     }
 
     /**
-     * The column <code>public.practice_laps.id</code>.
+     * The column <code>practice_laps.id</code>.
      */
-    public final TableField<PracticeLapsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<PracticeLapsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.practice_laps.practice_session_id</code>.
+     * The column <code>practice_laps.practice_session_id</code>.
      */
     public final TableField<PracticeLapsRecord, Long> PRACTICE_SESSION_ID = createField(DSL.name("practice_session_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.practice_laps.transponder_number</code>.
+     * The column <code>practice_laps.transponder_number</code>.
      */
     public final TableField<PracticeLapsRecord, String> TRANSPONDER_NUMBER = createField(DSL.name("transponder_number"), SQLDataType.VARCHAR(50).nullable(false), this, "");
 
     /**
-     * The column <code>public.practice_laps.user_id</code>.
+     * The column <code>practice_laps.user_id</code>.
      */
     public final TableField<PracticeLapsRecord, Long> USER_ID = createField(DSL.name("user_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.practice_laps.lap_number</code>.
+     * The column <code>practice_laps.lap_number</code>.
      */
     public final TableField<PracticeLapsRecord, Integer> LAP_NUMBER = createField(DSL.name("lap_number"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>public.practice_laps.lap_time_ms</code>.
+     * The column <code>practice_laps.lap_time_ms</code>.
      */
     public final TableField<PracticeLapsRecord, Long> LAP_TIME_MS = createField(DSL.name("lap_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.practice_laps.crossing_time</code>.
+     * The column <code>practice_laps.crossing_time</code>.
      */
-    public final TableField<PracticeLapsRecord, OffsetDateTime> CROSSING_TIME = createField(DSL.name("crossing_time"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false), this, "");
+    public final TableField<PracticeLapsRecord, Instant> CROSSING_TIME = createField(DSL.name("crossing_time"), SQLDataType.BIGINT.nullable(false), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.practice_laps.created_at</code>.
+     * The column <code>practice_laps.created_at</code>.
      */
-    public final TableField<PracticeLapsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<PracticeLapsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private PracticeLaps(Name alias, Table<PracticeLapsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -110,21 +111,21 @@ public class PracticeLaps extends TableImpl<PracticeLapsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.practice_laps</code> table reference
+     * Create an aliased <code>practice_laps</code> table reference
      */
     public PracticeLaps(String alias) {
         this(DSL.name(alias), PRACTICE_LAPS);
     }
 
     /**
-     * Create an aliased <code>public.practice_laps</code> table reference
+     * Create an aliased <code>practice_laps</code> table reference
      */
     public PracticeLaps(Name alias) {
         this(alias, PRACTICE_LAPS);
     }
 
     /**
-     * Create a <code>public.practice_laps</code> table reference
+     * Create a <code>practice_laps</code> table reference
      */
     public PracticeLaps() {
         this(DSL.name("practice_laps"), null);
@@ -165,7 +166,7 @@ public class PracticeLaps extends TableImpl<PracticeLapsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -180,7 +181,7 @@ public class PracticeLaps extends TableImpl<PracticeLapsRecord> {
 
     @Override
     public UniqueKey<PracticeLapsRecord> getPrimaryKey() {
-        return Keys.PRACTICE_LAPS_PKEY;
+        return Keys.PRACTICE_LAPS__PK_PRACTICE_LAPS;
     }
 
     @Override
@@ -191,8 +192,7 @@ public class PracticeLaps extends TableImpl<PracticeLapsRecord> {
     private transient PracticeSessionsPath _practiceSessions;
 
     /**
-     * Get the implicit join path to the <code>public.practice_sessions</code>
-     * table.
+     * Get the implicit join path to the <code>practice_sessions</code> table.
      */
     public PracticeSessionsPath practiceSessions() {
         if (_practiceSessions == null)
@@ -204,7 +204,7 @@ public class PracticeLaps extends TableImpl<PracticeLapsRecord> {
     private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table.
+     * Get the implicit join path to the <code>users</code> table.
      */
     public UsersPath users() {
         if (_users == null)

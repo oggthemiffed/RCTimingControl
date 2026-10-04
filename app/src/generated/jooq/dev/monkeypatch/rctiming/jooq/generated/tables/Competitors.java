@@ -4,13 +4,14 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.CompetitorsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -47,7 +48,7 @@ public class Competitors extends TableImpl<CompetitorsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.competitors</code>
+     * The reference instance of <code>competitors</code>
      */
     public static final Competitors COMPETITORS = new Competitors();
 
@@ -60,44 +61,44 @@ public class Competitors extends TableImpl<CompetitorsRecord> {
     }
 
     /**
-     * The column <code>public.competitors.id</code>.
+     * The column <code>competitors.id</code>.
      */
-    public final TableField<CompetitorsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<CompetitorsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.competitors.display_name</code>.
+     * The column <code>competitors.display_name</code>.
      */
     public final TableField<CompetitorsRecord, String> DISPLAY_NAME = createField(DSL.name("display_name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.competitors.external_source</code>.
+     * The column <code>competitors.external_source</code>.
      */
     public final TableField<CompetitorsRecord, String> EXTERNAL_SOURCE = createField(DSL.name("external_source"), SQLDataType.VARCHAR(50), this, "");
 
     /**
-     * The column <code>public.competitors.external_id</code>.
+     * The column <code>competitors.external_id</code>.
      */
     public final TableField<CompetitorsRecord, String> EXTERNAL_ID = createField(DSL.name("external_id"), SQLDataType.VARCHAR(100), this, "");
 
     /**
-     * The column <code>public.competitors.brca_number</code>.
+     * The column <code>competitors.brca_number</code>.
      */
     public final TableField<CompetitorsRecord, String> BRCA_NUMBER = createField(DSL.name("brca_number"), SQLDataType.VARCHAR(50), this, "");
 
     /**
-     * The column <code>public.competitors.home_club</code>.
+     * The column <code>competitors.home_club</code>.
      */
     public final TableField<CompetitorsRecord, String> HOME_CLUB = createField(DSL.name("home_club"), SQLDataType.VARCHAR(255), this, "");
 
     /**
-     * The column <code>public.competitors.created_at</code>.
+     * The column <code>competitors.created_at</code>.
      */
-    public final TableField<CompetitorsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<CompetitorsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.competitors.updated_at</code>.
+     * The column <code>competitors.updated_at</code>.
      */
-    public final TableField<CompetitorsRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<CompetitorsRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private Competitors(Name alias, Table<CompetitorsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -108,21 +109,21 @@ public class Competitors extends TableImpl<CompetitorsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.competitors</code> table reference
+     * Create an aliased <code>competitors</code> table reference
      */
     public Competitors(String alias) {
         this(DSL.name(alias), COMPETITORS);
     }
 
     /**
-     * Create an aliased <code>public.competitors</code> table reference
+     * Create an aliased <code>competitors</code> table reference
      */
     public Competitors(Name alias) {
         this(alias, COMPETITORS);
     }
 
     /**
-     * Create a <code>public.competitors</code> table reference
+     * Create a <code>competitors</code> table reference
      */
     public Competitors() {
         this(DSL.name("competitors"), null);
@@ -163,7 +164,7 @@ public class Competitors extends TableImpl<CompetitorsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -173,19 +174,19 @@ public class Competitors extends TableImpl<CompetitorsRecord> {
 
     @Override
     public UniqueKey<CompetitorsRecord> getPrimaryKey() {
-        return Keys.COMPETITORS_PKEY;
+        return Keys.COMPETITORS__PK_COMPETITORS;
     }
 
     @Override
     public List<UniqueKey<CompetitorsRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.UQ_COMPETITORS_EXTERNAL);
+        return Arrays.asList(Keys.COMPETITORS__UQ_COMPETITORS_EXTERNAL);
     }
 
     private transient ChampionshipExclusionsPath _championshipExclusions;
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.championship_exclusions</code> table
+     * <code>championship_exclusions</code> table
      */
     public ChampionshipExclusionsPath championshipExclusions() {
         if (_championshipExclusions == null)
@@ -197,8 +198,7 @@ public class Competitors extends TableImpl<CompetitorsRecord> {
     private transient EntriesPath _entries;
 
     /**
-     * Get the implicit to-many join path to the <code>public.entries</code>
-     * table
+     * Get the implicit to-many join path to the <code>entries</code> table
      */
     public EntriesPath entries() {
         if (_entries == null)

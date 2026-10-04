@@ -42,183 +42,183 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Users;
 
 
 /**
- * Convenience access to all tables in public.
+ * Convenience access to all tables in the default schema.
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Tables {
 
     /**
-     * The table <code>public.championship_classes</code>.
+     * The table <code>championship_classes</code>.
      */
     public static final ChampionshipClasses CHAMPIONSHIP_CLASSES = ChampionshipClasses.CHAMPIONSHIP_CLASSES;
 
     /**
-     * The table <code>public.championship_event_links</code>.
+     * The table <code>championship_event_links</code>.
      */
     public static final ChampionshipEventLinks CHAMPIONSHIP_EVENT_LINKS = ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS;
 
     /**
-     * The table <code>public.championship_exclusions</code>.
+     * The table <code>championship_exclusions</code>.
      */
     public static final ChampionshipExclusions CHAMPIONSHIP_EXCLUSIONS = ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS;
 
     /**
-     * The table <code>public.championship_points_scale</code>.
+     * The table <code>championship_points_scale</code>.
      */
     public static final ChampionshipPointsScale CHAMPIONSHIP_POINTS_SCALE = ChampionshipPointsScale.CHAMPIONSHIP_POINTS_SCALE;
 
     /**
-     * The table <code>public.championships</code>.
+     * The table <code>championships</code>.
      */
     public static final Championships CHAMPIONSHIPS = Championships.CHAMPIONSHIPS;
 
     /**
-     * The table <code>public.club_profiles</code>.
+     * The table <code>club_profiles</code>.
      */
     public static final ClubProfiles CLUB_PROFILES = ClubProfiles.CLUB_PROFILES;
 
     /**
-     * The table <code>public.competitors</code>.
+     * The table <code>competitors</code>.
      */
     public static final Competitors COMPETITORS = Competitors.COMPETITORS;
 
     /**
-     * The table <code>public.decoder_loops</code>.
+     * The table <code>decoder_loops</code>.
      */
     public static final DecoderLoops DECODER_LOOPS = DecoderLoops.DECODER_LOOPS;
 
     /**
-     * The table <code>public.entries</code>.
+     * The table <code>entries</code>.
      */
     public static final Entries ENTRIES = Entries.ENTRIES;
 
     /**
-     * The table <code>public.entry_audit_log</code>.
+     * The table <code>entry_audit_log</code>.
      */
     public static final EntryAuditLog ENTRY_AUDIT_LOG = EntryAuditLog.ENTRY_AUDIT_LOG;
 
     /**
-     * The table <code>public.event_classes</code>.
+     * The table <code>event_classes</code>.
      */
     public static final EventClasses EVENT_CLASSES = EventClasses.EVENT_CLASSES;
 
     /**
-     * The table <code>public.events</code>.
+     * The table <code>events</code>.
      */
     public static final Events EVENTS = Events.EVENTS;
 
     /**
-     * The table <code>public.governing_body_affiliations</code>.
+     * The table <code>governing_body_affiliations</code>.
      */
     public static final GoverningBodyAffiliations GOVERNING_BODY_AFFILIATIONS = GoverningBodyAffiliations.GOVERNING_BODY_AFFILIATIONS;
 
     /**
-     * The table <code>public.incident_reports</code>.
+     * The table <code>incident_reports</code>.
      */
     public static final IncidentReports INCIDENT_REPORTS = IncidentReports.INCIDENT_REPORTS;
 
     /**
-     * The table <code>public.marshal_absences</code>.
+     * The table <code>marshal_absences</code>.
      */
     public static final MarshalAbsences MARSHAL_ABSENCES = MarshalAbsences.MARSHAL_ABSENCES;
 
     /**
-     * The table <code>public.marshal_adjustments</code>.
+     * The table <code>marshal_adjustments</code>.
      */
     public static final MarshalAdjustments MARSHAL_ADJUSTMENTS = MarshalAdjustments.MARSHAL_ADJUSTMENTS;
 
     /**
-     * The table <code>public.marshal_penalties</code>.
+     * The table <code>marshal_penalties</code>.
      */
     public static final MarshalPenalties MARSHAL_PENALTIES = MarshalPenalties.MARSHAL_PENALTIES;
 
     /**
-     * The table <code>public.penalties</code>.
+     * The table <code>penalties</code>.
      */
     public static final Penalties PENALTIES = Penalties.PENALTIES;
 
     /**
-     * The table <code>public.practice_laps</code>.
+     * The table <code>practice_laps</code>.
      */
     public static final PracticeLaps PRACTICE_LAPS = PracticeLaps.PRACTICE_LAPS;
 
     /**
-     * The table <code>public.practice_sessions</code>.
+     * The table <code>practice_sessions</code>.
      */
     public static final PracticeSessions PRACTICE_SESSIONS = PracticeSessions.PRACTICE_SESSIONS;
 
     /**
-     * The table <code>public.profanity_blocklist</code>.
+     * The table <code>profanity_blocklist</code>.
      */
     public static final ProfanityBlocklist PROFANITY_BLOCKLIST = ProfanityBlocklist.PROFANITY_BLOCKLIST;
 
     /**
-     * The table <code>public.race_entries</code>.
+     * The table <code>race_entries</code>.
      */
     public static final RaceEntries RACE_ENTRIES = RaceEntries.RACE_ENTRIES;
 
     /**
-     * The table <code>public.race_format_templates</code>.
+     * The table <code>race_format_templates</code>.
      */
     public static final RaceFormatTemplates RACE_FORMAT_TEMPLATES = RaceFormatTemplates.RACE_FORMAT_TEMPLATES;
 
     /**
-     * The table <code>public.racehub_class_mappings</code>.
+     * The table <code>racehub_class_mappings</code>.
      */
     public static final RacehubClassMappings RACEHUB_CLASS_MAPPINGS = RacehubClassMappings.RACEHUB_CLASS_MAPPINGS;
 
     /**
-     * The table <code>public.races</code>.
+     * The table <code>races</code>.
      */
     public static final Races RACES = Races.RACES;
 
     /**
-     * The table <code>public.racing_classes</code>.
+     * The table <code>racing_classes</code>.
      */
     public static final RacingClasses RACING_CLASSES = RacingClasses.RACING_CLASSES;
 
     /**
-     * The table <code>public.refresh_tokens</code>.
+     * The table <code>refresh_tokens</code>.
      */
     public static final RefreshTokens REFRESH_TOKENS = RefreshTokens.REFRESH_TOKENS;
 
     /**
-     * The table <code>public.result_snapshots</code>.
+     * The table <code>result_snapshots</code>.
      */
     public static final ResultSnapshots RESULT_SNAPSHOTS = ResultSnapshots.RESULT_SNAPSHOTS;
 
     /**
-     * The table <code>public.rounds</code>.
+     * The table <code>rounds</code>.
      */
     public static final Rounds ROUNDS = Rounds.ROUNDS;
 
     /**
-     * The table <code>public.track_lap_thresholds</code>.
+     * The table <code>track_lap_thresholds</code>.
      */
     public static final TrackLapThresholds TRACK_LAP_THRESHOLDS = TrackLapThresholds.TRACK_LAP_THRESHOLDS;
 
     /**
-     * The table <code>public.tracks</code>.
+     * The table <code>tracks</code>.
      */
     public static final Tracks TRACKS = Tracks.TRACKS;
 
     /**
-     * The table <code>public.unknown_transponder_link</code>.
+     * The table <code>unknown_transponder_link</code>.
      */
     public static final UnknownTransponderLink UNKNOWN_TRANSPONDER_LINK = UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK;
 
     /**
-     * The table <code>public.unknown_transponder_links</code>.
+     * The table <code>unknown_transponder_links</code>.
      */
     public static final UnknownTransponderLinks UNKNOWN_TRANSPONDER_LINKS = UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS;
 
     /**
-     * The table <code>public.user_roles</code>.
+     * The table <code>user_roles</code>.
      */
     public static final UserRoles USER_ROLES = UserRoles.USER_ROLES;
 
     /**
-     * The table <code>public.users</code>.
+     * The table <code>users</code>.
      */
     public static final Users USERS = Users.USERS;
 }

@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: demo
+  flyway:
+    # The demo data is versioned 2000+, so a demo database has a higher version than new
+    # migrations. Out-of-order lets migrations added after it still apply.
+    out-of-order: true
+
+rctiming:
+  database:
+    # Loads the Wyvern RC Club demo data (db/demo/<vendor>) once, after the baseline
+    migration-locations: db/migration, db/demo

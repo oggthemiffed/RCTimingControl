@@ -4,12 +4,11 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks.ChampionshipEventLinksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Championships.ChampionshipsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences.MarshalAbsencesPath;
@@ -19,14 +18,14 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.RacehubClassMappings.Raceh
 import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.RoundsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks.TracksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.EventsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -47,7 +46,6 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -61,7 +59,7 @@ public class Events extends TableImpl<EventsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.events</code>
+     * The reference instance of <code>events</code>
      */
     public static final Events EVENTS = new Events();
 
@@ -74,57 +72,57 @@ public class Events extends TableImpl<EventsRecord> {
     }
 
     /**
-     * The column <code>public.events.id</code>.
+     * The column <code>events.id</code>.
      */
-    public final TableField<EventsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<EventsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.events.name</code>.
+     * The column <code>events.name</code>.
      */
     public final TableField<EventsRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.events.event_date</code>.
+     * The column <code>events.event_date</code>.
      */
     public final TableField<EventsRecord, LocalDate> EVENT_DATE = createField(DSL.name("event_date"), SQLDataType.LOCALDATE.nullable(false), this, "");
 
     /**
-     * The column <code>public.events.status</code>.
+     * The column <code>events.status</code>.
      */
-    public final TableField<EventsRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'DRAFT'::character varying"), SQLDataType.VARCHAR)), this, "");
+    public final TableField<EventsRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'DRAFT'"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.events.created_at</code>.
+     * The column <code>events.created_at</code>.
      */
-    public final TableField<EventsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<EventsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.events.updated_at</code>.
+     * The column <code>events.updated_at</code>.
      */
-    public final TableField<EventsRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<EventsRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.events.entry_opens_at</code>.
+     * The column <code>events.entry_opens_at</code>.
      */
-    public final TableField<EventsRecord, OffsetDateTime> ENTRY_OPENS_AT = createField(DSL.name("entry_opens_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+    public final TableField<EventsRecord, Instant> ENTRY_OPENS_AT = createField(DSL.name("entry_opens_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.events.entry_closes_at</code>.
+     * The column <code>events.entry_closes_at</code>.
      */
-    public final TableField<EventsRecord, OffsetDateTime> ENTRY_CLOSES_AT = createField(DSL.name("entry_closes_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+    public final TableField<EventsRecord, Instant> ENTRY_CLOSES_AT = createField(DSL.name("entry_closes_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.events.track_id</code>.
+     * The column <code>events.track_id</code>.
      */
     public final TableField<EventsRecord, Long> TRACK_ID = createField(DSL.name("track_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.events.racehub_last_import_at</code>.
+     * The column <code>events.racehub_last_import_at</code>.
      */
-    public final TableField<EventsRecord, OffsetDateTime> RACEHUB_LAST_IMPORT_AT = createField(DSL.name("racehub_last_import_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+    public final TableField<EventsRecord, Instant> RACEHUB_LAST_IMPORT_AT = createField(DSL.name("racehub_last_import_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.events.racehub_last_revision</code>.
+     * The column <code>events.racehub_last_revision</code>.
      */
     public final TableField<EventsRecord, Long> RACEHUB_LAST_REVISION = createField(DSL.name("racehub_last_revision"), SQLDataType.BIGINT, this, "");
 
@@ -137,21 +135,21 @@ public class Events extends TableImpl<EventsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.events</code> table reference
+     * Create an aliased <code>events</code> table reference
      */
     public Events(String alias) {
         this(DSL.name(alias), EVENTS);
     }
 
     /**
-     * Create an aliased <code>public.events</code> table reference
+     * Create an aliased <code>events</code> table reference
      */
     public Events(Name alias) {
         this(alias, EVENTS);
     }
 
     /**
-     * Create a <code>public.events</code> table reference
+     * Create a <code>events</code> table reference
      */
     public Events() {
         this(DSL.name("events"), null);
@@ -192,7 +190,7 @@ public class Events extends TableImpl<EventsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -207,7 +205,7 @@ public class Events extends TableImpl<EventsRecord> {
 
     @Override
     public UniqueKey<EventsRecord> getPrimaryKey() {
-        return Keys.EVENTS_PKEY;
+        return Keys.EVENTS__PK_EVENTS;
     }
 
     @Override
@@ -218,7 +216,7 @@ public class Events extends TableImpl<EventsRecord> {
     private transient TracksPath _tracks;
 
     /**
-     * Get the implicit join path to the <code>public.tracks</code> table.
+     * Get the implicit join path to the <code>tracks</code> table.
      */
     public TracksPath tracks() {
         if (_tracks == null)
@@ -231,7 +229,7 @@ public class Events extends TableImpl<EventsRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.championship_event_links</code> table
+     * <code>championship_event_links</code> table
      */
     public ChampionshipEventLinksPath championshipEventLinks() {
         if (_championshipEventLinks == null)
@@ -244,7 +242,7 @@ public class Events extends TableImpl<EventsRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.championship_exclusions</code> table
+     * <code>championship_exclusions</code> table
      */
     public ChampionshipExclusionsPath championshipExclusions() {
         if (_championshipExclusions == null)
@@ -256,8 +254,7 @@ public class Events extends TableImpl<EventsRecord> {
     private transient EntriesPath _entries;
 
     /**
-     * Get the implicit to-many join path to the <code>public.entries</code>
-     * table
+     * Get the implicit to-many join path to the <code>entries</code> table
      */
     public EntriesPath entries() {
         if (_entries == null)
@@ -269,8 +266,8 @@ public class Events extends TableImpl<EventsRecord> {
     private transient EventClassesPath _eventClasses;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.event_classes</code> table
+     * Get the implicit to-many join path to the <code>event_classes</code>
+     * table
      */
     public EventClassesPath eventClasses() {
         if (_eventClasses == null)
@@ -282,8 +279,8 @@ public class Events extends TableImpl<EventsRecord> {
     private transient MarshalAbsencesPath _marshalAbsences;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.marshal_absences</code> table
+     * Get the implicit to-many join path to the <code>marshal_absences</code>
+     * table
      */
     public MarshalAbsencesPath marshalAbsences() {
         if (_marshalAbsences == null)
@@ -295,8 +292,8 @@ public class Events extends TableImpl<EventsRecord> {
     private transient MarshalPenaltiesPath _marshalPenalties;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.marshal_penalties</code> table
+     * Get the implicit to-many join path to the <code>marshal_penalties</code>
+     * table
      */
     public MarshalPenaltiesPath marshalPenalties() {
         if (_marshalPenalties == null)
@@ -308,8 +305,8 @@ public class Events extends TableImpl<EventsRecord> {
     private transient PracticeSessionsPath _practiceSessions;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.practice_sessions</code> table
+     * Get the implicit to-many join path to the <code>practice_sessions</code>
+     * table
      */
     public PracticeSessionsPath practiceSessions() {
         if (_practiceSessions == null)
@@ -322,7 +319,7 @@ public class Events extends TableImpl<EventsRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.racehub_class_mappings</code> table
+     * <code>racehub_class_mappings</code> table
      */
     public RacehubClassMappingsPath racehubClassMappings() {
         if (_racehubClassMappings == null)
@@ -334,29 +331,13 @@ public class Events extends TableImpl<EventsRecord> {
     private transient RoundsPath _rounds;
 
     /**
-     * Get the implicit to-many join path to the <code>public.rounds</code>
-     * table
+     * Get the implicit to-many join path to the <code>rounds</code> table
      */
     public RoundsPath rounds() {
         if (_rounds == null)
             _rounds = new RoundsPath(this, null, Keys.ROUNDS__ROUNDS_EVENT_ID_FKEY.getInverseKey());
 
         return _rounds;
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the
-     * <code>public.championships</code> table
-     */
-    public ChampionshipsPath championships() {
-        return championshipEventLinks().championships();
-    }
-
-    @Override
-    public List<Check<EventsRecord>> getChecks() {
-        return Arrays.asList(
-            Internal.createCheck(this, DSL.name("events_status_check"), "(((status)::text = ANY ((ARRAY['DRAFT'::character varying, 'PUBLISHED'::character varying, 'OPEN'::character varying, 'ENTRIES_CLOSED'::character varying, 'IN_PROGRESS'::character varying, 'COMPLETED'::character varying])::text[])))", true)
-        );
     }
 
     @Override

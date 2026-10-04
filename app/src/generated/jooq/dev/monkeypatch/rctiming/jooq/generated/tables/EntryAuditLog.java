@@ -4,14 +4,15 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.EntryAuditLogRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +50,7 @@ public class EntryAuditLog extends TableImpl<EntryAuditLogRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.entry_audit_log</code>
+     * The reference instance of <code>entry_audit_log</code>
      */
     public static final EntryAuditLog ENTRY_AUDIT_LOG = new EntryAuditLog();
 
@@ -62,44 +63,44 @@ public class EntryAuditLog extends TableImpl<EntryAuditLogRecord> {
     }
 
     /**
-     * The column <code>public.entry_audit_log.id</code>.
+     * The column <code>entry_audit_log.id</code>.
      */
-    public final TableField<EntryAuditLogRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<EntryAuditLogRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.entry_audit_log.entry_id</code>.
+     * The column <code>entry_audit_log.entry_id</code>.
      */
     public final TableField<EntryAuditLogRecord, Long> ENTRY_ID = createField(DSL.name("entry_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.entry_audit_log.admin_user_id</code>.
+     * The column <code>entry_audit_log.admin_user_id</code>.
      */
     public final TableField<EntryAuditLogRecord, Long> ADMIN_USER_ID = createField(DSL.name("admin_user_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.entry_audit_log.action</code>.
+     * The column <code>entry_audit_log.action</code>.
      */
     public final TableField<EntryAuditLogRecord, String> ACTION = createField(DSL.name("action"), SQLDataType.VARCHAR(40).nullable(false), this, "");
 
     /**
-     * The column <code>public.entry_audit_log.reason</code>.
+     * The column <code>entry_audit_log.reason</code>.
      */
     public final TableField<EntryAuditLogRecord, String> REASON = createField(DSL.name("reason"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>public.entry_audit_log.before_snapshot</code>.
+     * The column <code>entry_audit_log.before_snapshot</code>.
      */
     public final TableField<EntryAuditLogRecord, String> BEFORE_SNAPSHOT = createField(DSL.name("before_snapshot"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>public.entry_audit_log.after_snapshot</code>.
+     * The column <code>entry_audit_log.after_snapshot</code>.
      */
     public final TableField<EntryAuditLogRecord, String> AFTER_SNAPSHOT = createField(DSL.name("after_snapshot"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>public.entry_audit_log.created_at</code>.
+     * The column <code>entry_audit_log.created_at</code>.
      */
-    public final TableField<EntryAuditLogRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<EntryAuditLogRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private EntryAuditLog(Name alias, Table<EntryAuditLogRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -110,21 +111,21 @@ public class EntryAuditLog extends TableImpl<EntryAuditLogRecord> {
     }
 
     /**
-     * Create an aliased <code>public.entry_audit_log</code> table reference
+     * Create an aliased <code>entry_audit_log</code> table reference
      */
     public EntryAuditLog(String alias) {
         this(DSL.name(alias), ENTRY_AUDIT_LOG);
     }
 
     /**
-     * Create an aliased <code>public.entry_audit_log</code> table reference
+     * Create an aliased <code>entry_audit_log</code> table reference
      */
     public EntryAuditLog(Name alias) {
         this(alias, ENTRY_AUDIT_LOG);
     }
 
     /**
-     * Create a <code>public.entry_audit_log</code> table reference
+     * Create a <code>entry_audit_log</code> table reference
      */
     public EntryAuditLog() {
         this(DSL.name("entry_audit_log"), null);
@@ -165,7 +166,7 @@ public class EntryAuditLog extends TableImpl<EntryAuditLogRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -180,7 +181,7 @@ public class EntryAuditLog extends TableImpl<EntryAuditLogRecord> {
 
     @Override
     public UniqueKey<EntryAuditLogRecord> getPrimaryKey() {
-        return Keys.ENTRY_AUDIT_LOG_PKEY;
+        return Keys.ENTRY_AUDIT_LOG__PK_ENTRY_AUDIT_LOG;
     }
 
     @Override
@@ -191,7 +192,7 @@ public class EntryAuditLog extends TableImpl<EntryAuditLogRecord> {
     private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table.
+     * Get the implicit join path to the <code>users</code> table.
      */
     public UsersPath users() {
         if (_users == null)
@@ -203,7 +204,7 @@ public class EntryAuditLog extends TableImpl<EntryAuditLogRecord> {
     private transient EntriesPath _entries;
 
     /**
-     * Get the implicit join path to the <code>public.entries</code> table.
+     * Get the implicit join path to the <code>entries</code> table.
      */
     public EntriesPath entries() {
         if (_entries == null)

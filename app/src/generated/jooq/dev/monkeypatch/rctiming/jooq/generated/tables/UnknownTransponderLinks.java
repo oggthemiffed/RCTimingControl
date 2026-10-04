@@ -4,14 +4,15 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.UnknownTransponderLinksRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +50,7 @@ public class UnknownTransponderLinks extends TableImpl<UnknownTransponderLinksRe
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.unknown_transponder_links</code>
+     * The reference instance of <code>unknown_transponder_links</code>
      */
     public static final UnknownTransponderLinks UNKNOWN_TRANSPONDER_LINKS = new UnknownTransponderLinks();
 
@@ -62,35 +63,34 @@ public class UnknownTransponderLinks extends TableImpl<UnknownTransponderLinksRe
     }
 
     /**
-     * The column <code>public.unknown_transponder_links.id</code>.
+     * The column <code>unknown_transponder_links.id</code>.
      */
-    public final TableField<UnknownTransponderLinksRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<UnknownTransponderLinksRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.unknown_transponder_links.race_id</code>.
+     * The column <code>unknown_transponder_links.race_id</code>.
      */
     public final TableField<UnknownTransponderLinksRecord, Long> RACE_ID = createField(DSL.name("race_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column
-     * <code>public.unknown_transponder_links.transponder_number</code>.
+     * The column <code>unknown_transponder_links.transponder_number</code>.
      */
     public final TableField<UnknownTransponderLinksRecord, String> TRANSPONDER_NUMBER = createField(DSL.name("transponder_number"), SQLDataType.VARCHAR(20).nullable(false), this, "");
 
     /**
-     * The column <code>public.unknown_transponder_links.linked_entry_id</code>.
+     * The column <code>unknown_transponder_links.linked_entry_id</code>.
      */
     public final TableField<UnknownTransponderLinksRecord, Long> LINKED_ENTRY_ID = createField(DSL.name("linked_entry_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.unknown_transponder_links.linked_by</code>.
+     * The column <code>unknown_transponder_links.linked_by</code>.
      */
     public final TableField<UnknownTransponderLinksRecord, Long> LINKED_BY = createField(DSL.name("linked_by"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.unknown_transponder_links.linked_at</code>.
+     * The column <code>unknown_transponder_links.linked_at</code>.
      */
-    public final TableField<UnknownTransponderLinksRecord, OffsetDateTime> LINKED_AT = createField(DSL.name("linked_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<UnknownTransponderLinksRecord, Instant> LINKED_AT = createField(DSL.name("linked_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private UnknownTransponderLinks(Name alias, Table<UnknownTransponderLinksRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -101,23 +101,21 @@ public class UnknownTransponderLinks extends TableImpl<UnknownTransponderLinksRe
     }
 
     /**
-     * Create an aliased <code>public.unknown_transponder_links</code> table
-     * reference
+     * Create an aliased <code>unknown_transponder_links</code> table reference
      */
     public UnknownTransponderLinks(String alias) {
         this(DSL.name(alias), UNKNOWN_TRANSPONDER_LINKS);
     }
 
     /**
-     * Create an aliased <code>public.unknown_transponder_links</code> table
-     * reference
+     * Create an aliased <code>unknown_transponder_links</code> table reference
      */
     public UnknownTransponderLinks(Name alias) {
         this(alias, UNKNOWN_TRANSPONDER_LINKS);
     }
 
     /**
-     * Create a <code>public.unknown_transponder_links</code> table reference
+     * Create a <code>unknown_transponder_links</code> table reference
      */
     public UnknownTransponderLinks() {
         this(DSL.name("unknown_transponder_links"), null);
@@ -158,7 +156,7 @@ public class UnknownTransponderLinks extends TableImpl<UnknownTransponderLinksRe
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -173,12 +171,7 @@ public class UnknownTransponderLinks extends TableImpl<UnknownTransponderLinksRe
 
     @Override
     public UniqueKey<UnknownTransponderLinksRecord> getPrimaryKey() {
-        return Keys.UNKNOWN_TRANSPONDER_LINKS_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<UnknownTransponderLinksRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.UNKNOWN_TRANSPONDER_LINKS_RACE_ID_TRANSPONDER_NUMBER_KEY);
+        return Keys.UNKNOWN_TRANSPONDER_LINKS__PK_UNKNOWN_TRANSPONDER_LINKS;
     }
 
     @Override
@@ -189,7 +182,7 @@ public class UnknownTransponderLinks extends TableImpl<UnknownTransponderLinksRe
     private transient EntriesPath _entries;
 
     /**
-     * Get the implicit join path to the <code>public.entries</code> table.
+     * Get the implicit join path to the <code>entries</code> table.
      */
     public EntriesPath entries() {
         if (_entries == null)
@@ -201,7 +194,7 @@ public class UnknownTransponderLinks extends TableImpl<UnknownTransponderLinksRe
     private transient RacesPath _races;
 
     /**
-     * Get the implicit join path to the <code>public.races</code> table.
+     * Get the implicit join path to the <code>races</code> table.
      */
     public RacesPath races() {
         if (_races == null)

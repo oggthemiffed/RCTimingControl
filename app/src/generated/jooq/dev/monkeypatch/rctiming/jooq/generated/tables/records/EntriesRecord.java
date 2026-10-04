@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,266 +21,266 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.entries.id</code>.
+     * Setter for <code>entries.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.entries.id</code>.
+     * Getter for <code>entries.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.entries.user_id</code>.
+     * Setter for <code>entries.user_id</code>.
      */
     public void setUserId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.entries.user_id</code>.
+     * Getter for <code>entries.user_id</code>.
      */
     public Long getUserId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.entries.event_id</code>.
+     * Setter for <code>entries.event_id</code>.
      */
     public void setEventId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.entries.event_id</code>.
+     * Getter for <code>entries.event_id</code>.
      */
     public Long getEventId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.entries.event_class_id</code>.
+     * Setter for <code>entries.event_class_id</code>.
      */
     public void setEventClassId(Long value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.entries.event_class_id</code>.
+     * Getter for <code>entries.event_class_id</code>.
      */
     public Long getEventClassId() {
         return (Long) get(3);
     }
 
     /**
-     * Setter for <code>public.entries.transponder_number</code>.
+     * Setter for <code>entries.transponder_number</code>.
      */
     public void setTransponderNumber(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.entries.transponder_number</code>.
+     * Getter for <code>entries.transponder_number</code>.
      */
     public String getTransponderNumber() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>public.entries.transponder_label</code>.
+     * Setter for <code>entries.transponder_label</code>.
      */
     public void setTransponderLabel(String value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.entries.transponder_label</code>.
+     * Getter for <code>entries.transponder_label</code>.
      */
     public String getTransponderLabel() {
         return (String) get(5);
     }
 
     /**
-     * Setter for <code>public.entries.status</code>.
+     * Setter for <code>entries.status</code>.
      */
     public void setStatus(String value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.entries.status</code>.
+     * Getter for <code>entries.status</code>.
      */
     public String getStatus() {
         return (String) get(6);
     }
 
     /**
-     * Setter for <code>public.entries.submitted_at</code>.
+     * Setter for <code>entries.submitted_at</code>.
      */
-    public void setSubmittedAt(OffsetDateTime value) {
+    public void setSubmittedAt(Instant value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.entries.submitted_at</code>.
+     * Getter for <code>entries.submitted_at</code>.
      */
-    public OffsetDateTime getSubmittedAt() {
-        return (OffsetDateTime) get(7);
+    public Instant getSubmittedAt() {
+        return (Instant) get(7);
     }
 
     /**
-     * Setter for <code>public.entries.updated_at</code>.
+     * Setter for <code>entries.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(8, value);
     }
 
     /**
-     * Getter for <code>public.entries.updated_at</code>.
+     * Getter for <code>entries.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(8);
+    public Instant getUpdatedAt() {
+        return (Instant) get(8);
     }
 
     /**
-     * Setter for <code>public.entries.confirmed_at</code>.
+     * Setter for <code>entries.confirmed_at</code>.
      */
-    public void setConfirmedAt(OffsetDateTime value) {
+    public void setConfirmedAt(Instant value) {
         set(9, value);
     }
 
     /**
-     * Getter for <code>public.entries.confirmed_at</code>.
+     * Getter for <code>entries.confirmed_at</code>.
      */
-    public OffsetDateTime getConfirmedAt() {
-        return (OffsetDateTime) get(9);
+    public Instant getConfirmedAt() {
+        return (Instant) get(9);
     }
 
     /**
-     * Setter for <code>public.entries.withdrawn_at</code>.
+     * Setter for <code>entries.withdrawn_at</code>.
      */
-    public void setWithdrawnAt(OffsetDateTime value) {
+    public void setWithdrawnAt(Instant value) {
         set(10, value);
     }
 
     /**
-     * Getter for <code>public.entries.withdrawn_at</code>.
+     * Getter for <code>entries.withdrawn_at</code>.
      */
-    public OffsetDateTime getWithdrawnAt() {
-        return (OffsetDateTime) get(10);
+    public Instant getWithdrawnAt() {
+        return (Instant) get(10);
     }
 
     /**
-     * Setter for <code>public.entries.competitor_id</code>.
+     * Setter for <code>entries.competitor_id</code>.
      */
     public void setCompetitorId(Long value) {
         set(11, value);
     }
 
     /**
-     * Getter for <code>public.entries.competitor_id</code>.
+     * Getter for <code>entries.competitor_id</code>.
      */
     public Long getCompetitorId() {
         return (Long) get(11);
     }
 
     /**
-     * Setter for <code>public.entries.secondary_transponder_number</code>.
+     * Setter for <code>entries.secondary_transponder_number</code>.
      */
     public void setSecondaryTransponderNumber(String value) {
         set(12, value);
     }
 
     /**
-     * Getter for <code>public.entries.secondary_transponder_number</code>.
+     * Getter for <code>entries.secondary_transponder_number</code>.
      */
     public String getSecondaryTransponderNumber() {
         return (String) get(12);
     }
 
     /**
-     * Setter for <code>public.entries.external_source</code>.
+     * Setter for <code>entries.external_source</code>.
      */
     public void setExternalSource(String value) {
         set(13, value);
     }
 
     /**
-     * Getter for <code>public.entries.external_source</code>.
+     * Getter for <code>entries.external_source</code>.
      */
     public String getExternalSource() {
         return (String) get(13);
     }
 
     /**
-     * Setter for <code>public.entries.external_entry_id</code>.
+     * Setter for <code>entries.external_entry_id</code>.
      */
     public void setExternalEntryId(String value) {
         set(14, value);
     }
 
     /**
-     * Getter for <code>public.entries.external_entry_id</code>.
+     * Getter for <code>entries.external_entry_id</code>.
      */
     public String getExternalEntryId() {
         return (String) get(14);
     }
 
     /**
-     * Setter for <code>public.entries.external_entry_version</code>.
+     * Setter for <code>entries.external_entry_version</code>.
      */
     public void setExternalEntryVersion(Long value) {
         set(15, value);
     }
 
     /**
-     * Getter for <code>public.entries.external_entry_version</code>.
+     * Getter for <code>entries.external_entry_version</code>.
      */
     public Long getExternalEntryVersion() {
         return (Long) get(15);
     }
 
     /**
-     * Setter for <code>public.entries.racehub_arrival</code>.
+     * Setter for <code>entries.racehub_arrival</code>.
      */
     public void setRacehubArrival(String value) {
         set(16, value);
     }
 
     /**
-     * Getter for <code>public.entries.racehub_arrival</code>.
+     * Getter for <code>entries.racehub_arrival</code>.
      */
     public String getRacehubArrival() {
         return (String) get(16);
     }
 
     /**
-     * Setter for <code>public.entries.checked_in_at</code>.
+     * Setter for <code>entries.checked_in_at</code>.
      */
-    public void setCheckedInAt(OffsetDateTime value) {
+    public void setCheckedInAt(Instant value) {
         set(17, value);
     }
 
     /**
-     * Getter for <code>public.entries.checked_in_at</code>.
+     * Getter for <code>entries.checked_in_at</code>.
      */
-    public OffsetDateTime getCheckedInAt() {
-        return (OffsetDateTime) get(17);
+    public Instant getCheckedInAt() {
+        return (Instant) get(17);
     }
 
     /**
-     * Setter for <code>public.entries.checked_in_by_user_id</code>.
+     * Setter for <code>entries.checked_in_by_user_id</code>.
      */
     public void setCheckedInByUserId(Long value) {
         set(18, value);
     }
 
     /**
-     * Getter for <code>public.entries.checked_in_by_user_id</code>.
+     * Getter for <code>entries.checked_in_by_user_id</code>.
      */
     public Long getCheckedInByUserId() {
         return (Long) get(18);
@@ -309,7 +309,7 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
     /**
      * Create a detached, initialised EntriesRecord
      */
-    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, OffsetDateTime submittedAt, OffsetDateTime updatedAt, OffsetDateTime confirmedAt, OffsetDateTime withdrawnAt, Long competitorId, String secondaryTransponderNumber, String externalSource, String externalEntryId, Long externalEntryVersion, String racehubArrival, OffsetDateTime checkedInAt, Long checkedInByUserId) {
+    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Instant submittedAt, Instant updatedAt, Instant confirmedAt, Instant withdrawnAt, Long competitorId, String secondaryTransponderNumber, String externalSource, String externalEntryId, Long externalEntryVersion, String racehubArrival, Instant checkedInAt, Long checkedInByUserId) {
         super(Entries.ENTRIES);
 
         setId(id);

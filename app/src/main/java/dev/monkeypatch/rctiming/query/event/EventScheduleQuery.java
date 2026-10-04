@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -40,19 +39,19 @@ public class EventScheduleQuery {
                 .orderBy(EVENTS.EVENT_DATE.asc())
                 .fetch(r -> {
                     String status = r.get(EVENTS.STATUS);
-                    OffsetDateTime opensAt = r.get(EVENTS.ENTRY_OPENS_AT);
-                    OffsetDateTime closesAt = r.get(EVENTS.ENTRY_CLOSES_AT);
+                    Instant opensAt = r.get(EVENTS.ENTRY_OPENS_AT);
+                    Instant closesAt = r.get(EVENTS.ENTRY_CLOSES_AT);
 
                     EventScheduleDto.EntryAvailability avail;
                     if ("ENTRIES_CLOSED".equals(status) || "IN_PROGRESS".equals(status)
-                            || (closesAt != null && closesAt.toInstant().isBefore(now))) {
+                            || (closesAt != null && closesAt.isBefore(now))) {
                         avail = EventScheduleDto.EntryAvailability.ENTRY_CLOSED;
                     } else if ("OPEN".equals(status)
                             || ("PUBLISHED".equals(status)
-                                && (opensAt == null || opensAt.toInstant().isBefore(now))
-                                && (closesAt == null || closesAt.toInstant().isAfter(now)))) {
+                                && (opensAt == null || opensAt.isBefore(now))
+                                && (closesAt == null || closesAt.isAfter(now)))) {
                         avail = EventScheduleDto.EntryAvailability.ENTRY_OPEN;
-                    } else if (opensAt != null && opensAt.toInstant().isAfter(now)) {
+                    } else if (opensAt != null && opensAt.isAfter(now)) {
                         avail = EventScheduleDto.EntryAvailability.ENTRY_NOT_YET_OPEN;
                     } else {
                         avail = EventScheduleDto.EntryAvailability.ENTRY_CLOSED;

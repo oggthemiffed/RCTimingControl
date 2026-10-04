@@ -4,14 +4,15 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships.ChampionshipsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RacingClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipClassesRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +50,7 @@ public class ChampionshipClasses extends TableImpl<ChampionshipClassesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.championship_classes</code>
+     * The reference instance of <code>championship_classes</code>
      */
     public static final ChampionshipClasses CHAMPIONSHIP_CLASSES = new ChampionshipClasses();
 
@@ -62,34 +63,34 @@ public class ChampionshipClasses extends TableImpl<ChampionshipClassesRecord> {
     }
 
     /**
-     * The column <code>public.championship_classes.id</code>.
+     * The column <code>championship_classes.id</code>.
      */
-    public final TableField<ChampionshipClassesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ChampionshipClassesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.championship_classes.championship_id</code>.
+     * The column <code>championship_classes.championship_id</code>.
      */
     public final TableField<ChampionshipClassesRecord, Long> CHAMPIONSHIP_ID = createField(DSL.name("championship_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_classes.racing_class_id</code>.
+     * The column <code>championship_classes.racing_class_id</code>.
      */
     public final TableField<ChampionshipClassesRecord, Long> RACING_CLASS_ID = createField(DSL.name("racing_class_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_classes.best_x_from_y_x</code>.
+     * The column <code>championship_classes.best_x_from_y_x</code>.
      */
     public final TableField<ChampionshipClassesRecord, Integer> BEST_X_FROM_Y_X = createField(DSL.name("best_x_from_y_x"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>public.championship_classes.best_x_from_y_y</code>.
+     * The column <code>championship_classes.best_x_from_y_y</code>.
      */
     public final TableField<ChampionshipClassesRecord, Integer> BEST_X_FROM_Y_Y = createField(DSL.name("best_x_from_y_y"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>public.championship_classes.created_at</code>.
+     * The column <code>championship_classes.created_at</code>.
      */
-    public final TableField<ChampionshipClassesRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<ChampionshipClassesRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private ChampionshipClasses(Name alias, Table<ChampionshipClassesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -100,23 +101,21 @@ public class ChampionshipClasses extends TableImpl<ChampionshipClassesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.championship_classes</code> table
-     * reference
+     * Create an aliased <code>championship_classes</code> table reference
      */
     public ChampionshipClasses(String alias) {
         this(DSL.name(alias), CHAMPIONSHIP_CLASSES);
     }
 
     /**
-     * Create an aliased <code>public.championship_classes</code> table
-     * reference
+     * Create an aliased <code>championship_classes</code> table reference
      */
     public ChampionshipClasses(Name alias) {
         this(alias, CHAMPIONSHIP_CLASSES);
     }
 
     /**
-     * Create a <code>public.championship_classes</code> table reference
+     * Create a <code>championship_classes</code> table reference
      */
     public ChampionshipClasses() {
         this(DSL.name("championship_classes"), null);
@@ -157,7 +156,7 @@ public class ChampionshipClasses extends TableImpl<ChampionshipClassesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -172,12 +171,7 @@ public class ChampionshipClasses extends TableImpl<ChampionshipClassesRecord> {
 
     @Override
     public UniqueKey<ChampionshipClassesRecord> getPrimaryKey() {
-        return Keys.CHAMPIONSHIP_CLASSES_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<ChampionshipClassesRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.CHAMPIONSHIP_CLASSES_CHAMPIONSHIP_ID_RACING_CLASS_ID_KEY);
+        return Keys.CHAMPIONSHIP_CLASSES__PK_CHAMPIONSHIP_CLASSES;
     }
 
     @Override
@@ -188,8 +182,7 @@ public class ChampionshipClasses extends TableImpl<ChampionshipClassesRecord> {
     private transient ChampionshipsPath _championships;
 
     /**
-     * Get the implicit join path to the <code>public.championships</code>
-     * table.
+     * Get the implicit join path to the <code>championships</code> table.
      */
     public ChampionshipsPath championships() {
         if (_championships == null)
@@ -201,8 +194,7 @@ public class ChampionshipClasses extends TableImpl<ChampionshipClassesRecord> {
     private transient RacingClassesPath _racingClasses;
 
     /**
-     * Get the implicit join path to the <code>public.racing_classes</code>
-     * table.
+     * Get the implicit join path to the <code>racing_classes</code> table.
      */
     public RacingClassesPath racingClasses() {
         if (_racingClasses == null)

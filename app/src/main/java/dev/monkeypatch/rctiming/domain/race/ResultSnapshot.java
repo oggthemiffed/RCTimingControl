@@ -6,8 +6,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -25,11 +23,9 @@ public class ResultSnapshot {
     @Column(name = "finished_at", nullable = false)
     private Instant finishedAt;
 
-    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "positions_json", nullable = false)
     private String positionsJson;
 
-    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "lap_history_json", nullable = false)
     private String lapHistoryJson;
 

@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,129 +21,129 @@ public class ChampionshipsRecord extends UpdatableRecordImpl<ChampionshipsRecord
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.championships.id</code>.
+     * Setter for <code>championships.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.championships.id</code>.
+     * Getter for <code>championships.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.championships.name</code>.
+     * Setter for <code>championships.name</code>.
      */
     public void setName(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.championships.name</code>.
+     * Getter for <code>championships.name</code>.
      */
     public String getName() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.championships.best_x_from_y_x</code>.
+     * Setter for <code>championships.best_x_from_y_x</code>.
      */
     public void setBestXFromYX(Integer value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.championships.best_x_from_y_x</code>.
+     * Getter for <code>championships.best_x_from_y_x</code>.
      */
     public Integer getBestXFromYX() {
         return (Integer) get(2);
     }
 
     /**
-     * Setter for <code>public.championships.best_x_from_y_y</code>.
+     * Setter for <code>championships.best_x_from_y_y</code>.
      */
     public void setBestXFromYY(Integer value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.championships.best_x_from_y_y</code>.
+     * Getter for <code>championships.best_x_from_y_y</code>.
      */
     public Integer getBestXFromYY() {
         return (Integer) get(3);
     }
 
     /**
-     * Setter for <code>public.championships.scoring_source</code>.
+     * Setter for <code>championships.scoring_source</code>.
      */
     public void setScoringSource(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.championships.scoring_source</code>.
+     * Getter for <code>championships.scoring_source</code>.
      */
     public String getScoringSource() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>public.championships.tq_bonus_points</code>.
+     * Setter for <code>championships.tq_bonus_points</code>.
      */
     public void setTqBonusPoints(Integer value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.championships.tq_bonus_points</code>.
+     * Getter for <code>championships.tq_bonus_points</code>.
      */
     public Integer getTqBonusPoints() {
         return (Integer) get(5);
     }
 
     /**
-     * Setter for <code>public.championships.afinal_winner_bonus_points</code>.
+     * Setter for <code>championships.afinal_winner_bonus_points</code>.
      */
     public void setAfinalWinnerBonusPoints(Integer value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.championships.afinal_winner_bonus_points</code>.
+     * Getter for <code>championships.afinal_winner_bonus_points</code>.
      */
     public Integer getAfinalWinnerBonusPoints() {
         return (Integer) get(6);
     }
 
     /**
-     * Setter for <code>public.championships.created_at</code>.
+     * Setter for <code>championships.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.championships.created_at</code>.
+     * Getter for <code>championships.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(7);
+    public Instant getCreatedAt() {
+        return (Instant) get(7);
     }
 
     /**
-     * Setter for <code>public.championships.updated_at</code>.
+     * Setter for <code>championships.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(8, value);
     }
 
     /**
-     * Getter for <code>public.championships.updated_at</code>.
+     * Getter for <code>championships.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(8);
+    public Instant getUpdatedAt() {
+        return (Instant) get(8);
     }
 
     // -------------------------------------------------------------------------
@@ -169,7 +169,7 @@ public class ChampionshipsRecord extends UpdatableRecordImpl<ChampionshipsRecord
     /**
      * Create a detached, initialised ChampionshipsRecord
      */
-    public ChampionshipsRecord(Long id, String name, Integer bestXFromYX, Integer bestXFromYY, String scoringSource, Integer tqBonusPoints, Integer afinalWinnerBonusPoints, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public ChampionshipsRecord(Long id, String name, Integer bestXFromYX, Integer bestXFromYY, String scoringSource, Integer tqBonusPoints, Integer afinalWinnerBonusPoints, Instant createdAt, Instant updatedAt) {
         super(Championships.CHAMPIONSHIPS);
 
         setId(id);

@@ -19,94 +19,84 @@ public class RaceEntriesRecord extends UpdatableRecordImpl<RaceEntriesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.race_entries.id</code>.
+     * Setter for <code>race_entries.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.race_entries.id</code>.
+     * Getter for <code>race_entries.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.race_entries.race_id</code>.
+     * Setter for <code>race_entries.race_id</code>.
      */
     public void setRaceId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.race_entries.race_id</code>.
+     * Getter for <code>race_entries.race_id</code>.
      */
     public Long getRaceId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.race_entries.entry_id</code>.
+     * Setter for <code>race_entries.entry_id</code>.
      */
     public void setEntryId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.race_entries.entry_id</code>.
+     * Getter for <code>race_entries.entry_id</code>.
      */
     public Long getEntryId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.race_entries.grid_position</code>.
+     * Setter for <code>race_entries.grid_position</code>.
      */
     public void setGridPosition(Integer value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.race_entries.grid_position</code>.
+     * Getter for <code>race_entries.grid_position</code>.
      */
     public Integer getGridPosition() {
         return (Integer) get(3);
     }
 
     /**
-     * Setter for <code>public.race_entries.bumped</code>.
+     * Setter for <code>race_entries.bumped</code>.
      */
     public void setBumped(Boolean value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.race_entries.bumped</code>.
+     * Getter for <code>race_entries.bumped</code>.
      */
     public Boolean getBumped() {
         return (Boolean) get(4);
     }
 
     /**
-     * Setter for <code>public.race_entries.car_number</code>. Assigned by
-     * RoundGeneratorService on qualifying creation (1-N in entry/grid_position
-     * order). Re-numbered by BumpUpSeedingService on finals seeding (1-N from
-     * qualifying standing position). Consistent within a phase; changes at
-     * qualifying-to-finals boundary. Historical snapshots in
-     * result_snapshots.positions_json retain carNumber=null (accepted gap).
+     * Setter for <code>race_entries.car_number</code>.
      */
     public void setCarNumber(Integer value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.race_entries.car_number</code>. Assigned by
-     * RoundGeneratorService on qualifying creation (1-N in entry/grid_position
-     * order). Re-numbered by BumpUpSeedingService on finals seeding (1-N from
-     * qualifying standing position). Consistent within a phase; changes at
-     * qualifying-to-finals boundary. Historical snapshots in
-     * result_snapshots.positions_json retain carNumber=null (accepted gap).
+     * Getter for <code>race_entries.car_number</code>.
      */
     public Integer getCarNumber() {
         return (Integer) get(5);

@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.api.setup;
 
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
+import dev.monkeypatch.rctiming.TestTables;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.setup.dto.BootstrapRequest;
 import dev.monkeypatch.rctiming.api.setup.dto.DecoderConfigDto;
@@ -21,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 
@@ -40,12 +42,14 @@ class SetupControllerIT extends AbstractIntegrationTest {
     @Autowired
     JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    TransactionTemplate transactionTemplate;
+
     @BeforeEach
     void cleanUp() {
         trackRepository.deleteAll();
         clubProfileRepository.deleteAll();
-        jdbcTemplate.execute("TRUNCATE users CASCADE");
-        jdbcTemplate.execute("TRUNCATE race_format_templates CASCADE");
+        TestTables.truncateCascade(jdbcTemplate, transactionTemplate, "users", "race_format_templates");
     }
 
     @Test

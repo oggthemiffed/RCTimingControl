@@ -4,17 +4,20 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ClubProfilesRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
+import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.Identity;
-import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
@@ -27,6 +30,7 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -40,7 +44,7 @@ public class ClubProfiles extends TableImpl<ClubProfilesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.club_profiles</code>
+     * The reference instance of <code>club_profiles</code>
      */
     public static final ClubProfiles CLUB_PROFILES = new ClubProfiles();
 
@@ -53,98 +57,94 @@ public class ClubProfiles extends TableImpl<ClubProfilesRecord> {
     }
 
     /**
-     * The column <code>public.club_profiles.id</code>.
+     * The column <code>club_profiles.id</code>.
      */
-    public final TableField<ClubProfilesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ClubProfilesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.club_profiles.name</code>.
+     * The column <code>club_profiles.name</code>.
      */
     public final TableField<ClubProfilesRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.club_profiles.email</code>.
+     * The column <code>club_profiles.email</code>.
      */
     public final TableField<ClubProfilesRecord, String> EMAIL = createField(DSL.name("email"), SQLDataType.VARCHAR(255), this, "");
 
     /**
-     * The column <code>public.club_profiles.phone</code>.
+     * The column <code>club_profiles.phone</code>.
      */
     public final TableField<ClubProfilesRecord, String> PHONE = createField(DSL.name("phone"), SQLDataType.VARCHAR(50), this, "");
 
     /**
-     * The column <code>public.club_profiles.website_url</code>.
+     * The column <code>club_profiles.website_url</code>.
      */
     public final TableField<ClubProfilesRecord, String> WEBSITE_URL = createField(DSL.name("website_url"), SQLDataType.VARCHAR(500), this, "");
 
     /**
-     * The column <code>public.club_profiles.latitude</code>.
+     * The column <code>club_profiles.latitude</code>.
      */
-    public final TableField<ClubProfilesRecord, Double> LATITUDE = createField(DSL.name("latitude"), SQLDataType.DOUBLE, this, "");
+    public final TableField<ClubProfilesRecord, Float> LATITUDE = createField(DSL.name("latitude"), SQLDataType.REAL, this, "");
 
     /**
-     * The column <code>public.club_profiles.longitude</code>.
+     * The column <code>club_profiles.longitude</code>.
      */
-    public final TableField<ClubProfilesRecord, Double> LONGITUDE = createField(DSL.name("longitude"), SQLDataType.DOUBLE, this, "");
+    public final TableField<ClubProfilesRecord, Float> LONGITUDE = createField(DSL.name("longitude"), SQLDataType.REAL, this, "");
 
     /**
-     * The column <code>public.club_profiles.timezone</code>.
+     * The column <code>club_profiles.timezone</code>.
      */
-    public final TableField<ClubProfilesRecord, String> TIMEZONE = createField(DSL.name("timezone"), SQLDataType.VARCHAR(100).nullable(false).defaultValue(DSL.field(DSL.raw("'UTC'::character varying"), SQLDataType.VARCHAR)), this, "");
+    public final TableField<ClubProfilesRecord, String> TIMEZONE = createField(DSL.name("timezone"), SQLDataType.VARCHAR(100).nullable(false).defaultValue(DSL.field(DSL.raw("'UTC'"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.club_profiles.logo</code>.
+     * The column <code>club_profiles.logo</code>.
      */
     public final TableField<ClubProfilesRecord, byte[]> LOGO = createField(DSL.name("logo"), SQLDataType.BLOB, this, "");
 
     /**
-     * The column <code>public.club_profiles.logo_type</code>.
+     * The column <code>club_profiles.logo_type</code>.
      */
     public final TableField<ClubProfilesRecord, String> LOGO_TYPE = createField(DSL.name("logo_type"), SQLDataType.VARCHAR(10), this, "");
 
     /**
-     * The column <code>public.club_profiles.created_at</code>.
+     * The column <code>club_profiles.created_at</code>.
      */
-    public final TableField<ClubProfilesRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<ClubProfilesRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.club_profiles.updated_at</code>.
+     * The column <code>club_profiles.updated_at</code>.
      */
-    public final TableField<ClubProfilesRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<ClubProfilesRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.club_profiles.logo_url</code>.
+     * The column <code>club_profiles.logo_url</code>.
      */
     public final TableField<ClubProfilesRecord, String> LOGO_URL = createField(DSL.name("logo_url"), SQLDataType.VARCHAR(500), this, "");
 
     /**
-     * The column <code>public.club_profiles.audio_settings</code>.
+     * The column <code>club_profiles.audio_settings</code>.
      */
-    public final TableField<ClubProfilesRecord, JSONB> AUDIO_SETTINGS = createField(DSL.name("audio_settings"), SQLDataType.JSONB.nullable(false).defaultValue(DSL.field(DSL.raw("'{\"announceFinish\": true, \"announceLapBeep\": true, \"announceStagger\": true, \"announceCountdown\": true, \"runningOrderDepth\": 3, \"announceRunningOrder\": true}'::jsonb"), SQLDataType.JSONB)), this, "");
+    public final TableField<ClubProfilesRecord, String> AUDIO_SETTINGS = createField(DSL.name("audio_settings"), SQLDataType.CLOB.nullable(false).defaultValue(DSL.field(DSL.raw("'{\"announceFinish\": true, \"announceLapBeep\": true, \"announceStagger\": true, \"announceCountdown\": true, \"runningOrderDepth\": 3, \"announceRunningOrder\": true}'"), SQLDataType.CLOB)), this, "");
 
     /**
-     * The column <code>public.club_profiles.default_voice_id</code>.
+     * The column <code>club_profiles.default_voice_id</code>.
      */
-    public final TableField<ClubProfilesRecord, String> DEFAULT_VOICE_ID = createField(DSL.name("default_voice_id"), SQLDataType.VARCHAR(100).nullable(false).defaultValue(DSL.field(DSL.raw("'en_GB-alan-medium'::character varying"), SQLDataType.VARCHAR)), this, "");
+    public final TableField<ClubProfilesRecord, String> DEFAULT_VOICE_ID = createField(DSL.name("default_voice_id"), SQLDataType.VARCHAR(100).nullable(false).defaultValue(DSL.field(DSL.raw("'en_GB-alan-medium'"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.club_profiles.decoder_host</code>. Hostname or IP
-     * address of the AMB decoder. Null until configured via setup wizard.
+     * The column <code>club_profiles.decoder_host</code>.
      */
-    public final TableField<ClubProfilesRecord, String> DECODER_HOST = createField(DSL.name("decoder_host"), SQLDataType.VARCHAR(255), this, "Hostname or IP address of the AMB decoder. Null until configured via setup wizard.");
+    public final TableField<ClubProfilesRecord, String> DECODER_HOST = createField(DSL.name("decoder_host"), SQLDataType.VARCHAR(255), this, "");
 
     /**
-     * The column <code>public.club_profiles.decoder_port</code>. TCP port. RC-4
-     * -&gt; 5100, P3 -&gt; 5403. Null until configured.
+     * The column <code>club_profiles.decoder_port</code>.
      */
-    public final TableField<ClubProfilesRecord, Integer> DECODER_PORT = createField(DSL.name("decoder_port"), SQLDataType.INTEGER, this, "TCP port. RC-4 -> 5100, P3 -> 5403. Null until configured.");
+    public final TableField<ClubProfilesRecord, Integer> DECODER_PORT = createField(DSL.name("decoder_port"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>public.club_profiles.decoder_protocol</code>. Decoder
-     * protocol: RC4 (text, firmware &lt;4.5) or P3 (binary, firmware &gt;=4.5).
-     * Null until configured.
+     * The column <code>club_profiles.decoder_protocol</code>.
      */
-    public final TableField<ClubProfilesRecord, String> DECODER_PROTOCOL = createField(DSL.name("decoder_protocol"), SQLDataType.VARCHAR(10), this, "Decoder protocol: RC4 (text, firmware <4.5) or P3 (binary, firmware >=4.5). Null until configured.");
+    public final TableField<ClubProfilesRecord, String> DECODER_PROTOCOL = createField(DSL.name("decoder_protocol"), SQLDataType.VARCHAR(10), this, "");
 
     private ClubProfiles(Name alias, Table<ClubProfilesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -155,21 +155,21 @@ public class ClubProfiles extends TableImpl<ClubProfilesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.club_profiles</code> table reference
+     * Create an aliased <code>club_profiles</code> table reference
      */
     public ClubProfiles(String alias) {
         this(DSL.name(alias), CLUB_PROFILES);
     }
 
     /**
-     * Create an aliased <code>public.club_profiles</code> table reference
+     * Create an aliased <code>club_profiles</code> table reference
      */
     public ClubProfiles(Name alias) {
         this(alias, CLUB_PROFILES);
     }
 
     /**
-     * Create a <code>public.club_profiles</code> table reference
+     * Create a <code>club_profiles</code> table reference
      */
     public ClubProfiles() {
         this(DSL.name("club_profiles"), null);
@@ -177,7 +177,7 @@ public class ClubProfiles extends TableImpl<ClubProfilesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -187,7 +187,14 @@ public class ClubProfiles extends TableImpl<ClubProfilesRecord> {
 
     @Override
     public UniqueKey<ClubProfilesRecord> getPrimaryKey() {
-        return Keys.CLUB_PROFILES_PKEY;
+        return Keys.CLUB_PROFILES__PK_CLUB_PROFILES;
+    }
+
+    @Override
+    public List<Check<ClubProfilesRecord>> getChecks() {
+        return Arrays.asList(
+            Internal.createCheck(this, DSL.name(""), "case (audio_settings is json) when (1 = 1) then 1 when (1 = 0) then 0 end <> 0", true)
+        );
     }
 
     @Override

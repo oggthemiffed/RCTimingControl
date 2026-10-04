@@ -8,8 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -43,7 +41,6 @@ public class Race {
     @Column(name = "format_id")
     private Long formatId;
 
-    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "format_overrides")
     private String formatOverrides;
 

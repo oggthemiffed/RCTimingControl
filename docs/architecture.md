@@ -4,7 +4,7 @@
 
 ## Overview
 
-Modular monolith — one Spring Boot process, single PostgreSQL database, single deployment. The complexity of a distributed system isn't warranted for single-club RC venue scale.
+Modular monolith — one Spring Boot process, single SQLite database file, single deployment. The complexity of a distributed system isn't warranted for single-club RC venue scale.
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -26,7 +26,7 @@ Modular monolith — one Spring Boot process, single PostgreSQL database, single
 │  └───────────────────┘  └───────────────────┘   │
 └─────────────────────┬───────────────────────────┘
                       │
-              PostgreSQL 16
+        SQLite (one database file)
 ```
 
 ## Key design decisions
@@ -41,7 +41,7 @@ Stateless — no server-side session. Access tokens (15-min TTL) are returned in
 
 ### Race format config (JSONB)
 
-Format configurations are stored as JSONB in PostgreSQL using Hypersistence Utils. The Java type is a sealed interface (`RaceFormatConfig`) with three record subtypes (`TimedRaceConfig`, `BumpUpConfig`, `PointsFinalsConfig`). Jackson's `@JsonTypeInfo` on the interface provides polymorphic serde. A `type` discriminator column on the table enables SQL-side filtering without deserializing the blob.
+Format configurations are stored as JSON text (checked with `json_valid`) and converted by a JPA `AttributeConverter` (`RaceFormatConfigConverter`). The Java type is a sealed interface (`RaceFormatConfig`) with three record subtypes (`TimedRaceConfig`, `BumpUpConfig`, `PointsFinalsConfig`). Jackson's `@JsonTypeInfo` on the interface provides polymorphic serde. A `type` discriminator column on the table enables SQL-side filtering without deserializing the blob.
 
 Override patches (FORMAT-07) are stored in a second `configOverride` JSONB column and merged at read time — base config from the template snapshot, patches applied on top. Template edits do not affect existing event classes (snapshot-at-assignment, FORMAT-06).
 

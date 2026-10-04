@@ -1,13 +1,12 @@
 package dev.monkeypatch.rctiming.domain.format;
 
-import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.Type;
 
 import java.time.Instant;
 
@@ -22,7 +21,7 @@ public class RaceFormatTemplate {
     @Column(nullable = false)
     private String name;
 
-    @Type(JsonType.class)
+    @Convert(converter = RaceFormatConfigConverter.class)
     @Column(nullable = false)
     private RaceFormatConfig config;
 

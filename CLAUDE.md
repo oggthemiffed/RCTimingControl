@@ -14,13 +14,13 @@ See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUI
 
 **Frontend:** React 18 + Vite, TypeScript, Tailwind CSS + shadcn/ui, TanStack Query v5, TanStack Table v8, React Hook Form v7, Zod, `@stomp/stompjs` (native WebSocket — no SockJS)
 
-**Persistence:** PostgreSQL 16, Flyway for migrations
+**Persistence:** SQLite (one file, sqlite-jdbc; WAL, one write connection plus a read pool), Flyway for migrations. The vendor is chosen in one place (`rctiming.database.vendor`, `persistence/DatabaseConfig`); vendor-specific code lives only in `persistence/vendor/`, and `PersistencePortabilityTest` enforces it. See `docs/development.md` → "Keeping the database swappable".
 
 **ORM — write side (domain module):** Spring Data JPA + Hibernate 6. Entity lifecycle, associations, and repositories. Hibernate sessions must not cross into the read/query module.
 
 **ORM — read side (query module):** jOOQ 3.19.x. Type-safe SQL for all projections and aggregations: scoring calculations, championship standings, lap aggregates, results views. jOOQ's DSL is generated from the live schema. No Hibernate involvement on this side.
 
-**Race format config:** Stored as PostgreSQL JSONB with a `type` discriminator column. Validated against a sealed Java class hierarchy on write. Override patches (FORMAT-07) stored as a second JSONB column and merged at read time. Supports JSON import/export (FORMAT-14). Use `jsonb_pretty(config)` in diagnostic queries.
+**Race format config:** Stored as JSON text (`CHECK (json_valid(...))`) with a `type` discriminator, converted by a JPA `AttributeConverter`. Validated against a sealed Java class hierarchy on write. Override patches (FORMAT-07) stored as a second JSON column and merged at read time. Supports JSON import/export (FORMAT-14).
 
 **Auth:** Spring Security + JWT (stateless). JJWT 0.12.x. JWT in `Authorization: Bearer` header for REST; passed in STOMP `CONNECT` frame for WebSocket.
 
@@ -33,7 +33,7 @@ See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUI
 
 **Forwarder:** Separate Java Gradle submodule. Connects to the AMB decoder via TCP (via `decoder-protocol/`), forwards timing events to the cloud service via gRPC bidirectional streaming.
 
-**Testing:** JUnit 5 + Mockito + Testcontainers (backend); Vitest + React Testing Library (frontend)
+**Testing:** JUnit 5 + Mockito on temporary SQLite databases, no Docker (backend); Vitest + React Testing Library (frontend)
 
 ### Do Not Use
 - Spring Boot 2.x (EOL)
@@ -49,7 +49,7 @@ See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUI
 
 ## Architecture
 
-**Modular monolith** — one Spring Boot process, single PostgreSQL database, single deployment.
+**Modular monolith** — one Spring Boot process, single SQLite database file, single deployment.
 
 ### Component Boundaries
 
@@ -99,7 +99,7 @@ Staff roles are **stackable** — a single user account can hold any combination
 
 ### Key Data Design Notes
 
-- Lap timestamps: for P3 binary decoders use the `RTC_TIME` field (GPS/NTP-synchronised UTC microseconds). For RC-4 text decoders use server-anchored offset (no absolute timestamp in protocol). Store as UTC `TIMESTAMPTZ` or `BIGINT` microseconds.
+- Lap timestamps: for P3 binary decoders use the `RTC_TIME` field (GPS/NTP-synchronised UTC microseconds). For RC-4 text decoders use server-anchored offset (no absolute timestamp in protocol). Every timestamp column is `BIGINT` UTC microseconds, mapped to `Instant` by converters in `persistence/convert/`.
 - **Do not store live race positions in the database during a race** — calculate in memory, broadcast over WebSocket, persist only the final result snapshot on `FINISHED`.
 - `MyLapsProtocolParser` must be a pure function (`byte[] → LapPassingEvent`) with no Spring dependencies. Protocol I/O is separate from domain logic.
 - Championship points: calculate on demand from result snapshots; do not increment incrementally.

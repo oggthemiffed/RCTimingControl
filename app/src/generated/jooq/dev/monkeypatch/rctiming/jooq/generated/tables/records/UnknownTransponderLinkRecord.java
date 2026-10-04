@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,91 +21,87 @@ public class UnknownTransponderLinkRecord extends UpdatableRecordImpl<UnknownTra
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.unknown_transponder_link.id</code>.
+     * Setter for <code>unknown_transponder_link.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.unknown_transponder_link.id</code>.
+     * Getter for <code>unknown_transponder_link.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.unknown_transponder_link.race_id</code>.
+     * Setter for <code>unknown_transponder_link.race_id</code>.
      */
     public void setRaceId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.unknown_transponder_link.race_id</code>.
+     * Getter for <code>unknown_transponder_link.race_id</code>.
      */
     public Long getRaceId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for
-     * <code>public.unknown_transponder_link.transponder_number</code>.
+     * Setter for <code>unknown_transponder_link.transponder_number</code>.
      */
     public void setTransponderNumber(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for
-     * <code>public.unknown_transponder_link.transponder_number</code>.
+     * Getter for <code>unknown_transponder_link.transponder_number</code>.
      */
     public String getTransponderNumber() {
         return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.unknown_transponder_link.entry_id</code>.
+     * Setter for <code>unknown_transponder_link.entry_id</code>.
      */
     public void setEntryId(Long value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.unknown_transponder_link.entry_id</code>.
+     * Getter for <code>unknown_transponder_link.entry_id</code>.
      */
     public Long getEntryId() {
         return (Long) get(3);
     }
 
     /**
-     * Setter for
-     * <code>public.unknown_transponder_link.linked_by_user_id</code>.
+     * Setter for <code>unknown_transponder_link.linked_by_user_id</code>.
      */
     public void setLinkedByUserId(Long value) {
         set(4, value);
     }
 
     /**
-     * Getter for
-     * <code>public.unknown_transponder_link.linked_by_user_id</code>.
+     * Getter for <code>unknown_transponder_link.linked_by_user_id</code>.
      */
     public Long getLinkedByUserId() {
         return (Long) get(4);
     }
 
     /**
-     * Setter for <code>public.unknown_transponder_link.linked_at</code>.
+     * Setter for <code>unknown_transponder_link.linked_at</code>.
      */
-    public void setLinkedAt(OffsetDateTime value) {
+    public void setLinkedAt(Instant value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.unknown_transponder_link.linked_at</code>.
+     * Getter for <code>unknown_transponder_link.linked_at</code>.
      */
-    public OffsetDateTime getLinkedAt() {
-        return (OffsetDateTime) get(5);
+    public Instant getLinkedAt() {
+        return (Instant) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -131,7 +127,7 @@ public class UnknownTransponderLinkRecord extends UpdatableRecordImpl<UnknownTra
     /**
      * Create a detached, initialised UnknownTransponderLinkRecord
      */
-    public UnknownTransponderLinkRecord(Long id, Long raceId, String transponderNumber, Long entryId, Long linkedByUserId, OffsetDateTime linkedAt) {
+    public UnknownTransponderLinkRecord(Long id, Long raceId, String transponderNumber, Long entryId, Long linkedByUserId, Instant linkedAt) {
         super(UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK);
 
         setId(id);

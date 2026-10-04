@@ -4,16 +4,17 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships.ChampionshipsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.CompetitorsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipExclusionsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -51,7 +52,7 @@ public class ChampionshipExclusions extends TableImpl<ChampionshipExclusionsReco
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.championship_exclusions</code>
+     * The reference instance of <code>championship_exclusions</code>
      */
     public static final ChampionshipExclusions CHAMPIONSHIP_EXCLUSIONS = new ChampionshipExclusions();
 
@@ -64,39 +65,39 @@ public class ChampionshipExclusions extends TableImpl<ChampionshipExclusionsReco
     }
 
     /**
-     * The column <code>public.championship_exclusions.id</code>.
+     * The column <code>championship_exclusions.id</code>.
      */
-    public final TableField<ChampionshipExclusionsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ChampionshipExclusionsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.championship_exclusions.championship_id</code>.
+     * The column <code>championship_exclusions.championship_id</code>.
      */
     public final TableField<ChampionshipExclusionsRecord, Long> CHAMPIONSHIP_ID = createField(DSL.name("championship_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_exclusions.driver_id</code>.
+     * The column <code>championship_exclusions.driver_id</code>.
      */
     public final TableField<ChampionshipExclusionsRecord, Long> DRIVER_ID = createField(DSL.name("driver_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_exclusions.event_id</code>.
+     * The column <code>championship_exclusions.event_id</code>.
      */
     public final TableField<ChampionshipExclusionsRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_exclusions.reason</code>.
+     * The column <code>championship_exclusions.reason</code>.
      */
     public final TableField<ChampionshipExclusionsRecord, String> REASON = createField(DSL.name("reason"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_exclusions.created_by</code>.
+     * The column <code>championship_exclusions.created_by</code>.
      */
     public final TableField<ChampionshipExclusionsRecord, Long> CREATED_BY = createField(DSL.name("created_by"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_exclusions.created_at</code>.
+     * The column <code>championship_exclusions.created_at</code>.
      */
-    public final TableField<ChampionshipExclusionsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<ChampionshipExclusionsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private ChampionshipExclusions(Name alias, Table<ChampionshipExclusionsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -107,23 +108,21 @@ public class ChampionshipExclusions extends TableImpl<ChampionshipExclusionsReco
     }
 
     /**
-     * Create an aliased <code>public.championship_exclusions</code> table
-     * reference
+     * Create an aliased <code>championship_exclusions</code> table reference
      */
     public ChampionshipExclusions(String alias) {
         this(DSL.name(alias), CHAMPIONSHIP_EXCLUSIONS);
     }
 
     /**
-     * Create an aliased <code>public.championship_exclusions</code> table
-     * reference
+     * Create an aliased <code>championship_exclusions</code> table reference
      */
     public ChampionshipExclusions(Name alias) {
         this(alias, CHAMPIONSHIP_EXCLUSIONS);
     }
 
     /**
-     * Create a <code>public.championship_exclusions</code> table reference
+     * Create a <code>championship_exclusions</code> table reference
      */
     public ChampionshipExclusions() {
         this(DSL.name("championship_exclusions"), null);
@@ -164,7 +163,7 @@ public class ChampionshipExclusions extends TableImpl<ChampionshipExclusionsReco
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -179,7 +178,7 @@ public class ChampionshipExclusions extends TableImpl<ChampionshipExclusionsReco
 
     @Override
     public UniqueKey<ChampionshipExclusionsRecord> getPrimaryKey() {
-        return Keys.CHAMPIONSHIP_EXCLUSIONS_PKEY;
+        return Keys.CHAMPIONSHIP_EXCLUSIONS__PK_CHAMPIONSHIP_EXCLUSIONS;
     }
 
     @Override
@@ -190,8 +189,7 @@ public class ChampionshipExclusions extends TableImpl<ChampionshipExclusionsReco
     private transient ChampionshipsPath _championships;
 
     /**
-     * Get the implicit join path to the <code>public.championships</code>
-     * table.
+     * Get the implicit join path to the <code>championships</code> table.
      */
     public ChampionshipsPath championships() {
         if (_championships == null)
@@ -203,7 +201,7 @@ public class ChampionshipExclusions extends TableImpl<ChampionshipExclusionsReco
     private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table.
+     * Get the implicit join path to the <code>users</code> table.
      */
     public UsersPath users() {
         if (_users == null)
@@ -215,7 +213,7 @@ public class ChampionshipExclusions extends TableImpl<ChampionshipExclusionsReco
     private transient CompetitorsPath _competitors;
 
     /**
-     * Get the implicit join path to the <code>public.competitors</code> table.
+     * Get the implicit join path to the <code>competitors</code> table.
      */
     public CompetitorsPath competitors() {
         if (_competitors == null)
@@ -227,7 +225,7 @@ public class ChampionshipExclusions extends TableImpl<ChampionshipExclusionsReco
     private transient EventsPath _events;
 
     /**
-     * Get the implicit join path to the <code>public.events</code> table.
+     * Get the implicit join path to the <code>events</code> table.
      */
     public EventsPath events() {
         if (_events == null)

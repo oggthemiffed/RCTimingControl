@@ -4,8 +4,8 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.EntryAuditLogPath;
@@ -16,8 +16,9 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens.RefreshToken
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink.UnknownTransponderLinkPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UserRoles.UserRolesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.UsersRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -54,7 +55,7 @@ public class Users extends TableImpl<UsersRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.users</code>
+     * The reference instance of <code>users</code>
      */
     public static final Users USERS = new Users();
 
@@ -67,39 +68,39 @@ public class Users extends TableImpl<UsersRecord> {
     }
 
     /**
-     * The column <code>public.users.id</code>.
+     * The column <code>users.id</code>.
      */
-    public final TableField<UsersRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<UsersRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.users.email</code>.
+     * The column <code>users.email</code>.
      */
     public final TableField<UsersRecord, String> EMAIL = createField(DSL.name("email"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.users.password_hash</code>.
+     * The column <code>users.password_hash</code>.
      */
     public final TableField<UsersRecord, String> PASSWORD_HASH = createField(DSL.name("password_hash"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.users.first_name</code>.
+     * The column <code>users.first_name</code>.
      */
     public final TableField<UsersRecord, String> FIRST_NAME = createField(DSL.name("first_name"), SQLDataType.VARCHAR(100).nullable(false), this, "");
 
     /**
-     * The column <code>public.users.last_name</code>.
+     * The column <code>users.last_name</code>.
      */
     public final TableField<UsersRecord, String> LAST_NAME = createField(DSL.name("last_name"), SQLDataType.VARCHAR(100).nullable(false), this, "");
 
     /**
-     * The column <code>public.users.created_at</code>.
+     * The column <code>users.created_at</code>.
      */
-    public final TableField<UsersRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<UsersRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.users.updated_at</code>.
+     * The column <code>users.updated_at</code>.
      */
-    public final TableField<UsersRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<UsersRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private Users(Name alias, Table<UsersRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -110,21 +111,21 @@ public class Users extends TableImpl<UsersRecord> {
     }
 
     /**
-     * Create an aliased <code>public.users</code> table reference
+     * Create an aliased <code>users</code> table reference
      */
     public Users(String alias) {
         this(DSL.name(alias), USERS);
     }
 
     /**
-     * Create an aliased <code>public.users</code> table reference
+     * Create an aliased <code>users</code> table reference
      */
     public Users(Name alias) {
         this(alias, USERS);
     }
 
     /**
-     * Create a <code>public.users</code> table reference
+     * Create a <code>users</code> table reference
      */
     public Users() {
         this(DSL.name("users"), null);
@@ -165,7 +166,7 @@ public class Users extends TableImpl<UsersRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -175,19 +176,19 @@ public class Users extends TableImpl<UsersRecord> {
 
     @Override
     public UniqueKey<UsersRecord> getPrimaryKey() {
-        return Keys.USERS_PKEY;
+        return Keys.USERS__PK_USERS;
     }
 
     @Override
     public List<UniqueKey<UsersRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.USERS_EMAIL_KEY);
+        return Arrays.asList(Keys.USERS__USERS_EMAIL_KEY);
     }
 
     private transient ChampionshipExclusionsPath _championshipExclusions;
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.championship_exclusions</code> table
+     * <code>championship_exclusions</code> table
      */
     public ChampionshipExclusionsPath championshipExclusions() {
         if (_championshipExclusions == null)
@@ -199,8 +200,8 @@ public class Users extends TableImpl<UsersRecord> {
     private transient EntriesPath _entriesCheckedInByUserIdFkey;
 
     /**
-     * Get the implicit to-many join path to the <code>public.entries</code>
-     * table, via the <code>entries_checked_in_by_user_id_fkey</code> key
+     * Get the implicit to-many join path to the <code>entries</code> table, via
+     * the <code>entries_checked_in_by_user_id_fkey</code> key
      */
     public EntriesPath entriesCheckedInByUserIdFkey() {
         if (_entriesCheckedInByUserIdFkey == null)
@@ -212,8 +213,8 @@ public class Users extends TableImpl<UsersRecord> {
     private transient EntriesPath _entriesUserIdFkey;
 
     /**
-     * Get the implicit to-many join path to the <code>public.entries</code>
-     * table, via the <code>entries_user_id_fkey</code> key
+     * Get the implicit to-many join path to the <code>entries</code> table, via
+     * the <code>entries_user_id_fkey</code> key
      */
     public EntriesPath entriesUserIdFkey() {
         if (_entriesUserIdFkey == null)
@@ -225,8 +226,8 @@ public class Users extends TableImpl<UsersRecord> {
     private transient EntryAuditLogPath _entryAuditLog;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.entry_audit_log</code> table
+     * Get the implicit to-many join path to the <code>entry_audit_log</code>
+     * table
      */
     public EntryAuditLogPath entryAuditLog() {
         if (_entryAuditLog == null)
@@ -238,8 +239,8 @@ public class Users extends TableImpl<UsersRecord> {
     private transient PracticeLapsPath _practiceLaps;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.practice_laps</code> table
+     * Get the implicit to-many join path to the <code>practice_laps</code>
+     * table
      */
     public PracticeLapsPath practiceLaps() {
         if (_practiceLaps == null)
@@ -251,8 +252,8 @@ public class Users extends TableImpl<UsersRecord> {
     private transient PracticeSessionsPath _practiceSessions;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.practice_sessions</code> table
+     * Get the implicit to-many join path to the <code>practice_sessions</code>
+     * table
      */
     public PracticeSessionsPath practiceSessions() {
         if (_practiceSessions == null)
@@ -265,7 +266,7 @@ public class Users extends TableImpl<UsersRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.profanity_blocklist</code> table
+     * <code>profanity_blocklist</code> table
      */
     public ProfanityBlocklistPath profanityBlocklist() {
         if (_profanityBlocklist == null)
@@ -277,8 +278,8 @@ public class Users extends TableImpl<UsersRecord> {
     private transient RefreshTokensPath _refreshTokens;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.refresh_tokens</code> table
+     * Get the implicit to-many join path to the <code>refresh_tokens</code>
+     * table
      */
     public RefreshTokensPath refreshTokens() {
         if (_refreshTokens == null)
@@ -291,7 +292,7 @@ public class Users extends TableImpl<UsersRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.unknown_transponder_link</code> table
+     * <code>unknown_transponder_link</code> table
      */
     public UnknownTransponderLinkPath unknownTransponderLink() {
         if (_unknownTransponderLink == null)
@@ -303,8 +304,7 @@ public class Users extends TableImpl<UsersRecord> {
     private transient UserRolesPath _userRoles;
 
     /**
-     * Get the implicit to-many join path to the <code>public.user_roles</code>
-     * table
+     * Get the implicit to-many join path to the <code>user_roles</code> table
      */
     public UserRolesPath userRoles() {
         if (_userRoles == null)

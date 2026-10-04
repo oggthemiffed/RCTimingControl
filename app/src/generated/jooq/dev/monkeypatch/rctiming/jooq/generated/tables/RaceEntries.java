@@ -4,9 +4,9 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RaceEntriesRecord;
@@ -48,7 +48,7 @@ public class RaceEntries extends TableImpl<RaceEntriesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.race_entries</code>
+     * The reference instance of <code>race_entries</code>
      */
     public static final RaceEntries RACE_ENTRIES = new RaceEntries();
 
@@ -61,39 +61,34 @@ public class RaceEntries extends TableImpl<RaceEntriesRecord> {
     }
 
     /**
-     * The column <code>public.race_entries.id</code>.
+     * The column <code>race_entries.id</code>.
      */
-    public final TableField<RaceEntriesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<RaceEntriesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.race_entries.race_id</code>.
+     * The column <code>race_entries.race_id</code>.
      */
     public final TableField<RaceEntriesRecord, Long> RACE_ID = createField(DSL.name("race_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.race_entries.entry_id</code>.
+     * The column <code>race_entries.entry_id</code>.
      */
     public final TableField<RaceEntriesRecord, Long> ENTRY_ID = createField(DSL.name("entry_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.race_entries.grid_position</code>.
+     * The column <code>race_entries.grid_position</code>.
      */
     public final TableField<RaceEntriesRecord, Integer> GRID_POSITION = createField(DSL.name("grid_position"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>public.race_entries.bumped</code>.
+     * The column <code>race_entries.bumped</code>.
      */
-    public final TableField<RaceEntriesRecord, Boolean> BUMPED = createField(DSL.name("bumped"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
+    public final TableField<RaceEntriesRecord, Boolean> BUMPED = createField(DSL.name("bumped"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.BOOLEAN)), this, "");
 
     /**
-     * The column <code>public.race_entries.car_number</code>. Assigned by
-     * RoundGeneratorService on qualifying creation (1-N in entry/grid_position
-     * order). Re-numbered by BumpUpSeedingService on finals seeding (1-N from
-     * qualifying standing position). Consistent within a phase; changes at
-     * qualifying-to-finals boundary. Historical snapshots in
-     * result_snapshots.positions_json retain carNumber=null (accepted gap).
+     * The column <code>race_entries.car_number</code>.
      */
-    public final TableField<RaceEntriesRecord, Integer> CAR_NUMBER = createField(DSL.name("car_number"), SQLDataType.INTEGER, this, "Assigned by RoundGeneratorService on qualifying creation (1-N in entry/grid_position order). Re-numbered by BumpUpSeedingService on finals seeding (1-N from qualifying standing position). Consistent within a phase; changes at qualifying-to-finals boundary. Historical snapshots in result_snapshots.positions_json retain carNumber=null (accepted gap).");
+    public final TableField<RaceEntriesRecord, Integer> CAR_NUMBER = createField(DSL.name("car_number"), SQLDataType.INTEGER, this, "");
 
     private RaceEntries(Name alias, Table<RaceEntriesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -104,21 +99,21 @@ public class RaceEntries extends TableImpl<RaceEntriesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.race_entries</code> table reference
+     * Create an aliased <code>race_entries</code> table reference
      */
     public RaceEntries(String alias) {
         this(DSL.name(alias), RACE_ENTRIES);
     }
 
     /**
-     * Create an aliased <code>public.race_entries</code> table reference
+     * Create an aliased <code>race_entries</code> table reference
      */
     public RaceEntries(Name alias) {
         this(alias, RACE_ENTRIES);
     }
 
     /**
-     * Create a <code>public.race_entries</code> table reference
+     * Create a <code>race_entries</code> table reference
      */
     public RaceEntries() {
         this(DSL.name("race_entries"), null);
@@ -159,7 +154,7 @@ public class RaceEntries extends TableImpl<RaceEntriesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -174,12 +169,7 @@ public class RaceEntries extends TableImpl<RaceEntriesRecord> {
 
     @Override
     public UniqueKey<RaceEntriesRecord> getPrimaryKey() {
-        return Keys.RACE_ENTRIES_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<RaceEntriesRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.RACE_ENTRIES_RACE_ID_ENTRY_ID_KEY);
+        return Keys.RACE_ENTRIES__PK_RACE_ENTRIES;
     }
 
     @Override
@@ -190,7 +180,7 @@ public class RaceEntries extends TableImpl<RaceEntriesRecord> {
     private transient EntriesPath _entries;
 
     /**
-     * Get the implicit join path to the <code>public.entries</code> table.
+     * Get the implicit join path to the <code>entries</code> table.
      */
     public EntriesPath entries() {
         if (_entries == null)
@@ -202,7 +192,7 @@ public class RaceEntries extends TableImpl<RaceEntriesRecord> {
     private transient RacesPath _races;
 
     /**
-     * Get the implicit join path to the <code>public.races</code> table.
+     * Get the implicit join path to the <code>races</code> table.
      */
     public RacesPath races() {
         if (_races == null)

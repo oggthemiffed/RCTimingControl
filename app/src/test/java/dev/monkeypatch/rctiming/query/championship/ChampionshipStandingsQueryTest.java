@@ -32,7 +32,6 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import org.jooq.DSLContext;
-import org.jooq.JSONB;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,7 +105,7 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
 
     /**
      * Create a user for testing. Email is randomised to avoid unique constraint violations
-     * across test runs sharing the same Testcontainers DB instance.
+     * across tests sharing the same SQLite test database.
      */
     private User makeUser(String firstName, String lastName) {
         User u = new User();
@@ -166,13 +165,13 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
      * config_snapshot is NOT NULL but not used in standings logic.
      */
     private Long makeEventClass(Long eventId) {
-        return dsl.insertInto(EVENT_CLASSES)
+        return dsl.transactionResult(tx -> tx.dsl().insertInto(EVENT_CLASSES)
                 .set(EVENT_CLASSES.EVENT_ID, eventId)
                 .set(EVENT_CLASSES.RACING_CLASS_ID, racingClassId)
-                .set(EVENT_CLASSES.CONFIG_SNAPSHOT, JSONB.valueOf("{\"type\":\"TIMED\"}"))
+                .set(EVENT_CLASSES.CONFIG_SNAPSHOT, "{\"type\":\"TIMED\"}")
                 .returning(EVENT_CLASSES.ID)
                 .fetchOne()
-                .get(EVENT_CLASSES.ID);
+                .get(EVENT_CLASSES.ID));
     }
 
     private Round makeRound(Long eventId, RoundType type, int roundNum) {

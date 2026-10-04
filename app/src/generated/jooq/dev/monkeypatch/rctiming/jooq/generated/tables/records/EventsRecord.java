@@ -6,8 +6,8 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.OffsetDateTime;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -22,154 +22,154 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.events.id</code>.
+     * Setter for <code>events.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.events.id</code>.
+     * Getter for <code>events.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.events.name</code>.
+     * Setter for <code>events.name</code>.
      */
     public void setName(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.events.name</code>.
+     * Getter for <code>events.name</code>.
      */
     public String getName() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.events.event_date</code>.
+     * Setter for <code>events.event_date</code>.
      */
     public void setEventDate(LocalDate value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.events.event_date</code>.
+     * Getter for <code>events.event_date</code>.
      */
     public LocalDate getEventDate() {
         return (LocalDate) get(2);
     }
 
     /**
-     * Setter for <code>public.events.status</code>.
+     * Setter for <code>events.status</code>.
      */
     public void setStatus(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.events.status</code>.
+     * Getter for <code>events.status</code>.
      */
     public String getStatus() {
         return (String) get(3);
     }
 
     /**
-     * Setter for <code>public.events.created_at</code>.
+     * Setter for <code>events.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.events.created_at</code>.
+     * Getter for <code>events.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(4);
+    public Instant getCreatedAt() {
+        return (Instant) get(4);
     }
 
     /**
-     * Setter for <code>public.events.updated_at</code>.
+     * Setter for <code>events.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.events.updated_at</code>.
+     * Getter for <code>events.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(5);
+    public Instant getUpdatedAt() {
+        return (Instant) get(5);
     }
 
     /**
-     * Setter for <code>public.events.entry_opens_at</code>.
+     * Setter for <code>events.entry_opens_at</code>.
      */
-    public void setEntryOpensAt(OffsetDateTime value) {
+    public void setEntryOpensAt(Instant value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.events.entry_opens_at</code>.
+     * Getter for <code>events.entry_opens_at</code>.
      */
-    public OffsetDateTime getEntryOpensAt() {
-        return (OffsetDateTime) get(6);
+    public Instant getEntryOpensAt() {
+        return (Instant) get(6);
     }
 
     /**
-     * Setter for <code>public.events.entry_closes_at</code>.
+     * Setter for <code>events.entry_closes_at</code>.
      */
-    public void setEntryClosesAt(OffsetDateTime value) {
+    public void setEntryClosesAt(Instant value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.events.entry_closes_at</code>.
+     * Getter for <code>events.entry_closes_at</code>.
      */
-    public OffsetDateTime getEntryClosesAt() {
-        return (OffsetDateTime) get(7);
+    public Instant getEntryClosesAt() {
+        return (Instant) get(7);
     }
 
     /**
-     * Setter for <code>public.events.track_id</code>.
+     * Setter for <code>events.track_id</code>.
      */
     public void setTrackId(Long value) {
         set(8, value);
     }
 
     /**
-     * Getter for <code>public.events.track_id</code>.
+     * Getter for <code>events.track_id</code>.
      */
     public Long getTrackId() {
         return (Long) get(8);
     }
 
     /**
-     * Setter for <code>public.events.racehub_last_import_at</code>.
+     * Setter for <code>events.racehub_last_import_at</code>.
      */
-    public void setRacehubLastImportAt(OffsetDateTime value) {
+    public void setRacehubLastImportAt(Instant value) {
         set(9, value);
     }
 
     /**
-     * Getter for <code>public.events.racehub_last_import_at</code>.
+     * Getter for <code>events.racehub_last_import_at</code>.
      */
-    public OffsetDateTime getRacehubLastImportAt() {
-        return (OffsetDateTime) get(9);
+    public Instant getRacehubLastImportAt() {
+        return (Instant) get(9);
     }
 
     /**
-     * Setter for <code>public.events.racehub_last_revision</code>.
+     * Setter for <code>events.racehub_last_revision</code>.
      */
     public void setRacehubLastRevision(Long value) {
         set(10, value);
     }
 
     /**
-     * Getter for <code>public.events.racehub_last_revision</code>.
+     * Getter for <code>events.racehub_last_revision</code>.
      */
     public Long getRacehubLastRevision() {
         return (Long) get(10);
@@ -198,7 +198,7 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
     /**
      * Create a detached, initialised EventsRecord
      */
-    public EventsRecord(Long id, String name, LocalDate eventDate, String status, OffsetDateTime createdAt, OffsetDateTime updatedAt, OffsetDateTime entryOpensAt, OffsetDateTime entryClosesAt, Long trackId, OffsetDateTime racehubLastImportAt, Long racehubLastRevision) {
+    public EventsRecord(Long id, String name, LocalDate eventDate, String status, Instant createdAt, Instant updatedAt, Instant entryOpensAt, Instant entryClosesAt, Long trackId, Instant racehubLastImportAt, Long racehubLastRevision) {
         super(Events.EVENTS);
 
         setId(id);

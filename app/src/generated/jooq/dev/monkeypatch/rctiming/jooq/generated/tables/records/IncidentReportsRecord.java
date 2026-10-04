@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,101 +21,101 @@ public class IncidentReportsRecord extends UpdatableRecordImpl<IncidentReportsRe
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.incident_reports.id</code>.
+     * Setter for <code>incident_reports.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.incident_reports.id</code>.
+     * Getter for <code>incident_reports.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.incident_reports.race_id</code>.
+     * Setter for <code>incident_reports.race_id</code>.
      */
     public void setRaceId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.incident_reports.race_id</code>.
+     * Getter for <code>incident_reports.race_id</code>.
      */
     public Long getRaceId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.incident_reports.entry_id</code>.
+     * Setter for <code>incident_reports.entry_id</code>.
      */
     public void setEntryId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.incident_reports.entry_id</code>.
+     * Getter for <code>incident_reports.entry_id</code>.
      */
     public Long getEntryId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.incident_reports.incident_type</code>.
+     * Setter for <code>incident_reports.incident_type</code>.
      */
     public void setIncidentType(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.incident_reports.incident_type</code>.
+     * Getter for <code>incident_reports.incident_type</code>.
      */
     public String getIncidentType() {
         return (String) get(3);
     }
 
     /**
-     * Setter for <code>public.incident_reports.description</code>.
+     * Setter for <code>incident_reports.description</code>.
      */
     public void setDescription(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.incident_reports.description</code>.
+     * Getter for <code>incident_reports.description</code>.
      */
     public String getDescription() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>public.incident_reports.raised_by</code>.
+     * Setter for <code>incident_reports.raised_by</code>.
      */
     public void setRaisedBy(Long value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.incident_reports.raised_by</code>.
+     * Getter for <code>incident_reports.raised_by</code>.
      */
     public Long getRaisedBy() {
         return (Long) get(5);
     }
 
     /**
-     * Setter for <code>public.incident_reports.raised_at</code>.
+     * Setter for <code>incident_reports.raised_at</code>.
      */
-    public void setRaisedAt(OffsetDateTime value) {
+    public void setRaisedAt(Instant value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.incident_reports.raised_at</code>.
+     * Getter for <code>incident_reports.raised_at</code>.
      */
-    public OffsetDateTime getRaisedAt() {
-        return (OffsetDateTime) get(6);
+    public Instant getRaisedAt() {
+        return (Instant) get(6);
     }
 
     // -------------------------------------------------------------------------
@@ -141,7 +141,7 @@ public class IncidentReportsRecord extends UpdatableRecordImpl<IncidentReportsRe
     /**
      * Create a detached, initialised IncidentReportsRecord
      */
-    public IncidentReportsRecord(Long id, Long raceId, Long entryId, String incidentType, String description, Long raisedBy, OffsetDateTime raisedAt) {
+    public IncidentReportsRecord(Long id, Long raceId, Long entryId, String incidentType, String description, Long raisedBy, Instant raisedAt) {
         super(IncidentReports.INCIDENT_REPORTS);
 
         setId(id);

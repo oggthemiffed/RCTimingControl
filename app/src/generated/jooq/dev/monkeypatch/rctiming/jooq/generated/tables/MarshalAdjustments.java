@@ -4,19 +4,19 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.MarshalAdjustmentsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -37,7 +37,6 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -51,7 +50,7 @@ public class MarshalAdjustments extends TableImpl<MarshalAdjustmentsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.marshal_adjustments</code>
+     * The reference instance of <code>marshal_adjustments</code>
      */
     public static final MarshalAdjustments MARSHAL_ADJUSTMENTS = new MarshalAdjustments();
 
@@ -64,49 +63,49 @@ public class MarshalAdjustments extends TableImpl<MarshalAdjustmentsRecord> {
     }
 
     /**
-     * The column <code>public.marshal_adjustments.id</code>.
+     * The column <code>marshal_adjustments.id</code>.
      */
-    public final TableField<MarshalAdjustmentsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<MarshalAdjustmentsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.marshal_adjustments.race_id</code>.
+     * The column <code>marshal_adjustments.race_id</code>.
      */
     public final TableField<MarshalAdjustmentsRecord, Long> RACE_ID = createField(DSL.name("race_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.marshal_adjustments.entry_id</code>.
+     * The column <code>marshal_adjustments.entry_id</code>.
      */
     public final TableField<MarshalAdjustmentsRecord, Long> ENTRY_ID = createField(DSL.name("entry_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.marshal_adjustments.transponder_number</code>.
+     * The column <code>marshal_adjustments.transponder_number</code>.
      */
     public final TableField<MarshalAdjustmentsRecord, String> TRANSPONDER_NUMBER = createField(DSL.name("transponder_number"), SQLDataType.VARCHAR(20).nullable(false), this, "");
 
     /**
-     * The column <code>public.marshal_adjustments.lap_delta</code>.
+     * The column <code>marshal_adjustments.lap_delta</code>.
      */
     public final TableField<MarshalAdjustmentsRecord, Integer> LAP_DELTA = createField(DSL.name("lap_delta"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>public.marshal_adjustments.race_state_at_time</code>.
+     * The column <code>marshal_adjustments.race_state_at_time</code>.
      */
     public final TableField<MarshalAdjustmentsRecord, String> RACE_STATE_AT_TIME = createField(DSL.name("race_state_at_time"), SQLDataType.VARCHAR(20).nullable(false), this, "");
 
     /**
-     * The column <code>public.marshal_adjustments.acting_user_id</code>.
+     * The column <code>marshal_adjustments.acting_user_id</code>.
      */
     public final TableField<MarshalAdjustmentsRecord, Long> ACTING_USER_ID = createField(DSL.name("acting_user_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.marshal_adjustments.acting_user_name</code>.
+     * The column <code>marshal_adjustments.acting_user_name</code>.
      */
     public final TableField<MarshalAdjustmentsRecord, String> ACTING_USER_NAME = createField(DSL.name("acting_user_name"), SQLDataType.VARCHAR(200).nullable(false), this, "");
 
     /**
-     * The column <code>public.marshal_adjustments.adjusted_at</code>.
+     * The column <code>marshal_adjustments.adjusted_at</code>.
      */
-    public final TableField<MarshalAdjustmentsRecord, OffsetDateTime> ADJUSTED_AT = createField(DSL.name("adjusted_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<MarshalAdjustmentsRecord, Instant> ADJUSTED_AT = createField(DSL.name("adjusted_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private MarshalAdjustments(Name alias, Table<MarshalAdjustmentsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -117,21 +116,21 @@ public class MarshalAdjustments extends TableImpl<MarshalAdjustmentsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.marshal_adjustments</code> table reference
+     * Create an aliased <code>marshal_adjustments</code> table reference
      */
     public MarshalAdjustments(String alias) {
         this(DSL.name(alias), MARSHAL_ADJUSTMENTS);
     }
 
     /**
-     * Create an aliased <code>public.marshal_adjustments</code> table reference
+     * Create an aliased <code>marshal_adjustments</code> table reference
      */
     public MarshalAdjustments(Name alias) {
         this(alias, MARSHAL_ADJUSTMENTS);
     }
 
     /**
-     * Create a <code>public.marshal_adjustments</code> table reference
+     * Create a <code>marshal_adjustments</code> table reference
      */
     public MarshalAdjustments() {
         this(DSL.name("marshal_adjustments"), null);
@@ -172,7 +171,7 @@ public class MarshalAdjustments extends TableImpl<MarshalAdjustmentsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -187,7 +186,7 @@ public class MarshalAdjustments extends TableImpl<MarshalAdjustmentsRecord> {
 
     @Override
     public UniqueKey<MarshalAdjustmentsRecord> getPrimaryKey() {
-        return Keys.MARSHAL_ADJUSTMENTS_PKEY;
+        return Keys.MARSHAL_ADJUSTMENTS__PK_MARSHAL_ADJUSTMENTS;
     }
 
     @Override
@@ -198,7 +197,7 @@ public class MarshalAdjustments extends TableImpl<MarshalAdjustmentsRecord> {
     private transient EntriesPath _entries;
 
     /**
-     * Get the implicit join path to the <code>public.entries</code> table.
+     * Get the implicit join path to the <code>entries</code> table.
      */
     public EntriesPath entries() {
         if (_entries == null)
@@ -210,20 +209,13 @@ public class MarshalAdjustments extends TableImpl<MarshalAdjustmentsRecord> {
     private transient RacesPath _races;
 
     /**
-     * Get the implicit join path to the <code>public.races</code> table.
+     * Get the implicit join path to the <code>races</code> table.
      */
     public RacesPath races() {
         if (_races == null)
             _races = new RacesPath(this, Keys.MARSHAL_ADJUSTMENTS__MARSHAL_ADJUSTMENTS_RACE_ID_FKEY, null);
 
         return _races;
-    }
-
-    @Override
-    public List<Check<MarshalAdjustmentsRecord>> getChecks() {
-        return Arrays.asList(
-            Internal.createCheck(this, DSL.name("marshal_adjustments_lap_delta_check"), "((lap_delta = ANY (ARRAY['-1'::integer, 1])))", true)
-        );
     }
 
     @Override

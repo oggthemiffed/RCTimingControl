@@ -4,13 +4,14 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RacehubClassMappingsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -47,7 +48,7 @@ public class RacehubClassMappings extends TableImpl<RacehubClassMappingsRecord> 
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.racehub_class_mappings</code>
+     * The reference instance of <code>racehub_class_mappings</code>
      */
     public static final RacehubClassMappings RACEHUB_CLASS_MAPPINGS = new RacehubClassMappings();
 
@@ -60,35 +61,34 @@ public class RacehubClassMappings extends TableImpl<RacehubClassMappingsRecord> 
     }
 
     /**
-     * The column <code>public.racehub_class_mappings.id</code>.
+     * The column <code>racehub_class_mappings.id</code>.
      */
-    public final TableField<RacehubClassMappingsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<RacehubClassMappingsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.racehub_class_mappings.event_id</code>.
+     * The column <code>racehub_class_mappings.event_id</code>.
      */
     public final TableField<RacehubClassMappingsRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column
-     * <code>public.racehub_class_mappings.racehub_event_class_id</code>.
+     * The column <code>racehub_class_mappings.racehub_event_class_id</code>.
      */
     public final TableField<RacehubClassMappingsRecord, String> RACEHUB_EVENT_CLASS_ID = createField(DSL.name("racehub_event_class_id"), SQLDataType.VARCHAR(100).nullable(false), this, "");
 
     /**
-     * The column <code>public.racehub_class_mappings.event_class_id</code>.
+     * The column <code>racehub_class_mappings.event_class_id</code>.
      */
     public final TableField<RacehubClassMappingsRecord, Long> EVENT_CLASS_ID = createField(DSL.name("event_class_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.racehub_class_mappings.created_at</code>.
+     * The column <code>racehub_class_mappings.created_at</code>.
      */
-    public final TableField<RacehubClassMappingsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RacehubClassMappingsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.racehub_class_mappings.updated_at</code>.
+     * The column <code>racehub_class_mappings.updated_at</code>.
      */
-    public final TableField<RacehubClassMappingsRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RacehubClassMappingsRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private RacehubClassMappings(Name alias, Table<RacehubClassMappingsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -99,23 +99,21 @@ public class RacehubClassMappings extends TableImpl<RacehubClassMappingsRecord> 
     }
 
     /**
-     * Create an aliased <code>public.racehub_class_mappings</code> table
-     * reference
+     * Create an aliased <code>racehub_class_mappings</code> table reference
      */
     public RacehubClassMappings(String alias) {
         this(DSL.name(alias), RACEHUB_CLASS_MAPPINGS);
     }
 
     /**
-     * Create an aliased <code>public.racehub_class_mappings</code> table
-     * reference
+     * Create an aliased <code>racehub_class_mappings</code> table reference
      */
     public RacehubClassMappings(Name alias) {
         this(alias, RACEHUB_CLASS_MAPPINGS);
     }
 
     /**
-     * Create a <code>public.racehub_class_mappings</code> table reference
+     * Create a <code>racehub_class_mappings</code> table reference
      */
     public RacehubClassMappings() {
         this(DSL.name("racehub_class_mappings"), null);
@@ -156,7 +154,7 @@ public class RacehubClassMappings extends TableImpl<RacehubClassMappingsRecord> 
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -166,12 +164,7 @@ public class RacehubClassMappings extends TableImpl<RacehubClassMappingsRecord> 
 
     @Override
     public UniqueKey<RacehubClassMappingsRecord> getPrimaryKey() {
-        return Keys.RACEHUB_CLASS_MAPPINGS_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<RacehubClassMappingsRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.UQ_RACEHUB_CLASS_MAPPINGS);
+        return Keys.RACEHUB_CLASS_MAPPINGS__PK_RACEHUB_CLASS_MAPPINGS;
     }
 
     @Override
@@ -182,8 +175,7 @@ public class RacehubClassMappings extends TableImpl<RacehubClassMappingsRecord> 
     private transient EventClassesPath _eventClasses;
 
     /**
-     * Get the implicit join path to the <code>public.event_classes</code>
-     * table.
+     * Get the implicit join path to the <code>event_classes</code> table.
      */
     public EventClassesPath eventClasses() {
         if (_eventClasses == null)
@@ -195,7 +187,7 @@ public class RacehubClassMappings extends TableImpl<RacehubClassMappingsRecord> 
     private transient EventsPath _events;
 
     /**
-     * Get the implicit join path to the <code>public.events</code> table.
+     * Get the implicit join path to the <code>events</code> table.
      */
     public EventsPath events() {
         if (_events == null)

@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacehubClassMappings;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,89 +21,87 @@ public class RacehubClassMappingsRecord extends UpdatableRecordImpl<RacehubClass
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.racehub_class_mappings.id</code>.
+     * Setter for <code>racehub_class_mappings.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.racehub_class_mappings.id</code>.
+     * Getter for <code>racehub_class_mappings.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.racehub_class_mappings.event_id</code>.
+     * Setter for <code>racehub_class_mappings.event_id</code>.
      */
     public void setEventId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.racehub_class_mappings.event_id</code>.
+     * Getter for <code>racehub_class_mappings.event_id</code>.
      */
     public Long getEventId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for
-     * <code>public.racehub_class_mappings.racehub_event_class_id</code>.
+     * Setter for <code>racehub_class_mappings.racehub_event_class_id</code>.
      */
     public void setRacehubEventClassId(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for
-     * <code>public.racehub_class_mappings.racehub_event_class_id</code>.
+     * Getter for <code>racehub_class_mappings.racehub_event_class_id</code>.
      */
     public String getRacehubEventClassId() {
         return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.racehub_class_mappings.event_class_id</code>.
+     * Setter for <code>racehub_class_mappings.event_class_id</code>.
      */
     public void setEventClassId(Long value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.racehub_class_mappings.event_class_id</code>.
+     * Getter for <code>racehub_class_mappings.event_class_id</code>.
      */
     public Long getEventClassId() {
         return (Long) get(3);
     }
 
     /**
-     * Setter for <code>public.racehub_class_mappings.created_at</code>.
+     * Setter for <code>racehub_class_mappings.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.racehub_class_mappings.created_at</code>.
+     * Getter for <code>racehub_class_mappings.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(4);
+    public Instant getCreatedAt() {
+        return (Instant) get(4);
     }
 
     /**
-     * Setter for <code>public.racehub_class_mappings.updated_at</code>.
+     * Setter for <code>racehub_class_mappings.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.racehub_class_mappings.updated_at</code>.
+     * Getter for <code>racehub_class_mappings.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(5);
+    public Instant getUpdatedAt() {
+        return (Instant) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -129,7 +127,7 @@ public class RacehubClassMappingsRecord extends UpdatableRecordImpl<RacehubClass
     /**
      * Create a detached, initialised RacehubClassMappingsRecord
      */
-    public RacehubClassMappingsRecord(Long id, Long eventId, String racehubEventClassId, Long eventClassId, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public RacehubClassMappingsRecord(Long id, Long eventId, String racehubEventClassId, Long eventClassId, Instant createdAt, Instant updatedAt) {
         super(RacehubClassMappings.RACEHUB_CLASS_MAPPINGS);
 
         setId(id);

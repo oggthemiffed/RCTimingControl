@@ -2,23 +2,15 @@ spring:
   config:
     activate:
       on-profile: dev
-  datasource:
-    url: jdbc:postgresql://localhost:5432/rctiming_dev
-    username: rctiming
-    password: rctiming
   flyway:
     # Dev seeds are versioned 1000+, so a seeded dev database has a higher version than new
-    # migrations. Out-of-order lets migrations added after the seed (V30 onward) still apply.
+    # migrations. Out-of-order lets migrations added after the seed still apply.
     out-of-order: true
-    # V1000 and V1003 seeded racer accounts and were retired in L10 (#18), replaced by V1005.
-    # Ignoring missing seeds lets a dev database that applied them keep migrating.
-    ignore-migration-patterns: "*:missing,*:future"
-  jpa:
-    hibernate:
-      ddl-auto: validate
 
 rctiming:
   database:
+    # Relative to the backend's working directory (app/), so `make clean-db` can wipe it
+    data-directory: ./data/db
     migration-locations: db/migration, db/seed
 
 tts:

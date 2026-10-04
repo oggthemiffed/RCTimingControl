@@ -4,10 +4,9 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports.IncidentReportsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences.MarshalAbsencesPath;
@@ -20,20 +19,19 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.RoundsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink.UnknownTransponderLinkPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLinks.UnknownTransponderLinksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RacesRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.InverseForeignKey;
-import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Path;
 import org.jooq.PlainSQL;
@@ -48,7 +46,6 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -62,7 +59,7 @@ public class Races extends TableImpl<RacesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.races</code>
+     * The reference instance of <code>races</code>
      */
     public static final Races RACES = new Races();
 
@@ -75,74 +72,74 @@ public class Races extends TableImpl<RacesRecord> {
     }
 
     /**
-     * The column <code>public.races.id</code>.
+     * The column <code>races.id</code>.
      */
-    public final TableField<RacesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<RacesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.races.round_id</code>.
+     * The column <code>races.round_id</code>.
      */
     public final TableField<RacesRecord, Long> ROUND_ID = createField(DSL.name("round_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.races.event_class_id</code>.
+     * The column <code>races.event_class_id</code>.
      */
     public final TableField<RacesRecord, Long> EVENT_CLASS_ID = createField(DSL.name("event_class_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.races.heat_number</code>.
+     * The column <code>races.heat_number</code>.
      */
     public final TableField<RacesRecord, Integer> HEAT_NUMBER = createField(DSL.name("heat_number"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>public.races.sequence_in_round</code>.
+     * The column <code>races.sequence_in_round</code>.
      */
     public final TableField<RacesRecord, Integer> SEQUENCE_IN_ROUND = createField(DSL.name("sequence_in_round"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>public.races.final_letter</code>.
+     * The column <code>races.final_letter</code>.
      */
     public final TableField<RacesRecord, String> FINAL_LETTER = createField(DSL.name("final_letter"), SQLDataType.VARCHAR(5), this, "");
 
     /**
-     * The column <code>public.races.start_type</code>.
+     * The column <code>races.start_type</code>.
      */
     public final TableField<RacesRecord, String> START_TYPE = createField(DSL.name("start_type"), SQLDataType.VARCHAR(20).nullable(false), this, "");
 
     /**
-     * The column <code>public.races.format_id</code>.
+     * The column <code>races.format_id</code>.
      */
     public final TableField<RacesRecord, Long> FORMAT_ID = createField(DSL.name("format_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.races.format_overrides</code>.
+     * The column <code>races.format_overrides</code>.
      */
-    public final TableField<RacesRecord, JSONB> FORMAT_OVERRIDES = createField(DSL.name("format_overrides"), SQLDataType.JSONB, this, "");
+    public final TableField<RacesRecord, String> FORMAT_OVERRIDES = createField(DSL.name("format_overrides"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>public.races.status</code>.
+     * The column <code>races.status</code>.
      */
-    public final TableField<RacesRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'PENDING'::character varying"), SQLDataType.VARCHAR)), this, "");
+    public final TableField<RacesRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'PENDING'"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.races.started_at</code>.
+     * The column <code>races.started_at</code>.
      */
-    public final TableField<RacesRecord, OffsetDateTime> STARTED_AT = createField(DSL.name("started_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+    public final TableField<RacesRecord, Instant> STARTED_AT = createField(DSL.name("started_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.races.finished_at</code>.
+     * The column <code>races.finished_at</code>.
      */
-    public final TableField<RacesRecord, OffsetDateTime> FINISHED_AT = createField(DSL.name("finished_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+    public final TableField<RacesRecord, Instant> FINISHED_AT = createField(DSL.name("finished_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.races.created_at</code>.
+     * The column <code>races.created_at</code>.
      */
-    public final TableField<RacesRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RacesRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.races.updated_at</code>.
+     * The column <code>races.updated_at</code>.
      */
-    public final TableField<RacesRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RacesRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private Races(Name alias, Table<RacesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -153,21 +150,21 @@ public class Races extends TableImpl<RacesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.races</code> table reference
+     * Create an aliased <code>races</code> table reference
      */
     public Races(String alias) {
         this(DSL.name(alias), RACES);
     }
 
     /**
-     * Create an aliased <code>public.races</code> table reference
+     * Create an aliased <code>races</code> table reference
      */
     public Races(Name alias) {
         this(alias, RACES);
     }
 
     /**
-     * Create a <code>public.races</code> table reference
+     * Create a <code>races</code> table reference
      */
     public Races() {
         this(DSL.name("races"), null);
@@ -208,7 +205,7 @@ public class Races extends TableImpl<RacesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -223,7 +220,7 @@ public class Races extends TableImpl<RacesRecord> {
 
     @Override
     public UniqueKey<RacesRecord> getPrimaryKey() {
-        return Keys.RACES_PKEY;
+        return Keys.RACES__PK_RACES;
     }
 
     @Override
@@ -234,8 +231,7 @@ public class Races extends TableImpl<RacesRecord> {
     private transient EventClassesPath _eventClasses;
 
     /**
-     * Get the implicit join path to the <code>public.event_classes</code>
-     * table.
+     * Get the implicit join path to the <code>event_classes</code> table.
      */
     public EventClassesPath eventClasses() {
         if (_eventClasses == null)
@@ -247,8 +243,8 @@ public class Races extends TableImpl<RacesRecord> {
     private transient RaceFormatTemplatesPath _raceFormatTemplates;
 
     /**
-     * Get the implicit join path to the
-     * <code>public.race_format_templates</code> table.
+     * Get the implicit join path to the <code>race_format_templates</code>
+     * table.
      */
     public RaceFormatTemplatesPath raceFormatTemplates() {
         if (_raceFormatTemplates == null)
@@ -260,7 +256,7 @@ public class Races extends TableImpl<RacesRecord> {
     private transient RoundsPath _rounds;
 
     /**
-     * Get the implicit join path to the <code>public.rounds</code> table.
+     * Get the implicit join path to the <code>rounds</code> table.
      */
     public RoundsPath rounds() {
         if (_rounds == null)
@@ -272,8 +268,8 @@ public class Races extends TableImpl<RacesRecord> {
     private transient IncidentReportsPath _incidentReports;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.incident_reports</code> table
+     * Get the implicit to-many join path to the <code>incident_reports</code>
+     * table
      */
     public IncidentReportsPath incidentReports() {
         if (_incidentReports == null)
@@ -285,8 +281,8 @@ public class Races extends TableImpl<RacesRecord> {
     private transient MarshalAbsencesPath _marshalAbsences;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.marshal_absences</code> table
+     * Get the implicit to-many join path to the <code>marshal_absences</code>
+     * table
      */
     public MarshalAbsencesPath marshalAbsences() {
         if (_marshalAbsences == null)
@@ -299,7 +295,7 @@ public class Races extends TableImpl<RacesRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.marshal_adjustments</code> table
+     * <code>marshal_adjustments</code> table
      */
     public MarshalAdjustmentsPath marshalAdjustments() {
         if (_marshalAdjustments == null)
@@ -311,8 +307,7 @@ public class Races extends TableImpl<RacesRecord> {
     private transient PenaltiesPath _penalties;
 
     /**
-     * Get the implicit to-many join path to the <code>public.penalties</code>
-     * table
+     * Get the implicit to-many join path to the <code>penalties</code> table
      */
     public PenaltiesPath penalties() {
         if (_penalties == null)
@@ -324,8 +319,7 @@ public class Races extends TableImpl<RacesRecord> {
     private transient RaceEntriesPath _raceEntries;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.race_entries</code> table
+     * Get the implicit to-many join path to the <code>race_entries</code> table
      */
     public RaceEntriesPath raceEntries() {
         if (_raceEntries == null)
@@ -337,8 +331,8 @@ public class Races extends TableImpl<RacesRecord> {
     private transient ResultSnapshotsPath _resultSnapshots;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.result_snapshots</code> table
+     * Get the implicit to-many join path to the <code>result_snapshots</code>
+     * table
      */
     public ResultSnapshotsPath resultSnapshots() {
         if (_resultSnapshots == null)
@@ -351,7 +345,7 @@ public class Races extends TableImpl<RacesRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.unknown_transponder_link</code> table
+     * <code>unknown_transponder_link</code> table
      */
     public UnknownTransponderLinkPath unknownTransponderLink() {
         if (_unknownTransponderLink == null)
@@ -364,39 +358,13 @@ public class Races extends TableImpl<RacesRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.unknown_transponder_links</code> table
+     * <code>unknown_transponder_links</code> table
      */
     public UnknownTransponderLinksPath unknownTransponderLinks() {
         if (_unknownTransponderLinks == null)
             _unknownTransponderLinks = new UnknownTransponderLinksPath(this, null, Keys.UNKNOWN_TRANSPONDER_LINKS__UNKNOWN_TRANSPONDER_LINKS_RACE_ID_FKEY.getInverseKey());
 
         return _unknownTransponderLinks;
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the
-     * <code>public.entries</code> table, via the
-     * <code>marshal_absences_entry_id_fkey</code> key
-     */
-    public EntriesPath marshalAbsencesEntryIdFkey() {
-        return marshalAbsences().entries();
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the
-     * <code>public.entries</code> table, via the
-     * <code>race_entries_entry_id_fkey</code> key
-     */
-    public EntriesPath raceEntriesEntryIdFkey() {
-        return raceEntries().entries();
-    }
-
-    @Override
-    public List<Check<RacesRecord>> getChecks() {
-        return Arrays.asList(
-            Internal.createCheck(this, DSL.name("races_start_type_check"), "(((start_type)::text = ANY ((ARRAY['STAGGER'::character varying, 'GRID'::character varying])::text[])))", true),
-            Internal.createCheck(this, DSL.name("races_status_check"), "(((status)::text = ANY ((ARRAY['PENDING'::character varying, 'GRID'::character varying, 'RUNNING'::character varying, 'STOPPED'::character varying, 'FINISHED'::character varying])::text[])))", true)
-        );
     }
 
     @Override

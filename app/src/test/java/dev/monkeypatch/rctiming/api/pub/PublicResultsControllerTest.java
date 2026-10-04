@@ -15,7 +15,6 @@ import dev.monkeypatch.rctiming.domain.race.StartType;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import org.jooq.DSLContext;
-import org.jooq.JSONB;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,13 +79,14 @@ class PublicResultsControllerTest extends AbstractIntegrationTest {
         rc.setUpdatedAt(now);
         Long racingClassId = racingClassRepository.save(rc).getId();
 
-        Long eventClassId = dsl.insertInto(EVENT_CLASSES)
-                .set(EVENT_CLASSES.EVENT_ID, event.getId())
+        Long eventId = event.getId();
+        Long eventClassId = dsl.transactionResult(tx -> tx.dsl().insertInto(EVENT_CLASSES)
+                .set(EVENT_CLASSES.EVENT_ID, eventId)
                 .set(EVENT_CLASSES.RACING_CLASS_ID, racingClassId)
-                .set(EVENT_CLASSES.CONFIG_SNAPSHOT, JSONB.valueOf("{\"type\":\"TIMED\"}"))
+                .set(EVENT_CLASSES.CONFIG_SNAPSHOT, "{\"type\":\"TIMED\"}")
                 .returning(EVENT_CLASSES.ID)
                 .fetchOne()
-                .get(EVENT_CLASSES.ID);
+                .get(EVENT_CLASSES.ID));
 
         // round
         Round round = new Round();

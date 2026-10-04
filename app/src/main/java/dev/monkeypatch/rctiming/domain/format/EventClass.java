@@ -1,7 +1,8 @@
 package dev.monkeypatch.rctiming.domain.format;
 
-import io.hypersistence.utils.hibernate.type.json.JsonType;
+import dev.monkeypatch.rctiming.persistence.convert.JsonMapConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -10,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import org.hibernate.annotations.Type;
 
 import java.time.Instant;
 import java.util.Map;
@@ -23,11 +23,11 @@ public class EventClass {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Type(JsonType.class)
+    @Convert(converter = RaceFormatConfigConverter.class)
     @Column(name = "config_snapshot", nullable = false)
     private RaceFormatConfig configSnapshot;
 
-    @Type(JsonType.class)
+    @Convert(converter = JsonMapConverter.class)
     @Column(name = "config_override")
     private Map<String, Object> configOverride;
 

@@ -4,7 +4,7 @@
 
 ### Backend integration tests
 
-Requires Docker (Testcontainers spins up a real PostgreSQL container automatically).
+No Docker needed: the tests run on a temporary SQLite database file, created fresh for each test run.
 
 ```bash
 # Run all tests
@@ -36,7 +36,7 @@ npm run lint          # ESLint
 
 ## Decoder protocol parser (`decoder-protocol/`)
 
-No Docker required (no Testcontainers).
+No Docker required.
 
 ```bash
 # Shared protocol parser — used by app/ and decoder-simulator/
@@ -47,29 +47,27 @@ No Docker required (no Testcontainers).
 
 ## Starting the full dev environment
 
-Always use the `dev` profile — it loads the datasource config from `application-dev.yml`. Running without it causes an immediate "Failed to configure a DataSource" error.
+Use the `dev` profile: it keeps the database in `app/data/db` and loads the dev seed data. `make clean-db` deletes that database so the next start begins fresh.
 
 ### First run — jOOQ codegen required
 
-If you have just pulled new Flyway migrations (or are running for the first time), you must generate jOOQ sources before starting:
+The generated jOOQ sources are committed. After changing a migration, regenerate them (no Docker needed; codegen migrates a throwaway SQLite file):
 
 ```bash
-make up                   # Start PostgreSQL first
-./gradlew :app:generateJooq   # Run codegen against the live schema
-make dev-start            # Then start everything
+./gradlew :app:generateJooq
 ```
 
 Codegen only needs to re-run when the schema changes (new `V*__.sql` migration files). Subsequent `make dev-start` calls skip it automatically via the `-x generateJooq` flag.
 
 ```bash
-# Recommended — starts docker, backend, and frontend in one command:
+# Recommended — starts the backend, the frontend and (if Docker is available) Piper:
 make dev-start
 
-# Stop everything (docker, backend, frontend):
+# Stop everything:
 make stop
 
 # Or run each service manually in separate terminals:
-make up                                                             # Terminal 1: PostgreSQL + Piper
+make up                                                             # Terminal 1: Piper (optional, announcer voices)
 ./gradlew :app:bootRun --args='--spring.profiles.active=dev'       # Terminal 2: backend
 cd frontend && npm run dev                                          # Terminal 3: frontend
 ```
@@ -83,7 +81,7 @@ cd frontend && npm run dev                                          # Terminal 3
 
 Only officials have accounts. The six drivers in the seed event are competitors, not users.
 
-**Seed event** (V1005): "Club Championship Round 1" (IN_PROGRESS) with 6 Mod Buggy competitors (transponders 101–106), run order: P1 → P2 → Q1 → Q2 → Q3 → Final A. Navigate to Race Control via **Admin → Race Control** in the sidebar, or directly: `/race-control/event/1`.
+**Seed event** (`db/seed/sqlite/V1002`): "Club Championship Round 1" (IN_PROGRESS) with 6 Mod Buggy competitors (transponders 101–106), run order: P1 → P2 → Q1 → Q2 → Q3 → Final A. Navigate to Race Control via **Admin → Race Control** in the sidebar, or directly: `/race-control/event/1`.
 
 ---
 

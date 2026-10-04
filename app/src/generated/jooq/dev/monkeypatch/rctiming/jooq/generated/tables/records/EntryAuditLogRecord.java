@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,115 +21,115 @@ public class EntryAuditLogRecord extends UpdatableRecordImpl<EntryAuditLogRecord
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.entry_audit_log.id</code>.
+     * Setter for <code>entry_audit_log.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.entry_audit_log.id</code>.
+     * Getter for <code>entry_audit_log.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.entry_audit_log.entry_id</code>.
+     * Setter for <code>entry_audit_log.entry_id</code>.
      */
     public void setEntryId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.entry_audit_log.entry_id</code>.
+     * Getter for <code>entry_audit_log.entry_id</code>.
      */
     public Long getEntryId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.entry_audit_log.admin_user_id</code>.
+     * Setter for <code>entry_audit_log.admin_user_id</code>.
      */
     public void setAdminUserId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.entry_audit_log.admin_user_id</code>.
+     * Getter for <code>entry_audit_log.admin_user_id</code>.
      */
     public Long getAdminUserId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.entry_audit_log.action</code>.
+     * Setter for <code>entry_audit_log.action</code>.
      */
     public void setAction(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.entry_audit_log.action</code>.
+     * Getter for <code>entry_audit_log.action</code>.
      */
     public String getAction() {
         return (String) get(3);
     }
 
     /**
-     * Setter for <code>public.entry_audit_log.reason</code>.
+     * Setter for <code>entry_audit_log.reason</code>.
      */
     public void setReason(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.entry_audit_log.reason</code>.
+     * Getter for <code>entry_audit_log.reason</code>.
      */
     public String getReason() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>public.entry_audit_log.before_snapshot</code>.
+     * Setter for <code>entry_audit_log.before_snapshot</code>.
      */
     public void setBeforeSnapshot(String value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.entry_audit_log.before_snapshot</code>.
+     * Getter for <code>entry_audit_log.before_snapshot</code>.
      */
     public String getBeforeSnapshot() {
         return (String) get(5);
     }
 
     /**
-     * Setter for <code>public.entry_audit_log.after_snapshot</code>.
+     * Setter for <code>entry_audit_log.after_snapshot</code>.
      */
     public void setAfterSnapshot(String value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.entry_audit_log.after_snapshot</code>.
+     * Getter for <code>entry_audit_log.after_snapshot</code>.
      */
     public String getAfterSnapshot() {
         return (String) get(6);
     }
 
     /**
-     * Setter for <code>public.entry_audit_log.created_at</code>.
+     * Setter for <code>entry_audit_log.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.entry_audit_log.created_at</code>.
+     * Getter for <code>entry_audit_log.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(7);
+    public Instant getCreatedAt() {
+        return (Instant) get(7);
     }
 
     // -------------------------------------------------------------------------
@@ -155,7 +155,7 @@ public class EntryAuditLogRecord extends UpdatableRecordImpl<EntryAuditLogRecord
     /**
      * Create a detached, initialised EntryAuditLogRecord
      */
-    public EntryAuditLogRecord(Long id, Long entryId, Long adminUserId, String action, String reason, String beforeSnapshot, String afterSnapshot, OffsetDateTime createdAt) {
+    public EntryAuditLogRecord(Long id, Long entryId, Long adminUserId, String action, String reason, String beforeSnapshot, String afterSnapshot, Instant createdAt) {
         super(EntryAuditLog.ENTRY_AUDIT_LOG);
 
         setId(id);

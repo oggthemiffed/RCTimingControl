@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,84 +21,84 @@ public class RefreshTokensRecord extends UpdatableRecordImpl<RefreshTokensRecord
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.refresh_tokens.id</code>.
+     * Setter for <code>refresh_tokens.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.refresh_tokens.id</code>.
+     * Getter for <code>refresh_tokens.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.refresh_tokens.user_id</code>.
+     * Setter for <code>refresh_tokens.user_id</code>.
      */
     public void setUserId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.refresh_tokens.user_id</code>.
+     * Getter for <code>refresh_tokens.user_id</code>.
      */
     public Long getUserId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.refresh_tokens.token_hash</code>.
+     * Setter for <code>refresh_tokens.token_hash</code>.
      */
     public void setTokenHash(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.refresh_tokens.token_hash</code>.
+     * Getter for <code>refresh_tokens.token_hash</code>.
      */
     public String getTokenHash() {
         return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.refresh_tokens.expires_at</code>.
+     * Setter for <code>refresh_tokens.expires_at</code>.
      */
-    public void setExpiresAt(OffsetDateTime value) {
+    public void setExpiresAt(Instant value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.refresh_tokens.expires_at</code>.
+     * Getter for <code>refresh_tokens.expires_at</code>.
      */
-    public OffsetDateTime getExpiresAt() {
-        return (OffsetDateTime) get(3);
+    public Instant getExpiresAt() {
+        return (Instant) get(3);
     }
 
     /**
-     * Setter for <code>public.refresh_tokens.created_at</code>.
+     * Setter for <code>refresh_tokens.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.refresh_tokens.created_at</code>.
+     * Getter for <code>refresh_tokens.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(4);
+    public Instant getCreatedAt() {
+        return (Instant) get(4);
     }
 
     /**
-     * Setter for <code>public.refresh_tokens.revoked</code>.
+     * Setter for <code>refresh_tokens.revoked</code>.
      */
     public void setRevoked(Boolean value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.refresh_tokens.revoked</code>.
+     * Getter for <code>refresh_tokens.revoked</code>.
      */
     public Boolean getRevoked() {
         return (Boolean) get(5);
@@ -127,7 +127,7 @@ public class RefreshTokensRecord extends UpdatableRecordImpl<RefreshTokensRecord
     /**
      * Create a detached, initialised RefreshTokensRecord
      */
-    public RefreshTokensRecord(Long id, Long userId, String tokenHash, OffsetDateTime expiresAt, OffsetDateTime createdAt, Boolean revoked) {
+    public RefreshTokensRecord(Long id, Long userId, String tokenHash, Instant expiresAt, Instant createdAt, Boolean revoked) {
         super(RefreshTokens.REFRESH_TOKENS);
 
         setId(id);

@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,129 +21,129 @@ public class MarshalAdjustmentsRecord extends UpdatableRecordImpl<MarshalAdjustm
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.marshal_adjustments.id</code>.
+     * Setter for <code>marshal_adjustments.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.marshal_adjustments.id</code>.
+     * Getter for <code>marshal_adjustments.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.marshal_adjustments.race_id</code>.
+     * Setter for <code>marshal_adjustments.race_id</code>.
      */
     public void setRaceId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.marshal_adjustments.race_id</code>.
+     * Getter for <code>marshal_adjustments.race_id</code>.
      */
     public Long getRaceId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.marshal_adjustments.entry_id</code>.
+     * Setter for <code>marshal_adjustments.entry_id</code>.
      */
     public void setEntryId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.marshal_adjustments.entry_id</code>.
+     * Getter for <code>marshal_adjustments.entry_id</code>.
      */
     public Long getEntryId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.marshal_adjustments.transponder_number</code>.
+     * Setter for <code>marshal_adjustments.transponder_number</code>.
      */
     public void setTransponderNumber(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.marshal_adjustments.transponder_number</code>.
+     * Getter for <code>marshal_adjustments.transponder_number</code>.
      */
     public String getTransponderNumber() {
         return (String) get(3);
     }
 
     /**
-     * Setter for <code>public.marshal_adjustments.lap_delta</code>.
+     * Setter for <code>marshal_adjustments.lap_delta</code>.
      */
     public void setLapDelta(Integer value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.marshal_adjustments.lap_delta</code>.
+     * Getter for <code>marshal_adjustments.lap_delta</code>.
      */
     public Integer getLapDelta() {
         return (Integer) get(4);
     }
 
     /**
-     * Setter for <code>public.marshal_adjustments.race_state_at_time</code>.
+     * Setter for <code>marshal_adjustments.race_state_at_time</code>.
      */
     public void setRaceStateAtTime(String value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.marshal_adjustments.race_state_at_time</code>.
+     * Getter for <code>marshal_adjustments.race_state_at_time</code>.
      */
     public String getRaceStateAtTime() {
         return (String) get(5);
     }
 
     /**
-     * Setter for <code>public.marshal_adjustments.acting_user_id</code>.
+     * Setter for <code>marshal_adjustments.acting_user_id</code>.
      */
     public void setActingUserId(Long value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.marshal_adjustments.acting_user_id</code>.
+     * Getter for <code>marshal_adjustments.acting_user_id</code>.
      */
     public Long getActingUserId() {
         return (Long) get(6);
     }
 
     /**
-     * Setter for <code>public.marshal_adjustments.acting_user_name</code>.
+     * Setter for <code>marshal_adjustments.acting_user_name</code>.
      */
     public void setActingUserName(String value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.marshal_adjustments.acting_user_name</code>.
+     * Getter for <code>marshal_adjustments.acting_user_name</code>.
      */
     public String getActingUserName() {
         return (String) get(7);
     }
 
     /**
-     * Setter for <code>public.marshal_adjustments.adjusted_at</code>.
+     * Setter for <code>marshal_adjustments.adjusted_at</code>.
      */
-    public void setAdjustedAt(OffsetDateTime value) {
+    public void setAdjustedAt(Instant value) {
         set(8, value);
     }
 
     /**
-     * Getter for <code>public.marshal_adjustments.adjusted_at</code>.
+     * Getter for <code>marshal_adjustments.adjusted_at</code>.
      */
-    public OffsetDateTime getAdjustedAt() {
-        return (OffsetDateTime) get(8);
+    public Instant getAdjustedAt() {
+        return (Instant) get(8);
     }
 
     // -------------------------------------------------------------------------
@@ -169,7 +169,7 @@ public class MarshalAdjustmentsRecord extends UpdatableRecordImpl<MarshalAdjustm
     /**
      * Create a detached, initialised MarshalAdjustmentsRecord
      */
-    public MarshalAdjustmentsRecord(Long id, Long raceId, Long entryId, String transponderNumber, Integer lapDelta, String raceStateAtTime, Long actingUserId, String actingUserName, OffsetDateTime adjustedAt) {
+    public MarshalAdjustmentsRecord(Long id, Long raceId, Long entryId, String transponderNumber, Integer lapDelta, String raceStateAtTime, Long actingUserId, String actingUserName, Instant adjustedAt) {
         super(MarshalAdjustments.MARSHAL_ADJUSTMENTS);
 
         setId(id);

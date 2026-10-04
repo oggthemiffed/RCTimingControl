@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for PracticeSessionController.
- * Exercises create/start/stop state machine via HTTP with a real Postgres container.
+ * Exercises create/start/stop state machine via HTTP against the SQLite test database.
  */
 class PracticeSessionControllerIT extends AbstractIntegrationTest {
 

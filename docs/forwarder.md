@@ -32,7 +32,7 @@ RCTC is the only client that connects to the decoder. Nothing connects in to RCT
 ## Step 1 — Start the app
 
 ```bash
-make up     # PostgreSQL
+make up     # Piper (optional)
 make dev    # Spring Boot on :8080
 ```
 

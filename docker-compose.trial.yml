@@ -1,40 +1,12 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: rctiming
-      POSTGRES_USER: rctiming
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rctiming_trial}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rctiming -d rctiming"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  demo-seed:
-    build:
-      context: .
-      dockerfile: docker/seed/Dockerfile
-    restart: "no"
-    environment:
-      PGHOST: postgres
-      PGUSER: rctiming
-      PGPASSWORD: ${POSTGRES_PASSWORD:-rctiming_trial}
-      PGDATABASE: rctiming
-    depends_on:
-      app:
-        condition: service_healthy
-
   app:
     build:
       context: .
       dockerfile: docker/app/Dockerfile
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/rctiming
-      SPRING_DATASOURCE_USERNAME: rctiming
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-rctiming_trial}
+      # Loads the Wyvern RC Club demo data into a fresh database
+      SPRING_PROFILES_ACTIVE: demo
+      RCTIMING_DATA_DIR: /app/data/db
       JWT_SECRET: ${JWT_SECRET:-dGhpcyBpcyBhIGRldmVsb3BtZW50IHNlY3JldCBrZXkgdGhhdCBtdXN0IGJlIGF0IGxlYXN0IDI1NiBiaXRz}
       STORAGE_LOCAL_PATH: /app/data/uploads
       STORAGE_PUBLIC_BASE_URL: http://localhost/storage
@@ -42,10 +14,9 @@ services:
       TTS_DEFAULT_VOICE: en_GB-alan-medium
       TTS_ENABLED: "true"
     volumes:
+      - app_db:/app/data/db
       - app_uploads:/app/data/uploads
     depends_on:
-      postgres:
-        condition: service_healthy
       piper:
         condition: service_started
     healthcheck:
@@ -86,6 +57,6 @@ services:
       --jitter-ms=2500
 
 volumes:
-  pgdata:
+  app_db:
   app_uploads:
   piper_data:

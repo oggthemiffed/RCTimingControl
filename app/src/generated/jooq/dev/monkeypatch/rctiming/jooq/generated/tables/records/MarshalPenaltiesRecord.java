@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,98 +21,98 @@ public class MarshalPenaltiesRecord extends UpdatableRecordImpl<MarshalPenalties
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.marshal_penalties.id</code>.
+     * Setter for <code>marshal_penalties.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.marshal_penalties.id</code>.
+     * Getter for <code>marshal_penalties.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.marshal_penalties.absence_id</code>.
+     * Setter for <code>marshal_penalties.absence_id</code>.
      */
     public void setAbsenceId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.marshal_penalties.absence_id</code>.
+     * Getter for <code>marshal_penalties.absence_id</code>.
      */
     public Long getAbsenceId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.marshal_penalties.entry_id</code>.
+     * Setter for <code>marshal_penalties.entry_id</code>.
      */
     public void setEntryId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.marshal_penalties.entry_id</code>.
+     * Getter for <code>marshal_penalties.entry_id</code>.
      */
     public Long getEntryId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.marshal_penalties.event_id</code>.
+     * Setter for <code>marshal_penalties.event_id</code>.
      */
     public void setEventId(Long value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.marshal_penalties.event_id</code>.
+     * Getter for <code>marshal_penalties.event_id</code>.
      */
     public Long getEventId() {
         return (Long) get(3);
     }
 
     /**
-     * Setter for <code>public.marshal_penalties.applied_by</code>.
+     * Setter for <code>marshal_penalties.applied_by</code>.
      */
     public void setAppliedBy(Long value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.marshal_penalties.applied_by</code>.
+     * Getter for <code>marshal_penalties.applied_by</code>.
      */
     public Long getAppliedBy() {
         return (Long) get(4);
     }
 
     /**
-     * Setter for <code>public.marshal_penalties.applied_at</code>.
+     * Setter for <code>marshal_penalties.applied_at</code>.
      */
-    public void setAppliedAt(OffsetDateTime value) {
+    public void setAppliedAt(Instant value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.marshal_penalties.applied_at</code>.
+     * Getter for <code>marshal_penalties.applied_at</code>.
      */
-    public OffsetDateTime getAppliedAt() {
-        return (OffsetDateTime) get(5);
+    public Instant getAppliedAt() {
+        return (Instant) get(5);
     }
 
     /**
-     * Setter for <code>public.marshal_penalties.notes</code>.
+     * Setter for <code>marshal_penalties.notes</code>.
      */
     public void setNotes(String value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.marshal_penalties.notes</code>.
+     * Getter for <code>marshal_penalties.notes</code>.
      */
     public String getNotes() {
         return (String) get(6);
@@ -141,7 +141,7 @@ public class MarshalPenaltiesRecord extends UpdatableRecordImpl<MarshalPenalties
     /**
      * Create a detached, initialised MarshalPenaltiesRecord
      */
-    public MarshalPenaltiesRecord(Long id, Long absenceId, Long entryId, Long eventId, Long appliedBy, OffsetDateTime appliedAt, String notes) {
+    public MarshalPenaltiesRecord(Long id, Long absenceId, Long entryId, Long eventId, Long appliedBy, Instant appliedAt, String notes) {
         super(MarshalPenalties.MARSHAL_PENALTIES);
 
         setId(id);

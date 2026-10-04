@@ -1,16 +1,4 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: rctiming-postgres
-    environment:
-      POSTGRES_DB: rctiming_dev
-      POSTGRES_USER: rctiming
-      POSTGRES_PASSWORD: rctiming
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
   piper:
     image: rhasspy/wyoming-piper:latest
     container_name: rctiming-piper
@@ -24,5 +12,4 @@ services:
       - "10200:10200"
 
 volumes:
-  pgdata:
   piper_data:

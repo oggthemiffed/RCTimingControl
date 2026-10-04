@@ -4,15 +4,15 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DecoderLoops.DecoderLoopsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RacingClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.TrackLapThresholds.TrackLapThresholdsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.TracksRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Collection;
 
 import org.jooq.Condition;
@@ -47,7 +47,7 @@ public class Tracks extends TableImpl<TracksRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.tracks</code>
+     * The reference instance of <code>tracks</code>
      */
     public static final Tracks TRACKS = new Tracks();
 
@@ -60,34 +60,34 @@ public class Tracks extends TableImpl<TracksRecord> {
     }
 
     /**
-     * The column <code>public.tracks.id</code>.
+     * The column <code>tracks.id</code>.
      */
-    public final TableField<TracksRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<TracksRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.tracks.name</code>.
+     * The column <code>tracks.name</code>.
      */
     public final TableField<TracksRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.tracks.venue_notes</code>.
+     * The column <code>tracks.venue_notes</code>.
      */
     public final TableField<TracksRecord, String> VENUE_NOTES = createField(DSL.name("venue_notes"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>public.tracks.track_length</code>.
+     * The column <code>tracks.track_length</code>.
      */
-    public final TableField<TracksRecord, Double> TRACK_LENGTH = createField(DSL.name("track_length"), SQLDataType.DOUBLE, this, "");
+    public final TableField<TracksRecord, Float> TRACK_LENGTH = createField(DSL.name("track_length"), SQLDataType.REAL, this, "");
 
     /**
-     * The column <code>public.tracks.created_at</code>.
+     * The column <code>tracks.created_at</code>.
      */
-    public final TableField<TracksRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<TracksRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.tracks.updated_at</code>.
+     * The column <code>tracks.updated_at</code>.
      */
-    public final TableField<TracksRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<TracksRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private Tracks(Name alias, Table<TracksRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -98,21 +98,21 @@ public class Tracks extends TableImpl<TracksRecord> {
     }
 
     /**
-     * Create an aliased <code>public.tracks</code> table reference
+     * Create an aliased <code>tracks</code> table reference
      */
     public Tracks(String alias) {
         this(DSL.name(alias), TRACKS);
     }
 
     /**
-     * Create an aliased <code>public.tracks</code> table reference
+     * Create an aliased <code>tracks</code> table reference
      */
     public Tracks(Name alias) {
         this(alias, TRACKS);
     }
 
     /**
-     * Create a <code>public.tracks</code> table reference
+     * Create a <code>tracks</code> table reference
      */
     public Tracks() {
         this(DSL.name("tracks"), null);
@@ -153,7 +153,7 @@ public class Tracks extends TableImpl<TracksRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -163,14 +163,14 @@ public class Tracks extends TableImpl<TracksRecord> {
 
     @Override
     public UniqueKey<TracksRecord> getPrimaryKey() {
-        return Keys.TRACKS_PKEY;
+        return Keys.TRACKS__PK_TRACKS;
     }
 
     private transient DecoderLoopsPath _decoderLoops;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.decoder_loops</code> table
+     * Get the implicit to-many join path to the <code>decoder_loops</code>
+     * table
      */
     public DecoderLoopsPath decoderLoops() {
         if (_decoderLoops == null)
@@ -182,8 +182,7 @@ public class Tracks extends TableImpl<TracksRecord> {
     private transient EventsPath _events;
 
     /**
-     * Get the implicit to-many join path to the <code>public.events</code>
-     * table
+     * Get the implicit to-many join path to the <code>events</code> table
      */
     public EventsPath events() {
         if (_events == null)
@@ -196,21 +195,13 @@ public class Tracks extends TableImpl<TracksRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.track_lap_thresholds</code> table
+     * <code>track_lap_thresholds</code> table
      */
     public TrackLapThresholdsPath trackLapThresholds() {
         if (_trackLapThresholds == null)
             _trackLapThresholds = new TrackLapThresholdsPath(this, null, Keys.TRACK_LAP_THRESHOLDS__TRACK_LAP_THRESHOLDS_TRACK_ID_FKEY.getInverseKey());
 
         return _trackLapThresholds;
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the
-     * <code>public.racing_classes</code> table
-     */
-    public RacingClassesPath racingClasses() {
-        return trackLapThresholds().racingClasses();
     }
 
     @Override
