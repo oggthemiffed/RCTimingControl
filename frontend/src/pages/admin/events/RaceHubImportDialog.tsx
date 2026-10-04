@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -55,11 +55,16 @@ export default function RaceHubImportDialog({ eventId, classes, open, onOpenChan
 
   const importMutation = useRaceHubImport(eventId);
   const replaceMappings = useReplaceRaceHubClassMappings(eventId);
-  const { data: mappings = [] } = useRaceHubClassMappings(eventId, open);
+  const mappingsQuery = useRaceHubClassMappings(eventId, open);
+  // Each file choice (and closing the dialog) starts a new request generation. A preview
+  // response from an older generation is ignored, so the preview on screen always belongs to
+  // the file that "Import entries" will send.
+  const generation = useRef(0);
   const { data: racingClasses = [] } = useRacingClasses();
 
   function handleOpenChange(next: boolean) {
     if (!next) {
+      generation.current++;
       setExportDocument(null);
       setFileError(null);
       setPreview(null);
@@ -74,15 +79,19 @@ export default function RaceHubImportDialog({ eventId, classes, open, onOpenChan
   }
 
   async function runPreview(document: unknown) {
+    const requestGeneration = generation.current;
     try {
-      setPreview(await importMutation.mutateAsync({ exportDocument: document, dryRun: true }));
+      const result = await importMutation.mutateAsync({ exportDocument: document, dryRun: true });
+      if (requestGeneration === generation.current) setPreview(result);
     } catch {
+      if (requestGeneration !== generation.current) return;
       setPreview(null);
       setFileError('RaceHub could not check this file. Make sure it is an Entry Export (schema version 1).');
     }
   }
 
   async function handleFile(file: File | undefined) {
+    const fileGeneration = ++generation.current;
     setPreview(null);
     setFileError(null);
     setClassChoices({});
@@ -91,15 +100,20 @@ export default function RaceHubImportDialog({ eventId, classes, open, onOpenChan
     try {
       parsed = JSON.parse(await file.text());
     } catch {
+      if (fileGeneration !== generation.current) return;
       setExportDocument(null);
       setFileError('This file is not valid JSON.');
       return;
     }
+    if (fileGeneration !== generation.current) return;
     setExportDocument(parsed);
     await runPreview(parsed);
   }
 
   async function saveMappingsAndRecheck() {
+    // The PUT replaces every mapping, so never send it without the saved ones loaded
+    if (!mappingsQuery.isSuccess) return;
+    const mappings = mappingsQuery.data;
     const chosen = Object.entries(classChoices).filter(([, eventClassId]) => eventClassId);
     const byRaceHubId = new Map(mappings.map(m => [m.racehubEventClassId, m.eventClassId]));
     chosen.forEach(([racehubId, eventClassId]) => byRaceHubId.set(racehubId, Number(eventClassId)));
@@ -116,7 +130,9 @@ export default function RaceHubImportDialog({ eventId, classes, open, onOpenChan
 
   async function confirmImport() {
     try {
+      const requestGeneration = generation.current;
       const result = await importMutation.mutateAsync({ exportDocument, dryRun: false });
+      if (requestGeneration !== generation.current) return;
       if (!result.applied) {
         setPreview(result);
         toast.error('The import is blocked. Fix the problems listed and try again.');
@@ -133,6 +149,7 @@ export default function RaceHubImportDialog({ eventId, classes, open, onOpenChan
   const unmapped = preview?.unmappedClasses ?? [];
   const allUnmappedChosen = unmapped.length > 0 && unmapped.every(u => classChoices[u.racehubEventClassId]);
   const busy = importMutation.isPending || replaceMappings.isPending;
+  const mappingsReady = mappingsQuery.isSuccess;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -225,7 +242,17 @@ export default function RaceHubImportDialog({ eventId, classes, open, onOpenChan
                     </Select>
                   </div>
                 ))}
-                <Button size="sm" onClick={() => void saveMappingsAndRecheck()} disabled={!allUnmappedChosen || busy}>
+                {mappingsQuery.isError && (
+                  <p className="text-xs text-destructive">
+                    Could not load this event&apos;s saved class mappings, so new ones cannot be saved yet. Close and
+                    try again.
+                  </p>
+                )}
+                <Button
+                  size="sm"
+                  onClick={() => void saveMappingsAndRecheck()}
+                  disabled={!allUnmappedChosen || !mappingsReady || busy}
+                >
                   Save mappings and check again
                 </Button>
               </div>

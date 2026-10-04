@@ -276,6 +276,14 @@ class RaceHubImportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void missingRevision_isRejected() {
+        String json = fixture("entries-v1-initial.json").replace("\"revision\": 4,", "");
+        var resp = restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-import?dryRun=true",
+                HttpMethod.POST, new HttpEntity<>(json, adminHeaders()), String.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void nonAdmin_isForbidden() {
         String refereeToken = loginAs(Set.of(Role.REFEREE));
         HttpHeaders headers = new HttpHeaders();

@@ -150,6 +150,42 @@ describe('RaceHubImportDialog', () => {
     expect(screen.queryByText('Buggy 2WD')).not.toBeInTheDocument();
   });
 
+  it('ignores a preview that arrives after a different file was chosen', async () => {
+    let resolveFirst: (r: RaceHubImportResult) => void = () => {};
+    api.importRaceHubEntries
+      .mockImplementationOnce(() => new Promise(resolve => { resolveFirst = resolve; }))
+      .mockResolvedValueOnce(result({ racehubEventName: 'Second file' }));
+    renderDialog();
+
+    chooseFile(exportFile());
+    await waitFor(() => expect(api.importRaceHubEntries).toHaveBeenCalledTimes(1));
+    chooseFile(exportFile());
+    expect(await screen.findByText(/Second file/)).toBeInTheDocument();
+
+    resolveFirst(result({ racehubEventName: 'First file' }));
+    await new Promise(r => setTimeout(r, 50));
+    expect(screen.getByText(/Second file/)).toBeInTheDocument();
+    expect(screen.queryByText(/First file/)).not.toBeInTheDocument();
+  });
+
+  it('will not save class mappings when the saved ones could not be loaded', async () => {
+    api.listRaceHubClassMappings.mockRejectedValue(new Error('network'));
+    api.importRaceHubEntries.mockResolvedValue(result({
+      blocked: true,
+      unmappedClasses: [{ racehubEventClassId: 'rh-buggy', rcClassName: 'Buggy 2WD', className: null, entryCount: 1 }],
+    }));
+    renderDialog();
+
+    chooseFile(exportFile());
+    await screen.findByText('Buggy 2WD');
+    await waitFor(() => expect(screen.getByRole('option', { name: '2WD Buggy' })).toBeInTheDocument());
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '11' } });
+
+    expect(await screen.findByText(/Could not load this event's saved class mappings/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Save mappings and check again' })).toBeDisabled();
+    expect(api.replaceRaceHubClassMappings).not.toHaveBeenCalled();
+  });
+
   it('confirms the import and closes', async () => {
     api.importRaceHubEntries
       .mockResolvedValueOnce(result())

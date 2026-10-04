@@ -81,6 +81,9 @@ public class RaceHubImportService {
             throw new IllegalArgumentException("Unsupported RaceHub export schema_version: expected "
                     + SUPPORTED_SCHEMA_VERSION + ", got " + (export == null ? null : export.schemaVersion()));
         }
+        if (export.revision() == null) {
+            throw new IllegalArgumentException("RaceHub export has no revision");
+        }
         List<ExportEntry> exportEntries = export.entries() == null ? List.of() : export.entries();
 
         List<String> errors = new ArrayList<>();
