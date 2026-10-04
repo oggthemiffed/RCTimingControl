@@ -62,6 +62,7 @@ public class Indexes {
     public static final Index IDX_DEVICE_LOSS_AUDIT_EVENT_ID = Internal.createIndex(DSL.name("idx_device_loss_audit_event_id"), DeviceLossAudit.DEVICE_LOSS_AUDIT, new OrderField[] { DeviceLossAudit.DEVICE_LOSS_AUDIT.EVENT_ID }, false);
     public static final Index IDX_ENTRIES_COMPETITOR_ID = Internal.createIndex(DSL.name("idx_entries_competitor_id"), Entries.ENTRIES, new OrderField[] { Entries.ENTRIES.COMPETITOR_ID }, false);
     public static final Index IDX_ENTRIES_EVENT_ID = Internal.createIndex(DSL.name("idx_entries_event_id"), Entries.ENTRIES, new OrderField[] { Entries.ENTRIES.EVENT_ID }, false);
+    public static final Index IDX_ENTRIES_EXTERNAL = Internal.createIndex(DSL.name("idx_entries_external"), Entries.ENTRIES, new OrderField[] { Entries.ENTRIES.EXTERNAL_SOURCE, Entries.ENTRIES.EXTERNAL_ENTRY_ID }, true);
     public static final Index IDX_ENTRIES_NO_DUPLICATE = Internal.createIndex(DSL.name("idx_entries_no_duplicate"), Entries.ENTRIES, new OrderField[] { Entries.ENTRIES.COMPETITOR_ID, Entries.ENTRIES.EVENT_ID, Entries.ENTRIES.EVENT_CLASS_ID }, true);
     public static final Index IDX_ENTRIES_USER_ID = Internal.createIndex(DSL.name("idx_entries_user_id"), Entries.ENTRIES, new OrderField[] { Entries.ENTRIES.USER_ID }, false);
     public static final Index IDX_ENTRY_AUDIT_LOG_ENTRY_ID = Internal.createIndex(DSL.name("idx_entry_audit_log_entry_id"), EntryAuditLog.ENTRY_AUDIT_LOG, new OrderField[] { EntryAuditLog.ENTRY_AUDIT_LOG.ENTRY_ID }, false);

@@ -38,6 +38,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ProfanityBlocklist;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceFormatTemplates;
+import dev.monkeypatch.rctiming.jooq.generated.tables.RacehubClassMappings;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens;
@@ -86,6 +87,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.records.PracticeSessionsRe
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ProfanityBlocklistRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RaceEntriesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RaceFormatTemplatesRecord;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.RacehubClassMappingsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RacesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RacingClassesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RefreshTokensRecord;
@@ -164,6 +166,8 @@ public class Keys {
     public static final UniqueKey<RaceEntriesRecord> RACE_ENTRIES_PKEY = Internal.createUniqueKey(RaceEntries.RACE_ENTRIES, DSL.name("race_entries_pkey"), new TableField[] { RaceEntries.RACE_ENTRIES.ID }, true);
     public static final UniqueKey<RaceEntriesRecord> RACE_ENTRIES_RACE_ID_ENTRY_ID_KEY = Internal.createUniqueKey(RaceEntries.RACE_ENTRIES, DSL.name("race_entries_race_id_entry_id_key"), new TableField[] { RaceEntries.RACE_ENTRIES.RACE_ID, RaceEntries.RACE_ENTRIES.ENTRY_ID }, true);
     public static final UniqueKey<RaceFormatTemplatesRecord> RACE_FORMAT_TEMPLATES_PKEY = Internal.createUniqueKey(RaceFormatTemplates.RACE_FORMAT_TEMPLATES, DSL.name("race_format_templates_pkey"), new TableField[] { RaceFormatTemplates.RACE_FORMAT_TEMPLATES.ID }, true);
+    public static final UniqueKey<RacehubClassMappingsRecord> RACEHUB_CLASS_MAPPINGS_PKEY = Internal.createUniqueKey(RacehubClassMappings.RACEHUB_CLASS_MAPPINGS, DSL.name("racehub_class_mappings_pkey"), new TableField[] { RacehubClassMappings.RACEHUB_CLASS_MAPPINGS.ID }, true);
+    public static final UniqueKey<RacehubClassMappingsRecord> UQ_RACEHUB_CLASS_MAPPINGS = Internal.createUniqueKey(RacehubClassMappings.RACEHUB_CLASS_MAPPINGS, DSL.name("uq_racehub_class_mappings"), new TableField[] { RacehubClassMappings.RACEHUB_CLASS_MAPPINGS.EVENT_ID, RacehubClassMappings.RACEHUB_CLASS_MAPPINGS.RACEHUB_EVENT_CLASS_ID }, true);
     public static final UniqueKey<RacesRecord> RACES_PKEY = Internal.createUniqueKey(Races.RACES, DSL.name("races_pkey"), new TableField[] { Races.RACES.ID }, true);
     public static final UniqueKey<RacingClassesRecord> RACING_CLASSES_NAME_KEY = Internal.createUniqueKey(RacingClasses.RACING_CLASSES, DSL.name("racing_classes_name_key"), new TableField[] { RacingClasses.RACING_CLASSES.NAME }, true);
     public static final UniqueKey<RacingClassesRecord> RACING_CLASSES_PKEY = Internal.createUniqueKey(RacingClasses.RACING_CLASSES, DSL.name("racing_classes_pkey"), new TableField[] { RacingClasses.RACING_CLASSES.ID }, true);
@@ -248,6 +252,8 @@ public class Keys {
     public static final ForeignKey<ProfanityBlocklistRecord, UsersRecord> PROFANITY_BLOCKLIST__PROFANITY_BLOCKLIST_ADDED_BY_USER_ID_FKEY = Internal.createForeignKey(ProfanityBlocklist.PROFANITY_BLOCKLIST, DSL.name("profanity_blocklist_added_by_user_id_fkey"), new TableField[] { ProfanityBlocklist.PROFANITY_BLOCKLIST.ADDED_BY_USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<RaceEntriesRecord, EntriesRecord> RACE_ENTRIES__RACE_ENTRIES_ENTRY_ID_FKEY = Internal.createForeignKey(RaceEntries.RACE_ENTRIES, DSL.name("race_entries_entry_id_fkey"), new TableField[] { RaceEntries.RACE_ENTRIES.ENTRY_ID }, Keys.ENTRIES_PKEY, new TableField[] { Entries.ENTRIES.ID }, true);
     public static final ForeignKey<RaceEntriesRecord, RacesRecord> RACE_ENTRIES__RACE_ENTRIES_RACE_ID_FKEY = Internal.createForeignKey(RaceEntries.RACE_ENTRIES, DSL.name("race_entries_race_id_fkey"), new TableField[] { RaceEntries.RACE_ENTRIES.RACE_ID }, Keys.RACES_PKEY, new TableField[] { Races.RACES.ID }, true);
+    public static final ForeignKey<RacehubClassMappingsRecord, EventClassesRecord> RACEHUB_CLASS_MAPPINGS__RACEHUB_CLASS_MAPPINGS_EVENT_CLASS_ID_FKEY = Internal.createForeignKey(RacehubClassMappings.RACEHUB_CLASS_MAPPINGS, DSL.name("racehub_class_mappings_event_class_id_fkey"), new TableField[] { RacehubClassMappings.RACEHUB_CLASS_MAPPINGS.EVENT_CLASS_ID }, Keys.EVENT_CLASSES_PKEY, new TableField[] { EventClasses.EVENT_CLASSES.ID }, true);
+    public static final ForeignKey<RacehubClassMappingsRecord, EventsRecord> RACEHUB_CLASS_MAPPINGS__RACEHUB_CLASS_MAPPINGS_EVENT_ID_FKEY = Internal.createForeignKey(RacehubClassMappings.RACEHUB_CLASS_MAPPINGS, DSL.name("racehub_class_mappings_event_id_fkey"), new TableField[] { RacehubClassMappings.RACEHUB_CLASS_MAPPINGS.EVENT_ID }, Keys.EVENTS_PKEY, new TableField[] { Events.EVENTS.ID }, true);
     public static final ForeignKey<RacesRecord, EventClassesRecord> RACES__RACES_EVENT_CLASS_ID_FKEY = Internal.createForeignKey(Races.RACES, DSL.name("races_event_class_id_fkey"), new TableField[] { Races.RACES.EVENT_CLASS_ID }, Keys.EVENT_CLASSES_PKEY, new TableField[] { EventClasses.EVENT_CLASSES.ID }, true);
     public static final ForeignKey<RacesRecord, RaceFormatTemplatesRecord> RACES__RACES_FORMAT_ID_FKEY = Internal.createForeignKey(Races.RACES, DSL.name("races_format_id_fkey"), new TableField[] { Races.RACES.FORMAT_ID }, Keys.RACE_FORMAT_TEMPLATES_PKEY, new TableField[] { RaceFormatTemplates.RACE_FORMAT_TEMPLATES.ID }, true);
     public static final ForeignKey<RacesRecord, RoundsRecord> RACES__RACES_ROUND_ID_FKEY = Internal.createForeignKey(Races.RACES, DSL.name("races_round_id_fkey"), new TableField[] { Races.RACES.ROUND_ID }, Keys.ROUNDS_PKEY, new TableField[] { Rounds.ROUNDS.ID }, true);

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "event": {
+    "id": "evt-{{run}}",
+    "external_reference": "RH-2026-ROUND-3",
+    "name": "Club Round 3",
+    "event_local_date": "2026-10-18",
+    "timezone": "Europe/London"
+  },
+  "revision": 4,
+  "entries": [
+    {
+      "entry_id": "u1-{{run}}",
+      "entry_version": 1,
+      "entry_status": "CONFIRMED",
+      "race_day_status": "NOT_ARRIVED",
+      "event_class_id": "rh-class-electric-{{run}}",
+      "rc_class_name": "RH Electric Touring {{run}}",
+      "rc_class_number": "1",
+      "class_name": "Electric Touring",
+      "driver_profile_id": "drv-ada-{{run}}",
+      "driver_display_name": "Ada Lovelace",
+      "brca_number": "BR12345",
+      "brca_source": "BRCA",
+      "home_club": "Analytical RC",
+      "age_category": "SENIOR",
+      "grade": "A",
+      "primary_transponder": "71{{run}}",
+      "secondary_transponder": "72{{run}}",
+      "club_car_requested": false,
+      "club_car_name": null
+    }
+  ]
+}

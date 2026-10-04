@@ -172,6 +172,26 @@ public class Entries extends TableImpl<EntriesRecord> {
      */
     public final TableField<EntriesRecord, String> SECONDARY_TRANSPONDER_NUMBER = createField(DSL.name("secondary_transponder_number"), SQLDataType.VARCHAR(20), this, "");
 
+    /**
+     * The column <code>public.entries.external_source</code>.
+     */
+    public final TableField<EntriesRecord, String> EXTERNAL_SOURCE = createField(DSL.name("external_source"), SQLDataType.VARCHAR(30), this, "");
+
+    /**
+     * The column <code>public.entries.external_entry_id</code>.
+     */
+    public final TableField<EntriesRecord, String> EXTERNAL_ENTRY_ID = createField(DSL.name("external_entry_id"), SQLDataType.VARCHAR(100), this, "");
+
+    /**
+     * The column <code>public.entries.external_entry_version</code>.
+     */
+    public final TableField<EntriesRecord, Long> EXTERNAL_ENTRY_VERSION = createField(DSL.name("external_entry_version"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>public.entries.racehub_arrival</code>.
+     */
+    public final TableField<EntriesRecord, String> RACEHUB_ARRIVAL = createField(DSL.name("racehub_arrival"), SQLDataType.VARCHAR(20), this, "");
+
     private Entries(Name alias, Table<EntriesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -241,7 +261,7 @@ public class Entries extends TableImpl<EntriesRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.IDX_ENTRIES_COMPETITOR_ID, Indexes.IDX_ENTRIES_EVENT_ID, Indexes.IDX_ENTRIES_NO_DUPLICATE, Indexes.IDX_ENTRIES_USER_ID);
+        return Arrays.asList(Indexes.IDX_ENTRIES_COMPETITOR_ID, Indexes.IDX_ENTRIES_EVENT_ID, Indexes.IDX_ENTRIES_EXTERNAL, Indexes.IDX_ENTRIES_NO_DUPLICATE, Indexes.IDX_ENTRIES_USER_ID);
     }
 
     @Override
