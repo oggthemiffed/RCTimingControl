@@ -8,6 +8,7 @@ import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships.ChampionshipsPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.CompetitorsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipExclusionsRecord;
@@ -199,30 +200,28 @@ public class ChampionshipExclusions extends TableImpl<ChampionshipExclusionsReco
         return _championships;
     }
 
-    private transient UsersPath _championshipExclusionsCreatedByFkey;
+    private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table, via
-     * the <code>championship_exclusions_created_by_fkey</code> key.
+     * Get the implicit join path to the <code>public.users</code> table.
      */
-    public UsersPath championshipExclusionsCreatedByFkey() {
-        if (_championshipExclusionsCreatedByFkey == null)
-            _championshipExclusionsCreatedByFkey = new UsersPath(this, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_CREATED_BY_FKEY, null);
+    public UsersPath users() {
+        if (_users == null)
+            _users = new UsersPath(this, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_CREATED_BY_FKEY, null);
 
-        return _championshipExclusionsCreatedByFkey;
+        return _users;
     }
 
-    private transient UsersPath _championshipExclusionsDriverIdFkey;
+    private transient CompetitorsPath _competitors;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table, via
-     * the <code>championship_exclusions_driver_id_fkey</code> key.
+     * Get the implicit join path to the <code>public.competitors</code> table.
      */
-    public UsersPath championshipExclusionsDriverIdFkey() {
-        if (_championshipExclusionsDriverIdFkey == null)
-            _championshipExclusionsDriverIdFkey = new UsersPath(this, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_DRIVER_ID_FKEY, null);
+    public CompetitorsPath competitors() {
+        if (_competitors == null)
+            _competitors = new CompetitorsPath(this, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_DRIVER_ID_FKEY, null);
 
-        return _championshipExclusionsDriverIdFkey;
+        return _competitors;
     }
 
     private transient EventsPath _events;

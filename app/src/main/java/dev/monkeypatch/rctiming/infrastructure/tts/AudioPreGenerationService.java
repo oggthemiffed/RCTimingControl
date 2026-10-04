@@ -129,7 +129,8 @@ public class AudioPreGenerationService {
         // 3. Finish announcements (AUDIO-05) — one per racer
         for (RaceEntry raceEntry : entries) {
             Entry entry = entryRepository.findById(raceEntry.getEntryId()).orElse(null);
-            if (entry == null) continue;
+            // Name clips come from the racer's login; competitor-only entries have none yet.
+            if (entry == null || entry.getUserId() == null) continue;
             User user = userRepository.findById(entry.getUserId()).orElse(null);
             if (user == null) continue;
 

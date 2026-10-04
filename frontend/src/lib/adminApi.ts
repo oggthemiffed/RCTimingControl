@@ -80,9 +80,9 @@ export interface EventDetailDto {
 
 export interface AdminEntryDto {
   id: number;
-  userId: number;
-  firstName: string;
-  lastName: string;
+  userId: number | null;
+  competitorId: number | null;
+  displayName: string | null;
   transponderNumber: string | null;
   status: 'PENDING' | 'CONFIRMED' | 'WITHDRAWN';
   submittedAt: string;
@@ -209,6 +209,7 @@ export interface PointsScaleEntryDto {
 export interface ChampionshipExclusionDto {
   id: number;
   championshipId: number;
+  /** Competitor id. */
   driverId: number;
   eventId: number;
   reason: string;
@@ -233,12 +234,19 @@ export interface RoundResultDto {
 }
 
 export interface StandingsRowDto {
+  /** Competitor id; exclusions use the same id. */
   driverId: number;
-  firstName: string;
-  lastName: string;
+  displayName: string;
   racingClassId: number;
   totalPoints: number;
   rounds: RoundResultDto[];
+}
+
+export interface CompetitorSummaryDto {
+  id: number;
+  displayName: string;
+  brcaNumber: string | null;
+  homeClub: string | null;
 }
 
 export interface UserSummaryDto {
@@ -437,7 +445,13 @@ export const adminApi = {
       api.delete(`/api/v1/admin/formats/${id}`),
   },
 
-  // Users (for driver search in exclusions etc.)
+  // Competitors (drivers, with or without a login — for driver search in exclusions)
+  competitors: {
+    list: () =>
+      api.get<CompetitorSummaryDto[]>('/api/v1/admin/competitors').then(r => r.data),
+  },
+
+  // Users
   users: {
     list: () =>
       api.get<UserSummaryDto[]>('/api/v1/admin/users').then(r => r.data),

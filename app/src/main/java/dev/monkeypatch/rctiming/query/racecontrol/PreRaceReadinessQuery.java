@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETITORS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Entries.ENTRIES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences.MARSHAL_ABSENCES;
@@ -19,7 +20,6 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries.RACE_EN
 import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACING_CLASSES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Races.RACES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
-import static dev.monkeypatch.rctiming.jooq.generated.tables.Users.USERS;
 
 /**
  * jOOQ read-side query for the pre-race readiness view (CTRL-02, CTRL-07).
@@ -117,14 +117,11 @@ public class PreRaceReadinessQuery {
             marshalDuty = dsl
                     .select(
                             RACE_ENTRIES.ENTRY_ID,
-                            DSL.coalesce(
-                                    DSL.concat(USERS.FIRST_NAME, DSL.val(" "), USERS.LAST_NAME),
-                                    USERS.EMAIL
-                            ).as("driverName"),
+                            DSL.coalesce(COMPETITORS.DISPLAY_NAME, DSL.val("Unknown")).as("driverName"),
                             absenceCount)
                     .from(RACE_ENTRIES)
                     .join(ENTRIES).on(ENTRIES.ID.eq(RACE_ENTRIES.ENTRY_ID))
-                    .join(USERS).on(USERS.ID.eq(ENTRIES.USER_ID))
+                    .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                     .where(RACE_ENTRIES.RACE_ID.eq(previousRaceId))
                     .orderBy(RACE_ENTRIES.GRID_POSITION.asc().nullsLast(), ENTRIES.ID.asc())
                     .fetch(r -> new MarshalDutyRowDto(
@@ -143,15 +140,12 @@ public class PreRaceReadinessQuery {
                         RACE_ENTRIES.ID,
                         RACE_ENTRIES.ENTRY_ID,
                         RACE_ENTRIES.GRID_POSITION,
-                        DSL.coalesce(
-                                DSL.concat(USERS.FIRST_NAME, DSL.val(" "), USERS.LAST_NAME),
-                                USERS.EMAIL
-                        ).as("driverName"),
+                        DSL.coalesce(COMPETITORS.DISPLAY_NAME, DSL.val("Unknown")).as("driverName"),
                         RACING_CLASSES.NAME.as("className"))
                 .from(RACE_ENTRIES)
                 .join(RACES).on(RACES.ID.eq(RACE_ENTRIES.RACE_ID))
                 .join(ENTRIES).on(ENTRIES.ID.eq(RACE_ENTRIES.ENTRY_ID))
-                .join(USERS).on(USERS.ID.eq(ENTRIES.USER_ID))
+                .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                 .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
                 .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
                 .where(RACE_ENTRIES.RACE_ID.eq(raceId))

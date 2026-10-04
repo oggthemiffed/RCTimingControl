@@ -6,8 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETITORS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Entries.ENTRIES;
-import static dev.monkeypatch.rctiming.jooq.generated.tables.Users.USERS;
 
 @Service
 @Transactional(readOnly = true)
@@ -23,22 +23,22 @@ public class AdminEntryQueryService {
         return dsl.select(
                         ENTRIES.ID,
                         ENTRIES.USER_ID,
-                        USERS.FIRST_NAME,
-                        USERS.LAST_NAME,
+                        ENTRIES.COMPETITOR_ID,
+                        COMPETITORS.DISPLAY_NAME,
                         ENTRIES.TRANSPONDER_NUMBER,
                         ENTRIES.STATUS,
                         ENTRIES.SUBMITTED_AT,
                         ENTRIES.WITHDRAWN_AT)
                 .from(ENTRIES)
-                .join(USERS).on(USERS.ID.eq(ENTRIES.USER_ID))
+                .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                 .where(ENTRIES.EVENT_ID.eq(eventId))
                 .and(ENTRIES.EVENT_CLASS_ID.eq(eventClassId))
                 .orderBy(ENTRIES.SUBMITTED_AT.asc())
                 .fetch(r -> new AdminEntryDto(
                         r.get(ENTRIES.ID),
                         r.get(ENTRIES.USER_ID),
-                        r.get(USERS.FIRST_NAME),
-                        r.get(USERS.LAST_NAME),
+                        r.get(ENTRIES.COMPETITOR_ID),
+                        r.get(COMPETITORS.DISPLAY_NAME),
                         r.get(ENTRIES.TRANSPONDER_NUMBER),
                         r.get(ENTRIES.STATUS),
                         r.get(ENTRIES.SUBMITTED_AT) == null ? null : r.get(ENTRIES.SUBMITTED_AT).toInstant(),

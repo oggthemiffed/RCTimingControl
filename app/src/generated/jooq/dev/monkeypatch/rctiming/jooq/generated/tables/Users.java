@@ -228,32 +228,17 @@ public class Users extends TableImpl<UsersRecord> {
         return _cars;
     }
 
-    private transient ChampionshipExclusionsPath _championshipExclusionsCreatedByFkey;
+    private transient ChampionshipExclusionsPath _championshipExclusions;
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.championship_exclusions</code> table, via the
-     * <code>championship_exclusions_created_by_fkey</code> key
+     * <code>public.championship_exclusions</code> table
      */
-    public ChampionshipExclusionsPath championshipExclusionsCreatedByFkey() {
-        if (_championshipExclusionsCreatedByFkey == null)
-            _championshipExclusionsCreatedByFkey = new ChampionshipExclusionsPath(this, null, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_CREATED_BY_FKEY.getInverseKey());
+    public ChampionshipExclusionsPath championshipExclusions() {
+        if (_championshipExclusions == null)
+            _championshipExclusions = new ChampionshipExclusionsPath(this, null, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_CREATED_BY_FKEY.getInverseKey());
 
-        return _championshipExclusionsCreatedByFkey;
-    }
-
-    private transient ChampionshipExclusionsPath _championshipExclusionsDriverIdFkey;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.championship_exclusions</code> table, via the
-     * <code>championship_exclusions_driver_id_fkey</code> key
-     */
-    public ChampionshipExclusionsPath championshipExclusionsDriverIdFkey() {
-        if (_championshipExclusionsDriverIdFkey == null)
-            _championshipExclusionsDriverIdFkey = new ChampionshipExclusionsPath(this, null, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_DRIVER_ID_FKEY.getInverseKey());
-
-        return _championshipExclusionsDriverIdFkey;
+        return _championshipExclusions;
     }
 
     private transient DeviceLossAuditPath _deviceLossAudit;

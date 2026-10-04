@@ -48,8 +48,8 @@ import {
   useDeleteExclusion,
 } from '@/hooks/admin/useAdminChampionships';
 import { useAdminEventsList } from '@/hooks/admin/useAdminEvents';
-import { useAdminUsersList } from '@/hooks/admin/useAdminUsers';
-import type { ChampionshipDto, UserSummaryDto } from '@/lib/adminApi';
+import { useAdminCompetitorsList } from '@/hooks/admin/useAdminCompetitors';
+import type { ChampionshipDto, CompetitorSummaryDto } from '@/lib/adminApi';
 import { adminApi } from '@/lib/adminApi';
 import { useQuery } from '@tanstack/react-query';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
@@ -65,26 +65,25 @@ function DriverCombobox({
   value: number | '';
   onChange: (id: number) => void;
 }) {
-  const { data: users = [] } = useAdminUsersList();
+  const { data: competitors = [] } = useAdminCompetitorsList();
   const [search, setSearch] = useState(() => {
-    const u = users.find(u => u.id === Number(value));
-    return u ? `${u.firstName} ${u.lastName}` : '';
+    const c = competitors.find(c => c.id === Number(value));
+    return c ? c.displayName : '';
   });
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const filtered = search.length >= 1
-    ? users.filter(u => {
-        const name = `${u.firstName} ${u.lastName}`.toLowerCase();
-        const memberNums = u.memberships.map(m => m.number.toLowerCase()).join(' ');
+    ? competitors.filter(c => {
         const q = search.toLowerCase();
-        return name.includes(q) || memberNums.includes(q);
+        return c.displayName.toLowerCase().includes(q)
+          || (c.brcaNumber ?? '').toLowerCase().includes(q);
       })
-    : users;
+    : competitors;
 
-  function handleSelect(u: UserSummaryDto) {
-    onChange(u.id);
-    setSearch(`${u.firstName} ${u.lastName}`);
+  function handleSelect(c: CompetitorSummaryDto) {
+    onChange(c.id);
+    setSearch(c.displayName);
     setOpen(false);
   }
 
@@ -100,20 +99,17 @@ function DriverCombobox({
       />
       {open && filtered.length > 0 && (
         <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
-          {filtered.slice(0, 30).map(u => {
-            const badges = u.memberships.map(m => `${m.code}: ${m.number}`).join(' · ');
-            return (
-              <button
-                key={u.id}
-                type="button"
-                className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-baseline gap-2"
-                onMouseDown={e => { e.preventDefault(); handleSelect(u); }}
-              >
-                <span>{u.firstName} {u.lastName}</span>
-                {badges && <span className="text-xs text-muted-foreground">{badges}</span>}
-              </button>
-            );
-          })}
+          {filtered.slice(0, 30).map(c => (
+            <button
+              key={c.id}
+              type="button"
+              className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-baseline gap-2"
+              onMouseDown={e => { e.preventDefault(); handleSelect(c); }}
+            >
+              <span>{c.displayName}</span>
+              {c.brcaNumber && <span className="text-xs text-muted-foreground">BRCA: {c.brcaNumber}</span>}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -436,13 +432,12 @@ export default function ChampionshipDetailPage() {
     queryFn: adminApi.listRacingClasses,
   });
   const { data: events = [] } = useAdminEventsList();
-  const { data: users = [] } = useAdminUsersList();
+  const { data: competitors = [] } = useAdminCompetitorsList();
 
   const driverName = (driverId: number) => {
-    const u = users.find(u => u.id === driverId);
-    if (!u) return `Driver ${driverId}`;
-    const badges = u.memberships.map(m => `${m.code}: ${m.number}`).join(', ');
-    return badges ? `${u.firstName} ${u.lastName} (${badges})` : `${u.firstName} ${u.lastName}`;
+    const c = competitors.find(c => c.id === driverId);
+    if (!c) return `Driver ${driverId}`;
+    return c.brcaNumber ? `${c.displayName} (BRCA: ${c.brcaNumber})` : c.displayName;
   };
 
   const [addClassOpen, setAddClassOpen] = useState(false);

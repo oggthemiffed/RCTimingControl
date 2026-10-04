@@ -1,10 +1,10 @@
 package dev.monkeypatch.rctiming.timing;
 
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
-import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,16 +32,16 @@ public class LapTimingService {
     private final LiveTimingHub liveTimingHub;
     private final RaceEntryRepository raceEntryRepository;
     private final EntryRepository entryRepository;
-    private final UserRepository userRepository;
+    private final CompetitorRepository competitorRepository;
 
     public LapTimingService(LiveTimingHub liveTimingHub,
                             RaceEntryRepository raceEntryRepository,
                             EntryRepository entryRepository,
-                            UserRepository userRepository) {
+                            CompetitorRepository competitorRepository) {
         this.liveTimingHub = liveTimingHub;
         this.raceEntryRepository = raceEntryRepository;
         this.entryRepository = entryRepository;
-        this.userRepository = userRepository;
+        this.competitorRepository = competitorRepository;
     }
 
     /**
@@ -136,17 +136,18 @@ public class LapTimingService {
     }
 
     /**
-     * Pre-loads entry display names (First Last) into the given state so calculatePositions()
+     * Pre-loads each entry's competitor display name into the given state so calculatePositions()
      * can include driver names without hitting the DB on every lap.
      */
     private void loadEntryNames(long raceId, LiveRaceState state) {
         try {
             List<RaceEntry> raceEntries = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId);
             for (RaceEntry raceEntry : raceEntries) {
-                entryRepository.findById(raceEntry.getEntryId()).ifPresent(entry ->
-                        userRepository.findById(entry.getUserId()).ifPresent(user ->
-                                state.putEntryName(raceEntry.getEntryId(),
-                                        user.getFirstName() + " " + user.getLastName())));
+                entryRepository.findById(raceEntry.getEntryId())
+                        .map(Entry::getCompetitorId)
+                        .flatMap(competitorRepository::findById)
+                        .ifPresent(competitor ->
+                                state.putEntryName(raceEntry.getEntryId(), competitor.getDisplayName()));
             }
         } catch (Exception e) {
             log.warn("Failed to load entry names for race {}: {}", raceId, e.getMessage());

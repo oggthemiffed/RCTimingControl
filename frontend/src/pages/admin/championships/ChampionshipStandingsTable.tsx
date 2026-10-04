@@ -95,7 +95,7 @@ export function ChampionshipStandingsTable({ championshipId }: Props) {
             return (
               <TableRow key={row.driverId}>
                 <TableCell className="font-medium">{idx + 1}</TableCell>
-                <TableCell>{row.firstName} {row.lastName}</TableCell>
+                <TableCell>{row.displayName}</TableCell>
                 <TableCell className="text-right font-semibold">{row.totalPoints}</TableCell>
                 {roundNumbers.map(n => (
                   <RoundCell key={n} result={roundMap.get(n)} />

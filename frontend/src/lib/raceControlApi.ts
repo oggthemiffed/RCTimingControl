@@ -249,8 +249,7 @@ export type RoundResultDto = {
 
 export type PublicStandingsRowDto = {
   driverId: number;
-  firstName: string;
-  lastName: string;
+  displayName: string;
   racingClassId: number;
   totalPoints: number;
   rounds: RoundResultDto[];

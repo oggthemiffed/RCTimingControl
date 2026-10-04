@@ -14,7 +14,8 @@ public record ResultSnapshotDto(
     public record ResultRow(
             int position,
             long entryId,
-            String driverName,
+            Long competitorId,        // L5: the driver; null in snapshots written before competitors existed
+            String driverName,        // competitor display name at the time the race finished
             String carNumber,
             int lapsCompleted,
             long totalTimeMs,
