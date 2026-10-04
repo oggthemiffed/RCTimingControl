@@ -1,0 +1,50 @@
+import api from './api';
+import type { LiveTimingRowDto, ResultRow } from './raceControlApi';
+
+// Anonymous spectator board endpoints (L12). Every call here is public, so a board never
+// trips the 401 → /login redirect in the shared axios client.
+
+export type BoardRaceDto = {
+  raceId: number;
+  label: string;
+  roundType: string;
+  roundNumber: number;
+  className: string;
+  heatNumber: number;
+  finalLetter: string | null;
+  status: 'PENDING' | 'GRID' | 'RUNNING' | 'STOPPED' | 'FINISHED';
+};
+
+export type NowNextDto = {
+  eventId: number | null;
+  eventName: string | null;
+  currentRace: BoardRaceDto | null;
+  nextRace: BoardRaceDto | null;
+  lastCompletedRace: BoardRaceDto | null;
+};
+
+export type ResultsBoardDto = {
+  eventId: number | null;
+  eventName: string | null;
+  race: BoardRaceDto | null;
+  results: ResultRow[];
+};
+
+function eventParams(eventId: number | null | undefined) {
+  return eventId ? { params: { eventId } } : undefined;
+}
+
+export async function getNowNext(eventId?: number | null): Promise<NowNextDto> {
+  const { data } = await api.get<NowNextDto>('/api/v1/boards/now-next', eventParams(eventId));
+  return data;
+}
+
+export async function getResultsBoard(eventId?: number | null): Promise<ResultsBoardDto> {
+  const { data } = await api.get<ResultsBoardDto>('/api/v1/boards/results', eventParams(eventId));
+  return data;
+}
+
+export async function getBoardLiveTiming(raceId: number): Promise<LiveTimingRowDto[]> {
+  const { data } = await api.get<LiveTimingRowDto[]>(`/api/v1/boards/races/${raceId}/live-timing`);
+  return data;
+}

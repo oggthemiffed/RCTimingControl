@@ -1,0 +1,141 @@
+package dev.monkeypatch.rctiming.query.boards;
+
+import dev.monkeypatch.rctiming.api.boards.dto.BoardRaceDto;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Record;
+import org.jooq.SortField;
+import org.jooq.impl.DSL;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Events.EVENTS;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACING_CLASSES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Races.RACES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
+
+/**
+ * jOOQ read side of the spectator boards (L12, ported from localday's BoardController).
+ * Everything is scoped to one event, which is the one asked for or, by default, the event
+ * that is racing now.
+ */
+@Component
+@Transactional(readOnly = true)
+public class BoardQuery {
+
+    public record BoardEvent(long id, String name) {}
+
+    private final DSLContext dsl;
+
+    public BoardQuery(DSLContext dsl) {
+        this.dsl = dsl;
+    }
+
+    /**
+     * The event to show: {@code requested} if it exists (empty if it doesn't). With no request,
+     * the event with a running or stopped race, else the most recent {@code IN_PROGRESS} event,
+     * so a board keeps its event between races. Empty only when neither exists.
+     */
+    public Optional<BoardEvent> resolveEvent(Long requested) {
+        if (requested != null) {
+            return dsl.select(EVENTS.ID, EVENTS.NAME).from(EVENTS).where(EVENTS.ID.eq(requested))
+                    .fetchOptional(r -> new BoardEvent(r.get(EVENTS.ID), r.get(EVENTS.NAME)));
+        }
+        Optional<BoardEvent> racing = dsl.select(EVENTS.ID, EVENTS.NAME)
+                .from(RACES)
+                .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
+                .join(EVENTS).on(EVENTS.ID.eq(ROUNDS.EVENT_ID))
+                .where(RACES.STATUS.in("RUNNING", "STOPPED"))
+                .orderBy(RACES.STARTED_AT.desc().nullsLast(), RACES.ID.desc())
+                .limit(1)
+                .fetchOptional(r -> new BoardEvent(r.get(EVENTS.ID), r.get(EVENTS.NAME)));
+        if (racing.isPresent()) {
+            return racing;
+        }
+        return dsl.select(EVENTS.ID, EVENTS.NAME)
+                .from(EVENTS)
+                .where(EVENTS.STATUS.eq("IN_PROGRESS"))
+                .orderBy(EVENTS.EVENT_DATE.desc(), EVENTS.ID.desc())
+                .limit(1)
+                .fetchOptional(r -> new BoardEvent(r.get(EVENTS.ID), r.get(EVENTS.NAME)));
+    }
+
+    /** The race on track: a running race, or failing that a stopped one. */
+    public Optional<BoardRaceDto> currentRace(long eventId) {
+        return first(eventId, RACES.STATUS.eq("RUNNING"), runOrder())
+                .or(() -> first(eventId, RACES.STATUS.eq("STOPPED"), runOrder()));
+    }
+
+    /**
+     * The race up next: one already called to the grid, else the first pending race in run
+     * order. Grid first, because a race director who skips ahead (CTRL-09) calls the grid on
+     * the race they skipped to while earlier races stay pending.
+     */
+    public Optional<BoardRaceDto> nextRace(long eventId) {
+        return first(eventId, RACES.STATUS.eq("GRID"), runOrder())
+                .or(() -> first(eventId, RACES.STATUS.eq("PENDING"), runOrder()));
+    }
+
+    /** The race that finished most recently. */
+    public Optional<BoardRaceDto> lastCompletedRace(long eventId) {
+        return first(eventId, RACES.STATUS.eq("FINISHED"),
+                List.of(RACES.FINISHED_AT.desc().nullsLast(), RACES.ID.desc()));
+    }
+
+    private static List<SortField<?>> runOrder() {
+        return List.of(ROUNDS.SEQUENCE_IN_EVENT.asc(), RACES.SEQUENCE_IN_ROUND.asc(),
+                RACES.HEAT_NUMBER.asc(), RACES.ID.asc());
+    }
+
+    private Optional<BoardRaceDto> first(long eventId, Condition status, List<SortField<?>> order) {
+        return dsl
+                .select(
+                        RACES.ID,
+                        ROUNDS.TYPE,
+                        ROUNDS.ROUND_NUMBER,
+                        RACING_CLASSES.NAME.as("className"),
+                        RACES.HEAT_NUMBER,
+                        RACES.FINAL_LETTER,
+                        RACES.STATUS)
+                .from(RACES)
+                .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
+                .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
+                .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
+                .where(ROUNDS.EVENT_ID.eq(eventId))
+                .and(status)
+                .orderBy(order)
+                .limit(1)
+                .fetchOptional(BoardQuery::toDto);
+    }
+
+    private static BoardRaceDto toDto(Record r) {
+        String roundType = r.get(ROUNDS.TYPE);
+        int roundNumber = r.get(ROUNDS.ROUND_NUMBER);
+        String className = r.get("className", String.class);
+        int heatNumber = r.get(RACES.HEAT_NUMBER);
+        String finalLetter = r.get(RACES.FINAL_LETTER);
+        return new BoardRaceDto(
+                r.get(RACES.ID),
+                label(roundType, roundNumber, className, heatNumber, finalLetter),
+                roundType,
+                roundNumber,
+                className,
+                heatNumber,
+                finalLetter,
+                r.get(RACES.STATUS));
+    }
+
+    /** Same wording as the race labels on result snapshots and the grid call. */
+    static String label(String roundType, int roundNumber, String className, int heatNumber, String finalLetter) {
+        return switch (roundType) {
+            case "PRACTICE" -> "Practice " + roundNumber + " — " + className + " — Heat " + heatNumber;
+            case "QUALIFIER" -> "Qualifying " + roundNumber + " — " + className + " — Heat " + heatNumber;
+            case "FINAL" -> (finalLetter != null ? finalLetter : "A") + " Final — " + className;
+            default -> roundType + " " + roundNumber + " — " + className + " — Heat " + heatNumber;
+        };
+    }
+}

@@ -1,0 +1,42 @@
+import type { ResultRow } from '@/lib/raceControlApi';
+import { fmtMs } from './boardFormat';
+
+function gap(row: ResultRow, leaderLaps: number): string {
+  if (row.position === 1) return '—';
+  const down = leaderLaps - row.lapsCompleted;
+  if (down > 0) return `+${down} ${down === 1 ? 'lap' : 'laps'}`;
+  return row.gapToLeaderMs !== null ? `+${fmtMs(row.gapToLeaderMs)}` : '—';
+}
+
+export function BoardResultsTable({ results }: { results: ResultRow[] }) {
+  if (results.length === 0) {
+    return <p className="text-2xl text-slate-400">No results recorded for this race.</p>;
+  }
+  const leaderLaps = Math.max(...results.map((r) => r.lapsCompleted));
+  return (
+    <table className="w-full text-2xl lg:text-4xl" aria-label="Results">
+      <thead>
+        <tr className="border-b border-slate-700 text-left text-lg text-slate-400 lg:text-2xl">
+          <th className="py-2 pr-4">Pos</th>
+          <th className="py-2 pr-4">Driver</th>
+          <th className="py-2 pr-4">Car</th>
+          <th className="py-2 pr-4 text-right">Laps</th>
+          <th className="py-2 pr-4 text-right">Best lap</th>
+          <th className="py-2 text-right">Gap</th>
+        </tr>
+      </thead>
+      <tbody>
+        {results.map((row) => (
+          <tr key={row.entryId} className="border-b border-slate-800">
+            <td className="py-3 pr-4 font-bold tabular-nums">{row.position}</td>
+            <td className="py-3 pr-4 font-semibold">{row.driverName}</td>
+            <td className="py-3 pr-4 tabular-nums">{row.carNumber ?? '—'}</td>
+            <td className="py-3 pr-4 text-right tabular-nums">{row.lapsCompleted}</td>
+            <td className="py-3 pr-4 text-right tabular-nums">{fmtMs(row.bestLapMs)}</td>
+            <td className="py-3 text-right tabular-nums text-slate-300">{gap(row, leaderLaps)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
