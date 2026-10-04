@@ -84,6 +84,7 @@ export interface AdminEntryDto {
   competitorId: number | null;
   displayName: string | null;
   transponderNumber: string | null;
+  secondaryTransponderNumber: string | null;
   status: 'PENDING' | 'CONFIRMED' | 'WITHDRAWN';
   submittedAt: string;
   withdrawnAt: string | null;

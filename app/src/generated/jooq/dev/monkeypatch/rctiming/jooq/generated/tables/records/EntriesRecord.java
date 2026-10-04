@@ -272,6 +272,20 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         return (Long) get(17);
     }
 
+    /**
+     * Setter for <code>public.entries.secondary_transponder_number</code>.
+     */
+    public void setSecondaryTransponderNumber(String value) {
+        set(18, value);
+    }
+
+    /**
+     * Getter for <code>public.entries.secondary_transponder_number</code>.
+     */
+    public String getSecondaryTransponderNumber() {
+        return (String) get(18);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -295,7 +309,7 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
     /**
      * Create a detached, initialised EntriesRecord
      */
-    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Boolean membershipOverride, Long membershipOverrideBy, OffsetDateTime membershipOverrideAt, String membershipOverrideNote, OffsetDateTime submittedAt, OffsetDateTime updatedAt, Long carId, Long transponderId, OffsetDateTime confirmedAt, OffsetDateTime withdrawnAt, Long competitorId) {
+    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Boolean membershipOverride, Long membershipOverrideBy, OffsetDateTime membershipOverrideAt, String membershipOverrideNote, OffsetDateTime submittedAt, OffsetDateTime updatedAt, Long carId, Long transponderId, OffsetDateTime confirmedAt, OffsetDateTime withdrawnAt, Long competitorId, String secondaryTransponderNumber) {
         super(Entries.ENTRIES);
 
         setId(id);
@@ -316,6 +330,7 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         setConfirmedAt(confirmedAt);
         setWithdrawnAt(withdrawnAt);
         setCompetitorId(competitorId);
+        setSecondaryTransponderNumber(secondaryTransponderNumber);
         resetChangedOnNotNull();
     }
 }

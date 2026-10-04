@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.timing;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
+import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
@@ -12,9 +13,11 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -66,7 +69,7 @@ public class LapTimingService {
     /**
      * Handles a LapPassingEvent published by the ApplicationEventPublisher.
      * Resolves transponder number → entry ID, first checking runtime links (from retroactive
-     * linking), then falling back to Entry.transponderNumberSnapshot in the DB.
+     * linking), then falling back to the entries' primary and secondary numbers in the DB.
      */
     @EventListener(LapPassingEvent.class)
     @Async
@@ -155,17 +158,34 @@ public class LapTimingService {
     }
 
     /**
-     * Resolves a transponder number to an entry ID for the given race via transponderNumberSnapshot.
-     * Does NOT check runtime links — callers must check state.getRuntimeLink() first.
+     * Resolves a transponder number to an entry ID for the given race. Either the entry's primary
+     * or its secondary transponder matches (L6). Numbers are unique only within a race, so the
+     * same number in another event never matters.
+     *
+     * <p>When the number belongs to more than one entry in this race it is ambiguous: no entry is
+     * credited and the passing is treated as unknown, so a referee links it through the
+     * unknown-transponder flow. Withdrawn entries never match.
+     *
+     * <p>Does NOT check runtime links — callers must check state.getRuntimeLink() first.
      */
     private Long resolveEntryId(long raceId, String transponderNumber) {
         try {
             List<RaceEntry> raceEntries = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId);
+            Set<Long> matches = new LinkedHashSet<>();
             for (RaceEntry raceEntry : raceEntries) {
                 Optional<Entry> entry = entryRepository.findById(raceEntry.getEntryId());
-                if (entry.isPresent() && transponderNumber.equals(entry.get().getTransponderNumberSnapshot())) {
-                    return raceEntry.getEntryId();
+                if (entry.isPresent() && entry.get().getStatus() != EntryStatus.WITHDRAWN
+                        && (transponderNumber.equals(entry.get().getTransponderNumberSnapshot())
+                            || transponderNumber.equals(entry.get().getSecondaryTransponderNumber()))) {
+                    matches.add(raceEntry.getEntryId());
                 }
+            }
+            if (matches.size() == 1) {
+                return matches.iterator().next();
+            }
+            if (matches.size() > 1) {
+                log.warn("Transponder {} matches entries {} in race {} — not credited, flagged as unknown",
+                        transponderNumber, matches, raceId);
             }
         } catch (Exception e) {
             log.warn("Failed to resolve transponder {} for race {}: {}", transponderNumber, raceId, e.getMessage());
