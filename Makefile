@@ -46,6 +46,7 @@ help:
 	@printf '    make start       Same as dev-start (background; logs to /tmp/rc-*.log)\n'
 	@printf '    make stop        Kill backend, frontend and docker containers\n'
 	@printf '    make clean       Stop everything and wipe build artefacts\n'
+	@printf '    make installer   Native installer for this system (msi, pkg or deb)\n'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Infrastructure
@@ -128,6 +129,14 @@ ui-build:
 .PHONY: ui-lint
 ui-lint:
 	cd frontend && npm run lint
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Packaging
+# ─────────────────────────────────────────────────────────────────────────────
+.PHONY: installer
+installer:
+	./gradlew -PbundleFrontend :app:installer -x generateJooq
+	@printf 'Installer written to app/build/installer/out/\n'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Combined

@@ -140,9 +140,147 @@ tasks.withType<nu.studer.gradle.jooq.JooqGenerate>().configureEach {
     javaExecSpec = Action { systemProperty("org.jooq.settings", settingsFile.absolutePath) }
 }
 
+// ---------------------------------------------------------------------------
+// #23: one package for the venue laptop. `-PbundleFrontend` builds the React app into the jar
+// (served by SpaConfig), and `installer` wraps that jar and a Java runtime in a native installer
+// that runs the app as a background service. See docs/installing.md.
+// ---------------------------------------------------------------------------
+
+val isWindows = System.getProperty("os.name").startsWith("Windows")
+val isMac = System.getProperty("os.name").startsWith("Mac")
+val frontendDir = rootProject.layout.projectDirectory.dir("frontend")
+val npm = if (isWindows) "npm.cmd" else "npm"
+
+val installFrontendDependencies by tasks.registering(Exec::class) {
+    group = "frontend"
+    description = "Install the frontend's npm dependencies"
+    workingDir = frontendDir.asFile
+    commandLine(npm, "ci", "--no-audit", "--no-fund")
+    inputs.file(frontendDir.file("package-lock.json"))
+    outputs.dir(frontendDir.dir("node_modules"))
+}
+
+val buildFrontend by tasks.registering(Exec::class) {
+    group = "frontend"
+    description = "Build the frontend into frontend/dist"
+    dependsOn(installFrontendDependencies)
+    workingDir = frontendDir.asFile
+    commandLine(npm, "run", "build")
+    inputs.dir(frontendDir.dir("src"))
+    inputs.dir(frontendDir.dir("public"))
+    inputs.files(frontendDir.files("index.html", "package.json", "package-lock.json", "vite.config.ts",
+            "tsconfig.json", "tsconfig.app.json", "tsconfig.node.json"))
+    outputs.dir(frontendDir.dir("dist"))
+}
+
 // jOOQ generated sources are committed at app/src/generated/jooq (Docker builds skip codegen with -x generateJooq)
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
     archiveFileName.set("app.jar")
+    if (providers.gradleProperty("bundleFrontend").isPresent) {
+        dependsOn(buildFrontend)
+        bootInf {
+            from(frontendDir.dir("dist")) { into("classes/static") }
+        }
+    }
+}
+
+// Installer versions must be numbers only (0.1.0-alpha.1 → 0.1.0); -PinstallerVersion overrides.
+// macOS will not take a version starting with 0, so pre-1.0 builds get a leading 1 there.
+val installerVersion = providers.gradleProperty("installerVersion").getOrElse(
+        Regex("""^(\d+)\.(\d+)\.(\d+)""").find(version.toString())?.value
+                ?: error("VERSION must start with major.minor.patch, not '$version'"))
+val platformInstallerVersion =
+        if (isMac && installerVersion.startsWith("0.")) "1." + installerVersion.removePrefix("0.") else installerVersion
+val installerType = providers.gradleProperty("installerType").getOrElse(
+        when {
+            isWindows -> "msi"
+            isMac -> "pkg"
+            else -> "deb"
+        })
+val installerDir = layout.buildDirectory.dir("installer")
+
+val stageInstallerInput by tasks.registering(Sync::class) {
+    group = "distribution"
+    description = "Stage the jar the installer wraps"
+    from(tasks.named("bootJar"))
+    into(installerDir.map { it.dir("input") })
+}
+
+val stageInstallerResources by tasks.registering(Sync::class) {
+    group = "distribution"
+    description = "Stage the files that customise jpackage's installer"
+    val os = when {
+        isWindows -> "windows"
+        isMac -> "macos"
+        else -> "linux"
+    }
+    from("packaging/$os")
+    if (isWindows) {
+        // jpackage registers the Windows service through NSSM (nssm.cc), which it expects in the
+        // resource folder as service-installer.exe. The build does not download it.
+        val nssm = providers.gradleProperty("windowsServiceInstaller").orNull
+                ?: System.getenv("RCTIMING_SERVICE_INSTALLER")
+        if (nssm != null) {
+            from(nssm) { rename { "service-installer.exe" } }
+        }
+        doFirst {
+            if (nssm == null) {
+                throw GradleException("Set -PwindowsServiceInstaller=<path to nssm.exe> (64-bit NSSM 2.24) " +
+                        "to build the Windows installer")
+            }
+        }
+    }
+    into(installerDir.map { it.dir("resources") })
+}
+
+val installer by tasks.registering(Exec::class) {
+    group = "distribution"
+    description = "Build a native installer (msi, pkg or deb) that runs RC Timing as a service. " +
+            "Run with -PbundleFrontend."
+    dependsOn(stageInstallerInput, stageInstallerResources)
+    doFirst {
+        if (!providers.gradleProperty("bundleFrontend").isPresent) {
+            throw GradleException("Run the installer task with -PbundleFrontend so the package includes the UI")
+        }
+        delete(installerDir.map { it.dir("out") })
+    }
+    val jdkHome = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+            .map { it.metadata.installationPath.asFile }
+    val output = installerDir.map { it.dir("out") }
+    outputs.dir(output)
+    inputs.files(stageInstallerInput, stageInstallerResources)
+    executable = jdkHome.get().resolve("bin/" + if (isWindows) "jpackage.exe" else "jpackage").path
+    args(buildList {
+        addAll(listOf(
+                "--type", installerType,
+                "--name", "RCTimingControl",
+                "--app-version", platformInstallerVersion,
+                "--vendor", "RC Timing Control",
+                "--description", "RC club race timing and race control",
+                "--input", installerDir.get().dir("input").asFile.path,
+                "--main-jar", "app.jar",
+                "--resource-dir", installerDir.get().dir("resources").asFile.path,
+                "--dest", output.get().asFile.path,
+                // Data lives in the per-machine folder, outside the install folder (DataDirectories)
+                "--java-options", "-Drctiming.data-scope=machine",
+                "--launcher-as-service"))
+        when {
+            isWindows -> addAll(listOf(
+                    // Fixed so a new version's installer upgrades the old one in place
+                    "--win-upgrade-uuid", "4f6a3c1e-8b2d-4e57-9a0c-5d7e2b9f1a63",
+                    // A console launcher, so `RCTimingControl.exe restore ...` prints its result
+                    "--win-console"))
+            isMac -> addAll(listOf(
+                    "--mac-package-identifier", "dev.monkeypatch.rctiming",
+                    "--mac-package-name", "RC Timing Control"))
+            else -> addAll(listOf(
+                    "--linux-package-name", "rctimingcontrol",
+                    "--linux-app-category", "misc"))
+        }
+        if (providers.gradleProperty("installerVerbose").isPresent) {
+            add("--verbose")
+        }
+    })
 }
 
 sourceSets["main"].java.srcDir("src/generated/jooq")

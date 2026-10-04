@@ -48,6 +48,29 @@ export default function AboutPage() {
           </div>
         </div>
 
+        {data && data.addresses.length > 0 && (
+          <div className="rounded-lg border bg-card p-6 space-y-3 text-sm">
+            <div>
+              <h2 className="font-medium">Open on other devices</h2>
+              <p className="text-muted-foreground">
+                Phones, tablets and boards on the same network can use any of these addresses.
+              </p>
+            </div>
+            <ul className="space-y-1" aria-label="Network addresses">
+              {data.addresses.map((address) => (
+                <li key={address}>
+                  <a
+                    href={address}
+                    className="font-mono text-primary underline underline-offset-4 break-all"
+                  >
+                    {address}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="text-center">
           <Link to="/login" className="text-sm text-primary underline underline-offset-4">
             Back to login

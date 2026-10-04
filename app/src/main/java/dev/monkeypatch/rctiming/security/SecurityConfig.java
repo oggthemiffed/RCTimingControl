@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.security;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -14,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.util.UrlPathHelper;
 
 @Configuration
 @EnableWebSecurity
@@ -42,6 +44,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/storage/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "RACE_DIRECTOR", "REFEREE")
                         .requestMatchers("/ws/timing", "/ws/timing/**").permitAll()
+                        // The bundled frontend (SpaConfig): the pages and their assets are public,
+                        // the data behind them is not
+                        .requestMatchers(SecurityConfig::isFrontendRequest).permitAll()
                         // Only officials sign in (L10, #18)
                         .anyRequest().hasAnyRole("ADMIN", "RACE_DIRECTOR", "REFEREE")
                 )
@@ -49,6 +54,15 @@ public class SecurityConfig {
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    static boolean isFrontendRequest(HttpServletRequest request) {
+        // Decoded, as Spring MVC routes it, so an encoded /api path is not taken for a page
+        String path = UrlPathHelper.defaultInstance.getPathWithinApplication(request);
+        return (HttpMethod.GET.matches(request.getMethod()) || HttpMethod.HEAD.matches(request.getMethod()))
+                && !path.startsWith("/api/")
+                && !path.startsWith("/actuator")
+                && !path.startsWith("/ws/");
     }
 
     @Bean

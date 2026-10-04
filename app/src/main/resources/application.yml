@@ -1,4 +1,8 @@
 spring:
+  web:
+    resources:
+      # SpaConfig serves the bundled frontend instead of Boot's default static mapping
+      add-mappings: false
   jpa:
     hibernate:
       ddl-auto: validate
@@ -16,7 +20,9 @@ rctiming:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:dGhpcyBpcyBhIGRldmVsb3BtZW50IHNlY3JldCBrZXkgdGhhdCBtdXN0IGJlIGF0IGxlYXN0IDI1NiBiaXRz}
+    # Base64 signing key for sign-in tokens. Unset, a random key is created in the data folder
+    # (jwt-secret) on first start and reused after that.
+    secret: ${JWT_SECRET:}
     access-token-ttl-ms: 900000
     refresh-token-ttl-ms: 604800000
   decoder:
@@ -25,8 +31,10 @@ app:
       enabled: ${DECODER_LISTENER_ENABLED:true}
 
 storage:
-  local-path: ${STORAGE_LOCAL_PATH:./data/uploads}
-  public-base-url: ${STORAGE_PUBLIC_BASE_URL:http://localhost:8080/storage}
+  # Folder for uploads (club logo, announcer clips). Unset, it is an uploads folder beside the database.
+  local-path: ${STORAGE_LOCAL_PATH:}
+  # Relative by default, so logos load on whichever address a phone or board opened the app with
+  public-base-url: ${STORAGE_PUBLIC_BASE_URL:/storage}
 
 tts:
   endpoint: ${TTS_ENDPOINT:piper:10200}

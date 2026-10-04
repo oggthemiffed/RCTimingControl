@@ -1,0 +1,143 @@
+name: Installers
+
+# Builds the Windows, macOS and Linux installers (#23), installs each on a clean runner, checks the
+# service comes up and serves the UI, then installs a newer version over it and checks the data
+# survived. The installers are kept as workflow artifacts.
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - 'app/packaging/**'
+      - 'app/build.gradle.kts'
+      - 'scripts/installer-smoke.sh'
+      - '.github/workflows/installers.yml'
+
+jobs:
+  installer:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux installer (deb)
+            os: ubuntu-24.04
+          - name: macOS installer (pkg)
+            os: macos-14
+          # windows-2022 has the WiX 3 toolset jpackage needs
+          - name: Windows installer (msi)
+            os: windows-2022
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install fakeroot (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y fakeroot
+
+      # jpackage registers the Windows service through NSSM, pinned by checksum
+      - name: Fetch NSSM (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          curl -sSfL --retry 3 -o nssm.zip https://nssm.cc/release/nssm-2.24.zip
+          sha256sum nssm.zip
+          echo "727d1e42275c605e0f04aba98095c38a8e1e46def453cdffce42869428aa6743  nssm.zip" | sha256sum -c -
+          unzip -q nssm.zip
+          echo "RCTIMING_SERVICE_INSTALLER=$(cygpath -w "$PWD/nssm-2.24/win64/nssm.exe")" >> "$GITHUB_ENV"
+
+      # The same code at a lower version number stands in for the release being upgraded from
+      - name: Build the older installer
+        run: |
+          ./gradlew -PbundleFrontend -PinstallerVersion=0.0.1 :app:installer -x generateJooq --no-daemon
+          mkdir -p older && mv app/build/installer/out/* older/
+
+      - name: Build the installer
+        run: |
+          ./gradlew -PbundleFrontend :app:installer -x generateJooq --no-daemon
+          mkdir -p newer && mv app/build/installer/out/* newer/
+          ls -l older newer
+
+      - name: Install the older package
+        if: runner.os != 'Windows'
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            sudo apt-get install -y ./older/*.deb
+          else
+            sudo installer -pkg older/*.pkg -target /
+          fi
+      - name: Install the older package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $msi = (Get-ChildItem older/*.msi).FullName
+          $p = Start-Process msiexec -ArgumentList '/i', "`"$msi`"", '/qn', '/l*v', 'install-older.log' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content install-older.log -Tail 50; exit $p.ExitCode }
+
+      - name: Check the fresh install
+        run: scripts/installer-smoke.sh fresh
+
+      - name: Install the newer package over it
+        if: runner.os != 'Windows'
+        run: |
+          if [ "$RUNNER_OS" = Linux ]; then
+            sudo apt-get install -y ./newer/*.deb
+          else
+            sudo installer -pkg newer/*.pkg -target /
+          fi
+      - name: Install the newer package over it (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $msi = (Get-ChildItem newer/*.msi).FullName
+          $p = Start-Process msiexec -ArgumentList '/i', "`"$msi`"", '/qn', '/l*v', 'install-newer.log' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content install-newer.log -Tail 50; exit $p.ExitCode }
+
+      - name: Check the upgrade kept the data
+        run: scripts/installer-smoke.sh upgraded
+
+      - name: Check the service starts on boot
+        run: |
+          case "$RUNNER_OS" in
+            Linux)   systemctl is-enabled rctimingcontrol-RCTimingControl ;;
+            macOS)   sudo launchctl print system/dev.monkeypatch.rctiming-RCTimingControl | grep -E 'state|path' ;;
+            Windows) powershell -Command "(Get-Service RCTimingControl).StartType" | tee /dev/stderr | grep -q Automatic ;;
+          esac
+
+      - name: Check other devices are let through the firewall (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $rule = netsh advfirewall firewall show rule name="RC Timing Control" verbose | Out-String
+          $rule
+          if ($rule -notmatch 'RCTimingControl\.exe') { exit 1 }
+
+      - name: Show the service log
+        if: failure()
+        run: |
+          case "$RUNNER_OS" in
+            Linux)   sudo journalctl -u rctimingcontrol-RCTimingControl --no-pager | tail -100 ;;
+            macOS)   sudo tail -100 "/Library/Application Support/RCTimingControl/logs/rctiming.log" ;;
+            Windows) tail -100 "C:/ProgramData/RCTimingControl/logs/rctiming.log" ;;
+          esac
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ runner.os }}
+          path: newer/*
+          if-no-files-found: error

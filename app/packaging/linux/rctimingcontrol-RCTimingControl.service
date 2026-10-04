@@ -1,0 +1,14 @@
+[Unit]
+Description=RC Timing Control (race timing and race control)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=APPLICATION_LAUNCHER
+Restart=on-failure
+RestartSec=5
+# Data, logs and optional settings live in /var/lib/rctimingcontrol, not the install folder
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
