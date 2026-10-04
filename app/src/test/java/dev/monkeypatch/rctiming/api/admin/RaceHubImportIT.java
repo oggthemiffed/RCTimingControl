@@ -250,6 +250,17 @@ class RaceHubImportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void nullEntry_blocksTheImportWithAnError() {
+        String json = fixture("entries-v1-unmapped-class.json").replace("\"entries\": [", "\"entries\": [null, ");
+        var resp = restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-import?dryRun=true",
+                HttpMethod.POST, new HttpEntity<>(json, adminHeaders()), JsonNode.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp.getBody().get("blocked").asBoolean()).isTrue();
+        assertThat(resp.getBody().get("errors").get(0).asText()).contains("null");
+    }
+
+    @Test
     void wrongSchemaVersion_isRejected() {
         String json = fixture("entries-v1-initial.json").replace("\"schema_version\": 1", "\"schema_version\": 2");
         var resp = restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-import",

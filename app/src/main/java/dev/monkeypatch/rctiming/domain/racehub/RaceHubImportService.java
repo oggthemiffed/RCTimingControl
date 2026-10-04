@@ -91,6 +91,10 @@ public class RaceHubImportService {
         Set<String> seenEntryIds = new HashSet<>();
 
         for (ExportEntry row : exportEntries) {
+            if (row == null) {
+                errors.add("The export has an empty (null) entry");
+                continue;
+            }
             String label = row.entryId() == null ? "entry without entry_id" : "entry " + row.entryId();
             List<String> rowErrors = validate(row, label);
             if (rowErrors.isEmpty() && !seenEntryIds.add(row.entryId())) {
