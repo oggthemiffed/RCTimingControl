@@ -110,7 +110,7 @@ To restore, stop the app, then run:
 java -jar app.jar restore /media/usb/rctiming/rctiming-20261004-220000-day-close.db
 ```
 
-It finds the data directory the way the app does (`RCTIMING_DATA_DIR`, `--rctiming.database.data-directory=...`, or the default folder), checks the backup is sound, and moves the current database aside as `rctiming.db.before-restore-<time>`. Then it puts the backup in its place. It refuses while the app has the database open. When the app next starts, it migrates the restored database if it came from an older version. With Docker, stop the stack and run `docker compose run --rm app restore /app/data/db/backups/<file>`.
+It finds the data directory the way the app does (`RCTIMING_DATA_DIR`, `--rctiming.database.data-directory=...`, or the default folder), checks the backup is sound, and moves the current database aside as `rctiming.db.before-restore-<time>`. Then it puts the backup in its place. It refuses while the app has the database open. When the app next starts, it migrates the restored database if it came from an older version. With the Docker trial or production stack, stop the app and run the command in a one-off container from the same compose file, for example `docker compose -f docker-compose.production.yml run --rm app restore /app/data/db/backups/<file>`.
 
 ### Production checklist
 

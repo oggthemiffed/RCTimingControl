@@ -41,6 +41,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 /** Database backups (#22): taken on demand, at day close and while laps are being written. */
@@ -81,6 +82,51 @@ class BackupIT extends AbstractIntegrationTest {
     void backupsAreForAdminsOnly() {
         assertThat(restTemplate.getForEntity("/api/v1/admin/backups", String.class).getStatusCode())
                 .isIn(HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN);
+
+        // Race directors and referees pass the /api/v1/admin/** rule but not the controller's
+        for (Role role : new Role[] {Role.RACE_DIRECTOR, Role.REFEREE}) {
+            HttpHeaders official = headersFor(role);
+            assertThat(restTemplate.exchange("/api/v1/admin/backups", HttpMethod.GET,
+                    new HttpEntity<>(official), String.class).getStatusCode()).as(role.name())
+                    .isEqualTo(HttpStatus.FORBIDDEN);
+            assertThat(restTemplate.exchange("/api/v1/admin/backups", HttpMethod.POST,
+                    new HttpEntity<>(official), String.class).getStatusCode()).as(role.name())
+                    .isEqualTo(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    @Test
+    void keepingNoBackupsIsRejected() {
+        assertThatThrownBy(() -> new BackupProperties(backupFolder, 0, "-"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("at least 1");
+    }
+
+    @Test
+    void aConfiguredFolderThatIsMissingIsNotCreatedOnTheLocalDisk() {
+        Path unplugged = backupFolder.resolve("usb-stick");
+        BackupService toUsb = new BackupService(databaseProperties, new BackupProperties(unplugged, 14, "-"));
+
+        assertThatThrownBy(() -> toUsb.backup("manual"))
+                .isInstanceOf(BackupFailedException.class)
+                .hasMessageContaining("is not there");
+        assertThatThrownBy(toUsb::list)
+                .isInstanceOf(BackupFailedException.class)
+                .hasMessageContaining("is not there");
+        assertThat(unplugged).doesNotExist();
+    }
+
+    @Test
+    void aFailedBackupLeavesNoPartialFile(@TempDir Path emptyDataDirectory) throws Exception {
+        // A data directory with no app database: the copy is made but fails the check
+        DatabaseProperties noDatabase = new DatabaseProperties(databaseProperties.vendor(), emptyDataDirectory,
+                databaseProperties.migrationLocations(), databaseProperties.readConnections());
+        BackupService failing = new BackupService(noDatabase, new BackupProperties(backupFolder, 14, "-"));
+
+        assertThatThrownBy(() -> failing.backup("manual")).isInstanceOf(BackupFailedException.class);
+        try (var files = java.nio.file.Files.list(backupFolder)) {
+            assertThat(files).isEmpty();
+        }
     }
 
     @Test
@@ -158,13 +204,17 @@ class BackupIT extends AbstractIntegrationTest {
     }
 
     private HttpHeaders adminHeaders() {
-        String email = "admin-backup-" + UUID.randomUUID() + "@test.com";
+        return headersFor(Role.ADMIN);
+    }
+
+    private HttpHeaders headersFor(Role role) {
+        String email = role.name().toLowerCase() + "-backup-" + UUID.randomUUID() + "@test.com";
         User user = new User();
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode("adminPass123"));
         user.setFirstName("Admin");
         user.setLastName("Backups");
-        user.setRoles(Set.of(Role.ADMIN));
+        user.setRoles(Set.of(role));
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
         userRepository.save(user);

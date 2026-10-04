@@ -53,10 +53,11 @@ public class BackupService {
      * @param reason a short lower-case label stored in the file name, such as {@code manual}
      */
     public synchronized BackupFile backup(String reason) {
+        Path partial = null;
         try {
-            Path folder = Files.createDirectories(directory());
+            Path folder = backupFolder();
             Path target = uniqueTarget(folder, Instant.now(), reason);
-            Path partial = target.resolveSibling(target.getFileName() + ".partial");
+            partial = target.resolveSibling(target.getFileName() + ".partial");
             Files.deleteIfExists(partial);
             database.vendor().backup(database.effectiveDataDirectory(), partial);
             database.vendor().checkBackup(partial);
@@ -65,6 +66,7 @@ public class BackupService {
             prune();
             return describe(target);
         } catch (IOException | SQLException e) {
+            deleteQuietly(partial, e);
             throw new BackupFailedException("Backup to " + directory() + " failed: " + e.getMessage(), e);
         }
     }
@@ -73,6 +75,10 @@ public class BackupService {
     public List<BackupFile> list() {
         Path folder = directory();
         if (!Files.isDirectory(folder)) {
+            if (properties.directory() != null) {
+                throw missingFolder(folder);
+            }
+            // The default folder appears with the first backup
             return List.of();
         }
         try (Stream<Path> files = Files.list(folder)) {
@@ -82,6 +88,38 @@ public class BackupService {
                     .toList();
         } catch (IOException e) {
             throw new BackupFailedException("Can't list backups in " + folder + ": " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * The folder to write to. The default folder is created when needed. A configured one, often a
+     * USB stick or network share, must already be there: creating it would put backups on the
+     * laptop's own disk when the stick is unplugged, and report success.
+     */
+    private Path backupFolder() throws IOException {
+        Path folder = directory();
+        if (properties.directory() == null) {
+            return Files.createDirectories(folder);
+        }
+        if (!Files.isDirectory(folder)) {
+            throw missingFolder(folder);
+        }
+        return folder;
+    }
+
+    private static BackupFailedException missingFolder(Path folder) {
+        return new BackupFailedException("The backup folder " + folder
+                + " is not there. Check the USB stick or network share is connected.", null);
+    }
+
+    private static void deleteQuietly(Path partial, Exception cause) {
+        if (partial == null) {
+            return;
+        }
+        try {
+            Files.deleteIfExists(partial);
+        } catch (IOException e) {
+            cause.addSuppressed(e);
         }
     }
 
