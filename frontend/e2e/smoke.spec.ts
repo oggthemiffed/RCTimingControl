@@ -59,36 +59,21 @@ test.describe('Admin login and navigation', () => {
   });
 });
 
-test.describe('Racer login and portal', () => {
-  test.beforeEach(async ({ page }) => {
+test.describe('Officials-only sign-in', () => {
+  test('a racer account cannot sign in', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel(/email/i).fill(RACER_EMAIL);
     await page.getByLabel(/password/i).fill(PASSWORD);
     await page.getByRole('button', { name: /sign in/i }).click();
-    await page.waitForURL(/\/racer\//);
+    await expect(page.getByText(/race officials only/i)).toBeVisible();
+    await expect(page).toHaveURL(/\/login/);
   });
 
-  test('racer reaches profile page', async ({ page }) => {
-    await expect(page).toHaveURL(/\/racer\/profile/);
-    await expect(page.getByRole('heading', { name: /profile/i })).toBeVisible();
-  });
-
-  test('racer can navigate to cars', async ({ page }) => {
-    await page.getByRole('link', { name: /cars/i }).click();
-    await page.waitForURL(/\/racer\/cars/);
-    await expect(page.getByRole('heading', { name: /car/i })).toBeVisible();
-  });
-
-  test('racer can navigate to transponders', async ({ page }) => {
-    await page.getByRole('link', { name: /transponder/i }).click();
-    await page.waitForURL(/\/racer\/transponders/);
-    await expect(page.getByRole('heading', { name: /transponder/i })).toBeVisible();
-  });
-
-  test('racer can navigate to entries', async ({ page }) => {
-    await page.getByRole('link', { name: /entries/i }).click();
-    await page.waitForURL(/\/racer\/entries/);
-    await expect(page.getByRole('heading', { name: /entr/i })).toBeVisible();
+  test('racer portal and self-registration pages are gone', async ({ page }) => {
+    for (const path of ['/register', '/forgot-password', '/racer/profile']) {
+      await page.goto(path);
+      await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
+    }
   });
 });
 
@@ -110,11 +95,6 @@ test.describe('Race control access', () => {
 test.describe('Auth guards', () => {
   test('protected admin route redirects to login when not authenticated', async ({ page }) => {
     await page.goto('/admin/events');
-    await expect(page).toHaveURL(/\/login/);
-  });
-
-  test('protected racer route redirects to login when not authenticated', async ({ page }) => {
-    await page.goto('/racer/profile');
     await expect(page).toHaveURL(/\/login/);
   });
 });

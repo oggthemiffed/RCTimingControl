@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import axios from 'axios';
 import api from '@/lib/api';
-import { setAccessToken, clearAccessToken } from '@/lib/auth';
+import { setAccessToken, clearAccessToken, NotAnOfficialError } from '@/lib/auth';
 
 export interface AuthUser {
   id: string;
@@ -31,6 +31,8 @@ interface AuthResponse {
   lastName: string;
   roles: AuthUser['roles'];
 }
+
+const OFFICIAL_ROLES: AuthUser['roles'][number][] = ['ADMIN', 'RACE_DIRECTOR', 'REFEREE'];
 
 function authResponseToUser(data: AuthResponse): AuthUser {
   return { id: data.id, email: data.email, firstName: data.firstName, lastName: data.lastName, roles: data.roles };
@@ -65,17 +67,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string, redirectTo?: string): Promise<void> => {
     const { data } = await api.post<AuthResponse>('/api/v1/auth/login', { email, password });
     const authUser = authResponseToUser(data);
+    if (!authUser.roles.some((r) => OFFICIAL_ROLES.includes(r))) {
+      throw new NotAnOfficialError();
+    }
     setAccessToken(data.accessToken);
     setAccessTokenState(data.accessToken);
     setUser(authUser);
 
-    if (redirectTo) {
-      navigate(redirectTo);
-    } else {
-      const staffRoles: AuthUser['roles'][number][] = ['ADMIN', 'RACE_DIRECTOR', 'REFEREE'];
-      const isStaff = authUser.roles.some((r) => staffRoles.includes(r));
-      navigate(isStaff ? '/admin' : '/racer');
-    }
+    navigate(redirectTo ?? '/admin');
   };
 
   const logout = () => {

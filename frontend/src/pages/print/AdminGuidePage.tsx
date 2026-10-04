@@ -132,7 +132,7 @@ export default function AdminGuidePage() {
           <li>
             <span className="font-semibold">Open entries:</span> Click
             <span className="font-semibold"> Open Entries</span> when ready to accept
-            submissions. Racers can now submit entries from their portal.
+            submissions. Entries come in through RaceHub; import them from the event's Entries tab.
           </li>
           <li>
             <span className="font-semibold">Close entries:</span> Click
@@ -175,7 +175,17 @@ export default function AdminGuidePage() {
           <li>
             <span className="font-semibold">View entries:</span> Click the
             <span className="font-semibold"> Entries</span> tab in the event detail to
-            see all submitted entries. The list shows each racer's name, class, and car.
+            see all entries. The list shows each competitor's name, class, and transponders.
+          </li>
+          <li>
+            <span className="font-semibold">Import from RaceHub:</span> Click
+            <span className="font-semibold"> Import entries from RaceHub</span> and choose the
+            Entry Export file. You see the changes before anything is saved.
+          </li>
+          <li>
+            <span className="font-semibold">Add a walk-in:</span> Click
+            <span className="font-semibold"> Add entry</span>, pick an existing driver or type a
+            new name, and enter their transponder.
           </li>
           <li>
             <span className="font-semibold">Remove an entry:</span> Click the delete icon
@@ -241,40 +251,30 @@ export default function AdminGuidePage() {
         </ol>
       </section>
 
-      {/* Section 7: User and Role Management */}
+      {/* Section 7: Officials and Competitors */}
       <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3">7. User and Role Management</h2>
+        <h2 className="text-xl font-semibold mb-3">7. Officials and Competitors</h2>
         <p className="text-sm mb-3">
-          Staff roles are stackable — a single account can hold any combination of
-          ADMIN, RACE_DIRECTOR, and REFEREE simultaneously. A racer can also be a
-          race director without needing a separate account.
+          Only race officials sign in. Staff roles are stackable — a single account can hold
+          any combination of ADMIN, RACE_DIRECTOR, and REFEREE. Competitors do not have
+          accounts.
         </p>
         <ol className="list-decimal list-inside space-y-2 text-sm">
           <li>
-            <span className="font-semibold">Open Racers:</span> In the Admin sidebar
-            under <span className="font-semibold">Operations</span>, click
-            <span className="font-semibold"> Racers</span>. The page at
-            <span className="font-mono text-xs"> /admin/racers</span> lists all registered
-            user accounts.
-          </li>
-          <li>
-            <span className="font-semibold">Assign roles:</span> Click a user to open
-            their detail. Tick the roles to assign:
+            <span className="font-semibold">Staff accounts:</span> The setup wizard&apos;s
+            <span className="font-semibold"> Staff</span> step creates the first official
+            accounts and their roles:
             <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
-              <li><span className="font-semibold">ADMIN</span> — full club configuration, user management, all events</li>
+              <li><span className="font-semibold">ADMIN</span> — full club configuration, all events</li>
               <li><span className="font-semibold">RACE_DIRECTOR</span> — access to race control: start/stop races, call grid, marshal laps</li>
               <li><span className="font-semibold">REFEREE</span> — Referee View: raise incidents, apply penalties, link transponders</li>
             </ul>
           </li>
           <li>
-            <span className="font-semibold">Multiple roles:</span> A single account can
-            hold all three roles. For example, the club secretary typically holds ADMIN
-            + RACE_DIRECTOR. A dedicated referee holds REFEREE only.
-          </li>
-          <li>
-            <span className="font-semibold">Racer-only accounts:</span> Accounts without
-            any staff role have access only to their own racer portal (profile, cars,
-            transponders, entries).
+            <span className="font-semibold">Competitors:</span> In the Admin sidebar
+            under <span className="font-semibold">Operations</span>, click
+            <span className="font-semibold"> Competitors</span> to see every driver imported
+            from RaceHub or added as a walk-in.
           </li>
         </ol>
       </section>

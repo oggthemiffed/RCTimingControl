@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useAuth } from '@/hooks/useAuth';
+import { NotAnOfficialError } from '@/lib/auth';
 
 const loginSchema = z.object({
   email: z.string().email('Valid email required'),
@@ -43,7 +44,9 @@ export default function LoginPage() {
     try {
       await login(values.email, values.password, redirectTo);
     } catch (err) {
-      if (isAxiosError(err) && err.response?.status === 401) {
+      if (err instanceof NotAnOfficialError) {
+        form.setError('password', { message: 'This sign-in is for race officials only.' });
+      } else if (isAxiosError(err) && err.response?.status === 401) {
         form.setError('password', { message: 'Invalid email or password' });
       } else {
         toast.error('Unable to reach server. Please try again.', { duration: 8000 });
@@ -56,13 +59,10 @@ export default function LoginPage() {
   return (
     <AuthLayout
       title="Sign in"
-      subtitle="Enter your email and password"
+      subtitle="Race officials: enter your email and password"
       footer={
         <p className="text-sm text-muted-foreground">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-primary underline underline-offset-4">
-            Register
-          </Link>
+          Forgotten your password? Ask your club admin to reset it.
         </p>
       }
     >
@@ -91,14 +91,6 @@ export default function LoginPage() {
                   <Input type="password" autoComplete="current-password" {...field} />
                 </FormControl>
                 <FormMessage />
-                <div className="text-right">
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm text-primary underline underline-offset-4"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
               </FormItem>
             )}
           />

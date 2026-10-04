@@ -230,13 +230,6 @@ export default function StaffStep({ onNext, onBack }: Props) {
           </div>
         </form>
       </Form>
-
-      <a
-        href="/admin/racers"
-        className="text-sm text-muted-foreground underline mt-4 inline-block"
-      >
-        Manage more in Admin →
-      </a>
     </div>
   );
 }

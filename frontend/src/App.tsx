@@ -5,18 +5,9 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import SetupGuard from '@/pages/setup/SetupGuard';
 import SetupLayout from '@/pages/setup/SetupLayout';
 import LoginPage from '@/pages/auth/LoginPage';
-import RegisterPage from '@/pages/auth/RegisterPage';
-import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
-import ResetPasswordPage from '@/pages/auth/ResetPasswordPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import { Toaster } from '@/components/ui/sonner';
-import RacerPortalLayout from '@/pages/racer/RacerPortalLayout';
-import ProfilePage from '@/pages/racer/ProfilePage';
-import CarsPage from '@/pages/racer/CarsPage';
-import TranspondersPage from '@/pages/racer/TranspondersPage';
-import EntriesPage from '@/pages/racer/EntriesPage';
-import RacerResultsPage from '@/pages/racer/RacerResultsPage';
 import EventSchedulePage from '@/pages/events/EventSchedulePage';
 import AdminPanelLayout from '@/pages/admin/AdminPanelLayout';
 import EventListPage from '@/pages/admin/events/EventListPage';
@@ -30,8 +21,7 @@ import FormatsPage from '@/pages/admin/formats/FormatsPage';
 import CarTagCategoriesPage from '@/pages/admin/categories/CarTagCategoriesPage';
 import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
 import DecoderSettingsPage from '@/pages/admin/decoder/DecoderSettingsPage';
-import AdminRacersListPage from '@/pages/admin/racers/AdminRacersListPage';
-import AdminRacerDetailPage from '@/pages/admin/racers/AdminRacerDetailPage';
+import CompetitorsPage from '@/pages/admin/competitors/CompetitorsPage';
 import RaceControlLayout from '@/pages/race-control/RaceControlLayout';
 import CockpitPage from '@/pages/race-control/CockpitPage';
 import RefereePage from '@/pages/race-control/RefereePage';
@@ -43,7 +33,6 @@ import PublicResultsPage from '@/pages/results/PublicResultsPage';
 import PublicChampionshipPage from '@/pages/championships/PublicChampionshipPage';
 import { HelpProvider } from '@/context/HelpContext';
 import MeetingGuidePage from '@/pages/print/MeetingGuidePage';
-import RacerGuidePage from '@/pages/print/RacerGuidePage';
 import AdminGuidePage from '@/pages/print/AdminGuidePage';
 import AboutPage from '@/pages/AboutPage';
 
@@ -66,9 +55,6 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <Navigate to="/login" replace /> },
       { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
-      { path: '/forgot-password', element: <ForgotPasswordPage /> },
-      { path: '/reset-password', element: <ResetPasswordPage /> },
       {
         path: '/admin',
         element: (
@@ -89,24 +75,7 @@ const router = createBrowserRouter([
           { path: 'race-control', element: <RaceControlSelectPage /> },
           { path: 'decoder', element: <ProtectedRoute roles={['ADMIN']}><DecoderSettingsPage /></ProtectedRoute> },
           { path: 'audio', element: <AdminAudioSettingsPage /> },
-          { path: 'racers', element: <AdminRacersListPage /> },
-          { path: 'racers/:userId', element: <AdminRacerDetailPage /> },
-        ],
-      },
-      {
-        path: '/racer',
-        element: (
-          <ProtectedRoute>
-            <RacerPortalLayout />
-          </ProtectedRoute>
-        ),
-        children: [
-          { index: true, element: <Navigate to="/racer/profile" replace /> },
-          { path: 'profile', element: <ProfilePage /> },
-          { path: 'cars', element: <CarsPage /> },
-          { path: 'transponders', element: <TranspondersPage /> },
-          { path: 'entries', element: <EntriesPage /> },
-          { path: 'results', element: <RacerResultsPage /> },
+          { path: 'competitors', element: <CompetitorsPage /> },
         ],
       },
       {
@@ -144,7 +113,6 @@ const router = createBrowserRouter([
       { path: '/results/:raceId', element: <PublicResultsPage /> },
       { path: '/championships/:id', element: <PublicChampionshipPage /> },
       { path: '/print/meeting-guide', element: <MeetingGuidePage /> },
-      { path: '/print/racer-guide', element: <RacerGuidePage /> },
       { path: '/print/admin-guide', element: <AdminGuidePage /> },
       { path: '/about', element: <AboutPage /> },
       { path: '/unauthorized', element: <UnauthorizedPage /> },
