@@ -6,7 +6,6 @@ import {
   Building2,
   MapPin,
   Sliders,
-  Tags,
   LogOut,
   Menu,
   Flag,
@@ -44,7 +43,6 @@ const configGroup = [
   { to: '/admin/tracks', label: 'Tracks', Icon: MapPin },
   { to: '/admin/formats', label: 'Formats', Icon: Sliders },
   { to: '/admin/club', label: 'Club Profile', Icon: Building2 },
-  { to: '/admin/categories', label: 'Car Tags', Icon: Tags },
   { to: '/admin/audio', label: 'Audio Settings', Icon: Volume2 },
 ] as const;
 

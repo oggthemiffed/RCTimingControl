@@ -29,6 +29,7 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.security.JwtTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,9 @@ public class PreRaceReadinessControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    JwtTokenService jwtTokenService;
 
     @Autowired
     EventRepository eventRepository;
@@ -99,13 +103,10 @@ public class PreRaceReadinessControllerIT extends AbstractIntegrationTest {
         assertThat(loginResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         directorToken = loginResp.getBody().accessToken();
 
-        // Create racer user (no staff roles)
+        // An account with no official role cannot sign in, so mint its token directly
         String racerEmail = "racer-" + UUID.randomUUID() + "@test.com";
-        createUser(racerEmail, "racerPass123", Set.of(Role.RACER));
-        var racerLoginResp = restTemplate.postForEntity("/api/v1/auth/login",
-                new LoginRequest(racerEmail, "racerPass123"), AuthResponse.class);
-        assertThat(racerLoginResp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        racerToken = racerLoginResp.getBody().accessToken();
+        Long racerId = createUser(racerEmail, "racerPass123", Set.of());
+        racerToken = jwtTokenService.generateAccessToken(userRepository.findById(racerId).orElseThrow());
     }
 
     @Test

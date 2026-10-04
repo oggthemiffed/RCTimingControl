@@ -9,7 +9,6 @@ import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.infrastructure.profanity.ProfanityBlocklistEntry;
 import dev.monkeypatch.rctiming.infrastructure.profanity.ProfanityBlocklistRepository;
 import dev.monkeypatch.rctiming.infrastructure.profanity.ProfanityFilter;
-import dev.monkeypatch.rctiming.infrastructure.tts.TtsClipService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,20 +37,17 @@ public class AdminAudioController {
     private final ProfanityBlocklistRepository blocklistRepository;
     private final ProfanityFilter profanityFilter;
     private final UserRepository userRepository;
-    private final TtsClipService clipService;
 
     public AdminAudioController(ClubProfileRepository clubProfileRepository,
                                 ClubProfileService clubProfileService,
                                 ProfanityBlocklistRepository blocklistRepository,
                                 ProfanityFilter profanityFilter,
-                                UserRepository userRepository,
-                                TtsClipService clipService) {
+                                UserRepository userRepository) {
         this.clubProfileRepository = clubProfileRepository;
         this.clubProfileService = clubProfileService;
         this.blocklistRepository = blocklistRepository;
         this.profanityFilter = profanityFilter;
         this.userRepository = userRepository;
-        this.clipService = clipService;
     }
 
     // ========== Audio Settings (AUDIO-07) ==========
@@ -158,49 +154,6 @@ public class AdminAudioController {
         }
         blocklistRepository.deleteById(id);
         profanityFilter.reload();
-        return ResponseEntity.noContent().build();
-    }
-
-    // ========== Racer Phonetic Override (AUDIO-15) ==========
-
-    /** DTO for racer phonetic name admin view/override */
-    public record PhoneticDto(String displayName, String phoneticName) {}
-
-    @GetMapping("/racer/{userId}/phonetic")
-    public ResponseEntity<PhoneticDto> getRacerPhonetic(@PathVariable Long userId) {
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        String displayName = user.getFirstName() + " " + user.getLastName();
-        return ResponseEntity.ok(new PhoneticDto(displayName, user.getPhoneticName()));
-    }
-
-    @PutMapping("/racer/{userId}/phonetic")
-    public ResponseEntity<PhoneticDto> updateRacerPhonetic(
-            @PathVariable Long userId,
-            @RequestBody PhoneticDto dto) {
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        // Admin override bypasses profanity check per AUDIO-15
-        user.setPhoneticName(dto.phoneticName());
-        userRepository.save(user);
-        String displayName = user.getFirstName() + " " + user.getLastName();
-        return ResponseEntity.ok(new PhoneticDto(displayName, user.getPhoneticName()));
-    }
-
-    @DeleteMapping("/racer/{userId}/name-clip")
-    public ResponseEntity<Void> regenerateNameClip(@PathVariable Long userId) {
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        String text = (user.getPhoneticName() != null && !user.getPhoneticName().isBlank())
-                ? user.getPhoneticName()
-                : user.getFirstName() + " " + user.getLastName();
-        clipService.generateNameClip(userId, text, user.getPreferredVoiceId());
         return ResponseEntity.noContent().build();
     }
 }

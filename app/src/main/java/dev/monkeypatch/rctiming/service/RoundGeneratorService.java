@@ -15,8 +15,6 @@ import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundStatus;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
 import dev.monkeypatch.rctiming.domain.race.StartType;
-import dev.monkeypatch.rctiming.domain.user.UserClassRating;
-import dev.monkeypatch.rctiming.domain.user.UserClassRatingRepository;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest.ClassFinalsConfig;
 import dev.monkeypatch.rctiming.service.dto.RoundPreviewDto;
@@ -35,7 +33,7 @@ import java.util.stream.Collectors;
  * Generates all Round, Race, and RaceEntry records for an event in a single transaction.
  *
  * <p>Heat assignment (which drivers are in Heat 1 vs Heat 2) is fixed at generation time
- * using a snake-draft algorithm seeded by ability rating. The same heat membership persists
+ * using a snake-draft algorithm in entry order. The same heat membership persists
  * across all Practice and Qualifying rounds.
  *
  * <p>Finals grids are created empty; seeding is deferred to {@link BumpUpSeedingService}
@@ -50,7 +48,6 @@ public class RoundGeneratorService {
     private final RaceEntryRepository raceEntryRepository;
     private final EntryRepository entryRepository;
     private final EventClassRepository eventClassRepository;
-    private final UserClassRatingRepository userClassRatingRepository;
     private final BumpUpSeedingService bumpUpSeedingService;
 
     public RoundGeneratorService(RoundRepository roundRepository,
@@ -58,14 +55,12 @@ public class RoundGeneratorService {
                                   RaceEntryRepository raceEntryRepository,
                                   EntryRepository entryRepository,
                                   EventClassRepository eventClassRepository,
-                                  UserClassRatingRepository userClassRatingRepository,
                                   BumpUpSeedingService bumpUpSeedingService) {
         this.roundRepository = roundRepository;
         this.raceRepository = raceRepository;
         this.raceEntryRepository = raceEntryRepository;
         this.entryRepository = entryRepository;
         this.eventClassRepository = eventClassRepository;
-        this.userClassRatingRepository = userClassRatingRepository;
         this.bumpUpSeedingService = bumpUpSeedingService;
     }
 
@@ -140,20 +135,8 @@ public class RoundGeneratorService {
             List<Entry> entries = entryRepository.findByEventClassIdAndStatus(
                     ec.getId(), EntryStatus.CONFIRMED);
 
-            // Load ratings for this class
-            Long racingClassId = ec.getRacingClassId();
-            Map<Long, Integer> ratingByUserId = new HashMap<>();
-            if (racingClassId != null) {
-                List<UserClassRating> ratings = userClassRatingRepository.findByRacingClassId(racingClassId);
-                for (UserClassRating r : ratings) {
-                    ratingByUserId.put(r.getUserId(), r.getRating().intValue());
-                }
-            }
-
-            // Sort entries: abilityRating DESC, then entryId ASC (tie-break / no-rating default 50)
-            entries.sort(Comparator
-                    .<Entry>comparingInt(e -> -(ratingByUserId.getOrDefault(e.getUserId(), 50)))
-                    .thenComparingLong(Entry::getId));
+            // Seed in entry order. Racer ability ratings went with racer accounts (L10, #18).
+            entries.sort(Comparator.comparingLong(Entry::getId));
 
             int heatCount = entries.isEmpty() ? 0
                     : (int) Math.ceil((double) entries.size() / request.maxCarsPerHeat());

@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static dev.monkeypatch.rctiming.jooq.generated.tables.Cars.CARS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETITORS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Entries.ENTRIES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries.RACE_ENTRIES;
@@ -27,18 +26,16 @@ public class RaceEntriesQuery {
         return dsl
                 .select(
                         RACE_ENTRIES.ENTRY_ID,
-                        DSL.coalesce(COMPETITORS.DISPLAY_NAME, DSL.val("Unknown")).as("driverName"),
-                        CARS.NAME.as("carName"))
+                        DSL.coalesce(COMPETITORS.DISPLAY_NAME, DSL.val("Unknown")).as("driverName"))
                 .from(RACE_ENTRIES)
                 .join(ENTRIES).on(ENTRIES.ID.eq(RACE_ENTRIES.ENTRY_ID))
                 .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
-                .leftJoin(CARS).on(CARS.ID.eq(ENTRIES.CAR_ID))
                 .where(RACE_ENTRIES.RACE_ID.eq(raceId))
                 .orderBy(RACE_ENTRIES.GRID_POSITION.asc().nullsLast())
                 .fetch(r -> new RaceEntryDto(
                         r.get(RACE_ENTRIES.ENTRY_ID),
                         r.get("driverName", String.class),
-                        r.get("carName", String.class)
+                        null // cars went with racer accounts (L10, #18)
                 ));
     }
 }

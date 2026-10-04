@@ -1,7 +1,9 @@
 package dev.monkeypatch.rctiming.api.auth;
 
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
+import dev.monkeypatch.rctiming.domain.user.Role;
+import dev.monkeypatch.rctiming.domain.user.User;
+import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -9,10 +11,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,58 +26,32 @@ class AuthControllerIT extends AbstractIntegrationTest {
     @Autowired
     TestRestTemplate restTemplate;
 
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
     private static final String BASE_URL = "/api/v1/auth";
-    private static int counter = 0;
 
-    /** Generate a unique email per test to avoid cross-test state */
-    private String uniqueEmail() {
-        return "test" + (++counter) + "@example.com";
-    }
-
-    @Test
-    void register_validRequest_returns201() {
-        String email = uniqueEmail();
-        RegisterRequest request = new RegisterRequest("Alice", "Smith", email, "password123");
-
-        ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
-                BASE_URL + "/register", request, AuthResponse.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().accessToken()).isNotBlank();
-        assertThat(response.getBody().email()).isEqualTo(email);
-        assertThat(response.getBody().roles()).contains("RACER");
-    }
-
-    @Test
-    void register_duplicateEmail_returns409() {
-        String email = uniqueEmail();
-        RegisterRequest request = new RegisterRequest("Bob", "Jones", email, "password123");
-
-        ResponseEntity<AuthResponse> first = restTemplate.postForEntity(
-                BASE_URL + "/register", request, AuthResponse.class);
-        assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-
-        ResponseEntity<Map> second = restTemplate.postForEntity(
-                BASE_URL + "/register", request, Map.class);
-        assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    }
-
-    @Test
-    void register_invalidEmail_returns400() {
-        RegisterRequest request = new RegisterRequest("Carol", "Brown", "not-an-email", "password123");
-
-        ResponseEntity<Map> response = restTemplate.postForEntity(
-                BASE_URL + "/register", request, Map.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    /** Creates a user with a unique email and the given roles; returns the email. Password is "password123". */
+    private String createUser(Set<Role> roles) {
+        String email = "auth-" + UUID.randomUUID() + "@example.com";
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode("password123"));
+        user.setFirstName("Test");
+        user.setLastName("User");
+        user.setRoles(roles);
+        user.setCreatedAt(Instant.now());
+        user.setUpdatedAt(Instant.now());
+        userRepository.save(user);
+        return email;
     }
 
     @Test
     void login_validCredentials_returns200WithTokenAndCookie() {
-        String email = uniqueEmail();
-        restTemplate.postForEntity(BASE_URL + "/register",
-                new RegisterRequest("Dave", "Lee", email, "password123"), AuthResponse.class);
+        String email = createUser(Set.of(Role.RACE_DIRECTOR));
 
         ResponseEntity<AuthResponse> response = restTemplate.postForEntity(
                 BASE_URL + "/login",
@@ -93,9 +72,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
 
     @Test
     void login_invalidPassword_returns401() {
-        String email = uniqueEmail();
-        restTemplate.postForEntity(BASE_URL + "/register",
-                new RegisterRequest("Eve", "White", email, "password123"), AuthResponse.class);
+        String email = createUser(Set.of(Role.RACE_DIRECTOR));
 
         ResponseEntity<Void> response = restTemplate.postForEntity(
                 BASE_URL + "/login",
@@ -117,9 +94,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
 
     @Test
     void refresh_validCookie_returnsNewAccessToken() {
-        String email = uniqueEmail();
-        restTemplate.postForEntity(BASE_URL + "/register",
-                new RegisterRequest("Frank", "Black", email, "password123"), AuthResponse.class);
+        String email = createUser(Set.of(Role.RACE_DIRECTOR));
 
         ResponseEntity<AuthResponse> loginResponse = restTemplate.postForEntity(
                 BASE_URL + "/login",
@@ -153,6 +128,63 @@ class AuthControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void login_accountWithNoOfficialRole_returns403() {
+        String email = createUser(Set.of());
+
+        ResponseEntity<Void> response = restTemplate.postForEntity(
+                BASE_URL + "/login",
+                new LoginRequest(email, "password123"),
+                Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getHeaders().get(HttpHeaders.SET_COOKIE)).isNull();
+    }
+
+    @Test
+    void login_noOfficialRoleAndWrongPassword_returns401() {
+        // The 403 is only given once the password is right, so it reveals nothing new
+        String email = createUser(Set.of());
+
+        ResponseEntity<Void> response = restTemplate.postForEntity(
+                BASE_URL + "/login",
+                new LoginRequest(email, "wrongPassword"),
+                Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void refresh_accountThatLostItsOfficialRoles_returns403() {
+        String email = createUser(Set.of(Role.REFEREE));
+        ResponseEntity<AuthResponse> loginResponse = restTemplate.postForEntity(
+                BASE_URL + "/login", new LoginRequest(email, "password123"), AuthResponse.class);
+        String rawCookieValue = extractCookieValue(loginResponse.getHeaders().get(HttpHeaders.SET_COOKIE).stream()
+                .filter(c -> c.startsWith("refresh_token=")).findFirst().orElseThrow(), "refresh_token");
+        User user = userRepository.findByEmail(email).orElseThrow();
+        user.setRoles(Set.of());
+        userRepository.save(user);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.COOKIE, "refresh_token=" + rawCookieValue);
+        ResponseEntity<Void> refreshResponse = restTemplate.exchange(
+                BASE_URL + "/refresh",
+                org.springframework.http.HttpMethod.POST,
+                new org.springframework.http.HttpEntity<>(headers),
+                Void.class);
+
+        assertThat(refreshResponse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void registerAndPasswordResetEndpoints_areGone() {
+        for (String path : List.of("/register", "/password-reset/request", "/password-reset/confirm")) {
+            ResponseEntity<Void> response = restTemplate.postForEntity(BASE_URL + path, "{}", Void.class);
+            // No longer permitted anonymously and no longer mapped
+            assertThat(response.getStatusCode().value()).as(path).isIn(401, 403, 404);
+        }
+    }
+
+    @Test
     void refresh_invalidCookie_returns401() {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.COOKIE, "refresh_token=garbage-invalid-token-value");
@@ -166,61 +198,7 @@ class AuthControllerIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-    @Test
-    void passwordResetRequest_existingEmail_returns200() {
-        String email = uniqueEmail();
-        restTemplate.postForEntity(BASE_URL + "/register",
-                new RegisterRequest("Grace", "Green", email, "password123"), AuthResponse.class);
-
-        ResponseEntity<Void> response = restTemplate.postForEntity(
-                BASE_URL + "/password-reset/request",
-                new PasswordResetRequestDto(email),
-                Void.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    }
-
-    @Test
-    void passwordResetRequest_nonexistentEmail_returns200() {
-        // Email enumeration prevention: must return 200 even for unknown emails
-        ResponseEntity<Void> response = restTemplate.postForEntity(
-                BASE_URL + "/password-reset/request",
-                new PasswordResetRequestDto("unknown@nowhere.com"),
-                Void.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    }
-
-    @Test
-    void passwordResetConfirm_expiredToken_returns400or410() {
-        ResponseEntity<Map> response = restTemplate.postForEntity(
-                BASE_URL + "/password-reset/confirm",
-                new PasswordResetConfirmDto("invalidtokenvalue", "newPassword123"),
-                Map.class);
-
-        assertThat(response.getStatusCode().value())
-                .as("Expected 400 or 410 for invalid/expired reset token")
-                .isIn(400, 410);
-    }
-
     // --- helpers ---
-
-    protected String registerAndLogin(String email, String password) {
-        restTemplate.postForEntity(BASE_URL + "/register",
-                new RegisterRequest("Test", "User", email, password), AuthResponse.class);
-        ResponseEntity<AuthResponse> loginResp = restTemplate.postForEntity(
-                BASE_URL + "/login",
-                new LoginRequest(email, password),
-                AuthResponse.class);
-        assertThat(loginResp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return loginResp.getBody().accessToken();
-    }
-
-    protected HttpHeaders authHeaders(String accessToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-        return headers;
-    }
 
     private String extractCookieValue(String setCookieHeader, String cookieName) {
         for (String part : setCookieHeader.split(";")) {

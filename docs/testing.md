@@ -104,7 +104,7 @@ make dev-start
 make stop
 
 # Or run each service manually in separate terminals:
-make up                                                             # Terminal 1: PostgreSQL + Mailpit
+make up                                                             # Terminal 1: PostgreSQL + Piper
 ./gradlew :app:bootRun --args='--spring.profiles.active=dev'       # Terminal 2: backend
 cd frontend && npm run dev                                          # Terminal 3: frontend
 ```

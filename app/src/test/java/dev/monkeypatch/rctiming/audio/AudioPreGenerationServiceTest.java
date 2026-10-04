@@ -3,6 +3,8 @@ package dev.monkeypatch.rctiming.audio;
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.race.Race;
@@ -11,8 +13,6 @@ import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.RaceStatusChangedEvent;
-import dev.monkeypatch.rctiming.domain.user.User;
-import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.infrastructure.tts.AudioPreGenerationService;
 import dev.monkeypatch.rctiming.infrastructure.tts.TtsClipService;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +44,7 @@ class AudioPreGenerationServiceTest {
     @Mock RaceRepository raceRepository;
     @Mock RaceEntryRepository raceEntryRepository;
     @Mock EntryRepository entryRepository;
-    @Mock UserRepository userRepository;
+    @Mock CompetitorRepository competitorRepository;
     @Mock ClubProfileRepository clubProfileRepository;
 
     @InjectMocks AudioPreGenerationService service;
@@ -110,7 +110,7 @@ class AudioPreGenerationServiceTest {
     }
 
     @Test
-    void onRaceGridTransition_generatesFinishClips() {
+    void onRaceGridTransition_generatesFinishClipsFromTheCompetitorName() {
         RaceEntry raceEntry = new RaceEntry();
         raceEntry.setId(10L);
         raceEntry.setRaceId(1L);
@@ -119,18 +119,17 @@ class AudioPreGenerationServiceTest {
 
         Entry entry = new Entry();
         entry.setId(100L);
-        entry.setUserId(200L);
+        entry.setCompetitorId(200L);
 
-        User user = new User();
-        user.setId(200L);
-        user.setFirstName("Alan");
-        user.setLastName("Smith");
+        Competitor competitor = new Competitor();
+        competitor.setId(200L);
+        competitor.setDisplayName("Alan Smith");
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
         when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
         when(entryRepository.findById(100L)).thenReturn(Optional.of(entry));
-        when(userRepository.findById(200L)).thenReturn(Optional.of(user));
+        when(competitorRepository.findById(200L)).thenReturn(Optional.of(competitor));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
         when(clipService.generateCarNumberClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
         when(clipService.generateFinishClip(anyLong(), anyLong(), anyString(), anyString()))
@@ -138,39 +137,8 @@ class AudioPreGenerationServiceTest {
 
         service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
 
-        verify(clipService).generateFinishClip(eq(1L), eq(200L), anyString(), anyString());
-    }
-
-    @Test
-    void onRaceGridTransition_usesPhoneticNameWhenPresent() {
-        RaceEntry raceEntry = new RaceEntry();
-        raceEntry.setId(10L);
-        raceEntry.setRaceId(1L);
-        raceEntry.setEntryId(100L);
-        raceEntry.setGridPosition(1);
-
-        Entry entry = new Entry();
-        entry.setId(100L);
-        entry.setUserId(200L);
-
-        User user = new User();
-        user.setId(200L);
-        user.setFirstName("Alan");
-        user.setLastName("Smith");
-        user.setPhoneticName("Ay-lan");
-
-        when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
-        when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
-        when(entryRepository.findById(100L)).thenReturn(Optional.of(entry));
-        when(userRepository.findById(200L)).thenReturn(Optional.of(user));
-        when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
-        when(clipService.generateCarNumberClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
-        when(clipService.generateFinishClip(anyLong(), anyLong(), anyString(), anyString())).thenReturn("http://x");
-
-        service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
-
-        verify(clipService).generateFinishClip(eq(1L), eq(200L), eq("Ay-lan has finished"), anyString());
+        verify(clipService).generateFinishClip(eq(1L), eq(200L), eq("Alan Smith has finished"), anyString());
+        assertThat(service.getClipMap(1L)).containsKey("finish-200");
     }
 
     @Test

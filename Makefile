@@ -21,7 +21,7 @@ COMPOSE := $(shell \
 help:
 	@printf '$(BOLD)RCTimingControl — common tasks$(RESET)\n\n'
 	@printf '  $(BOLD)Infrastructure$(RESET)\n'
-	@printf '    make up          Start PostgreSQL + Mailpit (docker compose up -d)\n'
+	@printf '    make up          Start PostgreSQL + Piper (docker compose up -d)\n'
 	@printf '    make down        Stop and remove containers\n'
 	@printf '    make clean-db    Drop the pgdata volume and restart fresh\n'
 	@printf '\n'
@@ -60,7 +60,7 @@ up:
 			-e POSTGRES_PASSWORD=rctiming \
 			-p 5432:5432 \
 			postgres:16-alpine 2>/dev/null || docker start rctiming-postgres 2>/dev/null || true; \
-		printf 'Postgres started on :5432 (mailpit skipped — install docker compose plugin for full stack).\n'; \
+		printf 'Postgres started on :5432 (piper skipped — install docker compose plugin for full stack).\n'; \
 	else \
 		$(COMPOSE) up -d; \
 	fi
@@ -68,7 +68,7 @@ up:
 .PHONY: down
 down:
 	@if [ -z "$(COMPOSE)" ]; then \
-		docker stop rctiming-postgres rctiming-mailpit rctiming-piper 2>/dev/null || true; \
+		docker stop rctiming-postgres rctiming-piper 2>/dev/null || true; \
 	else \
 		$(COMPOSE) down; \
 	fi

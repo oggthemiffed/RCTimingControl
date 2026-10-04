@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.api.auth;
 
-import dev.monkeypatch.rctiming.domain.auth.PasswordResetService;
 import dev.monkeypatch.rctiming.domain.auth.RefreshToken;
 import dev.monkeypatch.rctiming.domain.auth.RefreshTokenRepository;
 import dev.monkeypatch.rctiming.domain.user.User;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.MessageDigest;
@@ -34,30 +32,16 @@ public class AuthController {
     private final UserService userService;
     private final JwtTokenService jwtTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final PasswordResetService passwordResetService;
     private final PasswordEncoder passwordEncoder;
 
     public AuthController(UserService userService,
                           JwtTokenService jwtTokenService,
                           RefreshTokenRepository refreshTokenRepository,
-                          PasswordResetService passwordResetService,
                           PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.jwtTokenService = jwtTokenService;
         this.refreshTokenRepository = refreshTokenRepository;
-        this.passwordResetService = passwordResetService;
         this.passwordEncoder = passwordEncoder;
-    }
-
-    @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<AuthResponse> register(@RequestBody @Valid RegisterRequest request,
-                                                  HttpServletResponse response) {
-        User user = userService.createRacer(
-                request.email(), request.password(), request.firstName(), request.lastName());
-        String accessToken = jwtTokenService.generateAccessToken(user);
-        setRefreshCookie(user, response);
-        return ResponseEntity.status(HttpStatus.CREATED).body(buildAuthResponse(user, accessToken));
     }
 
     @PostMapping("/login")
@@ -70,6 +54,10 @@ public class AuthController {
                     .body(null);
         }
         User user = userOpt.get();
+        if (!user.isOfficial()) {
+            // Only race officials sign in (L10, #18); the password was right, so say why
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         String accessToken = jwtTokenService.generateAccessToken(user);
         setRefreshCookie(user, response);
         return ResponseEntity.ok(buildAuthResponse(user, accessToken));
@@ -100,25 +88,13 @@ public class AuthController {
         refreshTokenRepository.save(oldToken);
 
         User user = oldToken.getUser();
+        if (!user.isOfficial()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         String newAccessToken = jwtTokenService.generateAccessToken(user);
         setRefreshCookie(user, response);
 
         return ResponseEntity.ok(buildAuthResponse(user, newAccessToken));
-    }
-
-    @PostMapping("/password-reset/request")
-    public ResponseEntity<Void> requestPasswordReset(
-            @RequestBody @Valid PasswordResetRequestDto request) {
-        // Always return 200 — security requirement: prevent email enumeration (T-01-11)
-        passwordResetService.requestReset(request.email());
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/password-reset/confirm")
-    public ResponseEntity<Void> confirmPasswordReset(
-            @RequestBody @Valid PasswordResetConfirmDto request) {
-        passwordResetService.confirmReset(request.token(), request.newPassword());
-        return ResponseEntity.ok().build();
     }
 
     // --- helpers ---

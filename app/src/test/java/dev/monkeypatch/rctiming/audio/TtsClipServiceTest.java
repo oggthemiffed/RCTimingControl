@@ -36,45 +36,25 @@ class TtsClipServiceTest {
     }
 
     @Test
-    void generateNameClip_storesClip_returnsUrl() {
-        when(piperClient.synthesize("Alan Smith", "en_GB-alan-medium")).thenReturn(FAKE_WAV);
+    void generateFinishClip_storesWithCompetitorKey() {
+        when(piperClient.synthesize("Alan Smith has finished", "en_GB-cori-high")).thenReturn(FAKE_WAV);
         when(storageService.upload(
-                eq("audio/racer/42/name-en_GB-alan-medium.wav"),
-                eq(FAKE_WAV),
-                eq("audio/wav")))
-                .thenReturn("http://localhost:8080/storage/rctiming/audio/racer/42/name-en_GB-alan-medium.wav");
-
-        String url = service.generateNameClip(42L, "Alan Smith", null); // null → default voice
-
-        assertNotNull(url);
-        assertTrue(url.contains("audio/racer/42"));
-        verify(storageService).upload(
-                eq("audio/racer/42/name-en_GB-alan-medium.wav"),
-                eq(FAKE_WAV),
-                eq("audio/wav"));
-    }
-
-    @Test
-    void generateNameClip_voiceChanged_regeneratesClip() {
-        when(piperClient.synthesize("Bob Jones", "en_GB-cori-high")).thenReturn(FAKE_WAV);
-        when(storageService.upload(
-                eq("audio/racer/7/name-en_GB-cori-high.wav"),
+                eq("audio/race/3/finish-42-en_GB-cori-high.wav"),
                 any(), any()))
-                .thenReturn("http://localhost:8080/storage/rctiming/audio/racer/7/name-en_GB-cori-high.wav");
+                .thenReturn("http://localhost:8080/storage/rctiming/audio/race/3/finish-42-en_GB-cori-high.wav");
 
-        String url = service.generateNameClip(7L, "Bob Jones", "en_GB-cori-high");
+        String url = service.generateFinishClip(3L, 42L, "Alan Smith has finished", "en_GB-cori-high");
 
         assertNotNull(url);
-        verify(piperClient).synthesize("Bob Jones", "en_GB-cori-high");
-        verify(storageService).upload(eq("audio/racer/7/name-en_GB-cori-high.wav"), any(), any());
+        verify(storageService).upload(eq("audio/race/3/finish-42-en_GB-cori-high.wav"), eq(FAKE_WAV), eq("audio/wav"));
     }
 
     @Test
-    void generateNameClip_piperUnavailable_returnsNull() {
+    void generateClip_piperUnavailable_returnsNull() {
         when(piperClient.synthesize(any(), any()))
                 .thenThrow(new TtsUnavailableException("Piper is down"));
 
-        String url = service.generateNameClip(1L, "Test Racer", null);
+        String url = service.generateCountdownClip(1L, 60, "Race, 1 minute", null);
 
         assertNull(url, "Should return null when Piper is unavailable");
         verify(storageService, never()).upload(any(), any(), any());
@@ -109,15 +89,5 @@ class TtsClipServiceTest {
         verify(storageService).upload(
                 eq("audio/race/5/car-42-en_GB-alan-medium.wav"),
                 eq(FAKE_WAV), eq("audio/wav"));
-    }
-
-    @Test
-    void generatePreview_returnsBytesWithoutStoring() {
-        when(piperClient.synthesize("Alice", "en_GB-alan-medium")).thenReturn(FAKE_WAV);
-
-        byte[] result = service.generatePreview("Alice", null);
-
-        assertArrayEquals(FAKE_WAV, result);
-        verify(storageService, never()).upload(any(), any(), any());
     }
 }

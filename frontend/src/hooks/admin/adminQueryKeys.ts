@@ -27,13 +27,6 @@ export const adminQueryKeys = {
   racingClasses: {
     all: () => ['admin', 'racing-classes'] as const,
   },
-  carTagCategories: {
-    all: (includeArchived: boolean) =>
-      ['admin', 'car-tag-categories', { includeArchived }] as const,
-  },
-  users: {
-    all: () => ['admin', 'users'] as const,
-  },
   competitors: {
     all: () => ['admin', 'competitors'] as const,
   },

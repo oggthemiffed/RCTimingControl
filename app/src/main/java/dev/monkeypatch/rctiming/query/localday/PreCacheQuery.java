@@ -6,13 +6,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-import static dev.monkeypatch.rctiming.jooq.generated.tables.Cars.CARS;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETITORS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Entries.ENTRIES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACING_CLASSES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Races.RACES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
-import static dev.monkeypatch.rctiming.jooq.generated.tables.Users.USERS;
 
 /**
  * Read-side projection of an event's confirmed entries and race schedule for the local day
@@ -28,14 +27,15 @@ public class PreCacheQuery {
         this.dsl = dsl;
     }
 
+    /**
+     * Every confirmed entry, named by its competitor, so RaceHub imports and walk-ins (which have
+     * no login) are cached too. Cars went with racer accounts (L10, #18), so carName is null.
+     */
     public List<PreCacheEntryRow> confirmedEntries(Long eventId) {
         return dsl
-                .select(ENTRIES.ID, ENTRIES.TRANSPONDER_NUMBER,
-                        USERS.FIRST_NAME, USERS.LAST_NAME,
-                        CARS.NAME, RACING_CLASSES.NAME)
+                .select(ENTRIES.ID, ENTRIES.TRANSPONDER_NUMBER, COMPETITORS.DISPLAY_NAME, RACING_CLASSES.NAME)
                 .from(ENTRIES)
-                .join(USERS).on(ENTRIES.USER_ID.eq(USERS.ID))
-                .leftJoin(CARS).on(ENTRIES.CAR_ID.eq(CARS.ID))
+                .leftJoin(COMPETITORS).on(ENTRIES.COMPETITOR_ID.eq(COMPETITORS.ID))
                 .leftJoin(EVENT_CLASSES).on(ENTRIES.EVENT_CLASS_ID.eq(EVENT_CLASSES.ID))
                 .leftJoin(RACING_CLASSES).on(EVENT_CLASSES.RACING_CLASS_ID.eq(RACING_CLASSES.ID))
                 .where(ENTRIES.EVENT_ID.eq(eventId))
@@ -43,8 +43,8 @@ public class PreCacheQuery {
                 .fetch(r -> new PreCacheEntryRow(
                         r.get(ENTRIES.ID),
                         r.get(ENTRIES.TRANSPONDER_NUMBER),
-                        r.get(USERS.FIRST_NAME) + " " + r.get(USERS.LAST_NAME),
-                        r.get(CARS.NAME),
+                        r.get(COMPETITORS.DISPLAY_NAME),
+                        null,
                         r.get(RACING_CLASSES.NAME)
                 ));
     }

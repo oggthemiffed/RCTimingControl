@@ -3,12 +3,12 @@ package dev.monkeypatch.rctiming.api.admin;
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.auth.LoginRequest;
-import dev.monkeypatch.rctiming.api.auth.RegisterRequest;
 import dev.monkeypatch.rctiming.domain.entry.EntryAuditLog;
 import dev.monkeypatch.rctiming.domain.entry.EntryAuditLogRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.security.JwtTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +43,9 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Autowired
+    JwtTokenService jwtTokenService;
+
     private String adminToken;
     private Long adminUserId;
 
@@ -61,172 +64,27 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void adminUpdateTransponder_returns200AndWritesAudit() {
-        // Register racer, create transponder T1, submit entry
-        RacerSession racer = registerRacer("audit-transponder");
-        Long carId = createCar(racer.token());
-        Long t1Id = createTransponder(racer.token(), uniqueNumber());
-
-        var submitBody = Map.of("eventId", OPEN_EVENT_ID, "eventClassId", OPEN_CLASS_ID,
-                                "carId", carId, "transponderId", t1Id);
-        var submitResp = restTemplate.exchange("/api/v1/racer/entries", HttpMethod.POST,
-                new HttpEntity<>(submitBody, headersFor(racer.token())), Map.class);
-        assertThat(submitResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        Long entryId = ((Number) ((Map<String, Object>) submitResp.getBody().get("entry")).get("id")).longValue();
-
-        // Admin creates a second transponder (not owned by racer — D-12 admin backend)
-        Long t2Id = createTransponder(racer.token(), uniqueNumber());
-        String t2Number = getTransponderNumber(racer.token(), t2Id);
-
-        // Admin PATCH transponder swap
-        var patchBody = Map.of("transponderId", t2Id, "reason", "admin swap test");
-        var patchResp = restTemplate.exchange("/api/v1/admin/entries/" + entryId + "/transponder",
-                HttpMethod.PATCH, new HttpEntity<>(patchBody, adminHeaders()), Map.class);
-
-        assertThat(patchResp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(patchResp.getBody().get("transponderNumberSnapshot")).isEqualTo(t2Number);
-
-        // Verify audit log row written
-        List<EntryAuditLog> logs = entryAuditLogRepository.findByEntryIdOrderByCreatedAtAsc(entryId);
-        assertThat(logs).hasSize(1);
-        assertThat(logs.get(0).getAction()).isEqualTo("TRANSPONDER_SWAP");
-        assertThat(logs.get(0).getAdminUserId()).isEqualTo(adminUserId);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void adminMembershipOverride_returns200AndWritesAudit() {
-        // Register racer without BRCA membership and submit to open class (confirmed)
-        // Then manually create a PENDING entry to simulate a membership-blocked state
-        // by using the entry service path directly via repo
-        RacerSession racer = registerRacer("audit-override");
-        Long carId = createCar(racer.token());
-        Long transpId = createTransponder(racer.token(), uniqueNumber());
-
-        // Submit to open class (no membership required) → CONFIRMED
-        var submitBody = Map.of("eventId", OPEN_EVENT_ID, "eventClassId", OPEN_CLASS_ID,
-                                "carId", carId, "transponderId", transpId);
-        var submitResp = restTemplate.exchange("/api/v1/racer/entries", HttpMethod.POST,
-                new HttpEntity<>(submitBody, headersFor(racer.token())), Map.class);
-        assertThat(submitResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        Long entryId = ((Number) ((Map<String, Object>) submitResp.getBody().get("entry")).get("id")).longValue();
-
-        // Admin applies membership override (re-confirms and writes audit)
-        var overrideBody = Map.of("reason", "captain verified membership at gate");
-        var overrideResp = restTemplate.exchange("/api/v1/admin/entries/" + entryId + "/membership-override",
-                HttpMethod.POST, new HttpEntity<>(overrideBody, adminHeaders()), Map.class);
-
-        assertThat(overrideResp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(overrideResp.getBody().get("status")).isEqualTo("CONFIRMED");
-
-        // Verify audit log
-        List<EntryAuditLog> logs = entryAuditLogRepository.findByEntryIdOrderByCreatedAtAsc(entryId);
-        assertThat(logs).hasSizeGreaterThanOrEqualTo(1);
-        EntryAuditLog overrideLog = logs.stream()
-                .filter(l -> "MEMBERSHIP_OVERRIDE".equals(l.getAction()))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("No MEMBERSHIP_OVERRIDE audit row found"));
-        assertThat(overrideLog.getReason()).isEqualTo("captain verified membership at gate");
-        assertThat(overrideLog.getAdminUserId()).isEqualTo(adminUserId);
-    }
-
-    @Test
-    void adminMembershipOverride_blankReason_returns400() {
-        var resp = restTemplate.exchange("/api/v1/admin/entries/1/membership-override",
-                HttpMethod.POST, new HttpEntity<>(Map.of("reason", ""), adminHeaders()),
-                String.class);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    void refereeAttemptMembershipOverride_returns403() {
-        // Create referee user
-        String email = "referee-" + UUID.randomUUID() + "@test.com";
-        createAdminUser(email, "refPass123", Set.of(Role.REFEREE));
-        var loginResp = restTemplate.postForEntity("/api/v1/auth/login",
-                new LoginRequest(email, "refPass123"), AuthResponse.class);
-        String refereeToken = loginResp.getBody().accessToken();
-
-        // Referee tries membership override (only ADMIN/RACE_DIRECTOR allowed)
-        var resp = restTemplate.exchange("/api/v1/admin/entries/1/membership-override",
-                HttpMethod.POST,
-                new HttpEntity<>(Map.of("reason", "ref attempt"), headersFor(refereeToken)),
-                String.class);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void refereeTransponderSwap_returns200() {
-        // Referee can call PATCH /transponder (class-level rule includes REFEREE)
-        String email = "referee2-" + UUID.randomUUID() + "@test.com";
-        createAdminUser(email, "refPass456", Set.of(Role.REFEREE));
-        var loginResp = restTemplate.postForEntity("/api/v1/auth/login",
-                new LoginRequest(email, "refPass456"), AuthResponse.class);
-        String refereeToken = loginResp.getBody().accessToken();
-
-        // Create an entry to swap
-        RacerSession racer = registerRacer("referee-swap");
-        Long carId = createCar(racer.token());
-        Long t1Id = createTransponder(racer.token(), uniqueNumber());
-        Long t2Id = createTransponder(racer.token(), uniqueNumber());
-
-        var submitBody = Map.of("eventId", OPEN_EVENT_ID, "eventClassId", OPEN_CLASS_ID,
-                                "carId", carId, "transponderId", t1Id);
-        var submitResp = restTemplate.exchange("/api/v1/racer/entries", HttpMethod.POST,
-                new HttpEntity<>(submitBody, headersFor(racer.token())), Map.class);
-        assertThat(submitResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        Long entryId = ((Number) ((Map<String, Object>) submitResp.getBody().get("entry")).get("id")).longValue();
-
-        var patchBody = Map.of("transponderId", t2Id, "reason", "referee swap");
-        var patchResp = restTemplate.exchange("/api/v1/admin/entries/" + entryId + "/transponder",
-                HttpMethod.PATCH, new HttpEntity<>(patchBody, headersFor(refereeToken)), Map.class);
-        assertThat(patchResp.getStatusCode()).isEqualTo(HttpStatus.OK);
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void listEntriesForClass_returnsEntries() {
-        RacerSession racer = registerRacer("list-entries");
-        Long carId = createCar(racer.token());
-        Long transpId = createTransponder(racer.token(), uniqueNumber());
-
-        var submitBody = Map.of("eventId", OPEN_EVENT_ID, "eventClassId", OPEN_CLASS_ID,
-                                "carId", carId, "transponderId", transpId);
-        restTemplate.exchange("/api/v1/racer/entries", HttpMethod.POST,
-                new HttpEntity<>(submitBody, headersFor(racer.token())), Map.class);
+    void listEntriesForClass_returnsWalkInEntry() {
+        String name = "List Entries " + UUID.randomUUID();
+        String transponder = uniqueNumber();
+        Long entryId = createWalkIn(name, transponder);
 
         var resp = restTemplate.exchange(
                 "/api/v1/admin/entries/events/" + OPEN_EVENT_ID + "/classes/" + OPEN_CLASS_ID,
                 HttpMethod.GET, new HttpEntity<>(adminHeaders()), List.class);
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        List<Map<String, Object>> entries = (List<Map<String, Object>>) resp.getBody();
-        assertThat(entries).isNotEmpty();
-        // Find the entry belonging to our racer (userId match) — other tests may add entries to same class
-        Map<String, Object> ourEntry = entries.stream()
-                .filter(e -> e.get("userId") != null
-                        && racer.userId().equals(((Number) e.get("userId")).longValue()))
+        Map<String, Object> ourEntry = ((List<Map<String, Object>>) resp.getBody()).stream()
+                .filter(e -> entryId.equals(((Number) e.get("id")).longValue()))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("Racer's entry not found in list"));
-        assertThat(ourEntry.get("competitorId")).isNotNull();
-        assertThat(ourEntry.get("displayName")).isNotNull();
-        assertThat(ourEntry).containsKey("transponderNumber");
-        assertThat(ourEntry.get("status")).isEqualTo("CONFIRMED");
+                .orElseThrow(() -> new AssertionError("Entry not in list: " + entryId));
+        assertThat(ourEntry.get("transponderNumber")).isEqualTo(transponder);
+        assertThat(ourEntry.get("displayName")).isEqualTo(name);
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void adminWithdraw_setsStatusAndWritesAudit() {
-        RacerSession racer = registerRacer("admin-withdraw");
-        Long carId = createCar(racer.token());
-        Long transpId = createTransponder(racer.token(), uniqueNumber());
-
-        var submitBody = Map.of("eventId", OPEN_EVENT_ID, "eventClassId", OPEN_CLASS_ID,
-                                "carId", carId, "transponderId", transpId);
-        var submitResp = restTemplate.exchange("/api/v1/racer/entries", HttpMethod.POST,
-                new HttpEntity<>(submitBody, headersFor(racer.token())), Map.class);
-        Long entryId = ((Number) ((Map<String, Object>) submitResp.getBody().get("entry")).get("id")).longValue();
+        Long entryId = createWalkIn("Withdraw Me " + UUID.randomUUID(), uniqueNumber());
 
         var withdrawBody = Map.of("reason", "admin test withdrawal");
         var withdrawResp = restTemplate.exchange("/api/v1/admin/entries/" + entryId + "/withdraw",
@@ -248,29 +106,52 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void racerOnAdminEndpoint_returns403() {
-        RacerSession racer = registerRacer("racer-admin-attempt");
-        var resp = restTemplate.exchange("/api/v1/admin/entries/1/transponder",
-                HttpMethod.PATCH,
-                new HttpEntity<>(Map.of("transponderId", 1), headersFor(racer.token())),
+    void refereeCannotWithdraw() {
+        Long entryId = createWalkIn("Referee Withdraw " + UUID.randomUUID(), uniqueNumber());
+        String refereeToken = tokenFor(Set.of(Role.REFEREE));
+
+        var resp = restTemplate.exchange("/api/v1/admin/entries/" + entryId + "/withdraw",
+                HttpMethod.POST, new HttpEntity<>(Map.of("reason", "no"), headersFor(refereeToken)),
                 String.class);
+
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void accountWithNoOfficialRole_cannotListEntries() {
+        var resp = restTemplate.exchange(
+                "/api/v1/admin/entries/events/" + OPEN_EVENT_ID + "/classes/" + OPEN_CLASS_ID,
+                HttpMethod.GET, new HttpEntity<>(headersFor(tokenFor(Set.of()))), String.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void racerTransponderSwapAndMembershipOverrideEndpoints_areGone() {
+        var swap = restTemplate.exchange("/api/v1/admin/entries/1/transponder", HttpMethod.PATCH,
+                new HttpEntity<>(Map.of("transponderId", 1), adminHeaders()), String.class);
+        var override = restTemplate.exchange("/api/v1/admin/entries/1/membership-override", HttpMethod.POST,
+                new HttpEntity<>(Map.of("reason", "x"), adminHeaders()), String.class);
+
+        assertThat(swap.getStatusCode().value()).isIn(404, 405);
+        assertThat(override.getStatusCode().value()).isIn(404, 405);
     }
 
     // --- helpers ---
 
-    private record RacerSession(String token, Long userId) {}
+    @SuppressWarnings("unchecked")
+    private Long createWalkIn(String name, String transponder) {
+        var resp = restTemplate.exchange("/api/v1/admin/entries", HttpMethod.POST,
+                new HttpEntity<>(Map.of("eventId", OPEN_EVENT_ID, "eventClassId", OPEN_CLASS_ID,
+                        "competitorName", name, "primaryTransponder", transponder), adminHeaders()),
+                Map.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        return ((Number) ((Map<String, Object>) resp.getBody().get("entry")).get("id")).longValue();
+    }
 
-    private RacerSession registerRacer(String prefix) {
-        String email = prefix + "-" + UUID.randomUUID() + "@test.com";
-        restTemplate.postForEntity("/api/v1/auth/register",
-                new RegisterRequest("Test", "Racer", email, "password123"),
-                AuthResponse.class);
-        var loginResp = restTemplate.postForEntity("/api/v1/auth/login",
-                new LoginRequest(email, "password123"), AuthResponse.class);
-        String token = loginResp.getBody().accessToken();
-        Long userId = userRepository.findByEmail(email).orElseThrow().getId();
-        return new RacerSession(token, userId);
+    /** A token for a new user with the given roles, minted directly (no-role accounts cannot sign in). */
+    private String tokenFor(Set<Role> roles) {
+        Long id = createAdminUser("entry-staff-" + UUID.randomUUID() + "@test.com", "password123", roles);
+        return jwtTokenService.generateAccessToken(userRepository.findById(id).orElseThrow());
     }
 
     private Long createAdminUser(String email, String password, Set<Role> roles) {
@@ -286,36 +167,8 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
         return userRepository.save(user).getId();
     }
 
-    private Long createCar(String token) {
-        var resp = restTemplate.exchange("/api/v1/racer/cars", HttpMethod.POST,
-                new HttpEntity<>(Map.of("name", "Test Car"), headersFor(token)), Map.class);
-        return ((Number) resp.getBody().get("id")).longValue();
-    }
-
-    private Long createTransponder(String token, String number) {
-        var resp = restTemplate.exchange("/api/v1/racer/transponders", HttpMethod.POST,
-                new HttpEntity<>(Map.of("transponderNumber", number, "label", "Tag"),
-                        headersFor(token)), Map.class);
-        return ((Number) resp.getBody().get("id")).longValue();
-    }
-
-    @SuppressWarnings("unchecked")
-    private String getTransponderNumber(String token, Long transponderId) {
-        var body = restTemplate.exchange("/api/v1/racer/transponders", HttpMethod.GET,
-                new HttpEntity<>(headersFor(token)), List.class);
-        List<Map<String, Object>> transponders = (List<Map<String, Object>>) body.getBody();
-        return transponders.stream()
-                .filter(t -> transponderId.equals(((Number) t.get("id")).longValue()))
-                .map(t -> (String) t.get("transponderNumber"))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Transponder not found: " + transponderId));
-    }
-
     private HttpHeaders adminHeaders() {
-        HttpHeaders h = new HttpHeaders();
-        h.setBearerAuth(adminToken);
-        h.setContentType(MediaType.APPLICATION_JSON);
-        return h;
+        return headersFor(adminToken);
     }
 
     private HttpHeaders headersFor(String token) {
@@ -327,7 +180,8 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
 
     private static int counter = 0;
 
+    /** Transponder numbers are at most 20 characters. */
     private String uniqueNumber() {
-        return "A" + System.nanoTime() + (++counter);
+        return "A" + (System.nanoTime() % 1_000_000_000_000L) + (++counter);
     }
 }
