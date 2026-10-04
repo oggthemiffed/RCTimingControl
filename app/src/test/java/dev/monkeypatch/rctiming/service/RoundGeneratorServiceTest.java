@@ -10,7 +10,6 @@ import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
-import dev.monkeypatch.rctiming.domain.user.UserClassRatingRepository;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest;
 import dev.monkeypatch.rctiming.service.dto.RoundPreviewDto;
 import org.junit.jupiter.api.Test;
@@ -49,8 +48,6 @@ class RoundGeneratorServiceTest {
     @Mock
     private EventClassRepository eventClassRepository;
     @Mock
-    private UserClassRatingRepository userClassRatingRepository;
-    @Mock
     private BumpUpSeedingService bumpUpSeedingService;
 
     @InjectMocks
@@ -71,7 +68,7 @@ class RoundGeneratorServiceTest {
         EventClass eventClass = new EventClass();
         eventClass.setId(eventClassId);
         eventClass.setEventId(eventId);
-        eventClass.setRacingClassId(null); // no ratings
+        eventClass.setRacingClassId(null);
 
         when(eventClassRepository.findByEventId(eventId)).thenReturn(List.of(eventClass));
 
@@ -87,7 +84,6 @@ class RoundGeneratorServiceTest {
         }
         when(entryRepository.findByEventClassIdAndStatus(eventClassId, EntryStatus.CONFIRMED))
                 .thenReturn(entries);
-        lenient().when(userClassRatingRepository.findByRacingClassId(any())).thenReturn(List.of());
 
         // Act: preview with maxCarsPerHeat=8, 0 practice, 1 qualifying
         RoundGenerationRequest request = new RoundGenerationRequest(

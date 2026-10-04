@@ -6,8 +6,8 @@ import dev.monkeypatch.rctiming.api.auth.LoginRequest;
 import dev.monkeypatch.rctiming.api.localday.dto.CloseDayResponseDto;
 import dev.monkeypatch.rctiming.api.localday.dto.EventLockStatusDto;
 import dev.monkeypatch.rctiming.api.localday.dto.PreCacheResponseDto;
-import dev.monkeypatch.rctiming.domain.car.Car;
-import dev.monkeypatch.rctiming.domain.car.CarRepository;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -33,6 +33,7 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.security.JwtTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,7 +72,10 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
     EntryRepository entryRepository;
 
     @Autowired
-    CarRepository carRepository;
+    CompetitorRepository competitorRepository;
+
+    @Autowired
+    JwtTokenService jwtTokenService;
 
     @Autowired
     RacingClassRepository racingClassRepository;
@@ -234,30 +238,17 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
         RacingClass racingClass = createRacingClassInDb("PreCacheClass");
         Long eventClassId = createEventClassInDb(eventId, racingClass.getId());
 
-        User racer = new User();
-        racer.setEmail("racer-" + UUID.randomUUID() + "@test.com");
-        racer.setPasswordHash(passwordEncoder.encode("racerPass123"));
-        racer.setFirstName("Ricky");
-        racer.setLastName("Racer");
-        racer.setRoles(Set.of(Role.RACER));
         Instant now = Instant.now();
-        racer.setCreatedAt(now);
-        racer.setUpdatedAt(now);
-        racer = userRepository.save(racer);
-
-        Car car = new Car();
-        car.setUserId(racer.getId());
-        car.setName("Team Losi 22S");
-        car.setArchived(false);
-        car.setCreatedAt(now);
-        car.setUpdatedAt(now);
-        car = carRepository.save(car);
+        Competitor competitor = new Competitor();
+        competitor.setDisplayName("Ricky Racer");
+        competitor.setCreatedAt(now);
+        competitor.setUpdatedAt(now);
+        competitor = competitorRepository.save(competitor);
 
         Entry entry = new Entry();
-        entry.setUserId(racer.getId());
+        entry.setCompetitorId(competitor.getId());
         entry.setEventId(eventId);
         entry.setEventClassId(eventClassId);
-        entry.setCarId(car.getId());
         entry.setTransponderNumberSnapshot("TX-12345");
         entry.setStatus(EntryStatus.CONFIRMED);
         entry.setSubmittedAt(now);
@@ -296,7 +287,7 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
         var entryDto = body.entries().get(0);
         assertThat(entryDto.transponderNumber()).isEqualTo("TX-12345");
         assertThat(entryDto.racerName()).isEqualTo("Ricky Racer");
-        assertThat(entryDto.carName()).isEqualTo("Team Losi 22S");
+        assertThat(entryDto.carName()).isNull();
         assertThat(entryDto.className()).isEqualTo(racingClass.getName());
 
         assertThat(body.schedule()).hasSize(1);
@@ -491,9 +482,9 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void openDay_racerToken_returns403() {
+    void openDay_tokenWithNoOfficialRole_returns403() {
         Long eventId = createEventInDb();
-        String racerToken = createRacerAndLogin();
+        String racerToken = tokenForAccountWithNoOfficialRole();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(racerToken);
@@ -507,9 +498,9 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void preCache_racerToken_returns403AndCreatesNoCredentialRows() {
+    void preCache_tokenWithNoOfficialRole_returns403AndCreatesNoCredentialRows() {
         Long eventId = createEventInDb();
-        String racerToken = createRacerAndLogin();
+        String racerToken = tokenForAccountWithNoOfficialRole();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(racerToken);
@@ -557,25 +548,18 @@ class DayLifecyclePreCacheIT extends AbstractIntegrationTest {
         userRepository.save(user);
     }
 
-    private String createRacerAndLogin() {
-        String email = "racer-login-" + UUID.randomUUID() + "@test.com";
-        User racer = new User();
-        racer.setEmail(email);
-        racer.setPasswordHash(passwordEncoder.encode("racerPass123"));
-        racer.setFirstName("Only");
-        racer.setLastName("Racer");
-        racer.setRoles(Set.of(Role.RACER));
+    /** Minted directly: accounts with no official role cannot sign in. */
+    private String tokenForAccountWithNoOfficialRole() {
+        User user = new User();
+        user.setEmail("no-role-" + UUID.randomUUID() + "@test.com");
+        user.setPasswordHash(passwordEncoder.encode("password123"));
+        user.setFirstName("No");
+        user.setLastName("Role");
+        user.setRoles(Set.of());
         Instant now = Instant.now();
-        racer.setCreatedAt(now);
-        racer.setUpdatedAt(now);
-        userRepository.save(racer);
-
-        ResponseEntity<AuthResponse> loginResp = restTemplate.postForEntity(
-                "/api/v1/auth/login",
-                new LoginRequest(email, "racerPass123"),
-                AuthResponse.class);
-        assertThat(loginResp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return loginResp.getBody().accessToken();
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
+        return jwtTokenService.generateAccessToken(userRepository.save(user));
     }
 
     private Long createEventInDb() {

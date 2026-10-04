@@ -2,6 +2,8 @@ package dev.monkeypatch.rctiming.infrastructure.tts;
 
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.race.Race;
@@ -10,8 +12,6 @@ import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.RaceStatusChangedEvent;
-import dev.monkeypatch.rctiming.domain.user.User;
-import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -48,7 +48,7 @@ public class AudioPreGenerationService {
     private final RaceRepository raceRepository;
     private final RaceEntryRepository raceEntryRepository;
     private final EntryRepository entryRepository;
-    private final UserRepository userRepository;
+    private final CompetitorRepository competitorRepository;
     private final ClubProfileRepository clubProfileRepository;
 
     /** In-memory clip cache: raceId → Map<clipKey, url> */
@@ -58,13 +58,13 @@ public class AudioPreGenerationService {
                                      RaceRepository raceRepository,
                                      RaceEntryRepository raceEntryRepository,
                                      EntryRepository entryRepository,
-                                     UserRepository userRepository,
+                                     CompetitorRepository competitorRepository,
                                      ClubProfileRepository clubProfileRepository) {
         this.clipService = clipService;
         this.raceRepository = raceRepository;
         this.raceEntryRepository = raceEntryRepository;
         this.entryRepository = entryRepository;
-        this.userRepository = userRepository;
+        this.competitorRepository = competitorRepository;
         this.clubProfileRepository = clubProfileRepository;
     }
 
@@ -129,19 +129,15 @@ public class AudioPreGenerationService {
         // 3. Finish announcements (AUDIO-05) — one per racer
         for (RaceEntry raceEntry : entries) {
             Entry entry = entryRepository.findById(raceEntry.getEntryId()).orElse(null);
-            // Name clips come from the racer's login; competitor-only entries have none yet.
-            if (entry == null || entry.getUserId() == null) continue;
-            User user = userRepository.findById(entry.getUserId()).orElse(null);
-            if (user == null) continue;
+            if (entry == null || entry.getCompetitorId() == null) continue;
+            Competitor competitor = competitorRepository.findById(entry.getCompetitorId()).orElse(null);
+            if (competitor == null) continue;
 
-            Long racerId = user.getId();
-            String racerName = user.getPhoneticName() != null && !user.getPhoneticName().isBlank()
-                    ? user.getPhoneticName()
-                    : user.getFirstName() + " " + user.getLastName();
-
-            String url = clipService.generateFinishClip(raceId, racerId, racerName + " has finished", voiceId);
+            Long competitorId = competitor.getId();
+            String url = clipService.generateFinishClip(
+                    raceId, competitorId, competitor.getDisplayName() + " has finished", voiceId);
             if (url != null) {
-                clips.put("finish-" + racerId, url);
+                clips.put("finish-" + competitorId, url);
             }
         }
 

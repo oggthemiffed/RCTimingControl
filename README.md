@@ -2,7 +2,7 @@
 
 > **Early pre-release — v0.1**
 
-Web-based RC club management and race timing system. Replaces RCResults with a modern browser-based race control client and self-service racer portal.
+Web-based RC club management and race timing system. Replaces RCResults with a modern browser-based race control client for club officials. Entries come from RaceHub or are added as walk-ins.
 
 ## Try it out
 
@@ -25,12 +25,12 @@ Open **http://localhost** — demo data and a live fake decoder are included. Se
 | Component | Description |
 |-----------|-------------|
 | `app/` | Spring Boot 3.4 backend — REST API, JWT auth, WebSocket timing hub, direct AMB decoder listener, event/championship organization |
-| `frontend/` | React 18 + Vite + Tailwind + shadcn/ui — cloud racer portal, admin panel, race control |
+| `frontend/` | React 18 + Vite + Tailwind + shadcn/ui — admin panel and race control for officials |
 | `decoder-simulator/` | Fake AMB decoder over TCP for development and the trial stack (generative and playback modes) |
 | `decoder-protocol/` | Shared AMB/MyLaps decoder protocol parsing (RC-4 text + P3 binary) — used by `app/`, `decoder-simulator/` and `localday/` |
 | `localday/` | Independent Spring Boot backend — the **Local Race Day Program**: runs a full event day (check-in, race control, timing, results, public boards) with zero cloud dependency. See [Local Race Day Program](#local-race-day-program) below. |
 | `frontend-local/` | React 18 + Vite frontend for `localday/` — officials' race-control UI and anonymous spectator boards |
-| `docker-compose.yml` | PostgreSQL 16 + Mailpit (dev email) — cloud app only; `localday/` uses its own embedded PostgreSQL. Club logos and TTS clips are stored on local disk, no object-storage server needed. |
+| `docker-compose.yml` | PostgreSQL 16 + Piper (TTS) — cloud app only; `localday/` uses its own embedded PostgreSQL. Club logos and TTS clips are stored on local disk, no object-storage server needed. |
 
 ### Quick start (dev)
 
@@ -40,13 +40,12 @@ Open **http://localhost** — demo data and a live fake decoder are included. Se
 make dev-start
 ```
 
-Starts PostgreSQL + Mailpit, the Spring Boot backend (dev profile), and the Vite frontend — all in the background.
+Starts PostgreSQL + Piper, the Spring Boot backend (dev profile), and the Vite frontend — all in the background.
 
 | Service | URL |
 |---------|-----|
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:8080 |
-| Mailpit (dev email) | http://localhost:8025 |
 
 ```bash
 make stop       # shut everything down

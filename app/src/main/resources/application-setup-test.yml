@@ -6,12 +6,6 @@ spring:
     url: jdbc:postgresql://localhost:5432/rctiming_dev
     username: rctiming
     password: rctiming
-  mail:
-    host: localhost
-    port: 1025
-    properties:
-      mail.smtp.auth: false
-      mail.smtp.starttls.enable: false
   flyway:
     locations: classpath:db/migration
   jpa:

@@ -1,8 +1,4 @@
 spring:
-  mail:
-    host: localhost
-    port: 25
-    test-connection: false
   jpa:
     hibernate:
       ddl-auto: validate

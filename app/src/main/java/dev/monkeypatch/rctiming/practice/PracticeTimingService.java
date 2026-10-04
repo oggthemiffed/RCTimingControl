@@ -4,10 +4,11 @@ import dev.monkeypatch.rctiming.domain.practice.PracticeLap;
 import dev.monkeypatch.rctiming.domain.practice.PracticeLapRepository;
 import dev.monkeypatch.rctiming.domain.practice.PracticeSession;
 import dev.monkeypatch.rctiming.domain.practice.PracticeSessionRepository;
-import dev.monkeypatch.rctiming.domain.transponder.Transponder;
-import dev.monkeypatch.rctiming.domain.transponder.TransponderRepository;
-import dev.monkeypatch.rctiming.domain.user.User;
-import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.entry.Entry;
+import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
+import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
 import dev.monkeypatch.rctiming.practice.dto.PracticeTimingRowDto;
 import dev.monkeypatch.rctiming.timing.LapPassingEvent;
 import org.slf4j.Logger;
@@ -42,8 +43,8 @@ public class PracticeTimingService {
 
     private final PracticeSessionRepository sessionRepository;
     private final PracticeLapRepository lapRepository;
-    private final TransponderRepository transponderRepository;
-    private final UserRepository userRepository;
+    private final EntryRepository entryRepository;
+    private final CompetitorRepository competitorRepository;
     private final PracticeTimingHub timingHub;
 
     /** Active practice session states keyed by sessionId. */
@@ -58,13 +59,13 @@ public class PracticeTimingService {
 
     public PracticeTimingService(PracticeSessionRepository sessionRepository,
                                  PracticeLapRepository lapRepository,
-                                 TransponderRepository transponderRepository,
-                                 UserRepository userRepository,
+                                 EntryRepository entryRepository,
+                                 CompetitorRepository competitorRepository,
                                  PracticeTimingHub timingHub) {
         this.sessionRepository = sessionRepository;
         this.lapRepository = lapRepository;
-        this.transponderRepository = transponderRepository;
-        this.userRepository = userRepository;
+        this.entryRepository = entryRepository;
+        this.competitorRepository = competitorRepository;
         this.timingHub = timingHub;
     }
 
@@ -132,21 +133,12 @@ public class PracticeTimingService {
             }
         }
 
-        // Resolve transponder → user
-        Transponder transponder = transponderRepository.findByTransponderNumber(transponderNumber).orElse(null);
-        Long userId = null;
-        String racerName = null;
-        User user = null;
-        if (transponder != null) {
-            userId = transponder.getUserId();
-            user = userRepository.findById(userId).orElse(null);
-            if (user != null) {
-                racerName = user.getFirstName() + " " + user.getLastName();
-            }
-        }
+        // Resolve transponder → competitor through the session's event entries (L10, #18).
+        // A session with no event, or a transponder no entry uses, stays unknown.
+        String racerName = resolveCompetitorName(session, transponderNumber);
 
         // Record in in-memory state
-        state.recordLap(transponderNumber, userId, racerName, lapTimeMs, crossingTime);
+        state.recordLap(transponderNumber, null, racerName, lapTimeMs, crossingTime);
 
         // Persist lap record (only when we have a real lap time)
         if (lapTimeMs != null) {
@@ -158,7 +150,6 @@ public class PracticeTimingService {
             PracticeLap lap = new PracticeLap();
             lap.setPracticeSession(session);
             lap.setTransponderNumber(transponderNumber);
-            lap.setUser(user);
             lap.setLapNumber(lapNumber);
             lap.setLapTimeMs(lapTimeMs);
             lap.setCrossingTime(crossingTime);
@@ -234,5 +225,22 @@ public class PracticeTimingService {
         }
 
         return state.calculatePositions();
+    }
+
+    /** The competitor whose active entry in the session's event uses this transponder, if any. */
+    private String resolveCompetitorName(PracticeSession session, String transponderNumber) {
+        if (session.getEvent() == null) {
+            return null;
+        }
+        return entryRepository.findByEventId(session.getEvent().getId()).stream()
+                .filter(e -> e.getStatus() != EntryStatus.WITHDRAWN)
+                .filter(e -> transponderNumber.equals(e.getTransponderNumberSnapshot())
+                        || transponderNumber.equals(e.getSecondaryTransponderNumber()))
+                .map(Entry::getCompetitorId)
+                .filter(java.util.Objects::nonNull)
+                .findFirst()
+                .flatMap(competitorRepository::findById)
+                .map(Competitor::getDisplayName)
+                .orElse(null);
     }
 }

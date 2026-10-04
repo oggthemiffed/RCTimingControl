@@ -51,7 +51,6 @@ make up
 
 This starts:
 - **PostgreSQL 16** on `localhost:5432` — database `rctiming_dev`, user/pass `rctiming`
-- **Mailpit** on `localhost:1025` (SMTP) / `localhost:8025` (web UI) — catches all outgoing email
 
 Club logos and TTS clips are stored on local disk under `storage.local-path` (defaults to `./data/uploads`, overridable via `STORAGE_LOCAL_PATH`) and served back by the app itself at `/storage/**` — no object-storage server to start.
 
@@ -140,11 +139,10 @@ The dev JWT secret is baked into `application.yml` as a fallback default — fin
 ```
 app/src/main/java/dev/monkeypatch/rctiming/
 ├── api/
-│   ├── auth/            # Register, login, refresh, password reset
-│   ├── admin/           # Admin CRUD controllers (club, tracks, formats, car tags, entry overrides)
+│   ├── auth/            # Officials' login and refresh
+│   ├── admin/           # Admin CRUD controllers (club, tracks, formats, entries, competitors, RaceHub import)
 │   │   └── dto/
-│   ├── racer/           # Racer-scoped controllers (profile, cars, transponders, entries, events)
-│   │   └── dto/
+│   ├── pub/             # Public read endpoints (event schedule, results, championships)
 │   └── racecontrol/     # Race lifecycle commands, marshal, referee, result snapshots
 │       └── dto/
 ├── domain/
@@ -295,10 +293,8 @@ Uses Testcontainers with `@ServiceConnection` — spins up a real PostgreSQL con
 
 | Path | Access | Description |
 |------|--------|-------------|
-| `/login` | Public | Login |
-| `/register` | Public | Racer self-registration |
+| `/login` | Public | Officials' login |
 | `/events` | Public | Event schedule |
-| `/racer/*` | Any authenticated | Profile, cars, transponders, entries |
 | `/admin/*` | ADMIN / RACE_DIRECTOR / REFEREE | Admin panel |
 | `/admin/race-control` | ADMIN / RACE_DIRECTOR / REFEREE | Select in-progress event for race control |
 | `/race-control/event/:id` | ADMIN / RACE_DIRECTOR / REFEREE | Race control cockpit |
@@ -342,11 +338,6 @@ Run `make help` to see all targets. Quick reference:
 ./gradlew :app:generateJooq
 ```
 
-## Email in development
-
-Password reset emails are caught by Mailpit. Open `http://localhost:8025` to view them. No real email is ever sent in dev — all SMTP traffic goes to `localhost:1025`.
-
----
 
 ## Developer workflow
 

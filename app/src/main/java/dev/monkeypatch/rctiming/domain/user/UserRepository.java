@@ -14,7 +14,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
 
-    boolean existsByEmail(String email);
 
     /** Loads a user and holds a row lock until the transaction ends. Serialises first-time competitor creation. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

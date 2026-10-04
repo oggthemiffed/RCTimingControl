@@ -3,7 +3,6 @@ package dev.monkeypatch.rctiming.security;
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.auth.LoginRequest;
-import dev.monkeypatch.rctiming.api.auth.RegisterRequest;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
@@ -34,23 +33,34 @@ class SecurityIT extends AbstractIntegrationTest {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Autowired
+    JwtTokenService jwtTokenService;
+
     private static final String AUTH_BASE = "/api/v1/auth";
     private static final String ADMIN_PROFILE = "/api/v1/admin/club/profile";
 
     @Test
-    void adminEndpoint_withRacerRole_returns403() {
-        String email = "racer-" + UUID.randomUUID() + "@test.com";
-        restTemplate.postForEntity(AUTH_BASE + "/register",
-                new RegisterRequest("Racer", "User", email, "password123"), AuthResponse.class);
-        ResponseEntity<AuthResponse> loginResp = restTemplate.postForEntity(AUTH_BASE + "/login",
-                new LoginRequest(email, "password123"), AuthResponse.class);
-        assertThat(loginResp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        String token = loginResp.getBody().accessToken();
-
+    void adminEndpoint_withTokenForAccountWithNoOfficialRole_returns403() {
+        // Such accounts can no longer sign in; a token minted for one is still refused
+        User user = createUserWithRoles("noroles-" + UUID.randomUUID() + "@test.com", "password123", Set.of());
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(token);
+        headers.setBearerAuth(jwtTokenService.generateAccessToken(user));
+
         ResponseEntity<Void> response = restTemplate.exchange(
                 ADMIN_PROFILE, HttpMethod.GET,
+                new HttpEntity<>(headers), Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void otherAuthenticatedEndpoint_withTokenForAccountWithNoOfficialRole_returns403() {
+        User user = createUserWithRoles("noroles-" + UUID.randomUUID() + "@test.com", "password123", Set.of());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(jwtTokenService.generateAccessToken(user));
+
+        ResponseEntity<Void> response = restTemplate.exchange(
+                "/api/v1/audio/voices", HttpMethod.GET,
                 new HttpEntity<>(headers), Void.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);

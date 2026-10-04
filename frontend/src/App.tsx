@@ -18,7 +18,6 @@ import ClubProfilePage from '@/pages/admin/club/ClubProfilePage';
 import AdminAudioSettingsPage from '@/pages/admin/club/AdminAudioSettingsPage';
 import TracksPage from '@/pages/admin/tracks/TracksPage';
 import FormatsPage from '@/pages/admin/formats/FormatsPage';
-import CarTagCategoriesPage from '@/pages/admin/categories/CarTagCategoriesPage';
 import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
 import DecoderSettingsPage from '@/pages/admin/decoder/DecoderSettingsPage';
 import CompetitorsPage from '@/pages/admin/competitors/CompetitorsPage';
@@ -71,7 +70,6 @@ const router = createBrowserRouter([
           { path: 'club', element: <ClubProfilePage /> },
           { path: 'tracks', element: <TracksPage /> },
           { path: 'formats', element: <FormatsPage /> },
-          { path: 'categories', element: <CarTagCategoriesPage /> },
           { path: 'race-control', element: <RaceControlSelectPage /> },
           { path: 'decoder', element: <ProtectedRoute roles={['ADMIN']}><DecoderSettingsPage /></ProtectedRoute> },
           { path: 'audio', element: <AdminAudioSettingsPage /> },

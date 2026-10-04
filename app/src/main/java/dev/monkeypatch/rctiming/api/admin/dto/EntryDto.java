@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.api.racer.dto;
+package dev.monkeypatch.rctiming.api.admin.dto;
 
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 

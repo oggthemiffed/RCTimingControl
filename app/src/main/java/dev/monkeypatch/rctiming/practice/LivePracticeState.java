@@ -43,8 +43,8 @@ public class LivePracticeState {
             if (state == null) {
                 state = new ParticipantState(transponderNumber, userId, racerName);
             }
-            // Update user info if we just resolved an unknown transponder
-            if (userId != null && state.userId == null) {
+            // Update the name if we just resolved an unknown transponder
+            if (racerName != null && state.racerName == null) {
                 state.userId = userId;
                 state.racerName = racerName;
             }
@@ -95,19 +95,19 @@ public class LivePracticeState {
                     p.getBestLap(),
                     p.getBestConsecutiveN(bestLapN),
                     p.getLastLap(),
-                    p.userId == null
+                    p.racerName == null
             ));
         }
         return rows;
     }
 
     /**
-     * Returns transponder numbers that have not been linked to a user.
+     * Returns transponder numbers that have no name yet (no matching entry and not linked).
      */
     public Set<String> getUnknownTransponders() {
         Set<String> unknown = new HashSet<>();
         for (ParticipantState p : participants.values()) {
-            if (p.userId == null) {
+            if (p.racerName == null) {
                 unknown.add(p.transponderNumber);
             }
         }

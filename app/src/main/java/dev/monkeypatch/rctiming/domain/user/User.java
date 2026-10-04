@@ -80,6 +80,9 @@ public class User {
     public void setLastName(String lastName) { this.lastName = lastName; }
 
     public Set<Role> getRoles() { return roles; }
+
+    /** True when the account holds at least one official role, so it may sign in. */
+    public boolean isOfficial() { return roles.stream().anyMatch(Role.OFFICIAL_ROLES::contains); }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
 
     public Instant getCreatedAt() { return createdAt; }

@@ -3,7 +3,7 @@ package dev.monkeypatch.rctiming.api.admin;
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.auth.LoginRequest;
-import dev.monkeypatch.rctiming.api.auth.RegisterRequest;
+import dev.monkeypatch.rctiming.security.JwtTokenService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.event.Event;
@@ -56,6 +56,9 @@ class ChampionshipControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    JwtTokenService jwtTokenService;
 
     private String adminToken;
     private Long adminUserId;
@@ -428,18 +431,17 @@ class ChampionshipControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void allEndpoints_asRacer_return403() {
-        // Register a racer (RACER role only)
-        String racerEmail = "racer-champ-" + UUID.randomUUID() + "@test.com";
-        restTemplate.postForEntity("/api/v1/auth/register",
-                new RegisterRequest("Racer", "User", racerEmail, "racerPass123"),
-                AuthResponse.class);
-        ResponseEntity<AuthResponse> loginResp = restTemplate.postForEntity(
-                "/api/v1/auth/login",
-                new LoginRequest(racerEmail, "racerPass123"),
-                AuthResponse.class);
-        String racerToken = loginResp.getBody().accessToken();
-
+    void allEndpoints_withNoOfficialRole_return403() {
+        // Accounts with no official role can no longer sign in; a token minted for one is still refused
+        User noRoles = new User();
+        noRoles.setEmail("noroles-champ-" + UUID.randomUUID() + "@test.com");
+        noRoles.setPasswordHash(passwordEncoder.encode("password123"));
+        noRoles.setFirstName("No");
+        noRoles.setLastName("Roles");
+        noRoles.setRoles(java.util.Set.of());
+        noRoles.setCreatedAt(java.time.Instant.now());
+        noRoles.setUpdatedAt(java.time.Instant.now());
+        String racerToken = jwtTokenService.generateAccessToken(userRepository.save(noRoles));
         HttpHeaders racerHeaders = headersFor(racerToken);
         Map<String, Object> body = Map.of(
                 "name", "test",

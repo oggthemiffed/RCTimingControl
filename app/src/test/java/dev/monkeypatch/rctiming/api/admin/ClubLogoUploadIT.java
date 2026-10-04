@@ -7,6 +7,7 @@ import dev.monkeypatch.rctiming.api.auth.LoginRequest;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.security.JwtTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -54,6 +55,9 @@ class ClubLogoUploadIT extends AbstractIntegrationTest {
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    JwtTokenService jwtTokenService;
 
     private String adminToken;
 
@@ -152,18 +156,17 @@ class ClubLogoUploadIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void uploadLogo_asRacer_returns403() {
-        // Register and login as racer
-        String racerEmail = "racer-logo-" + UUID.randomUUID() + "@test.com";
-        rest.postForEntity("/api/v1/auth/register",
-                Map.of("firstName", "Test", "lastName", "Racer",
-                        "email", racerEmail, "password", "password123"),
-                AuthResponse.class);
-        ResponseEntity<AuthResponse> racerLogin = rest.postForEntity(
-                "/api/v1/auth/login",
-                new LoginRequest(racerEmail, "password123"),
-                AuthResponse.class);
-        String racerToken = racerLogin.getBody().accessToken();
+    void uploadLogo_withNoOfficialRole_returns403() {
+        // Accounts with no official role can no longer sign in; a token minted for one is still refused
+        User noRoles = new User();
+        noRoles.setEmail("noroles-logo-" + UUID.randomUUID() + "@test.com");
+        noRoles.setPasswordHash(passwordEncoder.encode("password123"));
+        noRoles.setFirstName("No");
+        noRoles.setLastName("Roles");
+        noRoles.setRoles(java.util.Set.of());
+        noRoles.setCreatedAt(java.time.Instant.now());
+        noRoles.setUpdatedAt(java.time.Instant.now());
+        String racerToken = jwtTokenService.generateAccessToken(userRepository.save(noRoles));
 
         byte[] pngBytes = {(byte) 0x89, 'P', 'N', 'G'};
         HttpHeaders headers = new HttpHeaders();

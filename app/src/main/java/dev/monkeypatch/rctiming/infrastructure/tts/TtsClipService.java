@@ -6,14 +6,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * Generates TTS name clips and other audio clips, storing them via storage via ObjectStorageService.
+ * Generates TTS announcement clips, storing them via ObjectStorageService.
  * <p>
  * Key conventions:
  * <ul>
- *   <li>{@code audio/racer/{racerId}/name-{voiceId}.wav} — racer name clip</li>
  *   <li>{@code audio/race/{raceId}/countdown-{seconds}-{voiceId}.wav} — countdown clip</li>
  *   <li>{@code audio/race/{raceId}/car-{carNumber}-{voiceId}.wav} — car number stagger clip</li>
- *   <li>{@code audio/race/{raceId}/finish-{racerId}-{voiceId}.wav} — finish announcement clip</li>
+ *   <li>{@code audio/race/{raceId}/finish-{competitorId}-{voiceId}.wav} — finish announcement clip</li>
  * </ul>
  * When Piper is unavailable, methods log a warning and return {@code null} (graceful degradation).
  */
@@ -33,21 +32,6 @@ public class TtsClipService {
         this.piperClient = piperClient;
         this.storageService = storageService;
         this.properties = properties;
-    }
-
-    /**
-     * Generate and store a racer name clip via storage.
-     *
-     * @param racerId  database ID of the racer
-     * @param text     text to synthesize (display name or phonetic name)
-     * @param voiceId  Piper voice model name, or null to use default
-     * @return storage public URL, or null if Piper was unavailable
-     */
-    public String generateNameClip(Long racerId, String text, String voiceId) {
-        String effectiveVoice = resolve(voiceId);
-        String key = String.format("audio/racer/%d/name-%s.wav", racerId, effectiveVoice);
-        return synthesizeAndUpload(key, text, effectiveVoice,
-                "racer {} name clip", racerId);
     }
 
     /**
@@ -86,27 +70,16 @@ public class TtsClipService {
      * Generate and store a finish announcement clip.
      *
      * @param raceId    database ID of the race
-     * @param racerId   database ID of the racer
+     * @param competitorId database ID of the competitor
      * @param text      announcement text (e.g. "Alan Smith has finished")
      * @param voiceId   Piper voice model name, or null to use default
      * @return storage public URL, or null if Piper was unavailable
      */
-    public String generateFinishClip(Long raceId, Long racerId, String text, String voiceId) {
+    public String generateFinishClip(Long raceId, Long competitorId, String text, String voiceId) {
         String effectiveVoice = resolve(voiceId);
-        String key = String.format("audio/race/%d/finish-%d-%s.wav", raceId, racerId, effectiveVoice);
+        String key = String.format("audio/race/%d/finish-%d-%s.wav", raceId, competitorId, effectiveVoice);
         return synthesizeAndUpload(key, text, effectiveVoice,
-                "race {} finish racer {} clip", raceId, racerId);
-    }
-
-    /**
-     * Generate a preview clip without storing it via storage.
-     * Returns raw WAV bytes for direct HTTP response.
-     *
-     * @throws TtsUnavailableException if Piper is unavailable
-     */
-    public byte[] generatePreview(String text, String voiceId) {
-        String effectiveVoice = resolve(voiceId);
-        return piperClient.synthesize(text, effectiveVoice);
+                "race {} finish competitor {} clip", raceId, competitorId);
     }
 
     // -------------------------------------------------------------------------

@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.domain.user;
 
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,22 +20,6 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User createRacer(String email, String password, String firstName, String lastName) {
-        if (userRepository.existsByEmail(email)) {
-            throw new DataIntegrityViolationException("User already exists with email: " + email);
-        }
-        User user = new User();
-        user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(password));
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setRoles(Set.of(Role.RACER));
-        Instant now = Instant.now();
-        user.setCreatedAt(now);
-        user.setUpdatedAt(now);
-        return userRepository.save(user);
-    }
-
     @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
@@ -48,8 +31,8 @@ public class UserService {
             throw new IllegalArgumentException("At least one role required");
         }
         if (roles.contains(Role.RACER)) {
-            // T-08-08: Staff endpoint cannot assign RACER role; use /auth/register for racers
-            throw new IllegalArgumentException("Staff endpoint cannot assign RACER role; use /auth/register for racers");
+            // Only officials have accounts (L10, #18)
+            throw new IllegalArgumentException("Staff accounts cannot hold the RACER role");
         }
         if (userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email already registered");

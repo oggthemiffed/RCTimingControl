@@ -308,13 +308,6 @@ export interface CompetitorSummaryDto {
   homeClub: string | null;
 }
 
-export interface UserSummaryDto {
-  id: number;
-  firstName: string;
-  lastName: string;
-  memberships: { code: string; number: string }[];
-}
-
 export interface ClubProfileDto {
   id: number;
   name: string;
@@ -339,14 +332,6 @@ export interface UpdateClubProfileRequest {
   timezone: string;
   logoType: string | null;
   showCarTagsInResults: boolean;
-}
-
-export interface CarTagCategoryDto {
-  id: number;
-  name: string;
-  color: string | null;
-  sortOrder: number;
-  archived: boolean;
 }
 
 // ── API client ─────────────────────────────────────────────────────────────
@@ -531,25 +516,5 @@ export const adminApi = {
   competitors: {
     list: () =>
       api.get<CompetitorSummaryDto[]>('/api/v1/admin/competitors').then(r => r.data),
-  },
-
-  // Users
-  users: {
-    list: () =>
-      api.get<UserSummaryDto[]>('/api/v1/admin/users').then(r => r.data),
-  },
-
-  // Car tag categories
-  carTagCategories: {
-    list: (includeArchived: boolean) =>
-      api.get<CarTagCategoryDto[]>(`/api/v1/admin/car-tag-categories?includeArchived=${includeArchived}`).then(r => r.data),
-    create: (body: Omit<CarTagCategoryDto, 'id' | 'archived'>) =>
-      api.post<CarTagCategoryDto>('/api/v1/admin/car-tag-categories', body).then(r => r.data),
-    update: (id: number, body: Partial<Omit<CarTagCategoryDto, 'id' | 'archived'>>) =>
-      api.put<CarTagCategoryDto>(`/api/v1/admin/car-tag-categories/${id}`, body).then(r => r.data),
-    archive: (id: number) =>
-      api.delete(`/api/v1/admin/car-tag-categories/${id}`),
-    unarchive: (id: number) =>
-      api.post(`/api/v1/admin/car-tag-categories/${id}/unarchive`),
   },
 };

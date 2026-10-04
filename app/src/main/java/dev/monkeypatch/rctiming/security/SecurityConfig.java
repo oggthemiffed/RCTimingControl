@@ -27,7 +27,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/setup/status").permitAll()
@@ -45,7 +45,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/localday/events/*/snapshots").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "RACE_DIRECTOR", "REFEREE")
                         .requestMatchers("/ws/timing", "/ws/timing/**").permitAll()
-                        .anyRequest().authenticated()
+                        // Only officials sign in (L10, #18)
+                        .anyRequest().hasAnyRole("ADMIN", "RACE_DIRECTOR", "REFEREE")
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
