@@ -8,6 +8,10 @@ export type GridCallSlotDto = {
   driverName: string;
   carNumber: string | null;
   className: string;
+  /** Checked in at the desk (L11). */
+  checkedIn: boolean;
+  /** RaceHub's arrival mark, read-only; null when the entry wasn't imported. */
+  racehubArrival: 'ARRIVED' | 'NOT_ARRIVED' | null;
 };
 
 export type MarshalDutyRowDto = {
@@ -284,5 +288,70 @@ export type DecoderStatusDto = {
 
 export async function fetchDecoderStatus(): Promise<DecoderStatusDto> {
   const { data } = await api.get<DecoderStatusDto>('/api/v1/race-control/decoder/status');
+  return data;
+}
+
+// ── Check-in desk and transponder swap (L11) ─────────────────────────────────
+
+export type CheckInEntry = {
+  entryId: number;
+  competitorName: string;
+  className: string | null;
+  transponderNumber: string;
+  secondaryTransponderNumber: string | null;
+  checkedIn: boolean;
+  checkedInAt: string | null;
+  racehubArrival: 'ARRIVED' | 'NOT_ARRIVED' | null;
+};
+
+export type CheckInConfirmResponse = {
+  entry: CheckInEntry;
+  alreadyCheckedIn: boolean;
+};
+
+export type TransponderSlot = 'PRIMARY' | 'SECONDARY';
+
+export type TransponderSwapResponse = {
+  entryId: number;
+  slot: TransponderSlot;
+  oldTransponderNumber: string | null;
+  newTransponderNumber: string | null;
+};
+
+/** Entries using this transponder number; a 404 means no match. */
+export async function checkInResolve(eventId: number, transponderNumber: string): Promise<CheckInEntry[]> {
+  const { data } = await api.post<CheckInEntry[]>(
+    `/api/v1/race-control/events/${eventId}/check-in/resolve`,
+    { transponderNumber },
+  );
+  return data;
+}
+
+export async function checkInSearch(eventId: number, query: string): Promise<CheckInEntry[]> {
+  const { data } = await api.get<CheckInEntry[]>(
+    `/api/v1/race-control/events/${eventId}/check-in/search`,
+    { params: { query } },
+  );
+  return data;
+}
+
+export async function checkInConfirm(eventId: number, entryId: number): Promise<CheckInConfirmResponse> {
+  const { data } = await api.post<CheckInConfirmResponse>(
+    `/api/v1/race-control/events/${eventId}/check-in/entries/${entryId}/confirm`,
+  );
+  return data;
+}
+
+/** A blank number removes the secondary transponder. */
+export async function swapTransponder(
+  eventId: number,
+  entryId: number,
+  slot: TransponderSlot,
+  newTransponderNumber: string,
+): Promise<TransponderSwapResponse> {
+  const { data } = await api.post<TransponderSwapResponse>(
+    `/api/v1/race-control/events/${eventId}/entries/${entryId}/transponder-swap`,
+    { slot, newTransponderNumber },
+  );
   return data;
 }
