@@ -47,4 +47,15 @@ public class CompetitorService {
                     return competitorRepository.save(competitor);
                 });
     }
+
+    /** Creates a competitor with no external identity, for a walk-in entered by hand (L9). */
+    @Transactional
+    public Competitor createWalkIn(String displayName) {
+        Instant now = Instant.now();
+        Competitor competitor = new Competitor();
+        competitor.setDisplayName(displayName.trim());
+        competitor.setCreatedAt(now);
+        competitor.setUpdatedAt(now);
+        return competitorRepository.save(competitor);
+    }
 }
