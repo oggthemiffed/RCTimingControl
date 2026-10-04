@@ -1,14 +1,12 @@
 package dev.monkeypatch.rctiming.domain.club;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -45,7 +43,7 @@ public class ClubProfile {
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Convert(converter = ClubAudioSettingsConverter.class)
     @Column(name = "audio_settings")
     private ClubAudioSettings audioSettings = ClubAudioSettings.defaults();
 

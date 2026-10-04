@@ -18,9 +18,8 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      # :decoder-protocol needs no Docker/Testcontainers, so it runs in the same job as
-      # :app/:decoder-simulator rather than a separate one. -x generateJooq only applies to
-      # :app's own task graph.
+      # The backend tests run on temporary SQLite files, so none of them needs Docker.
+      # -x generateJooq uses the committed jOOQ sources; it only applies to :app's task graph.
       - name: Run backend tests
         run: ./gradlew :app:test :decoder-simulator:test :decoder-protocol:test -x generateJooq
 
@@ -70,12 +69,6 @@ jobs:
           echo "App did not become ready in time"
           docker compose -f docker-compose.trial.yml logs app
           exit 1
-
-      - name: Run demo seed
-        run: |
-          echo "Running demo-seed..."
-          docker compose -f docker-compose.trial.yml up --no-deps demo-seed
-          echo "Seed complete"
 
       - uses: actions/setup-node@v4
         with:

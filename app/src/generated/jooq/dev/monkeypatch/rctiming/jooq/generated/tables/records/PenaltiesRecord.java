@@ -7,7 +7,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -22,115 +22,115 @@ public class PenaltiesRecord extends UpdatableRecordImpl<PenaltiesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.penalties.id</code>.
+     * Setter for <code>penalties.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.penalties.id</code>.
+     * Getter for <code>penalties.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.penalties.race_id</code>.
+     * Setter for <code>penalties.race_id</code>.
      */
     public void setRaceId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.penalties.race_id</code>.
+     * Getter for <code>penalties.race_id</code>.
      */
     public Long getRaceId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.penalties.entry_id</code>.
+     * Setter for <code>penalties.entry_id</code>.
      */
     public void setEntryId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.penalties.entry_id</code>.
+     * Getter for <code>penalties.entry_id</code>.
      */
     public Long getEntryId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.penalties.penalty_type</code>.
+     * Setter for <code>penalties.penalty_type</code>.
      */
     public void setPenaltyType(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.penalties.penalty_type</code>.
+     * Getter for <code>penalties.penalty_type</code>.
      */
     public String getPenaltyType() {
         return (String) get(3);
     }
 
     /**
-     * Setter for <code>public.penalties.value</code>.
+     * Setter for <code>penalties.value</code>.
      */
     public void setValue(BigDecimal value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.penalties.value</code>.
+     * Getter for <code>penalties.value</code>.
      */
     public BigDecimal getValue() {
         return (BigDecimal) get(4);
     }
 
     /**
-     * Setter for <code>public.penalties.reason</code>.
+     * Setter for <code>penalties.reason</code>.
      */
     public void setReason(String value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.penalties.reason</code>.
+     * Getter for <code>penalties.reason</code>.
      */
     public String getReason() {
         return (String) get(5);
     }
 
     /**
-     * Setter for <code>public.penalties.applied_by</code>.
+     * Setter for <code>penalties.applied_by</code>.
      */
     public void setAppliedBy(Long value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.penalties.applied_by</code>.
+     * Getter for <code>penalties.applied_by</code>.
      */
     public Long getAppliedBy() {
         return (Long) get(6);
     }
 
     /**
-     * Setter for <code>public.penalties.applied_at</code>.
+     * Setter for <code>penalties.applied_at</code>.
      */
-    public void setAppliedAt(OffsetDateTime value) {
+    public void setAppliedAt(Instant value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.penalties.applied_at</code>.
+     * Getter for <code>penalties.applied_at</code>.
      */
-    public OffsetDateTime getAppliedAt() {
-        return (OffsetDateTime) get(7);
+    public Instant getAppliedAt() {
+        return (Instant) get(7);
     }
 
     // -------------------------------------------------------------------------
@@ -156,7 +156,7 @@ public class PenaltiesRecord extends UpdatableRecordImpl<PenaltiesRecord> {
     /**
      * Create a detached, initialised PenaltiesRecord
      */
-    public PenaltiesRecord(Long id, Long raceId, Long entryId, String penaltyType, BigDecimal value, String reason, Long appliedBy, OffsetDateTime appliedAt) {
+    public PenaltiesRecord(Long id, Long raceId, Long entryId, String penaltyType, BigDecimal value, String reason, Long appliedBy, Instant appliedAt) {
         super(Penalties.PENALTIES);
 
         setId(id);

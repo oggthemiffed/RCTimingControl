@@ -4,13 +4,14 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RacingClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks.TracksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.TrackLapThresholdsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -47,7 +48,7 @@ public class TrackLapThresholds extends TableImpl<TrackLapThresholdsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.track_lap_thresholds</code>
+     * The reference instance of <code>track_lap_thresholds</code>
      */
     public static final TrackLapThresholds TRACK_LAP_THRESHOLDS = new TrackLapThresholds();
 
@@ -60,34 +61,34 @@ public class TrackLapThresholds extends TableImpl<TrackLapThresholdsRecord> {
     }
 
     /**
-     * The column <code>public.track_lap_thresholds.id</code>.
+     * The column <code>track_lap_thresholds.id</code>.
      */
-    public final TableField<TrackLapThresholdsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<TrackLapThresholdsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.track_lap_thresholds.track_id</code>.
+     * The column <code>track_lap_thresholds.track_id</code>.
      */
     public final TableField<TrackLapThresholdsRecord, Long> TRACK_ID = createField(DSL.name("track_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.track_lap_thresholds.racing_class_id</code>.
+     * The column <code>track_lap_thresholds.racing_class_id</code>.
      */
     public final TableField<TrackLapThresholdsRecord, Long> RACING_CLASS_ID = createField(DSL.name("racing_class_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.track_lap_thresholds.min_lap_ms</code>.
+     * The column <code>track_lap_thresholds.min_lap_ms</code>.
      */
     public final TableField<TrackLapThresholdsRecord, Integer> MIN_LAP_MS = createField(DSL.name("min_lap_ms"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>public.track_lap_thresholds.max_last_lap_ms</code>.
+     * The column <code>track_lap_thresholds.max_last_lap_ms</code>.
      */
     public final TableField<TrackLapThresholdsRecord, Integer> MAX_LAST_LAP_MS = createField(DSL.name("max_last_lap_ms"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>public.track_lap_thresholds.created_at</code>.
+     * The column <code>track_lap_thresholds.created_at</code>.
      */
-    public final TableField<TrackLapThresholdsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<TrackLapThresholdsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private TrackLapThresholds(Name alias, Table<TrackLapThresholdsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -98,23 +99,21 @@ public class TrackLapThresholds extends TableImpl<TrackLapThresholdsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.track_lap_thresholds</code> table
-     * reference
+     * Create an aliased <code>track_lap_thresholds</code> table reference
      */
     public TrackLapThresholds(String alias) {
         this(DSL.name(alias), TRACK_LAP_THRESHOLDS);
     }
 
     /**
-     * Create an aliased <code>public.track_lap_thresholds</code> table
-     * reference
+     * Create an aliased <code>track_lap_thresholds</code> table reference
      */
     public TrackLapThresholds(Name alias) {
         this(alias, TRACK_LAP_THRESHOLDS);
     }
 
     /**
-     * Create a <code>public.track_lap_thresholds</code> table reference
+     * Create a <code>track_lap_thresholds</code> table reference
      */
     public TrackLapThresholds() {
         this(DSL.name("track_lap_thresholds"), null);
@@ -155,7 +154,7 @@ public class TrackLapThresholds extends TableImpl<TrackLapThresholdsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -165,12 +164,7 @@ public class TrackLapThresholds extends TableImpl<TrackLapThresholdsRecord> {
 
     @Override
     public UniqueKey<TrackLapThresholdsRecord> getPrimaryKey() {
-        return Keys.TRACK_LAP_THRESHOLDS_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<TrackLapThresholdsRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.TRACK_LAP_THRESHOLDS_TRACK_ID_RACING_CLASS_ID_KEY);
+        return Keys.TRACK_LAP_THRESHOLDS__PK_TRACK_LAP_THRESHOLDS;
     }
 
     @Override
@@ -181,8 +175,7 @@ public class TrackLapThresholds extends TableImpl<TrackLapThresholdsRecord> {
     private transient RacingClassesPath _racingClasses;
 
     /**
-     * Get the implicit join path to the <code>public.racing_classes</code>
-     * table.
+     * Get the implicit join path to the <code>racing_classes</code> table.
      */
     public RacingClassesPath racingClasses() {
         if (_racingClasses == null)
@@ -194,7 +187,7 @@ public class TrackLapThresholds extends TableImpl<TrackLapThresholdsRecord> {
     private transient TracksPath _tracks;
 
     /**
-     * Get the implicit join path to the <code>public.tracks</code> table.
+     * Get the implicit join path to the <code>tracks</code> table.
      */
     public TracksPath tracks() {
         if (_tracks == null)

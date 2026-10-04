@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,101 +21,101 @@ public class ChampionshipExclusionsRecord extends UpdatableRecordImpl<Championsh
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.championship_exclusions.id</code>.
+     * Setter for <code>championship_exclusions.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.championship_exclusions.id</code>.
+     * Getter for <code>championship_exclusions.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.championship_exclusions.championship_id</code>.
+     * Setter for <code>championship_exclusions.championship_id</code>.
      */
     public void setChampionshipId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.championship_exclusions.championship_id</code>.
+     * Getter for <code>championship_exclusions.championship_id</code>.
      */
     public Long getChampionshipId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.championship_exclusions.driver_id</code>.
+     * Setter for <code>championship_exclusions.driver_id</code>.
      */
     public void setDriverId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.championship_exclusions.driver_id</code>.
+     * Getter for <code>championship_exclusions.driver_id</code>.
      */
     public Long getDriverId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.championship_exclusions.event_id</code>.
+     * Setter for <code>championship_exclusions.event_id</code>.
      */
     public void setEventId(Long value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.championship_exclusions.event_id</code>.
+     * Getter for <code>championship_exclusions.event_id</code>.
      */
     public Long getEventId() {
         return (Long) get(3);
     }
 
     /**
-     * Setter for <code>public.championship_exclusions.reason</code>.
+     * Setter for <code>championship_exclusions.reason</code>.
      */
     public void setReason(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.championship_exclusions.reason</code>.
+     * Getter for <code>championship_exclusions.reason</code>.
      */
     public String getReason() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>public.championship_exclusions.created_by</code>.
+     * Setter for <code>championship_exclusions.created_by</code>.
      */
     public void setCreatedBy(Long value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.championship_exclusions.created_by</code>.
+     * Getter for <code>championship_exclusions.created_by</code>.
      */
     public Long getCreatedBy() {
         return (Long) get(5);
     }
 
     /**
-     * Setter for <code>public.championship_exclusions.created_at</code>.
+     * Setter for <code>championship_exclusions.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.championship_exclusions.created_at</code>.
+     * Getter for <code>championship_exclusions.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(6);
+    public Instant getCreatedAt() {
+        return (Instant) get(6);
     }
 
     // -------------------------------------------------------------------------
@@ -141,7 +141,7 @@ public class ChampionshipExclusionsRecord extends UpdatableRecordImpl<Championsh
     /**
      * Create a detached, initialised ChampionshipExclusionsRecord
      */
-    public ChampionshipExclusionsRecord(Long id, Long championshipId, Long driverId, Long eventId, String reason, Long createdBy, OffsetDateTime createdAt) {
+    public ChampionshipExclusionsRecord(Long id, Long championshipId, Long driverId, Long eventId, String reason, Long createdBy, Instant createdAt) {
         super(ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS);
 
         setId(id);

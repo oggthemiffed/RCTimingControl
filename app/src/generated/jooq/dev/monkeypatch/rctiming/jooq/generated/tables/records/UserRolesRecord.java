@@ -19,28 +19,28 @@ public class UserRolesRecord extends UpdatableRecordImpl<UserRolesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.user_roles.user_id</code>.
+     * Setter for <code>user_roles.user_id</code>.
      */
     public void setUserId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.user_roles.user_id</code>.
+     * Getter for <code>user_roles.user_id</code>.
      */
     public Long getUserId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.user_roles.role</code>.
+     * Setter for <code>user_roles.role</code>.
      */
     public void setRole(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.user_roles.role</code>.
+     * Getter for <code>user_roles.role</code>.
      */
     public String getRole() {
         return (String) get(1);

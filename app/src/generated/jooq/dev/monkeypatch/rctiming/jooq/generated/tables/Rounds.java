@@ -4,19 +4,19 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RoundsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -37,7 +37,6 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -51,7 +50,7 @@ public class Rounds extends TableImpl<RoundsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.rounds</code>
+     * The reference instance of <code>rounds</code>
      */
     public static final Rounds ROUNDS = new Rounds();
 
@@ -64,44 +63,44 @@ public class Rounds extends TableImpl<RoundsRecord> {
     }
 
     /**
-     * The column <code>public.rounds.id</code>.
+     * The column <code>rounds.id</code>.
      */
-    public final TableField<RoundsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<RoundsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.rounds.event_id</code>.
+     * The column <code>rounds.event_id</code>.
      */
     public final TableField<RoundsRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.rounds.type</code>.
+     * The column <code>rounds.type</code>.
      */
     public final TableField<RoundsRecord, String> TYPE = createField(DSL.name("type"), SQLDataType.VARCHAR(20).nullable(false), this, "");
 
     /**
-     * The column <code>public.rounds.round_number</code>.
+     * The column <code>rounds.round_number</code>.
      */
     public final TableField<RoundsRecord, Integer> ROUND_NUMBER = createField(DSL.name("round_number"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>public.rounds.sequence_in_event</code>.
+     * The column <code>rounds.sequence_in_event</code>.
      */
     public final TableField<RoundsRecord, Integer> SEQUENCE_IN_EVENT = createField(DSL.name("sequence_in_event"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>public.rounds.status</code>.
+     * The column <code>rounds.status</code>.
      */
-    public final TableField<RoundsRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'PENDING'::character varying"), SQLDataType.VARCHAR)), this, "");
+    public final TableField<RoundsRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'PENDING'"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.rounds.created_at</code>.
+     * The column <code>rounds.created_at</code>.
      */
-    public final TableField<RoundsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RoundsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.rounds.updated_at</code>.
+     * The column <code>rounds.updated_at</code>.
      */
-    public final TableField<RoundsRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RoundsRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private Rounds(Name alias, Table<RoundsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -112,21 +111,21 @@ public class Rounds extends TableImpl<RoundsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.rounds</code> table reference
+     * Create an aliased <code>rounds</code> table reference
      */
     public Rounds(String alias) {
         this(DSL.name(alias), ROUNDS);
     }
 
     /**
-     * Create an aliased <code>public.rounds</code> table reference
+     * Create an aliased <code>rounds</code> table reference
      */
     public Rounds(Name alias) {
         this(alias, ROUNDS);
     }
 
     /**
-     * Create a <code>public.rounds</code> table reference
+     * Create a <code>rounds</code> table reference
      */
     public Rounds() {
         this(DSL.name("rounds"), null);
@@ -167,7 +166,7 @@ public class Rounds extends TableImpl<RoundsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -182,7 +181,7 @@ public class Rounds extends TableImpl<RoundsRecord> {
 
     @Override
     public UniqueKey<RoundsRecord> getPrimaryKey() {
-        return Keys.ROUNDS_PKEY;
+        return Keys.ROUNDS__PK_ROUNDS;
     }
 
     @Override
@@ -193,7 +192,7 @@ public class Rounds extends TableImpl<RoundsRecord> {
     private transient EventsPath _events;
 
     /**
-     * Get the implicit join path to the <code>public.events</code> table.
+     * Get the implicit join path to the <code>events</code> table.
      */
     public EventsPath events() {
         if (_events == null)
@@ -205,21 +204,13 @@ public class Rounds extends TableImpl<RoundsRecord> {
     private transient RacesPath _races;
 
     /**
-     * Get the implicit to-many join path to the <code>public.races</code> table
+     * Get the implicit to-many join path to the <code>races</code> table
      */
     public RacesPath races() {
         if (_races == null)
             _races = new RacesPath(this, null, Keys.RACES__RACES_ROUND_ID_FKEY.getInverseKey());
 
         return _races;
-    }
-
-    @Override
-    public List<Check<RoundsRecord>> getChecks() {
-        return Arrays.asList(
-            Internal.createCheck(this, DSL.name("rounds_status_check"), "(((status)::text = ANY ((ARRAY['PENDING'::character varying, 'RUNNING'::character varying, 'COMPLETED'::character varying])::text[])))", true),
-            Internal.createCheck(this, DSL.name("rounds_type_check"), "(((type)::text = ANY ((ARRAY['PRACTICE'::character varying, 'QUALIFIER'::character varying, 'FINAL'::character varying])::text[])))", true)
-        );
     }
 
     @Override

@@ -8,11 +8,10 @@ import org.flywaydb.core.Flyway;
  */
 public class FlywayMigrator {
 
-    public static void migrate(String url, String user, String password, String location) {
+    public static void migrate(String url, String location) {
         Flyway flyway = Flyway.configure()
-                .dataSource(url, user, password)
+                .dataSource(url, null, null)
                 .locations(location)
-                .cleanDisabled(false)
                 .load();
         flyway.migrate();
     }

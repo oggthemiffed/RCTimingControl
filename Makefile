@@ -21,13 +21,13 @@ COMPOSE := $(shell \
 help:
 	@printf '$(BOLD)RCTimingControl — common tasks$(RESET)\n\n'
 	@printf '  $(BOLD)Infrastructure$(RESET)\n'
-	@printf '    make up          Start PostgreSQL + Piper (docker compose up -d)\n'
+	@printf '    make up          Start Piper for announcer voices (optional; needs Docker)\n'
 	@printf '    make down        Stop and remove containers\n'
-	@printf '    make clean-db    Drop the pgdata volume and restart fresh\n'
+	@printf '    make clean-db    Delete the dev SQLite database (app/data/db)\n'
 	@printf '\n'
 	@printf '  $(BOLD)Backend$(RESET)\n'
-	@printf '    make dev         Start backend in dev mode (requires: make up)\n'
-	@printf '    make generate-db Regenerate jOOQ sources from live schema (requires: make up)\n'
+	@printf '    make dev         Start backend in dev mode (no Docker needed)\n'
+	@printf '    make generate-db Regenerate jOOQ sources from the SQLite migrations\n'
 	@printf '    make build       Compile the backend (regenerates jOOQ if sources missing)\n'
 	@printf '    make test        Run all backend + simulator integration tests\n'
 	@printf '    make test-fast   Run tests skipping jOOQ codegen\n'
@@ -42,7 +42,7 @@ help:
 	@printf '    make ui-lint     Run ESLint\n'
 	@printf '\n'
 	@printf '  $(BOLD)Combined$(RESET)\n'
-	@printf '    make dev-start   Full dev environment: docker + backend + frontend\n'
+	@printf '    make dev-start   Full dev environment: backend + frontend (+ Piper if Docker)\n'
 	@printf '    make start       Same as dev-start (background; logs to /tmp/rc-*.log)\n'
 	@printf '    make stop        Kill backend, frontend and docker containers\n'
 	@printf '    make clean       Stop everything and wipe build artefacts\n'
@@ -53,37 +53,20 @@ help:
 .PHONY: up
 up:
 	@if [ -z "$(COMPOSE)" ]; then \
-		printf '$(BOLD)No Docker Compose found — starting Postgres directly via docker run.$(RESET)\n'; \
-		docker run -d --name rctiming-postgres \
-			-e POSTGRES_DB=rctiming_dev \
-			-e POSTGRES_USER=rctiming \
-			-e POSTGRES_PASSWORD=rctiming \
-			-p 5432:5432 \
-			postgres:16-alpine 2>/dev/null || docker start rctiming-postgres 2>/dev/null || true; \
-		printf 'Postgres started on :5432 (piper skipped — install docker compose plugin for full stack).\n'; \
+		printf 'No Docker Compose found — skipping Piper, so announcer voices are off.\n'; \
 	else \
 		$(COMPOSE) up -d; \
 	fi
 
 .PHONY: down
 down:
-	@if [ -z "$(COMPOSE)" ]; then \
-		docker stop rctiming-postgres rctiming-piper 2>/dev/null || true; \
-	else \
-		$(COMPOSE) down; \
-	fi
+	@if [ -n "$(COMPOSE)" ]; then $(COMPOSE) down; fi
 
+# The dev database is a SQLite file under app/data; the backend recreates it on the next start
 .PHONY: clean-db
 clean-db:
-	@if [ -z "$(COMPOSE)" ]; then \
-		docker stop rctiming-postgres 2>/dev/null || true; \
-		docker rm rctiming-postgres 2>/dev/null || true; \
-		docker volume rm rctiming_pgdata 2>/dev/null || true; \
-		$(MAKE) up; \
-	else \
-		$(COMPOSE) down -v; \
-		$(COMPOSE) up -d; \
-	fi
+	rm -rf app/data/db app/data/db-setup-test
+	@printf 'Dev database deleted. The next "make dev" migrates and seeds a fresh one.\n'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Backend

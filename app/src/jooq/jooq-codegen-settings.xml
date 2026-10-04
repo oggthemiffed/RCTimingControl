@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- jOOQ codegen reads the schema back from SQLite's stored DDL. Its parser doesn't know SQLite's
+     date functions (used in the timestamp defaults), so let it skip unknown functions. -->
+<settings xmlns="http://www.jooq.org/xsd/jooq-runtime-3.19.0.xsd">
+    <parseUnknownFunctions>IGNORE</parseUnknownFunctions>
+</settings>

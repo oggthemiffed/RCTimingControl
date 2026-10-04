@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,115 +21,115 @@ public class RoundsRecord extends UpdatableRecordImpl<RoundsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.rounds.id</code>.
+     * Setter for <code>rounds.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.rounds.id</code>.
+     * Getter for <code>rounds.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.rounds.event_id</code>.
+     * Setter for <code>rounds.event_id</code>.
      */
     public void setEventId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.rounds.event_id</code>.
+     * Getter for <code>rounds.event_id</code>.
      */
     public Long getEventId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.rounds.type</code>.
+     * Setter for <code>rounds.type</code>.
      */
     public void setType(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.rounds.type</code>.
+     * Getter for <code>rounds.type</code>.
      */
     public String getType() {
         return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.rounds.round_number</code>.
+     * Setter for <code>rounds.round_number</code>.
      */
     public void setRoundNumber(Integer value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.rounds.round_number</code>.
+     * Getter for <code>rounds.round_number</code>.
      */
     public Integer getRoundNumber() {
         return (Integer) get(3);
     }
 
     /**
-     * Setter for <code>public.rounds.sequence_in_event</code>.
+     * Setter for <code>rounds.sequence_in_event</code>.
      */
     public void setSequenceInEvent(Integer value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.rounds.sequence_in_event</code>.
+     * Getter for <code>rounds.sequence_in_event</code>.
      */
     public Integer getSequenceInEvent() {
         return (Integer) get(4);
     }
 
     /**
-     * Setter for <code>public.rounds.status</code>.
+     * Setter for <code>rounds.status</code>.
      */
     public void setStatus(String value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.rounds.status</code>.
+     * Getter for <code>rounds.status</code>.
      */
     public String getStatus() {
         return (String) get(5);
     }
 
     /**
-     * Setter for <code>public.rounds.created_at</code>.
+     * Setter for <code>rounds.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.rounds.created_at</code>.
+     * Getter for <code>rounds.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(6);
+    public Instant getCreatedAt() {
+        return (Instant) get(6);
     }
 
     /**
-     * Setter for <code>public.rounds.updated_at</code>.
+     * Setter for <code>rounds.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.rounds.updated_at</code>.
+     * Getter for <code>rounds.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(7);
+    public Instant getUpdatedAt() {
+        return (Instant) get(7);
     }
 
     // -------------------------------------------------------------------------
@@ -155,7 +155,7 @@ public class RoundsRecord extends UpdatableRecordImpl<RoundsRecord> {
     /**
      * Create a detached, initialised RoundsRecord
      */
-    public RoundsRecord(Long id, Long eventId, String type, Integer roundNumber, Integer sequenceInEvent, String status, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public RoundsRecord(Long id, Long eventId, String type, Integer roundNumber, Integer sequenceInEvent, String status, Instant createdAt, Instant updatedAt) {
         super(Rounds.ROUNDS);
 
         setId(id);

@@ -4,13 +4,14 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RefreshTokensRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -48,7 +49,7 @@ public class RefreshTokens extends TableImpl<RefreshTokensRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.refresh_tokens</code>
+     * The reference instance of <code>refresh_tokens</code>
      */
     public static final RefreshTokens REFRESH_TOKENS = new RefreshTokens();
 
@@ -61,34 +62,34 @@ public class RefreshTokens extends TableImpl<RefreshTokensRecord> {
     }
 
     /**
-     * The column <code>public.refresh_tokens.id</code>.
+     * The column <code>refresh_tokens.id</code>.
      */
-    public final TableField<RefreshTokensRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<RefreshTokensRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.refresh_tokens.user_id</code>.
+     * The column <code>refresh_tokens.user_id</code>.
      */
     public final TableField<RefreshTokensRecord, Long> USER_ID = createField(DSL.name("user_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.refresh_tokens.token_hash</code>.
+     * The column <code>refresh_tokens.token_hash</code>.
      */
     public final TableField<RefreshTokensRecord, String> TOKEN_HASH = createField(DSL.name("token_hash"), SQLDataType.VARCHAR(64).nullable(false), this, "");
 
     /**
-     * The column <code>public.refresh_tokens.expires_at</code>.
+     * The column <code>refresh_tokens.expires_at</code>.
      */
-    public final TableField<RefreshTokensRecord, OffsetDateTime> EXPIRES_AT = createField(DSL.name("expires_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false), this, "");
+    public final TableField<RefreshTokensRecord, Instant> EXPIRES_AT = createField(DSL.name("expires_at"), SQLDataType.BIGINT.nullable(false), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.refresh_tokens.created_at</code>.
+     * The column <code>refresh_tokens.created_at</code>.
      */
-    public final TableField<RefreshTokensRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RefreshTokensRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.refresh_tokens.revoked</code>.
+     * The column <code>refresh_tokens.revoked</code>.
      */
-    public final TableField<RefreshTokensRecord, Boolean> REVOKED = createField(DSL.name("revoked"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
+    public final TableField<RefreshTokensRecord, Boolean> REVOKED = createField(DSL.name("revoked"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.BOOLEAN)), this, "");
 
     private RefreshTokens(Name alias, Table<RefreshTokensRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -99,21 +100,21 @@ public class RefreshTokens extends TableImpl<RefreshTokensRecord> {
     }
 
     /**
-     * Create an aliased <code>public.refresh_tokens</code> table reference
+     * Create an aliased <code>refresh_tokens</code> table reference
      */
     public RefreshTokens(String alias) {
         this(DSL.name(alias), REFRESH_TOKENS);
     }
 
     /**
-     * Create an aliased <code>public.refresh_tokens</code> table reference
+     * Create an aliased <code>refresh_tokens</code> table reference
      */
     public RefreshTokens(Name alias) {
         this(alias, REFRESH_TOKENS);
     }
 
     /**
-     * Create a <code>public.refresh_tokens</code> table reference
+     * Create a <code>refresh_tokens</code> table reference
      */
     public RefreshTokens() {
         this(DSL.name("refresh_tokens"), null);
@@ -154,7 +155,7 @@ public class RefreshTokens extends TableImpl<RefreshTokensRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -169,12 +170,7 @@ public class RefreshTokens extends TableImpl<RefreshTokensRecord> {
 
     @Override
     public UniqueKey<RefreshTokensRecord> getPrimaryKey() {
-        return Keys.REFRESH_TOKENS_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<RefreshTokensRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.REFRESH_TOKENS_TOKEN_HASH_KEY);
+        return Keys.REFRESH_TOKENS__PK_REFRESH_TOKENS;
     }
 
     @Override
@@ -185,7 +181,7 @@ public class RefreshTokens extends TableImpl<RefreshTokensRecord> {
     private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table.
+     * Get the implicit join path to the <code>users</code> table.
      */
     public UsersPath users() {
         if (_users == null)

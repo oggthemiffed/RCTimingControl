@@ -4,16 +4,17 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties.MarshalPenaltiesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.MarshalAbsencesRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -51,7 +52,7 @@ public class MarshalAbsences extends TableImpl<MarshalAbsencesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.marshal_absences</code>
+     * The reference instance of <code>marshal_absences</code>
      */
     public static final MarshalAbsences MARSHAL_ABSENCES = new MarshalAbsences();
 
@@ -64,32 +65,32 @@ public class MarshalAbsences extends TableImpl<MarshalAbsencesRecord> {
     }
 
     /**
-     * The column <code>public.marshal_absences.id</code>.
+     * The column <code>marshal_absences.id</code>.
      */
-    public final TableField<MarshalAbsencesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<MarshalAbsencesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.marshal_absences.race_id</code>.
+     * The column <code>marshal_absences.race_id</code>.
      */
     public final TableField<MarshalAbsencesRecord, Long> RACE_ID = createField(DSL.name("race_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.marshal_absences.entry_id</code>.
+     * The column <code>marshal_absences.entry_id</code>.
      */
     public final TableField<MarshalAbsencesRecord, Long> ENTRY_ID = createField(DSL.name("entry_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.marshal_absences.event_id</code>.
+     * The column <code>marshal_absences.event_id</code>.
      */
     public final TableField<MarshalAbsencesRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.marshal_absences.recorded_at</code>.
+     * The column <code>marshal_absences.recorded_at</code>.
      */
-    public final TableField<MarshalAbsencesRecord, OffsetDateTime> RECORDED_AT = createField(DSL.name("recorded_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<MarshalAbsencesRecord, Instant> RECORDED_AT = createField(DSL.name("recorded_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.marshal_absences.recorded_by</code>.
+     * The column <code>marshal_absences.recorded_by</code>.
      */
     public final TableField<MarshalAbsencesRecord, Long> RECORDED_BY = createField(DSL.name("recorded_by"), SQLDataType.BIGINT.nullable(false), this, "");
 
@@ -102,21 +103,21 @@ public class MarshalAbsences extends TableImpl<MarshalAbsencesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.marshal_absences</code> table reference
+     * Create an aliased <code>marshal_absences</code> table reference
      */
     public MarshalAbsences(String alias) {
         this(DSL.name(alias), MARSHAL_ABSENCES);
     }
 
     /**
-     * Create an aliased <code>public.marshal_absences</code> table reference
+     * Create an aliased <code>marshal_absences</code> table reference
      */
     public MarshalAbsences(Name alias) {
         this(alias, MARSHAL_ABSENCES);
     }
 
     /**
-     * Create a <code>public.marshal_absences</code> table reference
+     * Create a <code>marshal_absences</code> table reference
      */
     public MarshalAbsences() {
         this(DSL.name("marshal_absences"), null);
@@ -157,7 +158,7 @@ public class MarshalAbsences extends TableImpl<MarshalAbsencesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -172,12 +173,7 @@ public class MarshalAbsences extends TableImpl<MarshalAbsencesRecord> {
 
     @Override
     public UniqueKey<MarshalAbsencesRecord> getPrimaryKey() {
-        return Keys.MARSHAL_ABSENCES_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<MarshalAbsencesRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.MARSHAL_ABSENCES_RACE_ID_ENTRY_ID_KEY);
+        return Keys.MARSHAL_ABSENCES__PK_MARSHAL_ABSENCES;
     }
 
     @Override
@@ -188,7 +184,7 @@ public class MarshalAbsences extends TableImpl<MarshalAbsencesRecord> {
     private transient EntriesPath _entries;
 
     /**
-     * Get the implicit join path to the <code>public.entries</code> table.
+     * Get the implicit join path to the <code>entries</code> table.
      */
     public EntriesPath entries() {
         if (_entries == null)
@@ -200,7 +196,7 @@ public class MarshalAbsences extends TableImpl<MarshalAbsencesRecord> {
     private transient EventsPath _events;
 
     /**
-     * Get the implicit join path to the <code>public.events</code> table.
+     * Get the implicit join path to the <code>events</code> table.
      */
     public EventsPath events() {
         if (_events == null)
@@ -212,7 +208,7 @@ public class MarshalAbsences extends TableImpl<MarshalAbsencesRecord> {
     private transient RacesPath _races;
 
     /**
-     * Get the implicit join path to the <code>public.races</code> table.
+     * Get the implicit join path to the <code>races</code> table.
      */
     public RacesPath races() {
         if (_races == null)
@@ -224,8 +220,8 @@ public class MarshalAbsences extends TableImpl<MarshalAbsencesRecord> {
     private transient MarshalPenaltiesPath _marshalPenalties;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.marshal_penalties</code> table
+     * Get the implicit to-many join path to the <code>marshal_penalties</code>
+     * table
      */
     public MarshalPenaltiesPath marshalPenalties() {
         if (_marshalPenalties == null)

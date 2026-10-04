@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,87 +21,87 @@ public class ChampionshipClassesRecord extends UpdatableRecordImpl<ChampionshipC
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.championship_classes.id</code>.
+     * Setter for <code>championship_classes.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.championship_classes.id</code>.
+     * Getter for <code>championship_classes.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.championship_classes.championship_id</code>.
+     * Setter for <code>championship_classes.championship_id</code>.
      */
     public void setChampionshipId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.championship_classes.championship_id</code>.
+     * Getter for <code>championship_classes.championship_id</code>.
      */
     public Long getChampionshipId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.championship_classes.racing_class_id</code>.
+     * Setter for <code>championship_classes.racing_class_id</code>.
      */
     public void setRacingClassId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.championship_classes.racing_class_id</code>.
+     * Getter for <code>championship_classes.racing_class_id</code>.
      */
     public Long getRacingClassId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.championship_classes.best_x_from_y_x</code>.
+     * Setter for <code>championship_classes.best_x_from_y_x</code>.
      */
     public void setBestXFromYX(Integer value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.championship_classes.best_x_from_y_x</code>.
+     * Getter for <code>championship_classes.best_x_from_y_x</code>.
      */
     public Integer getBestXFromYX() {
         return (Integer) get(3);
     }
 
     /**
-     * Setter for <code>public.championship_classes.best_x_from_y_y</code>.
+     * Setter for <code>championship_classes.best_x_from_y_y</code>.
      */
     public void setBestXFromYY(Integer value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.championship_classes.best_x_from_y_y</code>.
+     * Getter for <code>championship_classes.best_x_from_y_y</code>.
      */
     public Integer getBestXFromYY() {
         return (Integer) get(4);
     }
 
     /**
-     * Setter for <code>public.championship_classes.created_at</code>.
+     * Setter for <code>championship_classes.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.championship_classes.created_at</code>.
+     * Getter for <code>championship_classes.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(5);
+    public Instant getCreatedAt() {
+        return (Instant) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -127,7 +127,7 @@ public class ChampionshipClassesRecord extends UpdatableRecordImpl<ChampionshipC
     /**
      * Create a detached, initialised ChampionshipClassesRecord
      */
-    public ChampionshipClassesRecord(Long id, Long championshipId, Long racingClassId, Integer bestXFromYX, Integer bestXFromYY, OffsetDateTime createdAt) {
+    public ChampionshipClassesRecord(Long id, Long championshipId, Long racingClassId, Integer bestXFromYX, Integer bestXFromYY, Instant createdAt) {
         super(ChampionshipClasses.CHAMPIONSHIP_CLASSES);
 
         setId(id);

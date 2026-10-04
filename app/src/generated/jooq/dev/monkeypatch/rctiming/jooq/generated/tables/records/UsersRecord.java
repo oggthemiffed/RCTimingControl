@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,101 +21,101 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.users.id</code>.
+     * Setter for <code>users.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.users.id</code>.
+     * Getter for <code>users.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.users.email</code>.
+     * Setter for <code>users.email</code>.
      */
     public void setEmail(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.users.email</code>.
+     * Getter for <code>users.email</code>.
      */
     public String getEmail() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.users.password_hash</code>.
+     * Setter for <code>users.password_hash</code>.
      */
     public void setPasswordHash(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.users.password_hash</code>.
+     * Getter for <code>users.password_hash</code>.
      */
     public String getPasswordHash() {
         return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.users.first_name</code>.
+     * Setter for <code>users.first_name</code>.
      */
     public void setFirstName(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.users.first_name</code>.
+     * Getter for <code>users.first_name</code>.
      */
     public String getFirstName() {
         return (String) get(3);
     }
 
     /**
-     * Setter for <code>public.users.last_name</code>.
+     * Setter for <code>users.last_name</code>.
      */
     public void setLastName(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.users.last_name</code>.
+     * Getter for <code>users.last_name</code>.
      */
     public String getLastName() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>public.users.created_at</code>.
+     * Setter for <code>users.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.users.created_at</code>.
+     * Getter for <code>users.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(5);
+    public Instant getCreatedAt() {
+        return (Instant) get(5);
     }
 
     /**
-     * Setter for <code>public.users.updated_at</code>.
+     * Setter for <code>users.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.users.updated_at</code>.
+     * Getter for <code>users.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(6);
+    public Instant getUpdatedAt() {
+        return (Instant) get(6);
     }
 
     // -------------------------------------------------------------------------
@@ -141,7 +141,7 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
     /**
      * Create a detached, initialised UsersRecord
      */
-    public UsersRecord(Long id, String email, String passwordHash, String firstName, String lastName, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public UsersRecord(Long id, String email, String passwordHash, String firstName, String lastName, Instant createdAt, Instant updatedAt) {
         super(Users.USERS);
 
         setId(id);

@@ -5,7 +5,7 @@
 | Tool | Version |
 |------|---------|
 | Java | 21 (LTS) |
-| Docker | 24+ |
+| Docker | 24+ (optional: only for Piper announcer voices and the trial stack) |
 | Node.js | 20+ |
 | Gradle | via wrapper (`./gradlew`) |
 
@@ -13,20 +13,12 @@
 
 A `Makefile` at the repo root wraps all common tasks. Run `make` (or `make help`) to see the full list.
 
-**First-time setup** — run jOOQ codegen before the first start:
+No database server to install: the backend keeps its data in a SQLite file under `app/data/db`, created and migrated on first start.
 
 ```bash
-make up                       # Start PostgreSQL
-./gradlew :app:generateJooq   # Generate jOOQ sources from live schema
-make dev-start                # Start backend + frontend in background
-```
-
-**Subsequent starts** (schema unchanged):
-
-```bash
-make dev-start   # Docker + backend (dev profile) + frontend, all in background
-make stop        # Kill backend + frontend + docker
-make clean-db    # Wipe the database volume and restart fresh (re-runs all seeds)
+make dev-start   # Backend (dev profile) + frontend in background, plus Piper if Docker is available
+make stop        # Kill backend + frontend (and Piper)
+make clean-db    # Delete the dev database; the next start migrates and seeds a fresh one
 make test-fast   # Run integration tests skipping jOOQ codegen
 ```
 
@@ -34,7 +26,7 @@ See [Makefile targets](#makefile-targets) below for the full reference.
 
 ### When to re-run jOOQ codegen
 
-Re-run `./gradlew :app:generateJooq` whenever new Flyway migration files appear (i.e. after pulling commits that add `V*__.sql` files). If you skip this and try to compile, you'll get `package dev.monkeypatch.rctiming.jooq.generated.tables does not exist` errors.
+The generated jOOQ sources are committed (`app/src/generated/jooq`). Re-run `./gradlew :app:generateJooq` after changing or adding a migration. Codegen migrates a throwaway SQLite file (`app/build/jooq-codegen/schema.db`) and reads the schema from it, so it needs no Docker.
 
 ---
 
@@ -42,15 +34,14 @@ Re-run `./gradlew :app:generateJooq` whenever new Flyway migration files appear 
 
 If you prefer to run services individually (e.g. in separate terminal tabs):
 
-### 1. Start dev infrastructure
+### 1. Optional: start Piper
 
 ```bash
 make up
 # or: docker compose up -d
 ```
 
-This starts:
-- **PostgreSQL 16** on `localhost:5432` — database `rctiming_dev`, user/pass `rctiming`
+This starts **Piper** (text to speech) on `localhost:10200` for announcer voices. Without it the app runs normally with announcements off.
 
 Club logos and TTS clips are stored on local disk under `storage.local-path` (defaults to `./data/uploads`, overridable via `STORAGE_LOCAL_PATH`) and served back by the app itself at `/storage/**` — no object-storage server to start.
 
@@ -61,49 +52,23 @@ make dev
 # or: ./gradlew :app:bootRun --args='--spring.profiles.active=dev'
 ```
 
-On first run, Flyway applies all migrations and dev seed data automatically:
+On first run, Flyway creates the database file and applies the baseline migrations and the dev seed data:
 
-**Phase 1 (V1–V5):**
-- `V1` — users and roles
-- `V2` — club profile and governing body affiliations
-- `V3` — tracks, decoder loops, lap thresholds
-- `V4` — racing classes
-- `V5` — race format templates and event classes (JSONB)
+**Baseline (`db/migration/sqlite/`, V1–V6), grouped by area:**
+- `V1` — users and roles, refresh tokens, club profile, governing bodies
+- `V2` — tracks, decoder loops, lap thresholds, racing classes, format templates, events and event classes
+- `V3` — competitors, entries, entry audit log, RaceHub class mappings
+- `V4` — rounds, races, race entries, marshal adjustments/absences/penalties, penalties, incident reports, unknown transponder links
+- `V5` — result snapshots and championships
+- `V6` — practice sessions and laps, profanity blocklist
 
-**Phase 2 (V6–V14):** the racer-portal tables and columns here (V6–V11, entry car/transponder links) were dropped in `V35` when sign-in became officials-only.
-- `V6` — user profile fields (phone, emergency contact, phonetic name)
-- `V7` — governing body memberships (unique per user+code)
-- `V8` — user class ratings (read-only, set by officials)
-- `V9` — cars
-- `V10` — car tag categories + values (7 default categories seeded)
-- `V11` — transponders (system-wide unique transponder numbers)
-- `V12` — events + event classes (JSONB config snapshot)
-- `V13` — entries (transponder snapshot, partial unique index)
-- `V14` — entry audit log
+The baseline replaced the PostgreSQL history (V1–V36) in #26; `V1` lists the type conventions.
 
-**Phase 3 (V15–V16):**
-- `V15` — event track FK, event class racing_class FK, combined race groups, club logo URL
-- `V16` — championships
+**Dev seeds (`db/seed/sqlite/`, V1000+):**
+- `V1001` — tracks, racing classes and race format templates
+- `V1002` — admin1 and race director accounts, club profile, "Club Championship Round 1" event (IN_PROGRESS) with 6 competitors and entries (transponders 101–106), 6 rounds (P1/P2/Q1/Q2/Q3/Final A), races and race entries
 
-**Phase 4 (V17–V19):**
-- `V17` — rounds, races, race_entries tables; EventClass finals config columns
-- `V18` — marshal_adjustments, marshal_absences, marshal_penalties, incident_reports, penalties, unknown_transponder_links
-- `V19` — result_snapshots (JSONB positions + lap_history)
-
-**Phase 5 (V21–V22):**
-- `V21` — forwarder_token (BCrypt hash, status, timestamps); dropped in `V29`
-- `V22` — unknown_transponder_link (audit of retroactive transponder→entry links)
-
-**Local-only (V30 onward):** competitors (`V30`–`V31`), secondary transponders (`V32`), RaceHub import (`V33`–`V34`), racer-portal schema dropped (`V35`).
-
-**Dev seeds (V1000+):**
-- `V1001/V1002` — racing classes and corrected race format templates
-- `V1004` — competitors for entries seeded by the retired V1003 (a no-op on a fresh database)
-- `V1005` — admin1 and race director accounts, club profile, "Club Championship Round 1" event (IN_PROGRESS) with 6 competitors and entries (transponders 101–106), 6 rounds (P1/P2/Q1/Q2/Q3/Final A), races and race entries
-
-`V1000` and `V1003` seeded racer accounts with cars and transponders; they were retired when sign-in became officials-only (L10). The dev profile ignores them in an existing database's history (`ignore-migration-patterns`), so no reset is needed.
-
-The dev profile connects to `localhost:5432/rctiming_dev`. No additional setup needed.
+The dev profile keeps the database in `app/data/db` (relative to `app/`, gitignored). `make clean-db` deletes it.
 
 ### 3. Frontend
 
@@ -123,9 +88,9 @@ Vite dev server starts on `http://localhost:5173` with API proxy to `localhost:8
 | Variable | Default (dev) | Description |
 |----------|---------------|-------------|
 | `JWT_SECRET` | base64-encoded dev key | HMAC-SHA256 signing key — **change in production** |
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/rctiming_dev` | Database URL |
-| `SPRING_DATASOURCE_USERNAME` | `rctiming` | Database user |
-| `SPRING_DATASOURCE_PASSWORD` | `rctiming` | Database password |
+| `RCTIMING_DATA_DIR` | per-user app-data folder (dev profile: `app/data/db`) | Folder holding the SQLite database file `rctiming.db` |
+
+Outside the dev profile the database lives in the user's app-data folder: `%LOCALAPPDATA%\RCTimingControl` on Windows, `~/Library/Application Support/RCTimingControl` on macOS, and `$XDG_DATA_HOME/rctimingcontrol` (or `~/.local/share/rctimingcontrol`) on Linux.
 
 The dev JWT secret is baked into `application.yml` as a fallback default — fine for development, must be overridden in production via environment variable.
 
@@ -191,7 +156,7 @@ app/src/main/java/dev/monkeypatch/rctiming/
 
 ## Running tests
 
-### Unit tests (no Docker)
+### Unit tests
 
 ```bash
 ./gradlew :app:test --tests "dev.monkeypatch.rctiming.domain.*"
@@ -200,13 +165,13 @@ app/src/main/java/dev/monkeypatch/rctiming/
 
 Covers format config serialization, race state machine transitions, round generator logic, and bump-up seeding.
 
-### Integration tests (requires Docker)
+### Integration tests (no Docker)
 
 ```bash
 ./gradlew :app:test
 ```
 
-Uses Testcontainers with `@ServiceConnection` — spins up a real PostgreSQL container. Tests cover all implemented endpoints.
+Each test run creates a temporary SQLite database, shared by all integration test classes (one Spring context). `SqliteConcurrencyIT` writes laps while readers poll, and `CrashRecoveryIT` kills the app mid-session and checks no committed lap is lost.
 
 **Phase 1:** `AuthControllerIT`, `SecurityIT`, `ClubControllerIT`, `TrackControllerIT`, `RacingClassControllerIT`, `FormatControllerIT`
 
@@ -238,11 +203,11 @@ Run `make help` to see all targets. Quick reference:
 
 | Target | What it does |
 |--------|-------------|
-| `make dev-start` | Start everything: Docker + backend (dev) + frontend (background) |
+| `make dev-start` | Start everything: backend (dev) + frontend (background), plus Piper if Docker is available |
 | `make stop` | Kill backend and frontend processes |
-| `make up` | `docker compose up -d` |
+| `make up` | Start Piper (`docker compose up -d`); skipped without Docker |
 | `make down` | `docker compose down` |
-| `make clean-db` | Drop pgdata volume and restart fresh (re-runs all seeds) |
+| `make clean-db` | Delete the dev SQLite database (re-runs all seeds on next start) |
 | `make dev` | Backend only, foreground |
 | `make ui` | Frontend only, foreground |
 | `make build` | Compile backend (no tests, no jOOQ codegen) |
@@ -259,9 +224,6 @@ Run `make help` to see all targets. Quick reference:
 ```bash
 # Compile check only
 ./gradlew :app:compileJava
-
-# View Flyway migration state
-./gradlew :app:flywayInfo
 
 # Generate jOOQ sources (needed after schema changes)
 ./gradlew :app:generateJooq
@@ -289,17 +251,20 @@ Run `make help` to see all targets. Quick reference:
 Any new `V*__.sql` migration file requires jOOQ codegen to be re-run before the code will compile:
 
 ```bash
-make up
 ./gradlew :app:generateJooq
 ```
 
 Flyway applies migrations automatically on backend startup — you do not need to run them manually.
 
-Migrations live in one folder per database: `app/src/main/resources/db/migration/{vendor}/` (dev seeds in `db/seed/{vendor}/`, test data in `app/src/test/resources/db/testdata/{vendor}/`).
+Migrations live in one folder per database: `app/src/main/resources/db/migration/{vendor}/` (dev seeds in `db/seed/{vendor}/`, the trial demo club in `db/demo/{vendor}/`, test data in `app/src/test/resources/db/testdata/{vendor}/`). Until the first release on SQLite, the baseline may still be edited in place; after that, every change is a new migration.
 
 ### Keeping the database swappable
 
-The database is chosen in one place. `rctiming.database.vendor` picks it, and `DatabaseConfig` (in `persistence/`) applies it to Flyway, Hibernate and jOOQ. The vendor-specific values themselves live in `persistence/vendor/DatabaseVendor`.
+The database is chosen in one place. `rctiming.database.vendor` picks it, and `DatabaseConfig` (in `persistence/`) applies it to Flyway, Hibernate and jOOQ. The vendor-specific values themselves live in `persistence/vendor/DatabaseVendor`: the JDBC URL, connection settings (for SQLite: WAL, `synchronous=NORMAL`, foreign keys on, a 5 second busy timeout), how many write connections it allows, and the dialects.
+
+The app opens two pools on the database: a write pool (one connection for SQLite, used by JPA, Flyway and Spring transactions) and a read pool of `rctiming.database.read-connections` (default 4) whose connections refuse writes. jOOQ queries outside a transaction go to the read pool; inside a transaction they share the writer.
+
+Column types the databases disagree on are mapped by converters in `persistence/convert/`, not by the schema: timestamps are `Instant` stored as UTC microseconds, date-only values are ISO text, and JSON columns are text read through `JsonTextConverter` subclasses.
 
 Everywhere else the code stays database-neutral:
 
@@ -311,10 +276,10 @@ Everywhere else the code stays database-neutral:
 
 Moving to another database means:
 
-1. Add a constant to `DatabaseVendor` with its migrations folder name, jOOQ dialect and Hibernate dialect.
+1. Add a constant to `DatabaseVendor` with its migrations folder name, jOOQ and Hibernate dialects, JDBC URL, connection settings and write-connection limit.
 2. Add baseline migrations under `db/migration/{vendor}/` (and the dev seeds and test data folders).
 3. Add the JDBC driver and Flyway database support to `app/build.gradle.kts`.
-4. Set `rctiming.database.vendor` and the datasource settings.
+4. Set `rctiming.database.vendor`, and point the jOOQ codegen in `app/build.gradle.kts` at the new migrations.
 5. Run the whole test suite against it.
 
 ### Submitting a PR

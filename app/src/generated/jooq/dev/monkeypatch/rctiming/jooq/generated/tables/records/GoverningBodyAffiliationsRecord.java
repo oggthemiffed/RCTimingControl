@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.GoverningBodyAffiliations;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,75 +21,73 @@ public class GoverningBodyAffiliationsRecord extends UpdatableRecordImpl<Governi
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.governing_body_affiliations.id</code>.
+     * Setter for <code>governing_body_affiliations.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.governing_body_affiliations.id</code>.
+     * Getter for <code>governing_body_affiliations.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.governing_body_affiliations.code</code>.
+     * Setter for <code>governing_body_affiliations.code</code>.
      */
     public void setCode(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.governing_body_affiliations.code</code>.
+     * Getter for <code>governing_body_affiliations.code</code>.
      */
     public String getCode() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.governing_body_affiliations.display_name</code>.
+     * Setter for <code>governing_body_affiliations.display_name</code>.
      */
     public void setDisplayName(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.governing_body_affiliations.display_name</code>.
+     * Getter for <code>governing_body_affiliations.display_name</code>.
      */
     public String getDisplayName() {
         return (String) get(2);
     }
 
     /**
-     * Setter for
-     * <code>public.governing_body_affiliations.membership_required</code>.
+     * Setter for <code>governing_body_affiliations.membership_required</code>.
      */
     public void setMembershipRequired(Boolean value) {
         set(3, value);
     }
 
     /**
-     * Getter for
-     * <code>public.governing_body_affiliations.membership_required</code>.
+     * Getter for <code>governing_body_affiliations.membership_required</code>.
      */
     public Boolean getMembershipRequired() {
         return (Boolean) get(3);
     }
 
     /**
-     * Setter for <code>public.governing_body_affiliations.created_at</code>.
+     * Setter for <code>governing_body_affiliations.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.governing_body_affiliations.created_at</code>.
+     * Getter for <code>governing_body_affiliations.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(4);
+    public Instant getCreatedAt() {
+        return (Instant) get(4);
     }
 
     // -------------------------------------------------------------------------
@@ -115,7 +113,7 @@ public class GoverningBodyAffiliationsRecord extends UpdatableRecordImpl<Governi
     /**
      * Create a detached, initialised GoverningBodyAffiliationsRecord
      */
-    public GoverningBodyAffiliationsRecord(Long id, String code, String displayName, Boolean membershipRequired, OffsetDateTime createdAt) {
+    public GoverningBodyAffiliationsRecord(Long id, String code, String displayName, Boolean membershipRequired, Instant createdAt) {
         super(GoverningBodyAffiliations.GOVERNING_BODY_AFFILIATIONS);
 
         setId(id);

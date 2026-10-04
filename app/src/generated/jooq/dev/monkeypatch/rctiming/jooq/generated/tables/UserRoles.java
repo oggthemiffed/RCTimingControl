@@ -4,8 +4,8 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.UserRolesRecord;
 
@@ -44,7 +44,7 @@ public class UserRoles extends TableImpl<UserRolesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.user_roles</code>
+     * The reference instance of <code>user_roles</code>
      */
     public static final UserRoles USER_ROLES = new UserRoles();
 
@@ -57,12 +57,12 @@ public class UserRoles extends TableImpl<UserRolesRecord> {
     }
 
     /**
-     * The column <code>public.user_roles.user_id</code>.
+     * The column <code>user_roles.user_id</code>.
      */
     public final TableField<UserRolesRecord, Long> USER_ID = createField(DSL.name("user_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.user_roles.role</code>.
+     * The column <code>user_roles.role</code>.
      */
     public final TableField<UserRolesRecord, String> ROLE = createField(DSL.name("role"), SQLDataType.VARCHAR(50).nullable(false), this, "");
 
@@ -75,21 +75,21 @@ public class UserRoles extends TableImpl<UserRolesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.user_roles</code> table reference
+     * Create an aliased <code>user_roles</code> table reference
      */
     public UserRoles(String alias) {
         this(DSL.name(alias), USER_ROLES);
     }
 
     /**
-     * Create an aliased <code>public.user_roles</code> table reference
+     * Create an aliased <code>user_roles</code> table reference
      */
     public UserRoles(Name alias) {
         this(alias, USER_ROLES);
     }
 
     /**
-     * Create a <code>public.user_roles</code> table reference
+     * Create a <code>user_roles</code> table reference
      */
     public UserRoles() {
         this(DSL.name("user_roles"), null);
@@ -130,12 +130,12 @@ public class UserRoles extends TableImpl<UserRolesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public UniqueKey<UserRolesRecord> getPrimaryKey() {
-        return Keys.USER_ROLES_PKEY;
+        return Keys.USER_ROLES__PK_USER_ROLES;
     }
 
     @Override
@@ -146,7 +146,7 @@ public class UserRoles extends TableImpl<UserRolesRecord> {
     private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table.
+     * Get the implicit join path to the <code>users</code> table.
      */
     public UsersPath users() {
         if (_users == null)

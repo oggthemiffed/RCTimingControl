@@ -128,7 +128,7 @@ Edit `.env` and change `HOST_PORT=80` to `HOST_PORT=8080` (or any free port), th
 
 **Services keep restarting / app won't start**
 
-Wait a bit longer — PostgreSQL takes 10–20 seconds to initialise on first boot and the app will retry automatically.
+Wait a bit longer — on first boot the app creates its database and loads the demo club, which can take a minute. Check progress with `docker compose -f docker-compose.ghcr.yml logs app`.
 
 **"Set RCTIMING_VERSION in .env" error**
 
@@ -136,7 +136,7 @@ Make sure you renamed `.env.example` to `.env` (not `.env.example`).
 
 **Everything looks blank / no demo data**
 
-The `demo-seed` container runs once on first boot. Check it completed: `docker compose -f docker-compose.ghcr.yml ps` — the `demo-seed` row should show `Exited (0)`. If it shows a non-zero exit code, run `docker compose -f docker-compose.ghcr.yml logs demo-seed` to see what went wrong.
+The app loads the demo club the first time it creates its database. Run `docker compose -f docker-compose.ghcr.yml logs app` and look for `wyvern demo club` in the Flyway lines. To start again from a fresh demo, run `docker compose -f docker-compose.ghcr.yml down -v` and bring the stack back up.
 
 ---
 

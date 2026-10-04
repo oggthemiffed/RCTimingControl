@@ -4,15 +4,17 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.GoverningBodyAffiliationsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.Identity;
@@ -28,6 +30,7 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -41,7 +44,7 @@ public class GoverningBodyAffiliations extends TableImpl<GoverningBodyAffiliatio
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.governing_body_affiliations</code>
+     * The reference instance of <code>governing_body_affiliations</code>
      */
     public static final GoverningBodyAffiliations GOVERNING_BODY_AFFILIATIONS = new GoverningBodyAffiliations();
 
@@ -54,30 +57,29 @@ public class GoverningBodyAffiliations extends TableImpl<GoverningBodyAffiliatio
     }
 
     /**
-     * The column <code>public.governing_body_affiliations.id</code>.
+     * The column <code>governing_body_affiliations.id</code>.
      */
-    public final TableField<GoverningBodyAffiliationsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<GoverningBodyAffiliationsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.governing_body_affiliations.code</code>.
+     * The column <code>governing_body_affiliations.code</code>.
      */
     public final TableField<GoverningBodyAffiliationsRecord, String> CODE = createField(DSL.name("code"), SQLDataType.VARCHAR(50).nullable(false), this, "");
 
     /**
-     * The column <code>public.governing_body_affiliations.display_name</code>.
+     * The column <code>governing_body_affiliations.display_name</code>.
      */
     public final TableField<GoverningBodyAffiliationsRecord, String> DISPLAY_NAME = createField(DSL.name("display_name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column
-     * <code>public.governing_body_affiliations.membership_required</code>.
+     * The column <code>governing_body_affiliations.membership_required</code>.
      */
-    public final TableField<GoverningBodyAffiliationsRecord, Boolean> MEMBERSHIP_REQUIRED = createField(DSL.name("membership_required"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
+    public final TableField<GoverningBodyAffiliationsRecord, Boolean> MEMBERSHIP_REQUIRED = createField(DSL.name("membership_required"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.BOOLEAN)), this, "");
 
     /**
-     * The column <code>public.governing_body_affiliations.created_at</code>.
+     * The column <code>governing_body_affiliations.created_at</code>.
      */
-    public final TableField<GoverningBodyAffiliationsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<GoverningBodyAffiliationsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private GoverningBodyAffiliations(Name alias, Table<GoverningBodyAffiliationsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -88,7 +90,7 @@ public class GoverningBodyAffiliations extends TableImpl<GoverningBodyAffiliatio
     }
 
     /**
-     * Create an aliased <code>public.governing_body_affiliations</code> table
+     * Create an aliased <code>governing_body_affiliations</code> table
      * reference
      */
     public GoverningBodyAffiliations(String alias) {
@@ -96,7 +98,7 @@ public class GoverningBodyAffiliations extends TableImpl<GoverningBodyAffiliatio
     }
 
     /**
-     * Create an aliased <code>public.governing_body_affiliations</code> table
+     * Create an aliased <code>governing_body_affiliations</code> table
      * reference
      */
     public GoverningBodyAffiliations(Name alias) {
@@ -104,7 +106,7 @@ public class GoverningBodyAffiliations extends TableImpl<GoverningBodyAffiliatio
     }
 
     /**
-     * Create a <code>public.governing_body_affiliations</code> table reference
+     * Create a <code>governing_body_affiliations</code> table reference
      */
     public GoverningBodyAffiliations() {
         this(DSL.name("governing_body_affiliations"), null);
@@ -112,7 +114,7 @@ public class GoverningBodyAffiliations extends TableImpl<GoverningBodyAffiliatio
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -122,12 +124,19 @@ public class GoverningBodyAffiliations extends TableImpl<GoverningBodyAffiliatio
 
     @Override
     public UniqueKey<GoverningBodyAffiliationsRecord> getPrimaryKey() {
-        return Keys.GOVERNING_BODY_AFFILIATIONS_PKEY;
+        return Keys.GOVERNING_BODY_AFFILIATIONS__PK_GOVERNING_BODY_AFFILIATIONS;
     }
 
     @Override
     public List<UniqueKey<GoverningBodyAffiliationsRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.GOVERNING_BODY_AFFILIATIONS_CODE_KEY);
+        return Arrays.asList(Keys.GOVERNING_BODY_AFFILIATIONS__GOVERNING_BODY_AFFILIATIONS_CODE_KEY);
+    }
+
+    @Override
+    public List<Check<GoverningBodyAffiliationsRecord>> getChecks() {
+        return Arrays.asList(
+            Internal.createCheck(this, DSL.name(""), "membership_required in (0, 1)", true)
+        );
     }
 
     @Override

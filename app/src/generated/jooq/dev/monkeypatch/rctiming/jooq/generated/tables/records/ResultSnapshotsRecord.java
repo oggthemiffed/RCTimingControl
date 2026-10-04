@@ -6,9 +6,8 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
-import org.jooq.JSONB;
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -22,87 +21,87 @@ public class ResultSnapshotsRecord extends UpdatableRecordImpl<ResultSnapshotsRe
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.result_snapshots.id</code>.
+     * Setter for <code>result_snapshots.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.result_snapshots.id</code>.
+     * Getter for <code>result_snapshots.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.result_snapshots.race_id</code>.
+     * Setter for <code>result_snapshots.race_id</code>.
      */
     public void setRaceId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.result_snapshots.race_id</code>.
+     * Getter for <code>result_snapshots.race_id</code>.
      */
     public Long getRaceId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.result_snapshots.finished_at</code>.
+     * Setter for <code>result_snapshots.finished_at</code>.
      */
-    public void setFinishedAt(OffsetDateTime value) {
+    public void setFinishedAt(Instant value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.result_snapshots.finished_at</code>.
+     * Getter for <code>result_snapshots.finished_at</code>.
      */
-    public OffsetDateTime getFinishedAt() {
-        return (OffsetDateTime) get(2);
+    public Instant getFinishedAt() {
+        return (Instant) get(2);
     }
 
     /**
-     * Setter for <code>public.result_snapshots.positions_json</code>.
+     * Setter for <code>result_snapshots.positions_json</code>.
      */
-    public void setPositionsJson(JSONB value) {
+    public void setPositionsJson(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.result_snapshots.positions_json</code>.
+     * Getter for <code>result_snapshots.positions_json</code>.
      */
-    public JSONB getPositionsJson() {
-        return (JSONB) get(3);
+    public String getPositionsJson() {
+        return (String) get(3);
     }
 
     /**
-     * Setter for <code>public.result_snapshots.lap_history_json</code>.
+     * Setter for <code>result_snapshots.lap_history_json</code>.
      */
-    public void setLapHistoryJson(JSONB value) {
+    public void setLapHistoryJson(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.result_snapshots.lap_history_json</code>.
+     * Getter for <code>result_snapshots.lap_history_json</code>.
      */
-    public JSONB getLapHistoryJson() {
-        return (JSONB) get(4);
+    public String getLapHistoryJson() {
+        return (String) get(4);
     }
 
     /**
-     * Setter for <code>public.result_snapshots.created_at</code>.
+     * Setter for <code>result_snapshots.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.result_snapshots.created_at</code>.
+     * Getter for <code>result_snapshots.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(5);
+    public Instant getCreatedAt() {
+        return (Instant) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -128,7 +127,7 @@ public class ResultSnapshotsRecord extends UpdatableRecordImpl<ResultSnapshotsRe
     /**
      * Create a detached, initialised ResultSnapshotsRecord
      */
-    public ResultSnapshotsRecord(Long id, Long raceId, OffsetDateTime finishedAt, JSONB positionsJson, JSONB lapHistoryJson, OffsetDateTime createdAt) {
+    public ResultSnapshotsRecord(Long id, Long raceId, Instant finishedAt, String positionsJson, String lapHistoryJson, Instant createdAt) {
         super(ResultSnapshots.RESULT_SNAPSHOTS);
 
         setId(id);

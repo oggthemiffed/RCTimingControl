@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,87 +21,87 @@ public class TracksRecord extends UpdatableRecordImpl<TracksRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.tracks.id</code>.
+     * Setter for <code>tracks.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.tracks.id</code>.
+     * Getter for <code>tracks.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.tracks.name</code>.
+     * Setter for <code>tracks.name</code>.
      */
     public void setName(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.tracks.name</code>.
+     * Getter for <code>tracks.name</code>.
      */
     public String getName() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.tracks.venue_notes</code>.
+     * Setter for <code>tracks.venue_notes</code>.
      */
     public void setVenueNotes(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.tracks.venue_notes</code>.
+     * Getter for <code>tracks.venue_notes</code>.
      */
     public String getVenueNotes() {
         return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.tracks.track_length</code>.
+     * Setter for <code>tracks.track_length</code>.
      */
-    public void setTrackLength(Double value) {
+    public void setTrackLength(Float value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.tracks.track_length</code>.
+     * Getter for <code>tracks.track_length</code>.
      */
-    public Double getTrackLength() {
-        return (Double) get(3);
+    public Float getTrackLength() {
+        return (Float) get(3);
     }
 
     /**
-     * Setter for <code>public.tracks.created_at</code>.
+     * Setter for <code>tracks.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.tracks.created_at</code>.
+     * Getter for <code>tracks.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(4);
+    public Instant getCreatedAt() {
+        return (Instant) get(4);
     }
 
     /**
-     * Setter for <code>public.tracks.updated_at</code>.
+     * Setter for <code>tracks.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.tracks.updated_at</code>.
+     * Getter for <code>tracks.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(5);
+    public Instant getUpdatedAt() {
+        return (Instant) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -127,7 +127,7 @@ public class TracksRecord extends UpdatableRecordImpl<TracksRecord> {
     /**
      * Create a detached, initialised TracksRecord
      */
-    public TracksRecord(Long id, String name, String venueNotes, Double trackLength, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public TracksRecord(Long id, String name, String venueNotes, Float trackLength, Instant createdAt, Instant updatedAt) {
         super(Tracks.TRACKS);
 
         setId(id);

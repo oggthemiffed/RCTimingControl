@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.jooq.DSLContext;
-import org.jooq.JSONB;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -228,14 +227,14 @@ public class ChampionshipStandingsQuery {
 
             // Step 6b/6c: Deserialize positions_json and collect per-driver best position per class
             for (var race : finishedRaces) {
-                JSONB posJson = race.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
+                String posJson = race.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
                 var raceEventClassId = race.get(EVENT_CLASSES.RACING_CLASS_ID);
 
                 if (posJson == null) continue;
 
                 try {
                     List<ResultSnapshotDto.ResultRow> positions = objectMapper.readValue(
-                            posJson.data(), new TypeReference<>() {});
+                            posJson, new TypeReference<>() {});
 
                     for (ResultSnapshotDto.ResultRow row : positions) {
                         Long driverId = entryIdToDriverId.get(row.entryId());
@@ -277,11 +276,11 @@ public class ChampionshipStandingsQuery {
             for (var race : bonusRaces) {
                 String roundType = race.get(ROUNDS.TYPE);
                 String finalLetter = race.get(RACES.FINAL_LETTER);
-                JSONB posJson = race.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
+                String posJson = race.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
                 if (posJson == null) continue;
                 try {
                     List<ResultSnapshotDto.ResultRow> positions = objectMapper.readValue(
-                            posJson.data(), new TypeReference<>() {});
+                            posJson, new TypeReference<>() {});
                     for (ResultSnapshotDto.ResultRow row : positions) {
                         Long driverId = bonusEntryToDriver.get(row.entryId());
                         if (driverId == null) continue;

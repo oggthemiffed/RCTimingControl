@@ -5,11 +5,24 @@ This document describes how to cut a release of RCTimingControl.
 ## Overview
 
 Releases are driven by git tags. Pushing a `v*` tag to GitHub automatically:
-1. Builds and publishes five Docker images to GHCR
+1. Builds and publishes three Docker images to GHCR
 2. Creates a GitHub Release with `docker-compose.ghcr.yml` and `.env.example` attached
 3. Marks the release as pre-release if the version starts with `0.` (i.e. `0.x.x`)
 
 The `VERSION` file in the repo root is the single source of truth. It controls the Gradle build version, the Spring Boot build-info (displayed on the About page), and the default `RCTIMING_VERSION` in `.env.example`.
+
+---
+
+## Upgrade notes
+
+### The release after 0.1.x: the database moved to SQLite (#26)
+
+The app now keeps its data in a single SQLite file instead of a PostgreSQL server. There is no migration path: an existing PostgreSQL database cannot be upgraded and its data is not carried over.
+
+- Start from an empty database. With Docker, remove the old stack and its volumes (`docker compose -f <compose file> down -v`) before starting the new version.
+- The `postgres` and `demo-seed` services and `POSTGRES_PASSWORD` are gone. The database lives in the `app_db` volume (`RCTIMING_DATA_DIR`, default the user's app-data folder outside Docker).
+- The trial stack loads its demo club through the app's `demo` profile rather than a seed container.
+- Developers: delete any old local database with `make clean-db`.
 
 ---
 
@@ -119,7 +132,7 @@ git push origin main
 
 | Job | What it runs |
 |-----|-------------|
-| `test-backend` | Gradle test suite — JUnit 5 + Testcontainers (Java 21); also runs `decoder-simulator` and `decoder-protocol` (the latter needs no Docker) |
+| `test-backend` | Gradle test suite — JUnit 5 on temporary SQLite databases (Java 21, no Docker); also runs `decoder-simulator` and `decoder-protocol` |
 | `test-frontend` | Vitest unit tests (Node 20) |
 | `test-e2e` | Playwright smoke tests against the full `docker-compose.trial.yml` stack |
 
@@ -127,7 +140,7 @@ git push origin main
 
 | Job | What it does |
 |-----|-------------|
-| `build-and-push` | Builds 5 Docker images and publishes them to GHCR tagged with the version |
+| `build-and-push` | Builds 3 Docker images and publishes them to GHCR tagged with the version |
 | `create-release` | Creates a GitHub Release with install instructions and file assets |
 
 ---
@@ -138,8 +151,6 @@ git push origin main
 |-------|---------------|
 | App (Spring Boot) | `ghcr.io/oggthemiffed/rctimingcontrol/app:<version>` |
 | Frontend (nginx) | `ghcr.io/oggthemiffed/rctimingcontrol/frontend:<version>` |
-| Forwarder | `ghcr.io/oggthemiffed/rctimingcontrol/forwarder:<version>` |
 | Fake decoder | `ghcr.io/oggthemiffed/rctimingcontrol/fake-decoder:<version>` |
-| Demo seed | `ghcr.io/oggthemiffed/rctimingcontrol/seed:<version>` |
 
 Images are tagged with the exact semver (e.g. `0.1.0`) without the `v` prefix. There is no `latest` tag — consumers must pin to a specific version via `RCTIMING_VERSION` in `.env`.

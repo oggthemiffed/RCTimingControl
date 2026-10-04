@@ -43,7 +43,7 @@ public class AdminEntryQueryService {
                         r.get(ENTRIES.TRANSPONDER_NUMBER),
                         r.get(ENTRIES.SECONDARY_TRANSPONDER_NUMBER),
                         r.get(ENTRIES.STATUS),
-                        r.get(ENTRIES.SUBMITTED_AT) == null ? null : r.get(ENTRIES.SUBMITTED_AT).toInstant(),
-                        r.get(ENTRIES.WITHDRAWN_AT) == null ? null : r.get(ENTRIES.WITHDRAWN_AT).toInstant()));
+                        r.get(ENTRIES.SUBMITTED_AT),
+                        r.get(ENTRIES.WITHDRAWN_AT)));
     }
 }

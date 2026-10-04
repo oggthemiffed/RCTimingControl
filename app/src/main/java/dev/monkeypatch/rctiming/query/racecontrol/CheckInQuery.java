@@ -8,7 +8,7 @@ import org.jooq.impl.DSL;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -79,7 +79,7 @@ public class CheckInQuery {
     }
 
     private static CheckInEntryDto toDto(Record r) {
-        OffsetDateTime checkedInAt = r.get(ENTRIES.CHECKED_IN_AT);
+        Instant checkedInAt = r.get(ENTRIES.CHECKED_IN_AT);
         return new CheckInEntryDto(
                 r.get(ENTRIES.ID),
                 r.get("competitorName", String.class),
@@ -87,7 +87,7 @@ public class CheckInQuery {
                 r.get(ENTRIES.TRANSPONDER_NUMBER),
                 r.get(ENTRIES.SECONDARY_TRANSPONDER_NUMBER),
                 checkedInAt != null,
-                checkedInAt != null ? checkedInAt.toInstant() : null,
+                checkedInAt,
                 r.get(ENTRIES.RACEHUB_ARRIVAL));
     }
 

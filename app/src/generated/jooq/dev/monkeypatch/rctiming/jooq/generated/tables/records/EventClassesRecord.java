@@ -6,9 +6,8 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
-import org.jooq.JSONB;
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -22,168 +21,168 @@ public class EventClassesRecord extends UpdatableRecordImpl<EventClassesRecord> 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.event_classes.id</code>.
+     * Setter for <code>event_classes.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.id</code>.
+     * Getter for <code>event_classes.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.event_classes.config_snapshot</code>.
+     * Setter for <code>event_classes.config_snapshot</code>.
      */
-    public void setConfigSnapshot(JSONB value) {
+    public void setConfigSnapshot(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.config_snapshot</code>.
+     * Getter for <code>event_classes.config_snapshot</code>.
      */
-    public JSONB getConfigSnapshot() {
-        return (JSONB) get(1);
+    public String getConfigSnapshot() {
+        return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.event_classes.config_override</code>.
+     * Setter for <code>event_classes.config_override</code>.
      */
-    public void setConfigOverride(JSONB value) {
+    public void setConfigOverride(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.config_override</code>.
+     * Getter for <code>event_classes.config_override</code>.
      */
-    public JSONB getConfigOverride() {
-        return (JSONB) get(2);
+    public String getConfigOverride() {
+        return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.event_classes.template_id</code>.
+     * Setter for <code>event_classes.template_id</code>.
      */
     public void setTemplateId(Long value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.template_id</code>.
+     * Getter for <code>event_classes.template_id</code>.
      */
     public Long getTemplateId() {
         return (Long) get(3);
     }
 
     /**
-     * Setter for <code>public.event_classes.created_at</code>.
+     * Setter for <code>event_classes.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.created_at</code>.
+     * Getter for <code>event_classes.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(4);
+    public Instant getCreatedAt() {
+        return (Instant) get(4);
     }
 
     /**
-     * Setter for <code>public.event_classes.updated_at</code>.
+     * Setter for <code>event_classes.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.updated_at</code>.
+     * Getter for <code>event_classes.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(5);
+    public Instant getUpdatedAt() {
+        return (Instant) get(5);
     }
 
     /**
-     * Setter for <code>public.event_classes.event_id</code>.
+     * Setter for <code>event_classes.event_id</code>.
      */
     public void setEventId(Long value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.event_id</code>.
+     * Getter for <code>event_classes.event_id</code>.
      */
     public Long getEventId() {
         return (Long) get(6);
     }
 
     /**
-     * Setter for <code>public.event_classes.racing_class_id</code>.
+     * Setter for <code>event_classes.racing_class_id</code>.
      */
     public void setRacingClassId(Long value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.racing_class_id</code>.
+     * Getter for <code>event_classes.racing_class_id</code>.
      */
     public Long getRacingClassId() {
         return (Long) get(7);
     }
 
     /**
-     * Setter for <code>public.event_classes.combined_race_group</code>.
+     * Setter for <code>event_classes.combined_race_group</code>.
      */
     public void setCombinedRaceGroup(Long value) {
         set(8, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.combined_race_group</code>.
+     * Getter for <code>event_classes.combined_race_group</code>.
      */
     public Long getCombinedRaceGroup() {
         return (Long) get(8);
     }
 
     /**
-     * Setter for <code>public.event_classes.finals_count</code>.
+     * Setter for <code>event_classes.finals_count</code>.
      */
     public void setFinalsCount(Integer value) {
         set(9, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.finals_count</code>.
+     * Getter for <code>event_classes.finals_count</code>.
      */
     public Integer getFinalsCount() {
         return (Integer) get(9);
     }
 
     /**
-     * Setter for <code>public.event_classes.cars_per_final</code>.
+     * Setter for <code>event_classes.cars_per_final</code>.
      */
     public void setCarsPerFinal(Integer value) {
         set(10, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.cars_per_final</code>.
+     * Getter for <code>event_classes.cars_per_final</code>.
      */
     public Integer getCarsPerFinal() {
         return (Integer) get(10);
     }
 
     /**
-     * Setter for <code>public.event_classes.bump_count</code>.
+     * Setter for <code>event_classes.bump_count</code>.
      */
     public void setBumpCount(Integer value) {
         set(11, value);
     }
 
     /**
-     * Getter for <code>public.event_classes.bump_count</code>.
+     * Getter for <code>event_classes.bump_count</code>.
      */
     public Integer getBumpCount() {
         return (Integer) get(11);
@@ -212,7 +211,7 @@ public class EventClassesRecord extends UpdatableRecordImpl<EventClassesRecord> 
     /**
      * Create a detached, initialised EventClassesRecord
      */
-    public EventClassesRecord(Long id, JSONB configSnapshot, JSONB configOverride, Long templateId, OffsetDateTime createdAt, OffsetDateTime updatedAt, Long eventId, Long racingClassId, Long combinedRaceGroup, Integer finalsCount, Integer carsPerFinal, Integer bumpCount) {
+    public EventClassesRecord(Long id, String configSnapshot, String configOverride, Long templateId, Instant createdAt, Instant updatedAt, Long eventId, Long racingClassId, Long combinedRaceGroup, Integer finalsCount, Integer carsPerFinal, Integer bumpCount) {
         super(EventClasses.EVENT_CLASSES);
 
         setId(id);

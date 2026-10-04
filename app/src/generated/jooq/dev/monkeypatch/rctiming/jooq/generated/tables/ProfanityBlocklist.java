@@ -4,12 +4,13 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ProfanityBlocklistRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -46,7 +47,7 @@ public class ProfanityBlocklist extends TableImpl<ProfanityBlocklistRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.profanity_blocklist</code>
+     * The reference instance of <code>profanity_blocklist</code>
      */
     public static final ProfanityBlocklist PROFANITY_BLOCKLIST = new ProfanityBlocklist();
 
@@ -59,24 +60,24 @@ public class ProfanityBlocklist extends TableImpl<ProfanityBlocklistRecord> {
     }
 
     /**
-     * The column <code>public.profanity_blocklist.id</code>.
+     * The column <code>profanity_blocklist.id</code>.
      */
-    public final TableField<ProfanityBlocklistRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ProfanityBlocklistRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.profanity_blocklist.word</code>.
+     * The column <code>profanity_blocklist.word</code>.
      */
     public final TableField<ProfanityBlocklistRecord, String> WORD = createField(DSL.name("word"), SQLDataType.VARCHAR(200).nullable(false), this, "");
 
     /**
-     * The column <code>public.profanity_blocklist.added_by_user_id</code>.
+     * The column <code>profanity_blocklist.added_by_user_id</code>.
      */
     public final TableField<ProfanityBlocklistRecord, Long> ADDED_BY_USER_ID = createField(DSL.name("added_by_user_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.profanity_blocklist.added_at</code>.
+     * The column <code>profanity_blocklist.added_at</code>.
      */
-    public final TableField<ProfanityBlocklistRecord, OffsetDateTime> ADDED_AT = createField(DSL.name("added_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<ProfanityBlocklistRecord, Instant> ADDED_AT = createField(DSL.name("added_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private ProfanityBlocklist(Name alias, Table<ProfanityBlocklistRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -87,21 +88,21 @@ public class ProfanityBlocklist extends TableImpl<ProfanityBlocklistRecord> {
     }
 
     /**
-     * Create an aliased <code>public.profanity_blocklist</code> table reference
+     * Create an aliased <code>profanity_blocklist</code> table reference
      */
     public ProfanityBlocklist(String alias) {
         this(DSL.name(alias), PROFANITY_BLOCKLIST);
     }
 
     /**
-     * Create an aliased <code>public.profanity_blocklist</code> table reference
+     * Create an aliased <code>profanity_blocklist</code> table reference
      */
     public ProfanityBlocklist(Name alias) {
         this(alias, PROFANITY_BLOCKLIST);
     }
 
     /**
-     * Create a <code>public.profanity_blocklist</code> table reference
+     * Create a <code>profanity_blocklist</code> table reference
      */
     public ProfanityBlocklist() {
         this(DSL.name("profanity_blocklist"), null);
@@ -142,7 +143,7 @@ public class ProfanityBlocklist extends TableImpl<ProfanityBlocklistRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -152,12 +153,7 @@ public class ProfanityBlocklist extends TableImpl<ProfanityBlocklistRecord> {
 
     @Override
     public UniqueKey<ProfanityBlocklistRecord> getPrimaryKey() {
-        return Keys.PROFANITY_BLOCKLIST_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<ProfanityBlocklistRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.PROFANITY_BLOCKLIST_WORD_KEY);
+        return Keys.PROFANITY_BLOCKLIST__PK_PROFANITY_BLOCKLIST;
     }
 
     @Override
@@ -168,7 +164,7 @@ public class ProfanityBlocklist extends TableImpl<ProfanityBlocklistRecord> {
     private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table.
+     * Get the implicit join path to the <code>users</code> table.
      */
     public UsersPath users() {
         if (_users == null)

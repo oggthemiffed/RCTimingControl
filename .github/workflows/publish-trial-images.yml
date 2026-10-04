@@ -20,8 +20,6 @@ jobs:
             dockerfile: docker/frontend/Dockerfile
           - image: fake-decoder
             dockerfile: docker/fake-decoder/Dockerfile
-          - image: seed
-            dockerfile: docker/seed/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
@@ -112,7 +110,6 @@ jobs:
             | `ghcr.io/oggthemiffed/rctimingcontrol/app` | `${{ steps.version.outputs.version }}` |
             | `ghcr.io/oggthemiffed/rctimingcontrol/frontend` | `${{ steps.version.outputs.version }}` |
             | `ghcr.io/oggthemiffed/rctimingcontrol/fake-decoder` | `${{ steps.version.outputs.version }}` |
-            | `ghcr.io/oggthemiffed/rctimingcontrol/seed` | `${{ steps.version.outputs.version }}` |
           files: |
             docker-compose.ghcr.yml
             .env.example

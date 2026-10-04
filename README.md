@@ -28,7 +28,7 @@ Open **http://localhost** — demo data and a live fake decoder are included. Se
 | `frontend/` | React 18 + Vite + Tailwind + shadcn/ui — admin panel and race control for officials |
 | `decoder-simulator/` | Fake AMB decoder over TCP for development and the trial stack (generative and playback modes) |
 | `decoder-protocol/` | Shared AMB/MyLaps decoder protocol parsing (RC-4 text + P3 binary) — used by `app/` and `decoder-simulator/` |
-| `docker-compose.yml` | PostgreSQL 16 + Piper (TTS). Club logos and TTS clips are stored on local disk, no object-storage server needed. |
+| `docker-compose.yml` | Piper (TTS), optional, for announcer voices. The database is a SQLite file and club logos and TTS clips are stored on local disk, so nothing else needs Docker. |
 
 ### Quick start (dev)
 
@@ -38,7 +38,7 @@ Open **http://localhost** — demo data and a live fake decoder are included. Se
 make dev-start
 ```
 
-Starts PostgreSQL + Piper, the Spring Boot backend (dev profile), and the Vite frontend — all in the background.
+Starts the Spring Boot backend (dev profile, SQLite database in `app/data/db`), the Vite frontend and, if Docker is available, Piper — all in the background.
 
 | Service | URL |
 |---------|-----|

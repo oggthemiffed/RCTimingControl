@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,143 +21,143 @@ public class PracticeSessionsRecord extends UpdatableRecordImpl<PracticeSessions
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.practice_sessions.id</code>.
+     * Setter for <code>practice_sessions.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.practice_sessions.id</code>.
+     * Getter for <code>practice_sessions.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.practice_sessions.name</code>.
+     * Setter for <code>practice_sessions.name</code>.
      */
     public void setName(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.practice_sessions.name</code>.
+     * Getter for <code>practice_sessions.name</code>.
      */
     public String getName() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.practice_sessions.event_id</code>.
+     * Setter for <code>practice_sessions.event_id</code>.
      */
     public void setEventId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.practice_sessions.event_id</code>.
+     * Getter for <code>practice_sessions.event_id</code>.
      */
     public Long getEventId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.practice_sessions.status</code>.
+     * Setter for <code>practice_sessions.status</code>.
      */
     public void setStatus(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.practice_sessions.status</code>.
+     * Getter for <code>practice_sessions.status</code>.
      */
     public String getStatus() {
         return (String) get(3);
     }
 
     /**
-     * Setter for <code>public.practice_sessions.best_lap_n</code>.
+     * Setter for <code>practice_sessions.best_lap_n</code>.
      */
     public void setBestLapN(Integer value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.practice_sessions.best_lap_n</code>.
+     * Getter for <code>practice_sessions.best_lap_n</code>.
      */
     public Integer getBestLapN() {
         return (Integer) get(4);
     }
 
     /**
-     * Setter for <code>public.practice_sessions.created_by_user_id</code>.
+     * Setter for <code>practice_sessions.created_by_user_id</code>.
      */
     public void setCreatedByUserId(Long value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.practice_sessions.created_by_user_id</code>.
+     * Getter for <code>practice_sessions.created_by_user_id</code>.
      */
     public Long getCreatedByUserId() {
         return (Long) get(5);
     }
 
     /**
-     * Setter for <code>public.practice_sessions.started_at</code>.
+     * Setter for <code>practice_sessions.started_at</code>.
      */
-    public void setStartedAt(OffsetDateTime value) {
+    public void setStartedAt(Instant value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.practice_sessions.started_at</code>.
+     * Getter for <code>practice_sessions.started_at</code>.
      */
-    public OffsetDateTime getStartedAt() {
-        return (OffsetDateTime) get(6);
+    public Instant getStartedAt() {
+        return (Instant) get(6);
     }
 
     /**
-     * Setter for <code>public.practice_sessions.stopped_at</code>.
+     * Setter for <code>practice_sessions.stopped_at</code>.
      */
-    public void setStoppedAt(OffsetDateTime value) {
+    public void setStoppedAt(Instant value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.practice_sessions.stopped_at</code>.
+     * Getter for <code>practice_sessions.stopped_at</code>.
      */
-    public OffsetDateTime getStoppedAt() {
-        return (OffsetDateTime) get(7);
+    public Instant getStoppedAt() {
+        return (Instant) get(7);
     }
 
     /**
-     * Setter for <code>public.practice_sessions.created_at</code>.
+     * Setter for <code>practice_sessions.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(8, value);
     }
 
     /**
-     * Getter for <code>public.practice_sessions.created_at</code>.
+     * Getter for <code>practice_sessions.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(8);
+    public Instant getCreatedAt() {
+        return (Instant) get(8);
     }
 
     /**
-     * Setter for <code>public.practice_sessions.updated_at</code>.
+     * Setter for <code>practice_sessions.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(9, value);
     }
 
     /**
-     * Getter for <code>public.practice_sessions.updated_at</code>.
+     * Getter for <code>practice_sessions.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(9);
+    public Instant getUpdatedAt() {
+        return (Instant) get(9);
     }
 
     // -------------------------------------------------------------------------
@@ -183,7 +183,7 @@ public class PracticeSessionsRecord extends UpdatableRecordImpl<PracticeSessions
     /**
      * Create a detached, initialised PracticeSessionsRecord
      */
-    public PracticeSessionsRecord(Long id, String name, Long eventId, String status, Integer bestLapN, Long createdByUserId, OffsetDateTime startedAt, OffsetDateTime stoppedAt, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public PracticeSessionsRecord(Long id, String name, Long eventId, String status, Integer bestLapN, Long createdByUserId, Instant startedAt, Instant stoppedAt, Instant createdAt, Instant updatedAt) {
         super(PracticeSessions.PRACTICE_SESSIONS);
 
         setId(id);

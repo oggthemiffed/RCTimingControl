@@ -4,16 +4,15 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses.ChampionshipClassesPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Championships.ChampionshipsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.TrackLapThresholds.TrackLapThresholdsPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks.TracksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RacingClassesRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -50,7 +49,7 @@ public class RacingClasses extends TableImpl<RacingClassesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.racing_classes</code>
+     * The reference instance of <code>racing_classes</code>
      */
     public static final RacingClasses RACING_CLASSES = new RacingClasses();
 
@@ -63,29 +62,29 @@ public class RacingClasses extends TableImpl<RacingClassesRecord> {
     }
 
     /**
-     * The column <code>public.racing_classes.id</code>.
+     * The column <code>racing_classes.id</code>.
      */
-    public final TableField<RacingClassesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<RacingClassesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.racing_classes.name</code>.
+     * The column <code>racing_classes.name</code>.
      */
     public final TableField<RacingClassesRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.racing_classes.description</code>.
+     * The column <code>racing_classes.description</code>.
      */
     public final TableField<RacingClassesRecord, String> DESCRIPTION = createField(DSL.name("description"), SQLDataType.CLOB, this, "");
 
     /**
-     * The column <code>public.racing_classes.created_at</code>.
+     * The column <code>racing_classes.created_at</code>.
      */
-    public final TableField<RacingClassesRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RacingClassesRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.racing_classes.updated_at</code>.
+     * The column <code>racing_classes.updated_at</code>.
      */
-    public final TableField<RacingClassesRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<RacingClassesRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private RacingClasses(Name alias, Table<RacingClassesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -96,21 +95,21 @@ public class RacingClasses extends TableImpl<RacingClassesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.racing_classes</code> table reference
+     * Create an aliased <code>racing_classes</code> table reference
      */
     public RacingClasses(String alias) {
         this(DSL.name(alias), RACING_CLASSES);
     }
 
     /**
-     * Create an aliased <code>public.racing_classes</code> table reference
+     * Create an aliased <code>racing_classes</code> table reference
      */
     public RacingClasses(Name alias) {
         this(alias, RACING_CLASSES);
     }
 
     /**
-     * Create a <code>public.racing_classes</code> table reference
+     * Create a <code>racing_classes</code> table reference
      */
     public RacingClasses() {
         this(DSL.name("racing_classes"), null);
@@ -151,7 +150,7 @@ public class RacingClasses extends TableImpl<RacingClassesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -161,19 +160,19 @@ public class RacingClasses extends TableImpl<RacingClassesRecord> {
 
     @Override
     public UniqueKey<RacingClassesRecord> getPrimaryKey() {
-        return Keys.RACING_CLASSES_PKEY;
+        return Keys.RACING_CLASSES__PK_RACING_CLASSES;
     }
 
     @Override
     public List<UniqueKey<RacingClassesRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.RACING_CLASSES_NAME_KEY);
+        return Arrays.asList(Keys.RACING_CLASSES__RACING_CLASSES_NAME_KEY);
     }
 
     private transient ChampionshipClassesPath _championshipClasses;
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.championship_classes</code> table
+     * <code>championship_classes</code> table
      */
     public ChampionshipClassesPath championshipClasses() {
         if (_championshipClasses == null)
@@ -185,8 +184,8 @@ public class RacingClasses extends TableImpl<RacingClassesRecord> {
     private transient EventClassesPath _eventClasses;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.event_classes</code> table
+     * Get the implicit to-many join path to the <code>event_classes</code>
+     * table
      */
     public EventClassesPath eventClasses() {
         if (_eventClasses == null)
@@ -199,29 +198,13 @@ public class RacingClasses extends TableImpl<RacingClassesRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.track_lap_thresholds</code> table
+     * <code>track_lap_thresholds</code> table
      */
     public TrackLapThresholdsPath trackLapThresholds() {
         if (_trackLapThresholds == null)
             _trackLapThresholds = new TrackLapThresholdsPath(this, null, Keys.TRACK_LAP_THRESHOLDS__FK_THRESHOLD_RACING_CLASS.getInverseKey());
 
         return _trackLapThresholds;
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the
-     * <code>public.championships</code> table
-     */
-    public ChampionshipsPath championships() {
-        return championshipClasses().championships();
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the <code>public.tracks</code>
-     * table
-     */
-    public TracksPath tracks() {
-        return trackLapThresholds().tracks();
     }
 
     @Override

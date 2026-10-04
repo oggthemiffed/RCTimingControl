@@ -31,7 +31,6 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import org.jooq.DSLContext;
-import org.jooq.JSONB;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -188,13 +187,13 @@ class ChampionshipStandingsGoldenTest extends AbstractIntegrationTest {
 
     /** Excludes a driver from an event, keyed the way the standings query keys drivers. */
     private void exclude(Long champId, Driver driver, Long eventId, Long createdBy) {
-        dsl.insertInto(CHAMPIONSHIP_EXCLUSIONS)
+        dsl.transactionResult(tx -> tx.dsl().insertInto(CHAMPIONSHIP_EXCLUSIONS)
                 .set(CHAMPIONSHIP_EXCLUSIONS.CHAMPIONSHIP_ID, champId)
                 .set(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID, driver.competitor().getId())
                 .set(CHAMPIONSHIP_EXCLUSIONS.EVENT_ID, eventId)
                 .set(CHAMPIONSHIP_EXCLUSIONS.REASON, "Golden exclusion")
                 .set(CHAMPIONSHIP_EXCLUSIONS.CREATED_BY, createdBy)
-                .execute();
+                .execute());
     }
 
     private Long makeRacingClass(String name) {
@@ -224,13 +223,13 @@ class ChampionshipStandingsGoldenTest extends AbstractIntegrationTest {
     }
 
     private Long makeEventClass(Long eventId, Long racingClassId) {
-        return dsl.insertInto(EVENT_CLASSES)
+        return dsl.transactionResult(tx -> tx.dsl().insertInto(EVENT_CLASSES)
                 .set(EVENT_CLASSES.EVENT_ID, eventId)
                 .set(EVENT_CLASSES.RACING_CLASS_ID, racingClassId)
-                .set(EVENT_CLASSES.CONFIG_SNAPSHOT, JSONB.valueOf("{\"type\":\"TIMED\"}"))
+                .set(EVENT_CLASSES.CONFIG_SNAPSHOT, "{\"type\":\"TIMED\"}")
                 .returning(EVENT_CLASSES.ID)
                 .fetchOne()
-                .get(EVENT_CLASSES.ID);
+                .get(EVENT_CLASSES.ID));
     }
 
     private Round makeRound(Long eventId, RoundType type, int sequence) {

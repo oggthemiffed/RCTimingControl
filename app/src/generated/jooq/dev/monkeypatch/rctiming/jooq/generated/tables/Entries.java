@@ -4,9 +4,9 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.CompetitorsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.EntryAuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
@@ -17,18 +17,17 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments.Marshal
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties.MarshalPenaltiesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties.PenaltiesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries.RaceEntriesPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink.UnknownTransponderLinkPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLinks.UnknownTransponderLinksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.EntriesRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -49,7 +48,6 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -63,7 +61,7 @@ public class Entries extends TableImpl<EntriesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.entries</code>
+     * The reference instance of <code>entries</code>
      */
     public static final Entries ENTRIES = new Entries();
 
@@ -76,97 +74,97 @@ public class Entries extends TableImpl<EntriesRecord> {
     }
 
     /**
-     * The column <code>public.entries.id</code>.
+     * The column <code>entries.id</code>.
      */
-    public final TableField<EntriesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<EntriesRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.entries.user_id</code>.
+     * The column <code>entries.user_id</code>.
      */
     public final TableField<EntriesRecord, Long> USER_ID = createField(DSL.name("user_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.entries.event_id</code>.
+     * The column <code>entries.event_id</code>.
      */
     public final TableField<EntriesRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.entries.event_class_id</code>.
+     * The column <code>entries.event_class_id</code>.
      */
     public final TableField<EntriesRecord, Long> EVENT_CLASS_ID = createField(DSL.name("event_class_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.entries.transponder_number</code>.
+     * The column <code>entries.transponder_number</code>.
      */
     public final TableField<EntriesRecord, String> TRANSPONDER_NUMBER = createField(DSL.name("transponder_number"), SQLDataType.VARCHAR(20).nullable(false), this, "");
 
     /**
-     * The column <code>public.entries.transponder_label</code>.
+     * The column <code>entries.transponder_label</code>.
      */
     public final TableField<EntriesRecord, String> TRANSPONDER_LABEL = createField(DSL.name("transponder_label"), SQLDataType.VARCHAR(100), this, "");
 
     /**
-     * The column <code>public.entries.status</code>.
+     * The column <code>entries.status</code>.
      */
-    public final TableField<EntriesRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'PENDING'::character varying"), SQLDataType.VARCHAR)), this, "");
+    public final TableField<EntriesRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'PENDING'"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.entries.submitted_at</code>.
+     * The column <code>entries.submitted_at</code>.
      */
-    public final TableField<EntriesRecord, OffsetDateTime> SUBMITTED_AT = createField(DSL.name("submitted_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<EntriesRecord, Instant> SUBMITTED_AT = createField(DSL.name("submitted_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.entries.updated_at</code>.
+     * The column <code>entries.updated_at</code>.
      */
-    public final TableField<EntriesRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<EntriesRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.entries.confirmed_at</code>.
+     * The column <code>entries.confirmed_at</code>.
      */
-    public final TableField<EntriesRecord, OffsetDateTime> CONFIRMED_AT = createField(DSL.name("confirmed_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+    public final TableField<EntriesRecord, Instant> CONFIRMED_AT = createField(DSL.name("confirmed_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.entries.withdrawn_at</code>.
+     * The column <code>entries.withdrawn_at</code>.
      */
-    public final TableField<EntriesRecord, OffsetDateTime> WITHDRAWN_AT = createField(DSL.name("withdrawn_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+    public final TableField<EntriesRecord, Instant> WITHDRAWN_AT = createField(DSL.name("withdrawn_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.entries.competitor_id</code>.
+     * The column <code>entries.competitor_id</code>.
      */
     public final TableField<EntriesRecord, Long> COMPETITOR_ID = createField(DSL.name("competitor_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.entries.secondary_transponder_number</code>.
+     * The column <code>entries.secondary_transponder_number</code>.
      */
     public final TableField<EntriesRecord, String> SECONDARY_TRANSPONDER_NUMBER = createField(DSL.name("secondary_transponder_number"), SQLDataType.VARCHAR(20), this, "");
 
     /**
-     * The column <code>public.entries.external_source</code>.
+     * The column <code>entries.external_source</code>.
      */
     public final TableField<EntriesRecord, String> EXTERNAL_SOURCE = createField(DSL.name("external_source"), SQLDataType.VARCHAR(30), this, "");
 
     /**
-     * The column <code>public.entries.external_entry_id</code>.
+     * The column <code>entries.external_entry_id</code>.
      */
     public final TableField<EntriesRecord, String> EXTERNAL_ENTRY_ID = createField(DSL.name("external_entry_id"), SQLDataType.VARCHAR(100), this, "");
 
     /**
-     * The column <code>public.entries.external_entry_version</code>.
+     * The column <code>entries.external_entry_version</code>.
      */
     public final TableField<EntriesRecord, Long> EXTERNAL_ENTRY_VERSION = createField(DSL.name("external_entry_version"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.entries.racehub_arrival</code>.
+     * The column <code>entries.racehub_arrival</code>.
      */
     public final TableField<EntriesRecord, String> RACEHUB_ARRIVAL = createField(DSL.name("racehub_arrival"), SQLDataType.VARCHAR(20), this, "");
 
     /**
-     * The column <code>public.entries.checked_in_at</code>.
+     * The column <code>entries.checked_in_at</code>.
      */
-    public final TableField<EntriesRecord, OffsetDateTime> CHECKED_IN_AT = createField(DSL.name("checked_in_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+    public final TableField<EntriesRecord, Instant> CHECKED_IN_AT = createField(DSL.name("checked_in_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.entries.checked_in_by_user_id</code>.
+     * The column <code>entries.checked_in_by_user_id</code>.
      */
     public final TableField<EntriesRecord, Long> CHECKED_IN_BY_USER_ID = createField(DSL.name("checked_in_by_user_id"), SQLDataType.BIGINT, this, "");
 
@@ -179,21 +177,21 @@ public class Entries extends TableImpl<EntriesRecord> {
     }
 
     /**
-     * Create an aliased <code>public.entries</code> table reference
+     * Create an aliased <code>entries</code> table reference
      */
     public Entries(String alias) {
         this(DSL.name(alias), ENTRIES);
     }
 
     /**
-     * Create an aliased <code>public.entries</code> table reference
+     * Create an aliased <code>entries</code> table reference
      */
     public Entries(Name alias) {
         this(alias, ENTRIES);
     }
 
     /**
-     * Create a <code>public.entries</code> table reference
+     * Create a <code>entries</code> table reference
      */
     public Entries() {
         this(DSL.name("entries"), null);
@@ -234,7 +232,7 @@ public class Entries extends TableImpl<EntriesRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -249,7 +247,7 @@ public class Entries extends TableImpl<EntriesRecord> {
 
     @Override
     public UniqueKey<EntriesRecord> getPrimaryKey() {
-        return Keys.ENTRIES_PKEY;
+        return Keys.ENTRIES__PK_ENTRIES;
     }
 
     @Override
@@ -260,8 +258,8 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient UsersPath _entriesCheckedInByUserIdFkey;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table, via
-     * the <code>entries_checked_in_by_user_id_fkey</code> key.
+     * Get the implicit join path to the <code>users</code> table, via the
+     * <code>entries_checked_in_by_user_id_fkey</code> key.
      */
     public UsersPath entriesCheckedInByUserIdFkey() {
         if (_entriesCheckedInByUserIdFkey == null)
@@ -273,7 +271,7 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient CompetitorsPath _competitors;
 
     /**
-     * Get the implicit join path to the <code>public.competitors</code> table.
+     * Get the implicit join path to the <code>competitors</code> table.
      */
     public CompetitorsPath competitors() {
         if (_competitors == null)
@@ -285,8 +283,7 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient EventClassesPath _eventClasses;
 
     /**
-     * Get the implicit join path to the <code>public.event_classes</code>
-     * table.
+     * Get the implicit join path to the <code>event_classes</code> table.
      */
     public EventClassesPath eventClasses() {
         if (_eventClasses == null)
@@ -298,7 +295,7 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient EventsPath _events;
 
     /**
-     * Get the implicit join path to the <code>public.events</code> table.
+     * Get the implicit join path to the <code>events</code> table.
      */
     public EventsPath events() {
         if (_events == null)
@@ -310,8 +307,8 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient UsersPath _entriesUserIdFkey;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table, via
-     * the <code>entries_user_id_fkey</code> key.
+     * Get the implicit join path to the <code>users</code> table, via the
+     * <code>entries_user_id_fkey</code> key.
      */
     public UsersPath entriesUserIdFkey() {
         if (_entriesUserIdFkey == null)
@@ -323,8 +320,8 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient EntryAuditLogPath _entryAuditLog;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.entry_audit_log</code> table
+     * Get the implicit to-many join path to the <code>entry_audit_log</code>
+     * table
      */
     public EntryAuditLogPath entryAuditLog() {
         if (_entryAuditLog == null)
@@ -336,8 +333,8 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient IncidentReportsPath _incidentReports;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.incident_reports</code> table
+     * Get the implicit to-many join path to the <code>incident_reports</code>
+     * table
      */
     public IncidentReportsPath incidentReports() {
         if (_incidentReports == null)
@@ -349,8 +346,8 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient MarshalAbsencesPath _marshalAbsences;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.marshal_absences</code> table
+     * Get the implicit to-many join path to the <code>marshal_absences</code>
+     * table
      */
     public MarshalAbsencesPath marshalAbsences() {
         if (_marshalAbsences == null)
@@ -363,7 +360,7 @@ public class Entries extends TableImpl<EntriesRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.marshal_adjustments</code> table
+     * <code>marshal_adjustments</code> table
      */
     public MarshalAdjustmentsPath marshalAdjustments() {
         if (_marshalAdjustments == null)
@@ -375,8 +372,8 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient MarshalPenaltiesPath _marshalPenalties;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.marshal_penalties</code> table
+     * Get the implicit to-many join path to the <code>marshal_penalties</code>
+     * table
      */
     public MarshalPenaltiesPath marshalPenalties() {
         if (_marshalPenalties == null)
@@ -388,8 +385,7 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient PenaltiesPath _penalties;
 
     /**
-     * Get the implicit to-many join path to the <code>public.penalties</code>
-     * table
+     * Get the implicit to-many join path to the <code>penalties</code> table
      */
     public PenaltiesPath penalties() {
         if (_penalties == null)
@@ -401,8 +397,7 @@ public class Entries extends TableImpl<EntriesRecord> {
     private transient RaceEntriesPath _raceEntries;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.race_entries</code> table
+     * Get the implicit to-many join path to the <code>race_entries</code> table
      */
     public RaceEntriesPath raceEntries() {
         if (_raceEntries == null)
@@ -415,7 +410,7 @@ public class Entries extends TableImpl<EntriesRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.unknown_transponder_link</code> table
+     * <code>unknown_transponder_link</code> table
      */
     public UnknownTransponderLinkPath unknownTransponderLink() {
         if (_unknownTransponderLink == null)
@@ -428,36 +423,13 @@ public class Entries extends TableImpl<EntriesRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.unknown_transponder_links</code> table
+     * <code>unknown_transponder_links</code> table
      */
     public UnknownTransponderLinksPath unknownTransponderLinks() {
         if (_unknownTransponderLinks == null)
             _unknownTransponderLinks = new UnknownTransponderLinksPath(this, null, Keys.UNKNOWN_TRANSPONDER_LINKS__UNKNOWN_TRANSPONDER_LINKS_LINKED_ENTRY_ID_FKEY.getInverseKey());
 
         return _unknownTransponderLinks;
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the <code>public.races</code>
-     * table, via the <code>marshal_absences_race_id_fkey</code> key
-     */
-    public RacesPath marshalAbsencesRaceIdFkey() {
-        return marshalAbsences().races();
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the <code>public.races</code>
-     * table, via the <code>race_entries_race_id_fkey</code> key
-     */
-    public RacesPath raceEntriesRaceIdFkey() {
-        return raceEntries().races();
-    }
-
-    @Override
-    public List<Check<EntriesRecord>> getChecks() {
-        return Arrays.asList(
-            Internal.createCheck(this, DSL.name("entries_status_check"), "(((status)::text = ANY ((ARRAY['PENDING'::character varying, 'CONFIRMED'::character varying, 'WITHDRAWN'::character varying])::text[])))", true)
-        );
     }
 
     @Override

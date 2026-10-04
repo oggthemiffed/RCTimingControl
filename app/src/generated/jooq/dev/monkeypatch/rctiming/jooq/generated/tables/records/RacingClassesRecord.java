@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,73 +21,73 @@ public class RacingClassesRecord extends UpdatableRecordImpl<RacingClassesRecord
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.racing_classes.id</code>.
+     * Setter for <code>racing_classes.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.racing_classes.id</code>.
+     * Getter for <code>racing_classes.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.racing_classes.name</code>.
+     * Setter for <code>racing_classes.name</code>.
      */
     public void setName(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.racing_classes.name</code>.
+     * Getter for <code>racing_classes.name</code>.
      */
     public String getName() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.racing_classes.description</code>.
+     * Setter for <code>racing_classes.description</code>.
      */
     public void setDescription(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.racing_classes.description</code>.
+     * Getter for <code>racing_classes.description</code>.
      */
     public String getDescription() {
         return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.racing_classes.created_at</code>.
+     * Setter for <code>racing_classes.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.racing_classes.created_at</code>.
+     * Getter for <code>racing_classes.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(3);
+    public Instant getCreatedAt() {
+        return (Instant) get(3);
     }
 
     /**
-     * Setter for <code>public.racing_classes.updated_at</code>.
+     * Setter for <code>racing_classes.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.racing_classes.updated_at</code>.
+     * Getter for <code>racing_classes.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(4);
+    public Instant getUpdatedAt() {
+        return (Instant) get(4);
     }
 
     // -------------------------------------------------------------------------
@@ -113,7 +113,7 @@ public class RacingClassesRecord extends UpdatableRecordImpl<RacingClassesRecord
     /**
      * Create a detached, initialised RacingClassesRecord
      */
-    public RacingClassesRecord(Long id, String name, String description, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public RacingClassesRecord(Long id, String name, String description, Instant createdAt, Instant updatedAt) {
         super(RacingClasses.RACING_CLASSES);
 
         setId(id);

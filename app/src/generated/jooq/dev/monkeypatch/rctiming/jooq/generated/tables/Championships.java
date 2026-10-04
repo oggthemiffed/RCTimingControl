@@ -4,17 +4,16 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses.ChampionshipClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks.ChampionshipEventLinksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipPointsScale.ChampionshipPointsScalePath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RacingClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -53,7 +52,7 @@ public class Championships extends TableImpl<ChampionshipsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.championships</code>
+     * The reference instance of <code>championships</code>
      */
     public static final Championships CHAMPIONSHIPS = new Championships();
 
@@ -66,49 +65,49 @@ public class Championships extends TableImpl<ChampionshipsRecord> {
     }
 
     /**
-     * The column <code>public.championships.id</code>.
+     * The column <code>championships.id</code>.
      */
-    public final TableField<ChampionshipsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ChampionshipsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.championships.name</code>.
+     * The column <code>championships.name</code>.
      */
     public final TableField<ChampionshipsRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>public.championships.best_x_from_y_x</code>.
+     * The column <code>championships.best_x_from_y_x</code>.
      */
     public final TableField<ChampionshipsRecord, Integer> BEST_X_FROM_Y_X = createField(DSL.name("best_x_from_y_x"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>public.championships.best_x_from_y_y</code>.
+     * The column <code>championships.best_x_from_y_y</code>.
      */
     public final TableField<ChampionshipsRecord, Integer> BEST_X_FROM_Y_Y = createField(DSL.name("best_x_from_y_y"), SQLDataType.INTEGER, this, "");
 
     /**
-     * The column <code>public.championships.scoring_source</code>.
+     * The column <code>championships.scoring_source</code>.
      */
-    public final TableField<ChampionshipsRecord, String> SCORING_SOURCE = createField(DSL.name("scoring_source"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'FINALS'::character varying"), SQLDataType.VARCHAR)), this, "");
+    public final TableField<ChampionshipsRecord, String> SCORING_SOURCE = createField(DSL.name("scoring_source"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'FINALS'"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.championships.tq_bonus_points</code>.
+     * The column <code>championships.tq_bonus_points</code>.
      */
     public final TableField<ChampionshipsRecord, Integer> TQ_BONUS_POINTS = createField(DSL.name("tq_bonus_points"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.INTEGER)), this, "");
 
     /**
-     * The column <code>public.championships.afinal_winner_bonus_points</code>.
+     * The column <code>championships.afinal_winner_bonus_points</code>.
      */
     public final TableField<ChampionshipsRecord, Integer> AFINAL_WINNER_BONUS_POINTS = createField(DSL.name("afinal_winner_bonus_points"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.INTEGER)), this, "");
 
     /**
-     * The column <code>public.championships.created_at</code>.
+     * The column <code>championships.created_at</code>.
      */
-    public final TableField<ChampionshipsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<ChampionshipsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.championships.updated_at</code>.
+     * The column <code>championships.updated_at</code>.
      */
-    public final TableField<ChampionshipsRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<ChampionshipsRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private Championships(Name alias, Table<ChampionshipsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -119,21 +118,21 @@ public class Championships extends TableImpl<ChampionshipsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.championships</code> table reference
+     * Create an aliased <code>championships</code> table reference
      */
     public Championships(String alias) {
         this(DSL.name(alias), CHAMPIONSHIPS);
     }
 
     /**
-     * Create an aliased <code>public.championships</code> table reference
+     * Create an aliased <code>championships</code> table reference
      */
     public Championships(Name alias) {
         this(alias, CHAMPIONSHIPS);
     }
 
     /**
-     * Create a <code>public.championships</code> table reference
+     * Create a <code>championships</code> table reference
      */
     public Championships() {
         this(DSL.name("championships"), null);
@@ -174,7 +173,7 @@ public class Championships extends TableImpl<ChampionshipsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -184,14 +183,14 @@ public class Championships extends TableImpl<ChampionshipsRecord> {
 
     @Override
     public UniqueKey<ChampionshipsRecord> getPrimaryKey() {
-        return Keys.CHAMPIONSHIPS_PKEY;
+        return Keys.CHAMPIONSHIPS__PK_CHAMPIONSHIPS;
     }
 
     private transient ChampionshipClassesPath _championshipClasses;
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.championship_classes</code> table
+     * <code>championship_classes</code> table
      */
     public ChampionshipClassesPath championshipClasses() {
         if (_championshipClasses == null)
@@ -204,7 +203,7 @@ public class Championships extends TableImpl<ChampionshipsRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.championship_event_links</code> table
+     * <code>championship_event_links</code> table
      */
     public ChampionshipEventLinksPath championshipEventLinks() {
         if (_championshipEventLinks == null)
@@ -217,7 +216,7 @@ public class Championships extends TableImpl<ChampionshipsRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.championship_exclusions</code> table
+     * <code>championship_exclusions</code> table
      */
     public ChampionshipExclusionsPath championshipExclusions() {
         if (_championshipExclusions == null)
@@ -230,7 +229,7 @@ public class Championships extends TableImpl<ChampionshipsRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>public.championship_points_scale</code> table
+     * <code>championship_points_scale</code> table
      */
     public ChampionshipPointsScalePath championshipPointsScale() {
         if (_championshipPointsScale == null)
@@ -239,26 +238,10 @@ public class Championships extends TableImpl<ChampionshipsRecord> {
         return _championshipPointsScale;
     }
 
-    /**
-     * Get the implicit many-to-many join path to the
-     * <code>public.racing_classes</code> table
-     */
-    public RacingClassesPath racingClasses() {
-        return championshipClasses().racingClasses();
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the <code>public.events</code>
-     * table
-     */
-    public EventsPath events() {
-        return championshipEventLinks().events();
-    }
-
     @Override
     public List<Check<ChampionshipsRecord>> getChecks() {
         return Arrays.asList(
-            Internal.createCheck(this, DSL.name("championships_scoring_source_check"), "(((scoring_source)::text = ANY ((ARRAY['QUALIFYING'::character varying, 'FINALS'::character varying, 'BOTH'::character varying])::text[])))", true)
+            Internal.createCheck(this, DSL.name("championships_scoring_source_check"), "scoring_source in ('QUALIFYING', 'FINALS', 'BOTH')", true)
         );
     }
 

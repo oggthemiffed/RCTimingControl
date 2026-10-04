@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.ProfanityBlocklist;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,59 +21,59 @@ public class ProfanityBlocklistRecord extends UpdatableRecordImpl<ProfanityBlock
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.profanity_blocklist.id</code>.
+     * Setter for <code>profanity_blocklist.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.profanity_blocklist.id</code>.
+     * Getter for <code>profanity_blocklist.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.profanity_blocklist.word</code>.
+     * Setter for <code>profanity_blocklist.word</code>.
      */
     public void setWord(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.profanity_blocklist.word</code>.
+     * Getter for <code>profanity_blocklist.word</code>.
      */
     public String getWord() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.profanity_blocklist.added_by_user_id</code>.
+     * Setter for <code>profanity_blocklist.added_by_user_id</code>.
      */
     public void setAddedByUserId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.profanity_blocklist.added_by_user_id</code>.
+     * Getter for <code>profanity_blocklist.added_by_user_id</code>.
      */
     public Long getAddedByUserId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.profanity_blocklist.added_at</code>.
+     * Setter for <code>profanity_blocklist.added_at</code>.
      */
-    public void setAddedAt(OffsetDateTime value) {
+    public void setAddedAt(Instant value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.profanity_blocklist.added_at</code>.
+     * Getter for <code>profanity_blocklist.added_at</code>.
      */
-    public OffsetDateTime getAddedAt() {
-        return (OffsetDateTime) get(3);
+    public Instant getAddedAt() {
+        return (Instant) get(3);
     }
 
     // -------------------------------------------------------------------------
@@ -99,7 +99,7 @@ public class ProfanityBlocklistRecord extends UpdatableRecordImpl<ProfanityBlock
     /**
      * Create a detached, initialised ProfanityBlocklistRecord
      */
-    public ProfanityBlocklistRecord(Long id, String word, Long addedByUserId, OffsetDateTime addedAt) {
+    public ProfanityBlocklistRecord(Long id, String word, Long addedByUserId, Instant addedAt) {
         super(ProfanityBlocklist.PROFANITY_BLOCKLIST);
 
         setId(id);

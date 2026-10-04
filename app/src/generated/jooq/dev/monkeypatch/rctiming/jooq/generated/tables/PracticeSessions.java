@@ -4,15 +4,16 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps.PracticeLapsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PracticeSessionsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -50,7 +51,7 @@ public class PracticeSessions extends TableImpl<PracticeSessionsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.practice_sessions</code>
+     * The reference instance of <code>practice_sessions</code>
      */
     public static final PracticeSessions PRACTICE_SESSIONS = new PracticeSessions();
 
@@ -63,54 +64,54 @@ public class PracticeSessions extends TableImpl<PracticeSessionsRecord> {
     }
 
     /**
-     * The column <code>public.practice_sessions.id</code>.
+     * The column <code>practice_sessions.id</code>.
      */
-    public final TableField<PracticeSessionsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<PracticeSessionsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.practice_sessions.name</code>.
+     * The column <code>practice_sessions.name</code>.
      */
     public final TableField<PracticeSessionsRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(200).nullable(false), this, "");
 
     /**
-     * The column <code>public.practice_sessions.event_id</code>.
+     * The column <code>practice_sessions.event_id</code>.
      */
     public final TableField<PracticeSessionsRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.practice_sessions.status</code>.
+     * The column <code>practice_sessions.status</code>.
      */
-    public final TableField<PracticeSessionsRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'IDLE'::character varying"), SQLDataType.VARCHAR)), this, "");
+    public final TableField<PracticeSessionsRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'IDLE'"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.practice_sessions.best_lap_n</code>.
+     * The column <code>practice_sessions.best_lap_n</code>.
      */
     public final TableField<PracticeSessionsRecord, Integer> BEST_LAP_N = createField(DSL.name("best_lap_n"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("3"), SQLDataType.INTEGER)), this, "");
 
     /**
-     * The column <code>public.practice_sessions.created_by_user_id</code>.
+     * The column <code>practice_sessions.created_by_user_id</code>.
      */
     public final TableField<PracticeSessionsRecord, Long> CREATED_BY_USER_ID = createField(DSL.name("created_by_user_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>public.practice_sessions.started_at</code>.
+     * The column <code>practice_sessions.started_at</code>.
      */
-    public final TableField<PracticeSessionsRecord, OffsetDateTime> STARTED_AT = createField(DSL.name("started_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+    public final TableField<PracticeSessionsRecord, Instant> STARTED_AT = createField(DSL.name("started_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.practice_sessions.stopped_at</code>.
+     * The column <code>practice_sessions.stopped_at</code>.
      */
-    public final TableField<PracticeSessionsRecord, OffsetDateTime> STOPPED_AT = createField(DSL.name("stopped_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+    public final TableField<PracticeSessionsRecord, Instant> STOPPED_AT = createField(DSL.name("stopped_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.practice_sessions.created_at</code>.
+     * The column <code>practice_sessions.created_at</code>.
      */
-    public final TableField<PracticeSessionsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<PracticeSessionsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.practice_sessions.updated_at</code>.
+     * The column <code>practice_sessions.updated_at</code>.
      */
-    public final TableField<PracticeSessionsRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<PracticeSessionsRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private PracticeSessions(Name alias, Table<PracticeSessionsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -121,21 +122,21 @@ public class PracticeSessions extends TableImpl<PracticeSessionsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.practice_sessions</code> table reference
+     * Create an aliased <code>practice_sessions</code> table reference
      */
     public PracticeSessions(String alias) {
         this(DSL.name(alias), PRACTICE_SESSIONS);
     }
 
     /**
-     * Create an aliased <code>public.practice_sessions</code> table reference
+     * Create an aliased <code>practice_sessions</code> table reference
      */
     public PracticeSessions(Name alias) {
         this(alias, PRACTICE_SESSIONS);
     }
 
     /**
-     * Create a <code>public.practice_sessions</code> table reference
+     * Create a <code>practice_sessions</code> table reference
      */
     public PracticeSessions() {
         this(DSL.name("practice_sessions"), null);
@@ -176,7 +177,7 @@ public class PracticeSessions extends TableImpl<PracticeSessionsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -191,7 +192,7 @@ public class PracticeSessions extends TableImpl<PracticeSessionsRecord> {
 
     @Override
     public UniqueKey<PracticeSessionsRecord> getPrimaryKey() {
-        return Keys.PRACTICE_SESSIONS_PKEY;
+        return Keys.PRACTICE_SESSIONS__PK_PRACTICE_SESSIONS;
     }
 
     @Override
@@ -202,7 +203,7 @@ public class PracticeSessions extends TableImpl<PracticeSessionsRecord> {
     private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table.
+     * Get the implicit join path to the <code>users</code> table.
      */
     public UsersPath users() {
         if (_users == null)
@@ -214,7 +215,7 @@ public class PracticeSessions extends TableImpl<PracticeSessionsRecord> {
     private transient EventsPath _events;
 
     /**
-     * Get the implicit join path to the <code>public.events</code> table.
+     * Get the implicit join path to the <code>events</code> table.
      */
     public EventsPath events() {
         if (_events == null)
@@ -226,8 +227,8 @@ public class PracticeSessions extends TableImpl<PracticeSessionsRecord> {
     private transient PracticeLapsPath _practiceLaps;
 
     /**
-     * Get the implicit to-many join path to the
-     * <code>public.practice_laps</code> table
+     * Get the implicit to-many join path to the <code>practice_laps</code>
+     * table
      */
     public PracticeLapsPath practiceLaps() {
         if (_practiceLaps == null)

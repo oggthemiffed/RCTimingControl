@@ -6,9 +6,8 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
-import org.jooq.JSONB;
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -22,199 +21,199 @@ public class RacesRecord extends UpdatableRecordImpl<RacesRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.races.id</code>.
+     * Setter for <code>races.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.races.id</code>.
+     * Getter for <code>races.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.races.round_id</code>.
+     * Setter for <code>races.round_id</code>.
      */
     public void setRoundId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.races.round_id</code>.
+     * Getter for <code>races.round_id</code>.
      */
     public Long getRoundId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.races.event_class_id</code>.
+     * Setter for <code>races.event_class_id</code>.
      */
     public void setEventClassId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.races.event_class_id</code>.
+     * Getter for <code>races.event_class_id</code>.
      */
     public Long getEventClassId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.races.heat_number</code>.
+     * Setter for <code>races.heat_number</code>.
      */
     public void setHeatNumber(Integer value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.races.heat_number</code>.
+     * Getter for <code>races.heat_number</code>.
      */
     public Integer getHeatNumber() {
         return (Integer) get(3);
     }
 
     /**
-     * Setter for <code>public.races.sequence_in_round</code>.
+     * Setter for <code>races.sequence_in_round</code>.
      */
     public void setSequenceInRound(Integer value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.races.sequence_in_round</code>.
+     * Getter for <code>races.sequence_in_round</code>.
      */
     public Integer getSequenceInRound() {
         return (Integer) get(4);
     }
 
     /**
-     * Setter for <code>public.races.final_letter</code>.
+     * Setter for <code>races.final_letter</code>.
      */
     public void setFinalLetter(String value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.races.final_letter</code>.
+     * Getter for <code>races.final_letter</code>.
      */
     public String getFinalLetter() {
         return (String) get(5);
     }
 
     /**
-     * Setter for <code>public.races.start_type</code>.
+     * Setter for <code>races.start_type</code>.
      */
     public void setStartType(String value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.races.start_type</code>.
+     * Getter for <code>races.start_type</code>.
      */
     public String getStartType() {
         return (String) get(6);
     }
 
     /**
-     * Setter for <code>public.races.format_id</code>.
+     * Setter for <code>races.format_id</code>.
      */
     public void setFormatId(Long value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.races.format_id</code>.
+     * Getter for <code>races.format_id</code>.
      */
     public Long getFormatId() {
         return (Long) get(7);
     }
 
     /**
-     * Setter for <code>public.races.format_overrides</code>.
+     * Setter for <code>races.format_overrides</code>.
      */
-    public void setFormatOverrides(JSONB value) {
+    public void setFormatOverrides(String value) {
         set(8, value);
     }
 
     /**
-     * Getter for <code>public.races.format_overrides</code>.
+     * Getter for <code>races.format_overrides</code>.
      */
-    public JSONB getFormatOverrides() {
-        return (JSONB) get(8);
+    public String getFormatOverrides() {
+        return (String) get(8);
     }
 
     /**
-     * Setter for <code>public.races.status</code>.
+     * Setter for <code>races.status</code>.
      */
     public void setStatus(String value) {
         set(9, value);
     }
 
     /**
-     * Getter for <code>public.races.status</code>.
+     * Getter for <code>races.status</code>.
      */
     public String getStatus() {
         return (String) get(9);
     }
 
     /**
-     * Setter for <code>public.races.started_at</code>.
+     * Setter for <code>races.started_at</code>.
      */
-    public void setStartedAt(OffsetDateTime value) {
+    public void setStartedAt(Instant value) {
         set(10, value);
     }
 
     /**
-     * Getter for <code>public.races.started_at</code>.
+     * Getter for <code>races.started_at</code>.
      */
-    public OffsetDateTime getStartedAt() {
-        return (OffsetDateTime) get(10);
+    public Instant getStartedAt() {
+        return (Instant) get(10);
     }
 
     /**
-     * Setter for <code>public.races.finished_at</code>.
+     * Setter for <code>races.finished_at</code>.
      */
-    public void setFinishedAt(OffsetDateTime value) {
+    public void setFinishedAt(Instant value) {
         set(11, value);
     }
 
     /**
-     * Getter for <code>public.races.finished_at</code>.
+     * Getter for <code>races.finished_at</code>.
      */
-    public OffsetDateTime getFinishedAt() {
-        return (OffsetDateTime) get(11);
+    public Instant getFinishedAt() {
+        return (Instant) get(11);
     }
 
     /**
-     * Setter for <code>public.races.created_at</code>.
+     * Setter for <code>races.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(12, value);
     }
 
     /**
-     * Getter for <code>public.races.created_at</code>.
+     * Getter for <code>races.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(12);
+    public Instant getCreatedAt() {
+        return (Instant) get(12);
     }
 
     /**
-     * Setter for <code>public.races.updated_at</code>.
+     * Setter for <code>races.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(13, value);
     }
 
     /**
-     * Getter for <code>public.races.updated_at</code>.
+     * Getter for <code>races.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(13);
+    public Instant getUpdatedAt() {
+        return (Instant) get(13);
     }
 
     // -------------------------------------------------------------------------
@@ -240,7 +239,7 @@ public class RacesRecord extends UpdatableRecordImpl<RacesRecord> {
     /**
      * Create a detached, initialised RacesRecord
      */
-    public RacesRecord(Long id, Long roundId, Long eventClassId, Integer heatNumber, Integer sequenceInRound, String finalLetter, String startType, Long formatId, JSONB formatOverrides, String status, OffsetDateTime startedAt, OffsetDateTime finishedAt, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public RacesRecord(Long id, Long roundId, Long eventClassId, Integer heatNumber, Integer sequenceInRound, String finalLetter, String startType, Long formatId, String formatOverrides, String status, Instant startedAt, Instant finishedAt, Instant createdAt, Instant updatedAt) {
         super(Races.RACES);
 
         setId(id);

@@ -6,9 +6,8 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceFormatTemplates;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
-import org.jooq.JSONB;
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -22,73 +21,73 @@ public class RaceFormatTemplatesRecord extends UpdatableRecordImpl<RaceFormatTem
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.race_format_templates.id</code>.
+     * Setter for <code>race_format_templates.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.race_format_templates.id</code>.
+     * Getter for <code>race_format_templates.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.race_format_templates.name</code>.
+     * Setter for <code>race_format_templates.name</code>.
      */
     public void setName(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.race_format_templates.name</code>.
+     * Getter for <code>race_format_templates.name</code>.
      */
     public String getName() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.race_format_templates.config</code>.
+     * Setter for <code>race_format_templates.config</code>.
      */
-    public void setConfig(JSONB value) {
+    public void setConfig(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.race_format_templates.config</code>.
+     * Getter for <code>race_format_templates.config</code>.
      */
-    public JSONB getConfig() {
-        return (JSONB) get(2);
+    public String getConfig() {
+        return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.race_format_templates.created_at</code>.
+     * Setter for <code>race_format_templates.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.race_format_templates.created_at</code>.
+     * Getter for <code>race_format_templates.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(3);
+    public Instant getCreatedAt() {
+        return (Instant) get(3);
     }
 
     /**
-     * Setter for <code>public.race_format_templates.updated_at</code>.
+     * Setter for <code>race_format_templates.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.race_format_templates.updated_at</code>.
+     * Getter for <code>race_format_templates.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(4);
+    public Instant getUpdatedAt() {
+        return (Instant) get(4);
     }
 
     // -------------------------------------------------------------------------
@@ -114,7 +113,7 @@ public class RaceFormatTemplatesRecord extends UpdatableRecordImpl<RaceFormatTem
     /**
      * Create a detached, initialised RaceFormatTemplatesRecord
      */
-    public RaceFormatTemplatesRecord(Long id, String name, JSONB config, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public RaceFormatTemplatesRecord(Long id, String name, String config, Instant createdAt, Instant updatedAt) {
         super(RaceFormatTemplates.RACE_FORMAT_TEMPLATES);
 
         setId(id);

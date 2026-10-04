@@ -4,13 +4,14 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ResultSnapshotsRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -21,7 +22,6 @@ import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.InverseForeignKey;
-import org.jooq.JSONB;
 import org.jooq.Name;
 import org.jooq.Path;
 import org.jooq.PlainSQL;
@@ -49,7 +49,7 @@ public class ResultSnapshots extends TableImpl<ResultSnapshotsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.result_snapshots</code>
+     * The reference instance of <code>result_snapshots</code>
      */
     public static final ResultSnapshots RESULT_SNAPSHOTS = new ResultSnapshots();
 
@@ -62,34 +62,34 @@ public class ResultSnapshots extends TableImpl<ResultSnapshotsRecord> {
     }
 
     /**
-     * The column <code>public.result_snapshots.id</code>.
+     * The column <code>result_snapshots.id</code>.
      */
-    public final TableField<ResultSnapshotsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ResultSnapshotsRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.result_snapshots.race_id</code>.
+     * The column <code>result_snapshots.race_id</code>.
      */
     public final TableField<ResultSnapshotsRecord, Long> RACE_ID = createField(DSL.name("race_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.result_snapshots.finished_at</code>.
+     * The column <code>result_snapshots.finished_at</code>.
      */
-    public final TableField<ResultSnapshotsRecord, OffsetDateTime> FINISHED_AT = createField(DSL.name("finished_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false), this, "");
+    public final TableField<ResultSnapshotsRecord, Instant> FINISHED_AT = createField(DSL.name("finished_at"), SQLDataType.BIGINT.nullable(false), this, "", new InstantMicrosConverter());
 
     /**
-     * The column <code>public.result_snapshots.positions_json</code>.
+     * The column <code>result_snapshots.positions_json</code>.
      */
-    public final TableField<ResultSnapshotsRecord, JSONB> POSITIONS_JSON = createField(DSL.name("positions_json"), SQLDataType.JSONB.nullable(false), this, "");
+    public final TableField<ResultSnapshotsRecord, String> POSITIONS_JSON = createField(DSL.name("positions_json"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>public.result_snapshots.lap_history_json</code>.
+     * The column <code>result_snapshots.lap_history_json</code>.
      */
-    public final TableField<ResultSnapshotsRecord, JSONB> LAP_HISTORY_JSON = createField(DSL.name("lap_history_json"), SQLDataType.JSONB.nullable(false), this, "");
+    public final TableField<ResultSnapshotsRecord, String> LAP_HISTORY_JSON = createField(DSL.name("lap_history_json"), SQLDataType.CLOB.nullable(false), this, "");
 
     /**
-     * The column <code>public.result_snapshots.created_at</code>.
+     * The column <code>result_snapshots.created_at</code>.
      */
-    public final TableField<ResultSnapshotsRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<ResultSnapshotsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private ResultSnapshots(Name alias, Table<ResultSnapshotsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -100,21 +100,21 @@ public class ResultSnapshots extends TableImpl<ResultSnapshotsRecord> {
     }
 
     /**
-     * Create an aliased <code>public.result_snapshots</code> table reference
+     * Create an aliased <code>result_snapshots</code> table reference
      */
     public ResultSnapshots(String alias) {
         this(DSL.name(alias), RESULT_SNAPSHOTS);
     }
 
     /**
-     * Create an aliased <code>public.result_snapshots</code> table reference
+     * Create an aliased <code>result_snapshots</code> table reference
      */
     public ResultSnapshots(Name alias) {
         this(alias, RESULT_SNAPSHOTS);
     }
 
     /**
-     * Create a <code>public.result_snapshots</code> table reference
+     * Create a <code>result_snapshots</code> table reference
      */
     public ResultSnapshots() {
         this(DSL.name("result_snapshots"), null);
@@ -155,7 +155,7 @@ public class ResultSnapshots extends TableImpl<ResultSnapshotsRecord> {
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -170,12 +170,7 @@ public class ResultSnapshots extends TableImpl<ResultSnapshotsRecord> {
 
     @Override
     public UniqueKey<ResultSnapshotsRecord> getPrimaryKey() {
-        return Keys.RESULT_SNAPSHOTS_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<ResultSnapshotsRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.RESULT_SNAPSHOTS_RACE_ID_KEY);
+        return Keys.RESULT_SNAPSHOTS__PK_RESULT_SNAPSHOTS;
     }
 
     @Override
@@ -186,7 +181,7 @@ public class ResultSnapshots extends TableImpl<ResultSnapshotsRecord> {
     private transient RacesPath _races;
 
     /**
-     * Get the implicit join path to the <code>public.races</code> table.
+     * Get the implicit join path to the <code>races</code> table.
      */
     public RacesPath races() {
         if (_races == null)

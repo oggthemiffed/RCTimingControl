@@ -2,13 +2,11 @@ spring:
   config:
     activate:
       on-profile: setup-test
-  datasource:
-    url: jdbc:postgresql://localhost:5432/rctiming_dev
-    username: rctiming
-    password: rctiming
-  jpa:
-    hibernate:
-      ddl-auto: validate
+
+rctiming:
+  database:
+    # An unseeded database of its own, for walking through the first-run setup wizard
+    data-directory: ./data/db-setup-test
 
 tts:
   endpoint: localhost:10200

@@ -4,14 +4,15 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships.ChampionshipsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipEventLinksRecord;
+import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -49,7 +50,7 @@ public class ChampionshipEventLinks extends TableImpl<ChampionshipEventLinksReco
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.championship_event_links</code>
+     * The reference instance of <code>championship_event_links</code>
      */
     public static final ChampionshipEventLinks CHAMPIONSHIP_EVENT_LINKS = new ChampionshipEventLinks();
 
@@ -62,29 +63,29 @@ public class ChampionshipEventLinks extends TableImpl<ChampionshipEventLinksReco
     }
 
     /**
-     * The column <code>public.championship_event_links.id</code>.
+     * The column <code>championship_event_links.id</code>.
      */
-    public final TableField<ChampionshipEventLinksRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ChampionshipEventLinksRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.identity(true), this, "");
 
     /**
-     * The column <code>public.championship_event_links.championship_id</code>.
+     * The column <code>championship_event_links.championship_id</code>.
      */
     public final TableField<ChampionshipEventLinksRecord, Long> CHAMPIONSHIP_ID = createField(DSL.name("championship_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_event_links.event_id</code>.
+     * The column <code>championship_event_links.event_id</code>.
      */
     public final TableField<ChampionshipEventLinksRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_event_links.round_number</code>.
+     * The column <code>championship_event_links.round_number</code>.
      */
     public final TableField<ChampionshipEventLinksRecord, Integer> ROUND_NUMBER = createField(DSL.name("round_number"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_event_links.created_at</code>.
+     * The column <code>championship_event_links.created_at</code>.
      */
-    public final TableField<ChampionshipEventLinksRecord, OffsetDateTime> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
+    public final TableField<ChampionshipEventLinksRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
     private ChampionshipEventLinks(Name alias, Table<ChampionshipEventLinksRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -95,23 +96,21 @@ public class ChampionshipEventLinks extends TableImpl<ChampionshipEventLinksReco
     }
 
     /**
-     * Create an aliased <code>public.championship_event_links</code> table
-     * reference
+     * Create an aliased <code>championship_event_links</code> table reference
      */
     public ChampionshipEventLinks(String alias) {
         this(DSL.name(alias), CHAMPIONSHIP_EVENT_LINKS);
     }
 
     /**
-     * Create an aliased <code>public.championship_event_links</code> table
-     * reference
+     * Create an aliased <code>championship_event_links</code> table reference
      */
     public ChampionshipEventLinks(Name alias) {
         this(alias, CHAMPIONSHIP_EVENT_LINKS);
     }
 
     /**
-     * Create a <code>public.championship_event_links</code> table reference
+     * Create a <code>championship_event_links</code> table reference
      */
     public ChampionshipEventLinks() {
         this(DSL.name("championship_event_links"), null);
@@ -152,7 +151,7 @@ public class ChampionshipEventLinks extends TableImpl<ChampionshipEventLinksReco
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
@@ -167,12 +166,7 @@ public class ChampionshipEventLinks extends TableImpl<ChampionshipEventLinksReco
 
     @Override
     public UniqueKey<ChampionshipEventLinksRecord> getPrimaryKey() {
-        return Keys.CHAMPIONSHIP_EVENT_LINKS_PKEY;
-    }
-
-    @Override
-    public List<UniqueKey<ChampionshipEventLinksRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.CHAMPIONSHIP_EVENT_LINKS_CHAMPIONSHIP_ID_EVENT_ID_KEY, Keys.CHAMPIONSHIP_EVENT_LINKS_CHAMPIONSHIP_ID_ROUND_NUMBER_KEY);
+        return Keys.CHAMPIONSHIP_EVENT_LINKS__PK_CHAMPIONSHIP_EVENT_LINKS;
     }
 
     @Override
@@ -183,8 +177,7 @@ public class ChampionshipEventLinks extends TableImpl<ChampionshipEventLinksReco
     private transient ChampionshipsPath _championships;
 
     /**
-     * Get the implicit join path to the <code>public.championships</code>
-     * table.
+     * Get the implicit join path to the <code>championships</code> table.
      */
     public ChampionshipsPath championships() {
         if (_championships == null)
@@ -196,7 +189,7 @@ public class ChampionshipEventLinks extends TableImpl<ChampionshipEventLinksReco
     private transient EventsPath _events;
 
     /**
-     * Get the implicit join path to the <code>public.events</code> table.
+     * Get the implicit join path to the <code>events</code> table.
      */
     public EventsPath events() {
         if (_events == null)

@@ -1,6 +1,6 @@
 package dev.monkeypatch.rctiming.api.racecontrol.dto;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 public record RunOrderItemDto(
         long raceId,
@@ -12,6 +12,6 @@ public record RunOrderItemDto(
         String finalLetter,     // null for practice/qualifier
         String status,
         int sequenceInRound,
-        OffsetDateTime startedAt  // null until race starts
+        Instant startedAt  // null until race starts
 ) {
 }

@@ -6,9 +6,8 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
-import org.jooq.JSONB;
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -22,260 +21,252 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.club_profiles.id</code>.
+     * Setter for <code>club_profiles.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.id</code>.
+     * Getter for <code>club_profiles.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.club_profiles.name</code>.
+     * Setter for <code>club_profiles.name</code>.
      */
     public void setName(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.name</code>.
+     * Getter for <code>club_profiles.name</code>.
      */
     public String getName() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.club_profiles.email</code>.
+     * Setter for <code>club_profiles.email</code>.
      */
     public void setEmail(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.email</code>.
+     * Getter for <code>club_profiles.email</code>.
      */
     public String getEmail() {
         return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.club_profiles.phone</code>.
+     * Setter for <code>club_profiles.phone</code>.
      */
     public void setPhone(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.phone</code>.
+     * Getter for <code>club_profiles.phone</code>.
      */
     public String getPhone() {
         return (String) get(3);
     }
 
     /**
-     * Setter for <code>public.club_profiles.website_url</code>.
+     * Setter for <code>club_profiles.website_url</code>.
      */
     public void setWebsiteUrl(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.website_url</code>.
+     * Getter for <code>club_profiles.website_url</code>.
      */
     public String getWebsiteUrl() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>public.club_profiles.latitude</code>.
+     * Setter for <code>club_profiles.latitude</code>.
      */
-    public void setLatitude(Double value) {
+    public void setLatitude(Float value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.latitude</code>.
+     * Getter for <code>club_profiles.latitude</code>.
      */
-    public Double getLatitude() {
-        return (Double) get(5);
+    public Float getLatitude() {
+        return (Float) get(5);
     }
 
     /**
-     * Setter for <code>public.club_profiles.longitude</code>.
+     * Setter for <code>club_profiles.longitude</code>.
      */
-    public void setLongitude(Double value) {
+    public void setLongitude(Float value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.longitude</code>.
+     * Getter for <code>club_profiles.longitude</code>.
      */
-    public Double getLongitude() {
-        return (Double) get(6);
+    public Float getLongitude() {
+        return (Float) get(6);
     }
 
     /**
-     * Setter for <code>public.club_profiles.timezone</code>.
+     * Setter for <code>club_profiles.timezone</code>.
      */
     public void setTimezone(String value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.timezone</code>.
+     * Getter for <code>club_profiles.timezone</code>.
      */
     public String getTimezone() {
         return (String) get(7);
     }
 
     /**
-     * Setter for <code>public.club_profiles.logo</code>.
+     * Setter for <code>club_profiles.logo</code>.
      */
     public void setLogo(byte[] value) {
         set(8, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.logo</code>.
+     * Getter for <code>club_profiles.logo</code>.
      */
     public byte[] getLogo() {
         return (byte[]) get(8);
     }
 
     /**
-     * Setter for <code>public.club_profiles.logo_type</code>.
+     * Setter for <code>club_profiles.logo_type</code>.
      */
     public void setLogoType(String value) {
         set(9, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.logo_type</code>.
+     * Getter for <code>club_profiles.logo_type</code>.
      */
     public String getLogoType() {
         return (String) get(9);
     }
 
     /**
-     * Setter for <code>public.club_profiles.created_at</code>.
+     * Setter for <code>club_profiles.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(10, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.created_at</code>.
+     * Getter for <code>club_profiles.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(10);
+    public Instant getCreatedAt() {
+        return (Instant) get(10);
     }
 
     /**
-     * Setter for <code>public.club_profiles.updated_at</code>.
+     * Setter for <code>club_profiles.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(11, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.updated_at</code>.
+     * Getter for <code>club_profiles.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(11);
+    public Instant getUpdatedAt() {
+        return (Instant) get(11);
     }
 
     /**
-     * Setter for <code>public.club_profiles.logo_url</code>.
+     * Setter for <code>club_profiles.logo_url</code>.
      */
     public void setLogoUrl(String value) {
         set(12, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.logo_url</code>.
+     * Getter for <code>club_profiles.logo_url</code>.
      */
     public String getLogoUrl() {
         return (String) get(12);
     }
 
     /**
-     * Setter for <code>public.club_profiles.audio_settings</code>.
+     * Setter for <code>club_profiles.audio_settings</code>.
      */
-    public void setAudioSettings(JSONB value) {
+    public void setAudioSettings(String value) {
         set(13, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.audio_settings</code>.
+     * Getter for <code>club_profiles.audio_settings</code>.
      */
-    public JSONB getAudioSettings() {
-        return (JSONB) get(13);
+    public String getAudioSettings() {
+        return (String) get(13);
     }
 
     /**
-     * Setter for <code>public.club_profiles.default_voice_id</code>.
+     * Setter for <code>club_profiles.default_voice_id</code>.
      */
     public void setDefaultVoiceId(String value) {
         set(14, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.default_voice_id</code>.
+     * Getter for <code>club_profiles.default_voice_id</code>.
      */
     public String getDefaultVoiceId() {
         return (String) get(14);
     }
 
     /**
-     * Setter for <code>public.club_profiles.decoder_host</code>. Hostname or IP
-     * address of the AMB decoder. Null until configured via setup wizard.
+     * Setter for <code>club_profiles.decoder_host</code>.
      */
     public void setDecoderHost(String value) {
         set(15, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.decoder_host</code>. Hostname or IP
-     * address of the AMB decoder. Null until configured via setup wizard.
+     * Getter for <code>club_profiles.decoder_host</code>.
      */
     public String getDecoderHost() {
         return (String) get(15);
     }
 
     /**
-     * Setter for <code>public.club_profiles.decoder_port</code>. TCP port. RC-4
-     * -&gt; 5100, P3 -&gt; 5403. Null until configured.
+     * Setter for <code>club_profiles.decoder_port</code>.
      */
     public void setDecoderPort(Integer value) {
         set(16, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.decoder_port</code>. TCP port. RC-4
-     * -&gt; 5100, P3 -&gt; 5403. Null until configured.
+     * Getter for <code>club_profiles.decoder_port</code>.
      */
     public Integer getDecoderPort() {
         return (Integer) get(16);
     }
 
     /**
-     * Setter for <code>public.club_profiles.decoder_protocol</code>. Decoder
-     * protocol: RC4 (text, firmware &lt;4.5) or P3 (binary, firmware &gt;=4.5).
-     * Null until configured.
+     * Setter for <code>club_profiles.decoder_protocol</code>.
      */
     public void setDecoderProtocol(String value) {
         set(17, value);
     }
 
     /**
-     * Getter for <code>public.club_profiles.decoder_protocol</code>. Decoder
-     * protocol: RC4 (text, firmware &lt;4.5) or P3 (binary, firmware &gt;=4.5).
-     * Null until configured.
+     * Getter for <code>club_profiles.decoder_protocol</code>.
      */
     public String getDecoderProtocol() {
         return (String) get(17);
@@ -304,7 +295,7 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
     /**
      * Create a detached, initialised ClubProfilesRecord
      */
-    public ClubProfilesRecord(Long id, String name, String email, String phone, String websiteUrl, Double latitude, Double longitude, String timezone, byte[] logo, String logoType, OffsetDateTime createdAt, OffsetDateTime updatedAt, String logoUrl, JSONB audioSettings, String defaultVoiceId, String decoderHost, Integer decoderPort, String decoderProtocol) {
+    public ClubProfilesRecord(Long id, String name, String email, String phone, String websiteUrl, Float latitude, Float longitude, String timezone, byte[] logo, String logoType, Instant createdAt, Instant updatedAt, String logoUrl, String audioSettings, String defaultVoiceId, String decoderHost, Integer decoderPort, String decoderProtocol) {
         super(ClubProfiles.CLUB_PROFILES);
 
         setId(id);

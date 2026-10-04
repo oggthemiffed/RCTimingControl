@@ -1,26 +1,9 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: rctiming
-      POSTGRES_USER: rctiming
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rctiming -d rctiming"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
   app:
     image: ghcr.io/oggthemiffed/rctimingcontrol/app:${RCTIMING_VERSION:?Set RCTIMING_VERSION in .env}
     restart: unless-stopped
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/rctiming
-      SPRING_DATASOURCE_USERNAME: rctiming
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      RCTIMING_DATA_DIR: /app/data/db
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       STORAGE_LOCAL_PATH: /app/data/uploads
       STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:?Set STORAGE_PUBLIC_BASE_URL in .env}
@@ -28,10 +11,9 @@ services:
       TTS_DEFAULT_VOICE: ${TTS_DEFAULT_VOICE:-en_GB-alan-medium}
       TTS_ENABLED: ${TTS_ENABLED:-true}
     volumes:
+      - app_db:/app/data/db
       - app_uploads:/app/data/uploads
     depends_on:
-      postgres:
-        condition: service_healthy
       piper:
         condition: service_started
     healthcheck:
@@ -61,6 +43,6 @@ services:
       --voice en_US-amy-medium
 
 volumes:
-  pgdata:
+  app_db:
   app_uploads:
   piper_data:

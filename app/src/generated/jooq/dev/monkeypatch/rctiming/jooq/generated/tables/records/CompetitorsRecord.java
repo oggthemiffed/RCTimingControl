@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,115 +21,115 @@ public class CompetitorsRecord extends UpdatableRecordImpl<CompetitorsRecord> {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.competitors.id</code>.
+     * Setter for <code>competitors.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.competitors.id</code>.
+     * Getter for <code>competitors.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.competitors.display_name</code>.
+     * Setter for <code>competitors.display_name</code>.
      */
     public void setDisplayName(String value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.competitors.display_name</code>.
+     * Getter for <code>competitors.display_name</code>.
      */
     public String getDisplayName() {
         return (String) get(1);
     }
 
     /**
-     * Setter for <code>public.competitors.external_source</code>.
+     * Setter for <code>competitors.external_source</code>.
      */
     public void setExternalSource(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.competitors.external_source</code>.
+     * Getter for <code>competitors.external_source</code>.
      */
     public String getExternalSource() {
         return (String) get(2);
     }
 
     /**
-     * Setter for <code>public.competitors.external_id</code>.
+     * Setter for <code>competitors.external_id</code>.
      */
     public void setExternalId(String value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.competitors.external_id</code>.
+     * Getter for <code>competitors.external_id</code>.
      */
     public String getExternalId() {
         return (String) get(3);
     }
 
     /**
-     * Setter for <code>public.competitors.brca_number</code>.
+     * Setter for <code>competitors.brca_number</code>.
      */
     public void setBrcaNumber(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.competitors.brca_number</code>.
+     * Getter for <code>competitors.brca_number</code>.
      */
     public String getBrcaNumber() {
         return (String) get(4);
     }
 
     /**
-     * Setter for <code>public.competitors.home_club</code>.
+     * Setter for <code>competitors.home_club</code>.
      */
     public void setHomeClub(String value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.competitors.home_club</code>.
+     * Getter for <code>competitors.home_club</code>.
      */
     public String getHomeClub() {
         return (String) get(5);
     }
 
     /**
-     * Setter for <code>public.competitors.created_at</code>.
+     * Setter for <code>competitors.created_at</code>.
      */
-    public void setCreatedAt(OffsetDateTime value) {
+    public void setCreatedAt(Instant value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>public.competitors.created_at</code>.
+     * Getter for <code>competitors.created_at</code>.
      */
-    public OffsetDateTime getCreatedAt() {
-        return (OffsetDateTime) get(6);
+    public Instant getCreatedAt() {
+        return (Instant) get(6);
     }
 
     /**
-     * Setter for <code>public.competitors.updated_at</code>.
+     * Setter for <code>competitors.updated_at</code>.
      */
-    public void setUpdatedAt(OffsetDateTime value) {
+    public void setUpdatedAt(Instant value) {
         set(7, value);
     }
 
     /**
-     * Getter for <code>public.competitors.updated_at</code>.
+     * Getter for <code>competitors.updated_at</code>.
      */
-    public OffsetDateTime getUpdatedAt() {
-        return (OffsetDateTime) get(7);
+    public Instant getUpdatedAt() {
+        return (Instant) get(7);
     }
 
     // -------------------------------------------------------------------------
@@ -155,7 +155,7 @@ public class CompetitorsRecord extends UpdatableRecordImpl<CompetitorsRecord> {
     /**
      * Create a detached, initialised CompetitorsRecord
      */
-    public CompetitorsRecord(Long id, String displayName, String externalSource, String externalId, String brcaNumber, String homeClub, OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+    public CompetitorsRecord(Long id, String displayName, String externalSource, String externalId, String brcaNumber, String homeClub, Instant createdAt, Instant updatedAt) {
         super(Competitors.COMPETITORS);
 
         setId(id);

@@ -4,8 +4,8 @@
 package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
-import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships.ChampionshipsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipPointsScaleRecord;
 
@@ -13,7 +13,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-import org.jooq.Check;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
@@ -32,7 +31,6 @@ import org.jooq.TableField;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -46,7 +44,7 @@ public class ChampionshipPointsScale extends TableImpl<ChampionshipPointsScaleRe
     private static final long serialVersionUID = 1L;
 
     /**
-     * The reference instance of <code>public.championship_points_scale</code>
+     * The reference instance of <code>championship_points_scale</code>
      */
     public static final ChampionshipPointsScale CHAMPIONSHIP_POINTS_SCALE = new ChampionshipPointsScale();
 
@@ -59,17 +57,17 @@ public class ChampionshipPointsScale extends TableImpl<ChampionshipPointsScaleRe
     }
 
     /**
-     * The column <code>public.championship_points_scale.championship_id</code>.
+     * The column <code>championship_points_scale.championship_id</code>.
      */
     public final TableField<ChampionshipPointsScaleRecord, Long> CHAMPIONSHIP_ID = createField(DSL.name("championship_id"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_points_scale.position</code>.
+     * The column <code>championship_points_scale.position</code>.
      */
     public final TableField<ChampionshipPointsScaleRecord, Integer> POSITION = createField(DSL.name("position"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>public.championship_points_scale.points</code>.
+     * The column <code>championship_points_scale.points</code>.
      */
     public final TableField<ChampionshipPointsScaleRecord, Integer> POINTS = createField(DSL.name("points"), SQLDataType.INTEGER.nullable(false), this, "");
 
@@ -82,23 +80,21 @@ public class ChampionshipPointsScale extends TableImpl<ChampionshipPointsScaleRe
     }
 
     /**
-     * Create an aliased <code>public.championship_points_scale</code> table
-     * reference
+     * Create an aliased <code>championship_points_scale</code> table reference
      */
     public ChampionshipPointsScale(String alias) {
         this(DSL.name(alias), CHAMPIONSHIP_POINTS_SCALE);
     }
 
     /**
-     * Create an aliased <code>public.championship_points_scale</code> table
-     * reference
+     * Create an aliased <code>championship_points_scale</code> table reference
      */
     public ChampionshipPointsScale(Name alias) {
         this(alias, CHAMPIONSHIP_POINTS_SCALE);
     }
 
     /**
-     * Create a <code>public.championship_points_scale</code> table reference
+     * Create a <code>championship_points_scale</code> table reference
      */
     public ChampionshipPointsScale() {
         this(DSL.name("championship_points_scale"), null);
@@ -139,12 +135,12 @@ public class ChampionshipPointsScale extends TableImpl<ChampionshipPointsScaleRe
 
     @Override
     public Schema getSchema() {
-        return aliased() ? null : Public.PUBLIC;
+        return aliased() ? null : DefaultSchema.DEFAULT_SCHEMA;
     }
 
     @Override
     public UniqueKey<ChampionshipPointsScaleRecord> getPrimaryKey() {
-        return Keys.CHAMPIONSHIP_POINTS_SCALE_PKEY;
+        return Keys.CHAMPIONSHIP_POINTS_SCALE__PK_CHAMPIONSHIP_POINTS_SCALE;
     }
 
     @Override
@@ -155,22 +151,13 @@ public class ChampionshipPointsScale extends TableImpl<ChampionshipPointsScaleRe
     private transient ChampionshipsPath _championships;
 
     /**
-     * Get the implicit join path to the <code>public.championships</code>
-     * table.
+     * Get the implicit join path to the <code>championships</code> table.
      */
     public ChampionshipsPath championships() {
         if (_championships == null)
             _championships = new ChampionshipsPath(this, Keys.CHAMPIONSHIP_POINTS_SCALE__CHAMPIONSHIP_POINTS_SCALE_CHAMPIONSHIP_ID_FKEY, null);
 
         return _championships;
-    }
-
-    @Override
-    public List<Check<ChampionshipPointsScaleRecord>> getChecks() {
-        return Arrays.asList(
-            Internal.createCheck(this, DSL.name("championship_points_scale_points_check"), "((points >= 0))", true),
-            Internal.createCheck(this, DSL.name("championship_points_scale_position_check"), "((\"position\" >= 1))", true)
-        );
     }
 
     @Override

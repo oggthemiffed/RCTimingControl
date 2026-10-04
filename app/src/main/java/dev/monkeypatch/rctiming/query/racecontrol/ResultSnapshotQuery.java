@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.jooq.DSLContext;
-import org.jooq.JSONB;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,17 +61,17 @@ public class ResultSnapshotQuery {
         String finalLetter = row.get(RACES.FINAL_LETTER);
         String raceLabel = buildRaceLabel(roundType, roundNumber, className, heatNumber, finalLetter);
 
-        Instant finishedAt = row.get(RESULT_SNAPSHOTS.FINISHED_AT).toInstant();
+        Instant finishedAt = row.get(RESULT_SNAPSHOTS.FINISHED_AT);
 
-        JSONB positionsJsonb = row.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
-        JSONB lapHistoryJsonb = row.get(RESULT_SNAPSHOTS.LAP_HISTORY_JSON);
+        String positionsJson = row.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
+        String lapHistoryJson = row.get(RESULT_SNAPSHOTS.LAP_HISTORY_JSON);
 
         try {
             List<ResultSnapshotDto.ResultRow> positions = objectMapper.readValue(
-                    positionsJsonb.data(),
+                    positionsJson,
                     new TypeReference<List<ResultSnapshotDto.ResultRow>>() {});
             List<ResultSnapshotDto.PositionAtLap> lapHistory = objectMapper.readValue(
-                    lapHistoryJsonb.data(),
+                    lapHistoryJson,
                     new TypeReference<List<ResultSnapshotDto.PositionAtLap>>() {});
 
             ResultSnapshotDto.ClubBrandingDto branding = fetchClubBranding();

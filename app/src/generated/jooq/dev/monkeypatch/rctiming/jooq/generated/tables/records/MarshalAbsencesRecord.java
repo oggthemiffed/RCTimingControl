@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables.records;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -21,84 +21,84 @@ public class MarshalAbsencesRecord extends UpdatableRecordImpl<MarshalAbsencesRe
     private static final long serialVersionUID = 1L;
 
     /**
-     * Setter for <code>public.marshal_absences.id</code>.
+     * Setter for <code>marshal_absences.id</code>.
      */
     public void setId(Long value) {
         set(0, value);
     }
 
     /**
-     * Getter for <code>public.marshal_absences.id</code>.
+     * Getter for <code>marshal_absences.id</code>.
      */
     public Long getId() {
         return (Long) get(0);
     }
 
     /**
-     * Setter for <code>public.marshal_absences.race_id</code>.
+     * Setter for <code>marshal_absences.race_id</code>.
      */
     public void setRaceId(Long value) {
         set(1, value);
     }
 
     /**
-     * Getter for <code>public.marshal_absences.race_id</code>.
+     * Getter for <code>marshal_absences.race_id</code>.
      */
     public Long getRaceId() {
         return (Long) get(1);
     }
 
     /**
-     * Setter for <code>public.marshal_absences.entry_id</code>.
+     * Setter for <code>marshal_absences.entry_id</code>.
      */
     public void setEntryId(Long value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>public.marshal_absences.entry_id</code>.
+     * Getter for <code>marshal_absences.entry_id</code>.
      */
     public Long getEntryId() {
         return (Long) get(2);
     }
 
     /**
-     * Setter for <code>public.marshal_absences.event_id</code>.
+     * Setter for <code>marshal_absences.event_id</code>.
      */
     public void setEventId(Long value) {
         set(3, value);
     }
 
     /**
-     * Getter for <code>public.marshal_absences.event_id</code>.
+     * Getter for <code>marshal_absences.event_id</code>.
      */
     public Long getEventId() {
         return (Long) get(3);
     }
 
     /**
-     * Setter for <code>public.marshal_absences.recorded_at</code>.
+     * Setter for <code>marshal_absences.recorded_at</code>.
      */
-    public void setRecordedAt(OffsetDateTime value) {
+    public void setRecordedAt(Instant value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>public.marshal_absences.recorded_at</code>.
+     * Getter for <code>marshal_absences.recorded_at</code>.
      */
-    public OffsetDateTime getRecordedAt() {
-        return (OffsetDateTime) get(4);
+    public Instant getRecordedAt() {
+        return (Instant) get(4);
     }
 
     /**
-     * Setter for <code>public.marshal_absences.recorded_by</code>.
+     * Setter for <code>marshal_absences.recorded_by</code>.
      */
     public void setRecordedBy(Long value) {
         set(5, value);
     }
 
     /**
-     * Getter for <code>public.marshal_absences.recorded_by</code>.
+     * Getter for <code>marshal_absences.recorded_by</code>.
      */
     public Long getRecordedBy() {
         return (Long) get(5);
@@ -127,7 +127,7 @@ public class MarshalAbsencesRecord extends UpdatableRecordImpl<MarshalAbsencesRe
     /**
      * Create a detached, initialised MarshalAbsencesRecord
      */
-    public MarshalAbsencesRecord(Long id, Long raceId, Long entryId, Long eventId, OffsetDateTime recordedAt, Long recordedBy) {
+    public MarshalAbsencesRecord(Long id, Long raceId, Long entryId, Long eventId, Instant recordedAt, Long recordedBy) {
         super(MarshalAbsences.MARSHAL_ABSENCES);
 
         setId(id);
