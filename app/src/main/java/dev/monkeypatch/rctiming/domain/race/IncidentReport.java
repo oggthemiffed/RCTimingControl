@@ -26,7 +26,6 @@ public class IncidentReport {
     @Column(name = "incident_type", nullable = false, length = 50)
     private String incidentType;
 
-    @Column(columnDefinition = "text")
     private String description;
 
     @Column(name = "raised_by", nullable = false)

@@ -24,7 +24,7 @@ public class Track {
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "venue_notes", columnDefinition = "text")
+    @Column(name = "venue_notes")
     private String venueNotes;
 
     @Column(name = "track_length")

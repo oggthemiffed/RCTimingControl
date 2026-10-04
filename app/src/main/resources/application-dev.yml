@@ -7,7 +7,6 @@ spring:
     username: rctiming
     password: rctiming
   flyway:
-    locations: classpath:db/migration,classpath:db/seed
     # Dev seeds are versioned 1000+, so a seeded dev database has a higher version than new
     # migrations. Out-of-order lets migrations added after the seed (V30 onward) still apply.
     out-of-order: true
@@ -17,6 +16,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
+
+rctiming:
+  database:
+    migration-locations: db/migration, db/seed
 
 tts:
   endpoint: localhost:10200

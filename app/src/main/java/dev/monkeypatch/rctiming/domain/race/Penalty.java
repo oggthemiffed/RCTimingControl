@@ -30,7 +30,6 @@ public class Penalty {
     @Column(nullable = false)
     private BigDecimal value;
 
-    @Column(columnDefinition = "text")
     private String reason;
 
     @Column(name = "applied_by", nullable = false)

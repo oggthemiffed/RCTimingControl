@@ -37,7 +37,6 @@ public class ClubProfile {
     @Column(nullable = false)
     private String timezone = "UTC";
 
-    @Column(columnDefinition = "bytea")
     private byte[] logo;
 
     @Column(name = "logo_type", length = 10)
@@ -47,7 +46,7 @@ public class ClubProfile {
     private String logoUrl;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "audio_settings", columnDefinition = "jsonb")
+    @Column(name = "audio_settings")
     private ClubAudioSettings audioSettings = ClubAudioSettings.defaults();
 
     @Column(name = "default_voice_id", length = 100)

@@ -26,13 +26,12 @@ public class EntryAuditLog {
     @Column(nullable = false, length = 40)
     private String action;   // "TRANSPONDER_SWAP" | "MEMBERSHIP_OVERRIDE"
 
-    @Column(columnDefinition = "text")
     private String reason;
 
-    @Column(name = "before_snapshot", columnDefinition = "text")
+    @Column(name = "before_snapshot")
     private String beforeSnapshot;
 
-    @Column(name = "after_snapshot", columnDefinition = "text")
+    @Column(name = "after_snapshot")
     private String afterSnapshot;
 
     @Column(name = "created_at", nullable = false)

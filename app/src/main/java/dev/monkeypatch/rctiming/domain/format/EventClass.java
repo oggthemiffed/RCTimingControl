@@ -24,11 +24,11 @@ public class EventClass {
     private Long id;
 
     @Type(JsonType.class)
-    @Column(name = "config_snapshot", columnDefinition = "jsonb", nullable = false)
+    @Column(name = "config_snapshot", nullable = false)
     private RaceFormatConfig configSnapshot;
 
     @Type(JsonType.class)
-    @Column(name = "config_override", columnDefinition = "jsonb")
+    @Column(name = "config_override")
     private Map<String, Object> configOverride;
 
     @ManyToOne(fetch = FetchType.LAZY)

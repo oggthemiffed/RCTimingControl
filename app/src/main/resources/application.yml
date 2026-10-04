@@ -5,7 +5,11 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
-    locations: classpath:db/migration
+
+rctiming:
+  database:
+    # The database the app runs on. DatabaseConfig applies it to Flyway, Hibernate and jOOQ.
+    vendor: postgresql
 
 app:
   jwt:

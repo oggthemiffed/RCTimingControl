@@ -26,11 +26,11 @@ public class ResultSnapshot {
     private Instant finishedAt;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "positions_json", columnDefinition = "jsonb", nullable = false)
+    @Column(name = "positions_json", nullable = false)
     private String positionsJson;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "lap_history_json", columnDefinition = "jsonb", nullable = false)
+    @Column(name = "lap_history_json", nullable = false)
     private String lapHistoryJson;
 
     @Column(name = "created_at", nullable = false)

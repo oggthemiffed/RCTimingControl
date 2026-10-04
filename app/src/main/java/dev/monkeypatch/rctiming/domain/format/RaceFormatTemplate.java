@@ -23,7 +23,7 @@ public class RaceFormatTemplate {
     private String name;
 
     @Type(JsonType.class)
-    @Column(columnDefinition = "jsonb", nullable = false)
+    @Column(nullable = false)
     private RaceFormatConfig config;
 
     @Column(name = "created_at", nullable = false, updatable = false)
