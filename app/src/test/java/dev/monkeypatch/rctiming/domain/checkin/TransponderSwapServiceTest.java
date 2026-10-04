@@ -6,6 +6,8 @@ import dev.monkeypatch.rctiming.domain.entry.EntryAuditLog;
 import dev.monkeypatch.rctiming.domain.entry.EntryAuditLogRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
+import dev.monkeypatch.rctiming.domain.event.Event;
+import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,6 +27,7 @@ class TransponderSwapServiceTest {
 
     private static final long EVENT_ID = 1L;
 
+    private EventRepository eventRepository;
     private EntryRepository entryRepository;
     private EntryAuditLogRepository auditLogRepository;
     private TransponderSwapService service;
@@ -32,9 +35,11 @@ class TransponderSwapServiceTest {
 
     @BeforeEach
     void setUp() {
+        eventRepository = Mockito.mock(EventRepository.class);
         entryRepository = Mockito.mock(EntryRepository.class);
         auditLogRepository = Mockito.mock(EntryAuditLogRepository.class);
-        service = new TransponderSwapService(entryRepository, auditLogRepository, new ObjectMapper());
+        service = new TransponderSwapService(eventRepository, entryRepository, auditLogRepository, new ObjectMapper());
+        Mockito.when(eventRepository.findByIdForUpdate(EVENT_ID)).thenReturn(Optional.of(new Event()));
         Mockito.when(entryRepository.save(any(Entry.class))).thenAnswer(inv -> inv.getArgument(0));
         Mockito.when(entryRepository.findByEventId(EVENT_ID)).thenReturn(eventEntries);
     }
@@ -48,7 +53,7 @@ class TransponderSwapServiceTest {
         e.setTransponderNumberSnapshot(primary);
         e.setSecondaryTransponderNumber(secondary);
         eventEntries.add(e);
-        Mockito.when(entryRepository.findById(id)).thenReturn(Optional.of(e));
+        Mockito.when(entryRepository.findByIdForUpdate(id)).thenReturn(Optional.of(e));
         return e;
     }
 
@@ -151,13 +156,32 @@ class TransponderSwapServiceTest {
 
     @Test
     void swap_unknownOrOtherEventEntry_isNotFound() {
-        Mockito.when(entryRepository.findById(9L)).thenReturn(Optional.empty());
+        Mockito.when(entryRepository.findByIdForUpdate(9L)).thenReturn(Optional.empty());
         Entry elsewhere = entry(5L, 50L, "1234567", null);
         elsewhere.setEventId(2L);
 
         assertThat(service.swap(EVENT_ID, 9L, TransponderSlot.PRIMARY, "1", 42L))
                 .isInstanceOf(SwapResult.EntryNotFound.class);
         assertThat(service.swap(EVENT_ID, 5L, TransponderSlot.PRIMARY, "1", 42L))
+                .isInstanceOf(SwapResult.EntryNotFound.class);
+    }
+
+    @Test
+    void swap_locksTheEventBeforeCheckingForConflicts() {
+        entry(5L, 50L, "1234567", null);
+
+        service.swap(EVENT_ID, 5L, TransponderSlot.PRIMARY, "7654321", 42L);
+
+        var order = Mockito.inOrder(eventRepository, entryRepository);
+        order.verify(eventRepository).findByIdForUpdate(EVENT_ID);
+        order.verify(entryRepository).findByEventId(EVENT_ID);
+    }
+
+    @Test
+    void swap_unknownEvent_isNotFound() {
+        Mockito.when(eventRepository.findByIdForUpdate(2L)).thenReturn(Optional.empty());
+
+        assertThat(service.swap(2L, 5L, TransponderSlot.PRIMARY, "1", 42L))
                 .isInstanceOf(SwapResult.EntryNotFound.class);
     }
 

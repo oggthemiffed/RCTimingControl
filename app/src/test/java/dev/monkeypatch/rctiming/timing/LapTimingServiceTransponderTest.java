@@ -6,6 +6,8 @@ import dev.monkeypatch.rctiming.domain.checkin.TransponderSlot;
 import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryAuditLogRepository;
+import dev.monkeypatch.rctiming.domain.event.Event;
+import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -46,6 +48,7 @@ class LapTimingServiceTransponderTest {
     @Mock EntryRepository entryRepository;
     @Mock CompetitorRepository competitorRepository;
     @Mock EntryAuditLogRepository auditLogRepository;
+    @Mock EventRepository eventRepository;
 
     private LapTimingService service;
     private final Map<Long, List<RaceEntry>> raceEntriesByRace = new HashMap<>();
@@ -130,10 +133,12 @@ class LapTimingServiceTransponderTest {
         addEntry(1L, 10L, "1001", null, EntryStatus.CONFIRMED);
         entriesById.get(10L).setEventId(99L);
         when(entryRepository.findByEventId(99L)).thenReturn(List.of(entriesById.get(10L)));
+        when(entryRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(entriesById.get(10L)));
+        when(eventRepository.findByIdForUpdate(99L)).thenReturn(Optional.of(new Event()));
         lap(1L, "1001", 1_000);
 
         TransponderSwapService swapService =
-                new TransponderSwapService(entryRepository, auditLogRepository, new ObjectMapper());
+                new TransponderSwapService(eventRepository, entryRepository, auditLogRepository, new ObjectMapper());
         SwapResult result = swapService.swap(99L, 10L, TransponderSlot.PRIMARY, "3003", 7L);
         assertThat(result).isInstanceOf(SwapResult.Success.class);
 

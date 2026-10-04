@@ -6,6 +6,7 @@ import dev.monkeypatch.rctiming.domain.entry.EntryAuditLog;
 import dev.monkeypatch.rctiming.domain.entry.EntryAuditLogRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
+import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,24 +26,33 @@ public class TransponderSwapService {
 
     static final String AUDIT_ACTION = "TRANSPONDER_SWAP";
 
+    private final EventRepository eventRepository;
     private final EntryRepository entryRepository;
     private final EntryAuditLogRepository auditLogRepository;
     private final ObjectMapper objectMapper;
 
-    public TransponderSwapService(EntryRepository entryRepository,
+    public TransponderSwapService(EventRepository eventRepository,
+                                  EntryRepository entryRepository,
                                   EntryAuditLogRepository auditLogRepository,
                                   ObjectMapper objectMapper) {
+        this.eventRepository = eventRepository;
         this.entryRepository = entryRepository;
         this.auditLogRepository = auditLogRepository;
         this.objectMapper = objectMapper;
     }
 
     /**
+     * Swaps for one event are serialized by locking the event row, so two officials cannot both
+     * give the same free number to different competitors.
+     *
      * @param newNumber the new number; blank removes a secondary transponder
      */
     @Transactional
     public SwapResult swap(long eventId, long entryId, TransponderSlot slot, String newNumber, long actingUserId) {
-        Entry entry = entryRepository.findById(entryId).orElse(null);
+        if (eventRepository.findByIdForUpdate(eventId).isEmpty()) {
+            return new SwapResult.EntryNotFound();
+        }
+        Entry entry = entryRepository.findByIdForUpdate(entryId).orElse(null);
         if (entry == null || !Objects.equals(entry.getEventId(), eventId)) {
             return new SwapResult.EntryNotFound();
         }

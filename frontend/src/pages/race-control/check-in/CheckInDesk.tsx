@@ -2,7 +2,7 @@
 // search all lead to the same confirmation step. Camera and keyboard-wedge are deliberately two
 // separate entry points (see BarcodeScanner / KeyboardWedgeInput) even though both call
 // checkInResolve, so a regression in one can't hide behind the other.
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -21,6 +21,7 @@ import RosterSearch from './RosterSearch';
 
 type ResolveState =
   | { kind: 'idle' }
+  | { kind: 'resolving' }
   | { kind: 'resolved'; entries: CheckInEntry[] }
   | { kind: 'not_found'; query: string }
   | { kind: 'error' };
@@ -39,15 +40,22 @@ export default function CheckInDesk({ eventId }: { eventId: number }) {
   const [confirmed, setConfirmed] = useState<Record<number, CheckInConfirmResponse>>({});
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  // Only the newest scan or search may update the desk: a slower earlier response is dropped
+  const latestLookup = useRef(0);
 
   const resolveCode = useCallback(
     async (code: string) => {
+      const lookup = ++latestLookup.current;
+      // Clear the previous competitor at once so they can't be confirmed by mistake
+      setResolveState({ kind: 'resolving' });
       setConfirmed({});
       setConfirmError(null);
       try {
         const entries = await checkInResolve(eventId, code);
+        if (lookup !== latestLookup.current) return;
         setResolveState({ kind: 'resolved', entries });
       } catch (err) {
+        if (lookup !== latestLookup.current) return;
         if (statusFrom(err) === 404) {
           setResolveState({ kind: 'not_found', query: code });
         } else {
@@ -74,6 +82,7 @@ export default function CheckInDesk({ eventId }: { eventId: number }) {
   const handleCameraUnavailable = useCallback(() => setCameraAvailable(false), []);
 
   function handleSearchSelect(entry: CheckInEntry) {
+    latestLookup.current++;
     setConfirmed({});
     setConfirmError(null);
     setResolveState({ kind: 'resolved', entries: [entry] });
@@ -116,6 +125,10 @@ export default function CheckInDesk({ eventId }: { eventId: number }) {
         <h2 className="text-sm font-medium text-muted-foreground">Keyboard-wedge scanner</h2>
         <KeyboardWedgeInput onScan={handleWedgeScan} />
       </section>
+
+      {resolveState.kind === 'resolving' && (
+        <p className="text-sm text-muted-foreground">Looking up…</p>
+      )}
 
       {resolveState.kind === 'resolved' &&
         resolveState.entries.map((entry) => (

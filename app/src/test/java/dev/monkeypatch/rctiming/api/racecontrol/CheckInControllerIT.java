@@ -1,6 +1,11 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
+import dev.monkeypatch.rctiming.domain.checkin.CheckInResult;
+import dev.monkeypatch.rctiming.domain.checkin.CheckInService;
+import dev.monkeypatch.rctiming.domain.checkin.SwapResult;
+import dev.monkeypatch.rctiming.domain.checkin.TransponderSlot;
+import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryAuditLog;
@@ -37,6 +42,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -52,6 +63,8 @@ class CheckInControllerIT extends AbstractIntegrationTest {
     @Autowired EntryRepository entryRepository;
     @Autowired EntryAuditLogRepository auditLogRepository;
     @Autowired CompetitorService competitorService;
+    @Autowired CheckInService checkInService;
+    @Autowired TransponderSwapService transponderSwapService;
 
     private Long directorId;
     private String directorToken;
@@ -218,7 +231,56 @@ class CheckInControllerIT extends AbstractIntegrationTest {
                 .getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    @Test
+    void concurrentConfirms_recordExactlyOneFirstCheckIn() throws Exception {
+        Entry entry = saveEntry("Jane Doe", "M" + suffix, null, EntryStatus.CONFIRMED);
+
+        List<CheckInResult> results = runConcurrently(6,
+                i -> () -> checkInService.confirm(event.getId(), entry.getId(), directorId));
+
+        assertThat(results).filteredOn(r -> r instanceof CheckInResult.Success s && !s.alreadyCheckedIn())
+                .hasSize(1);
+    }
+
+    @Test
+    void concurrentSwapsToTheSameFreeNumber_onlyOneCompetitorGetsIt() throws Exception {
+        List<Entry> entries = IntStream.range(0, 4)
+                .mapToObj(i -> saveEntry("Driver " + i, "N" + i + suffix, null, EntryStatus.CONFIRMED))
+                .toList();
+
+        List<SwapResult> results = runConcurrently(entries.size(),
+                i -> () -> transponderSwapService.swap(event.getId(), entries.get(i).getId(),
+                        TransponderSlot.PRIMARY, "FREE" + suffix, directorId));
+
+        assertThat(results).filteredOn(r -> r instanceof SwapResult.Success).hasSize(1);
+        assertThat(results).filteredOn(r -> r instanceof SwapResult.TransponderAlreadyAssigned)
+                .hasSize(entries.size() - 1);
+    }
+
     // --- helpers ---
+
+    /** Starts the tasks together and waits for all of them. */
+    private <T> List<T> runConcurrently(int count, java.util.function.IntFunction<Callable<T>> task)
+            throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(count);
+        try {
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<T>> futures = IntStream.range(0, count)
+                    .mapToObj(i -> pool.submit(() -> {
+                        start.await();
+                        return task.apply(i).call();
+                    }))
+                    .toList();
+            start.countDown();
+            List<T> results = new java.util.ArrayList<>();
+            for (Future<T> f : futures) {
+                results.add(f.get());
+            }
+            return results;
+        } finally {
+            pool.shutdownNow();
+        }
+    }
 
     private String checkIn(String path) {
         return "/api/v1/race-control/events/" + event.getId() + "/check-in" + path;

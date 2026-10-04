@@ -54,7 +54,10 @@ export default function TransponderSwap({ eventId }: { eventId: number }) {
     if (!selectedEntry) return;
     const trimmed = newTransponderNumber.trim();
     // Blank only means something for the secondary: it removes it
-    if (!trimmed && slot === 'PRIMARY') return;
+    if (!trimmed && slot === 'PRIMARY') {
+      setResult({ kind: 'error', message: ERROR_MESSAGES.primary_required });
+      return;
+    }
 
     setSubmitting(true);
     setResult(null);

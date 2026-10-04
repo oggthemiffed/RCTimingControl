@@ -34,7 +34,7 @@ class CheckInServiceTest {
         e.setEventId(eventId);
         e.setStatus(status);
         e.setTransponderNumberSnapshot("1234567");
-        Mockito.when(entryRepository.findById(id)).thenReturn(Optional.of(e));
+        Mockito.when(entryRepository.findByIdForUpdate(id)).thenReturn(Optional.of(e));
         return e;
     }
 
@@ -78,7 +78,7 @@ class CheckInServiceTest {
 
     @Test
     void confirm_unknownEntry_isNotFound() {
-        Mockito.when(entryRepository.findById(9L)).thenReturn(Optional.empty());
+        Mockito.when(entryRepository.findByIdForUpdate(9L)).thenReturn(Optional.empty());
 
         assertThat(service.confirm(1L, 9L, 42L)).isInstanceOf(CheckInResult.NotFound.class);
     }

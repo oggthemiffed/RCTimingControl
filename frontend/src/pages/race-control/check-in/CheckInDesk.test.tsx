@@ -123,6 +123,34 @@ describe('CheckInDesk: keyboard-wedge path', () => {
   });
 });
 
+describe('CheckInDesk: overlapping scans', () => {
+  it('clears the previous competitor at once and ignores a slower earlier response', async () => {
+    let resolveFirst: (entries: (typeof sampleEntry)[]) => void = () => {};
+    vi.mocked(checkInResolve)
+      .mockResolvedValueOnce([sampleEntry])
+      .mockImplementationOnce(() => new Promise((resolve) => (resolveFirst = resolve)))
+      .mockResolvedValueOnce([{ ...sampleEntry, entryId: 9, competitorName: 'Sam Late' }]);
+
+    renderDesk();
+    scan('1234567');
+    await screen.findByText('Jane Doe');
+
+    // Second scan is slow; the old competitor must not stay confirmable meanwhile
+    scan('1111111');
+    expect(screen.queryByText('Jane Doe')).toBeNull();
+    expect(screen.queryByRole('button', { name: /confirm check-in/i })).toBeNull();
+
+    // Third scan answers first; the slow second answer then arrives and is dropped
+    scan('9999999');
+    await screen.findByText('Sam Late');
+    resolveFirst([{ ...sampleEntry, entryId: 8, competitorName: 'Stale Driver' }]);
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(screen.queryByText('Stale Driver')).toBeNull();
+    expect(screen.getByText('Sam Late')).toBeInTheDocument();
+  });
+});
+
 describe('CheckInDesk: camera scan path', () => {
   it('independently resolves the entry via a camera decode and confirms check-in', async () => {
     getUserMedia.mockResolvedValue(fakeStream());

@@ -24,11 +24,12 @@ public class CheckInService {
 
     /**
      * Checks an entry in. Idempotent: a repeat confirm keeps the first check-in time and
-     * reports {@code alreadyCheckedIn}.
+     * reports {@code alreadyCheckedIn}. The entry row is locked, so two desks confirming at
+     * once cannot both record a first check-in.
      */
     @Transactional
     public CheckInResult confirm(long eventId, long entryId, Long actingUserId) {
-        Entry entry = entryRepository.findById(entryId).orElse(null);
+        Entry entry = entryRepository.findByIdForUpdate(entryId).orElse(null);
         if (entry == null || !Objects.equals(entry.getEventId(), eventId)) {
             return new CheckInResult.NotFound();
         }

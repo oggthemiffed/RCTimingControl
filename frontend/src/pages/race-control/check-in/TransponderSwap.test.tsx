@@ -85,11 +85,12 @@ describe('TransponderSwap', () => {
     expect(swapTransponder).toHaveBeenCalledWith(EVENT_ID, 5, 'SECONDARY', '');
   });
 
-  it('does not send a blank primary', async () => {
+  it('explains a blank primary instead of sending it', async () => {
     renderSwap();
     await selectSampleEntry();
     submit('');
 
+    await screen.findByText(/can be replaced but not removed/i);
     expect(swapTransponder).not.toHaveBeenCalled();
   });
 
