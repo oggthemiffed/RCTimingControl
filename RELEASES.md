@@ -119,11 +119,9 @@ git push origin main
 
 | Job | What it runs |
 |-----|-------------|
-| `test-backend` | Gradle test suite — JUnit 5 + Testcontainers (Java 21); also runs `decoder-protocol` and `localday` (no Docker needed for either) |
+| `test-backend` | Gradle test suite — JUnit 5 + Testcontainers (Java 21); also runs `decoder-simulator` and `decoder-protocol` (the latter needs no Docker) |
 | `test-frontend` | Vitest unit tests (Node 20) |
 | `test-e2e` | Playwright smoke tests against the full `docker-compose.trial.yml` stack |
-| `test-frontend-local` | Vitest unit tests for the Local Race Day Program frontend (Node 20) |
-| `test-e2e-localday` | Playwright against a live `:localday` (`e2e` profile) + `frontend-local` dev server |
 
 ### On `v*` tag push (`publish-trial-images.yml`)
 
