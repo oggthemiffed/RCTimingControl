@@ -74,6 +74,21 @@ public class Entry {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /** Where the entry was imported from (RACEHUB), or null for entries made here (L7). */
+    @Column(name = "external_source", length = 30)
+    private String externalSource;
+
+    @Column(name = "external_entry_id", length = 100)
+    private String externalEntryId;
+
+    /** The source's entry_version last applied. Only a higher version changes the entry. */
+    @Column(name = "external_entry_version")
+    private Long externalEntryVersion;
+
+    /** RaceHub's race_day_status (NOT_ARRIVED / ARRIVED). Read-only here; set only by import. */
+    @Column(name = "racehub_arrival", length = 20)
+    private String racehubArrival;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -127,4 +142,16 @@ public class Entry {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getExternalSource() { return externalSource; }
+    public void setExternalSource(String externalSource) { this.externalSource = externalSource; }
+
+    public String getExternalEntryId() { return externalEntryId; }
+    public void setExternalEntryId(String externalEntryId) { this.externalEntryId = externalEntryId; }
+
+    public Long getExternalEntryVersion() { return externalEntryVersion; }
+    public void setExternalEntryVersion(Long externalEntryVersion) { this.externalEntryVersion = externalEntryVersion; }
+
+    public String getRacehubArrival() { return racehubArrival; }
+    public void setRacehubArrival(String racehubArrival) { this.racehubArrival = racehubArrival; }
 }

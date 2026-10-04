@@ -10,6 +10,7 @@ import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events.EventsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceFormatTemplates.RaceFormatTemplatesPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.RacehubClassMappings.RacehubClassMappingsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RacingClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.EventClassesRecord;
@@ -267,6 +268,19 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
             _entries = new EntriesPath(this, null, Keys.ENTRIES__ENTRIES_EVENT_CLASS_ID_FKEY.getInverseKey());
 
         return _entries;
+    }
+
+    private transient RacehubClassMappingsPath _racehubClassMappings;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.racehub_class_mappings</code> table
+     */
+    public RacehubClassMappingsPath racehubClassMappings() {
+        if (_racehubClassMappings == null)
+            _racehubClassMappings = new RacehubClassMappingsPath(this, null, Keys.RACEHUB_CLASS_MAPPINGS__RACEHUB_CLASS_MAPPINGS_EVENT_CLASS_ID_FKEY.getInverseKey());
+
+        return _racehubClassMappings;
     }
 
     private transient RacesPath _races;

@@ -286,6 +286,62 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         return (String) get(18);
     }
 
+    /**
+     * Setter for <code>public.entries.external_source</code>.
+     */
+    public void setExternalSource(String value) {
+        set(19, value);
+    }
+
+    /**
+     * Getter for <code>public.entries.external_source</code>.
+     */
+    public String getExternalSource() {
+        return (String) get(19);
+    }
+
+    /**
+     * Setter for <code>public.entries.external_entry_id</code>.
+     */
+    public void setExternalEntryId(String value) {
+        set(20, value);
+    }
+
+    /**
+     * Getter for <code>public.entries.external_entry_id</code>.
+     */
+    public String getExternalEntryId() {
+        return (String) get(20);
+    }
+
+    /**
+     * Setter for <code>public.entries.external_entry_version</code>.
+     */
+    public void setExternalEntryVersion(Long value) {
+        set(21, value);
+    }
+
+    /**
+     * Getter for <code>public.entries.external_entry_version</code>.
+     */
+    public Long getExternalEntryVersion() {
+        return (Long) get(21);
+    }
+
+    /**
+     * Setter for <code>public.entries.racehub_arrival</code>.
+     */
+    public void setRacehubArrival(String value) {
+        set(22, value);
+    }
+
+    /**
+     * Getter for <code>public.entries.racehub_arrival</code>.
+     */
+    public String getRacehubArrival() {
+        return (String) get(22);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -309,7 +365,7 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
     /**
      * Create a detached, initialised EntriesRecord
      */
-    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Boolean membershipOverride, Long membershipOverrideBy, OffsetDateTime membershipOverrideAt, String membershipOverrideNote, OffsetDateTime submittedAt, OffsetDateTime updatedAt, Long carId, Long transponderId, OffsetDateTime confirmedAt, OffsetDateTime withdrawnAt, Long competitorId, String secondaryTransponderNumber) {
+    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Boolean membershipOverride, Long membershipOverrideBy, OffsetDateTime membershipOverrideAt, String membershipOverrideNote, OffsetDateTime submittedAt, OffsetDateTime updatedAt, Long carId, Long transponderId, OffsetDateTime confirmedAt, OffsetDateTime withdrawnAt, Long competitorId, String secondaryTransponderNumber, String externalSource, String externalEntryId, Long externalEntryVersion, String racehubArrival) {
         super(Entries.ENTRIES);
 
         setId(id);
@@ -331,6 +387,10 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         setWithdrawnAt(withdrawnAt);
         setCompetitorId(competitorId);
         setSecondaryTransponderNumber(secondaryTransponderNumber);
+        setExternalSource(externalSource);
+        setExternalEntryId(externalEntryId);
+        setExternalEntryVersion(externalEntryVersion);
+        setRacehubArrival(racehubArrival);
         resetChangedOnNotNull();
     }
 }
