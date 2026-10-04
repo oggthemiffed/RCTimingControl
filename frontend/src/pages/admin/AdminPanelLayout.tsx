@@ -14,6 +14,7 @@ import {
   Users,
   Wand2,
   HelpCircle,
+  DatabaseBackup,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -34,9 +35,10 @@ const operationsGroup = [
   { to: '/setup', label: 'Setup Wizard', Icon: Wand2 },
 ] as const;
 
-// Decoder settings are admin-only, so this item is shown only to ADMIN users.
+// Decoder settings and backups are admin-only, so these items are shown only to ADMIN users.
 const adminOnlyOperations = [
   { to: '/admin/decoder', label: 'Decoder', Icon: Radio },
+  { to: '/admin/backups', label: 'Backups', Icon: DatabaseBackup },
 ] as const;
 
 const configGroup = [

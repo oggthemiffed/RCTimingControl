@@ -53,3 +53,22 @@ describe('AdminPanelLayout Decoder entry', () => {
     expect(screen.queryByRole('link', { name: /Decoder/i })).not.toBeInTheDocument();
   });
 });
+
+describe('AdminPanelLayout Backups entry', () => {
+  beforeEach(() => {
+    auth.roles = ['ADMIN'];
+  });
+
+  it('is shown to ADMIN users', () => {
+    renderLayout();
+
+    expect(screen.getAllByRole('link', { name: /Backups/i }).length).toBeGreaterThan(0);
+  });
+
+  it('is hidden from race directors', () => {
+    auth.roles = ['RACE_DIRECTOR'];
+    renderLayout();
+
+    expect(screen.queryByRole('link', { name: /Backups/i })).not.toBeInTheDocument();
+  });
+});
