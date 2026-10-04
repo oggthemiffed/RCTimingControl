@@ -6,6 +6,8 @@ export const adminQueryKeys = {
       ['admin', 'events', eventId, 'classes', classId, 'entries'] as const,
     classesFor: (eventId: number) =>
       ['admin', 'events', eventId, 'classes'] as const,
+    racehubClassMappings: (eventId: number) =>
+      ['admin', 'events', eventId, 'racehub-class-mappings'] as const,
   },
   championships: {
     all: () => ['admin', 'championships'] as const,

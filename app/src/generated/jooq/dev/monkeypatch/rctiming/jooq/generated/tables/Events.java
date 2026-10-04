@@ -125,6 +125,16 @@ public class Events extends TableImpl<EventsRecord> {
      */
     public final TableField<EventsRecord, Long> TRACK_ID = createField(DSL.name("track_id"), SQLDataType.BIGINT, this, "");
 
+    /**
+     * The column <code>public.events.racehub_last_import_at</code>.
+     */
+    public final TableField<EventsRecord, OffsetDateTime> RACEHUB_LAST_IMPORT_AT = createField(DSL.name("racehub_last_import_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
+
+    /**
+     * The column <code>public.events.racehub_last_revision</code>.
+     */
+    public final TableField<EventsRecord, Long> RACEHUB_LAST_REVISION = createField(DSL.name("racehub_last_revision"), SQLDataType.BIGINT, this, "");
+
     private Events(Name alias, Table<EventsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

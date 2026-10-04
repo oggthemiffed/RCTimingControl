@@ -45,6 +45,14 @@ public class Event {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /** When entries were last imported from RaceHub (L8). Null if never. */
+    @Column(name = "racehub_last_import_at")
+    private Instant racehubLastImportAt;
+
+    /** The RaceHub export revision of that import. */
+    @Column(name = "racehub_last_revision")
+    private Long racehubLastRevision;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -71,4 +79,10 @@ public class Event {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public Instant getRacehubLastImportAt() { return racehubLastImportAt; }
+    public void setRacehubLastImportAt(Instant racehubLastImportAt) { this.racehubLastImportAt = racehubLastImportAt; }
+
+    public Long getRacehubLastRevision() { return racehubLastRevision; }
+    public void setRacehubLastRevision(Long racehubLastRevision) { this.racehubLastRevision = racehubLastRevision; }
 }

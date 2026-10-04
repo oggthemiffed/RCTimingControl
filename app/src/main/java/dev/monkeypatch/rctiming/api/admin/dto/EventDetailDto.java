@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.api.admin.dto;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -12,9 +13,12 @@ public record EventDetailDto(
         LocalDate eventDate,
         EventStatus status,
         Long trackId,
-        List<EventClassDto> classes   // EventClassDto created in Task 2
+        List<EventClassDto> classes,  // EventClassDto created in Task 2
+        Instant racehubLastImportAt,
+        Long racehubLastRevision
 ) {
     public static EventDetailDto from(Event e, List<EventClassDto> classes) {
-        return new EventDetailDto(e.getId(), e.getName(), e.getEventDate(), e.getStatus(), e.getTrackId(), classes);
+        return new EventDetailDto(e.getId(), e.getName(), e.getEventDate(), e.getStatus(), e.getTrackId(), classes,
+                e.getRacehubLastImportAt(), e.getRacehubLastRevision());
     }
 }

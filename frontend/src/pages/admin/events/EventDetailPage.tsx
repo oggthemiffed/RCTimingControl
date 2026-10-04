@@ -39,6 +39,7 @@ import { useHelp } from '@/context/HelpContext';
 import { EventManagementHelp } from '@/help/EventManagementHelp';
 import EventClassSection from './EventClassSection';
 import EntryListSection from './EntryListSection';
+import RaceHubImportDialog from './RaceHubImportDialog';
 
 // ── Status colors ──────────────────────────────────────────────────────────
 
@@ -142,6 +143,7 @@ export default function EventDetailPage() {
 
   const [transitionTarget, setTransitionTarget] = useState<EventStatus | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const {
     register,
@@ -353,8 +355,32 @@ export default function EventDetailPage() {
           <EventClassSection eventId={id} classes={data.classes} />
         </TabsContent>
 
-        <TabsContent value="entries" className="mt-4">
+        <TabsContent value="entries" className="mt-4 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-lg border px-4 py-3">
+            <p className="flex-1 text-sm text-muted-foreground" data-testid="racehub-last-import">
+              {data.racehubLastImportAt ? (
+                <>
+                  Last imported from RaceHub{' '}
+                  {new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(
+                    new Date(data.racehubLastImportAt)
+                  )}
+                  {data.racehubLastRevision != null && <> (revision {data.racehubLastRevision})</>}
+                </>
+              ) : (
+                'Not imported from RaceHub yet.'
+              )}
+            </p>
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+              Import entries from RaceHub
+            </Button>
+          </div>
           <EntryListSection eventId={id} classes={data.classes} />
+          <RaceHubImportDialog
+            eventId={id}
+            classes={data.classes}
+            open={importOpen}
+            onOpenChange={setImportOpen}
+          />
         </TabsContent>
       </Tabs>
 
