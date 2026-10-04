@@ -1,6 +1,11 @@
 package dev.monkeypatch.rctiming.timing;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.domain.checkin.SwapResult;
+import dev.monkeypatch.rctiming.domain.checkin.TransponderSlot;
+import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
+import dev.monkeypatch.rctiming.domain.entry.EntryAuditLogRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -40,6 +45,7 @@ class LapTimingServiceTransponderTest {
     @Mock RaceEntryRepository raceEntryRepository;
     @Mock EntryRepository entryRepository;
     @Mock CompetitorRepository competitorRepository;
+    @Mock EntryAuditLogRepository auditLogRepository;
 
     private LapTimingService service;
     private final Map<Long, List<RaceEntry>> raceEntriesByRace = new HashMap<>();
@@ -115,6 +121,33 @@ class LapTimingServiceTransponderTest {
 
         assertThat(lapsFor(1L, 11L)).isEqualTo(1);
         verify(hub, never()).broadcastUnknownTransponder(anyLong(), eq("4444"));
+    }
+
+    @Test
+    void swappedTransponderGetsLapsInTheNextRace() {
+        // L11 acceptance: the swap goes through the real service, against the same repository
+        // lap timing reads from
+        addEntry(1L, 10L, "1001", null, EntryStatus.CONFIRMED);
+        entriesById.get(10L).setEventId(99L);
+        when(entryRepository.findByEventId(99L)).thenReturn(List.of(entriesById.get(10L)));
+        lap(1L, "1001", 1_000);
+
+        TransponderSwapService swapService =
+                new TransponderSwapService(entryRepository, auditLogRepository, new ObjectMapper());
+        SwapResult result = swapService.swap(99L, 10L, TransponderSlot.PRIMARY, "3003", 7L);
+        assertThat(result).isInstanceOf(SwapResult.Success.class);
+
+        RaceEntry nextRace = new RaceEntry();
+        nextRace.setRaceId(2L);
+        nextRace.setEntryId(10L);
+        raceEntriesByRace.computeIfAbsent(2L, k -> new ArrayList<>()).add(nextRace);
+
+        lap(2L, "3003", 1_000);
+        lap(2L, "3003", 31_000);
+        lap(2L, "1001", 32_000);
+
+        assertThat(lapsFor(2L, 10L)).isEqualTo(2);
+        verify(hub).broadcastUnknownTransponder(2L, "1001");
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────

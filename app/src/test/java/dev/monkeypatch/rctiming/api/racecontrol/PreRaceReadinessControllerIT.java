@@ -125,6 +125,13 @@ public class PreRaceReadinessControllerIT extends AbstractIntegrationTest {
         for (int i = 1; i <= 3; i++) {
             User driver = saveDriver("driver-first-" + i + "-" + UUID.randomUUID(), now);
             Entry entry = saveEntry(driver.getId(), event.getId(), ec.getId(), now);
+            // L11: driver 1 has checked in; driver 2 is marked arrived in RaceHub only
+            if (i == 1) {
+                entry.setCheckedInAt(now);
+            } else if (i == 2) {
+                entry.setRacehubArrival("ARRIVED");
+            }
+            entryRepository.save(entry);
             saveRaceEntry(race.getId(), entry.getId(), i);
         }
 
@@ -140,6 +147,8 @@ public class PreRaceReadinessControllerIT extends AbstractIntegrationTest {
         List<Map<String, Object>> gridCall = (List<Map<String, Object>>) body.get("gridCall");
         assertThat(gridCall).hasSize(3);
         assertThat(gridCall.get(0).get("gridPosition")).isEqualTo(1);
+        assertThat(gridCall).extracting(slot -> slot.get("checkedIn")).containsExactly(true, false, false);
+        assertThat(gridCall).extracting(slot -> slot.get("racehubArrival")).containsExactly(null, "ARRIVED", null);
         assertThat(body.get("raceLabel").toString()).contains("Practice 1");
     }
 
