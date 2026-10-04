@@ -9,6 +9,8 @@ product_contract_source: ce-brainstorm
 execution: code
 ---
 
+> **Superseded (2026-10-04).** This plan was replaced by the local-only timing plan in tracking issue #8. The offline race-day app it describes (`localday/` + `frontend-local/`) and its cloud sync were removed in #21. Kept for history only.
+
 # Offline Race-Day Resilience - Plan
 
 ## Goal Capsule

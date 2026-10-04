@@ -27,10 +27,8 @@ Open **http://localhost** — demo data and a live fake decoder are included. Se
 | `app/` | Spring Boot 3.4 backend — REST API, JWT auth, WebSocket timing hub, direct AMB decoder listener, event/championship organization |
 | `frontend/` | React 18 + Vite + Tailwind + shadcn/ui — admin panel and race control for officials |
 | `decoder-simulator/` | Fake AMB decoder over TCP for development and the trial stack (generative and playback modes) |
-| `decoder-protocol/` | Shared AMB/MyLaps decoder protocol parsing (RC-4 text + P3 binary) — used by `app/`, `decoder-simulator/` and `localday/` |
-| `localday/` | Independent Spring Boot backend — the **Local Race Day Program**: runs a full event day (check-in, race control, timing, results, public boards) with zero cloud dependency. See [Local Race Day Program](#local-race-day-program) below. |
-| `frontend-local/` | React 18 + Vite frontend for `localday/` — officials' race-control UI and anonymous spectator boards |
-| `docker-compose.yml` | PostgreSQL 16 + Piper (TTS) — cloud app only; `localday/` uses its own embedded PostgreSQL. Club logos and TTS clips are stored on local disk, no object-storage server needed. |
+| `decoder-protocol/` | Shared AMB/MyLaps decoder protocol parsing (RC-4 text + P3 binary) — used by `app/` and `decoder-simulator/` |
+| `docker-compose.yml` | PostgreSQL 16 + Piper (TTS). Club logos and TTS clips are stored on local disk, no object-storage server needed. |
 
 ### Quick start (dev)
 
@@ -66,8 +64,6 @@ make simulator   # Terminal 2 — fake decoder on :5100
 
 Then set the decoder host to `localhost` and click **Test Connection**. See the [decoder setup guide](docs/forwarder.md) for the full walkthrough and hardware setup.
 
-> **Never run RCTC and `localday/` against the same decoder at the same time** — see [Local Race Day Program](#local-race-day-program) below.
-
 ### Spectator boards
 
 Point a TV's browser at `/boards/now-next` (the race on track with live timing, then what's next) or `/boards/results` (the last finished race). No login is needed. Add `?event=ID` to pin a board to one event; otherwise it follows the event that is racing.
@@ -79,25 +75,7 @@ make test       # full integration suite — app + decoder simulator (requires D
 make test-fast  # skip jOOQ codegen for faster reruns
 ```
 
-See [docs/testing.md](docs/testing.md) for the full test matrix, including `decoder-protocol/`, `localday/`, and `frontend-local/`.
-
----
-
-## Local Race Day Program
-
-`localday/` + `frontend-local/` is a separate, independent web application — its own Spring Boot backend (with an embedded PostgreSQL, no external database needed) and its own React frontend — that becomes the **sole authority for running an event day** once an official opens it. It runs check-in, race control, live timing, results, and multi-monitor now/next spectator boards with **zero cloud dependency**, and periodically pushes result snapshots up to the cloud while connected. See [docs/architecture.md](docs/architecture.md#local-race-day-program-split-architecture) for the full design rationale and the superseded prior plan it replaces.
-
-```bash
-# Terminal 1 — Local Race Day Program backend (embedded Postgres, no Docker needed)
-./gradlew :localday:bootRun
-
-# Terminal 2 — its frontend
-cd frontend-local && npm run dev
-```
-
-Open **http://localhost:5173** — day setup walks you through pre-caching an event from the cloud (or opening offline if already cached). See [docs/development.md](docs/development.md#local-race-day-program-localday--frontend-local) for the full dev workflow, including the decoder simulator and the `e2e` Spring profile used by the Playwright suite.
-
-**Never run RCTC and `localday/` against the same decoder at the same venue** — only one of them should be connected to a given AMB decoder at a time (see [docs/forwarder.md](docs/forwarder.md#never-connect-two-timing-programs-to-one-decoder)).
+See [docs/testing.md](docs/testing.md) for the full test matrix, including `decoder-protocol/`.
 
 ---
 
@@ -117,8 +95,6 @@ All ten planned phases are complete:
 | 8 | First-run setup wizard — guided onboarding for new club installations |
 | 9 | User manual & documentation — in-app help system, printable race meeting guide |
 | 10 | Docker trial environment — single-command demo stack with fake decoder and seed data |
-
-**Local Race Day Program** (`localday/` + `frontend-local/`, independent of the ten phases above): cloud day-lifecycle lock/unlock, offline check-in and transponder reassignment, independent race-control state machine and grid progression, independent decoder ingestion and live timing, local officials' authentication, multi-monitor spectator boards, periodic snapshot sync to the cloud with device-loss recovery.
 
 ---
 

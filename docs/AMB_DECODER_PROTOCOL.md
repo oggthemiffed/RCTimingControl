@@ -1,6 +1,6 @@
 # AMB Decoder Protocol Reference
 
-> **Implementation status:** both protocols described below are implemented once, in the shared `decoder-protocol/` module (`Rc4TextParser`, `EpochAnchor`, `SeqGapDetector`, and the P3 binary decoder) — used by both `forwarder/` (cloud path) and `localday/` (Local Race Day Program path). See [architecture.md](architecture.md#local-race-day-program-split-architecture).
+> **Implementation status:** both protocols described below are implemented once, in the shared `decoder-protocol/` module (`Rc4TextParser`, `EpochAnchor`, `SeqGapDetector`, and the P3 binary decoder) — used by `app/`'s decoder listener and `decoder-simulator/`.
 
 ## Overview
 

@@ -10,6 +10,8 @@ execution: code
 deepened: 2026-08-06
 ---
 
+> **Superseded (2026-10-04).** This plan was replaced by the local-only timing plan in tracking issue #8. The offline race-day app it describes (`localday/` + `frontend-local/`) and its cloud sync were removed in #21. Kept for history only.
+
 # Offline Race-Day Resilience Split Architecture - Plan
 
 ## Goal Capsule
