@@ -1,5 +1,5 @@
-// Anonymous spectator board for a venue TV (L12, ported from frontend-local): the race on track
-// with live timing, what's next, and the last finished race's results when nothing is running.
+// Anonymous spectator board for a venue TV (L12): the race on track with live
+// timing, what's next, and the last finished race's results when nothing is running.
 // Polls the public board endpoints and, while a race is on track, follows its STOMP timing and
 // state topics, which anonymous sessions may subscribe to.
 import { useEffect, useMemo } from 'react';

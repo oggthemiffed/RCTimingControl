@@ -1,5 +1,5 @@
-// Anonymous spectator board showing the last finished race's results (L12, ported from
-// frontend-local). Polls the public board endpoint so a newly finished race appears on its own.
+// Anonymous spectator board showing the last finished race's results (L12).
+// Polls the public board endpoint so a newly finished race appears on its own.
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getResultsBoard } from '@/lib/boardsApi';

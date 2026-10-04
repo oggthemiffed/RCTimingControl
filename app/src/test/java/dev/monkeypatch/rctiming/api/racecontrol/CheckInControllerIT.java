@@ -51,7 +51,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Check-in desk and transponder swap end to end (L11, ported from localday's CheckInAndReassignmentControllerIT). */
+/** Check-in desk and transponder swap end to end (L11). */
 class CheckInControllerIT extends AbstractIntegrationTest {
 
     @Autowired TestRestTemplate restTemplate;

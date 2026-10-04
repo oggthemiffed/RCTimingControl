@@ -28,8 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Check-in desk and transponder swap for race control (L11, ported from localday's
- * CheckInController and TransponderReassignmentController). Open to every official.
+ * Check-in desk and transponder swap for race control (L11). Open to every
+ * official.
  */
 @RestController
 @RequestMapping("/api/v1/race-control/events/{eventId}")

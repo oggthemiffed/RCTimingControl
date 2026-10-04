@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import TransponderSwap from './TransponderSwap';
 
-// Ported from frontend-local's TransponderReassign tests (L11), plus the secondary slot.
+// Transponder swap tests (L11), for the primary and secondary slots.
 
 vi.mock('@/lib/raceControlApi', () => ({
   checkInSearch: vi.fn(),

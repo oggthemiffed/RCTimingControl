@@ -1,4 +1,4 @@
-// Check-in desk (L11, ported from frontend-local): camera scan, keyboard-wedge scan and manual
+// Check-in desk (L11): camera scan, keyboard-wedge scan and manual
 // search all lead to the same confirmation step. Camera and keyboard-wedge are deliberately two
 // separate entry points (see BarcodeScanner / KeyboardWedgeInput) even though both call
 // checkInResolve, so a regression in one can't hide behind the other.

@@ -1,7 +1,7 @@
 package dev.monkeypatch.rctiming.api.boards.dto;
 
 /**
- * What the now/next board shows for one event (L12, ported from localday). Any race may be
+ * What the now/next board shows for one event (L12). Any race may be
  * null: before the first heat only {@code nextRace} is set, after the last only
  * {@code lastCompletedRace}. {@code eventId} is the resolved event (see
  * {@code BoardQuery.resolveEvent}), so it is set between races too; it is null only when the

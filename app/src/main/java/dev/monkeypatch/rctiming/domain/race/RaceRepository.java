@@ -20,8 +20,4 @@ public interface RaceRepository extends JpaRepository<Race, Long> {
 
     // DecoderListener queries for the currently running race to resolve raceId
     Optional<Race> findFirstByStatus(RaceStatus status);
-
-    // For PreCacheService: all races for an event, reached via Round (Race has no direct eventId)
-    @Query("SELECT r FROM Race r JOIN Round ro ON r.roundId = ro.id WHERE ro.eventId = :eventId")
-    List<Race> findByEventId(@Param("eventId") Long eventId);
 }

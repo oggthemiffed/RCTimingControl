@@ -34,7 +34,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * The spectator board read API (L12), called with no Authorization header throughout.
- * Scenarios ported from localday's BoardControllerIT.
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 class BoardControllerIT extends AbstractIntegrationTest {

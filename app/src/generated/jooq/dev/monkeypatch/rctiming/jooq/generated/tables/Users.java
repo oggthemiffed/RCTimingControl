@@ -7,10 +7,8 @@ package dev.monkeypatch.rctiming.jooq.generated.tables;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.Public;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.DeviceLossAudit.DeviceLossAuditPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.EntryAuditLogPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials.LocaldayCredentialsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps.PracticeLapsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions.PracticeSessionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ProfanityBlocklist.ProfanityBlocklistPath;
@@ -198,19 +196,6 @@ public class Users extends TableImpl<UsersRecord> {
         return _championshipExclusions;
     }
 
-    private transient DeviceLossAuditPath _deviceLossAudit;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.device_loss_audit</code> table
-     */
-    public DeviceLossAuditPath deviceLossAudit() {
-        if (_deviceLossAudit == null)
-            _deviceLossAudit = new DeviceLossAuditPath(this, null, Keys.DEVICE_LOSS_AUDIT__DEVICE_LOSS_AUDIT_ADMIN_USER_ID_FKEY.getInverseKey());
-
-        return _deviceLossAudit;
-    }
-
     private transient EntriesPath _entriesCheckedInByUserIdFkey;
 
     /**
@@ -248,19 +233,6 @@ public class Users extends TableImpl<UsersRecord> {
             _entryAuditLog = new EntryAuditLogPath(this, null, Keys.ENTRY_AUDIT_LOG__ENTRY_AUDIT_LOG_ADMIN_USER_ID_FKEY.getInverseKey());
 
         return _entryAuditLog;
-    }
-
-    private transient LocaldayCredentialsPath _localdayCredentials;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.localday_credentials</code> table
-     */
-    public LocaldayCredentialsPath localdayCredentials() {
-        if (_localdayCredentials == null)
-            _localdayCredentials = new LocaldayCredentialsPath(this, null, Keys.LOCALDAY_CREDENTIALS__LOCALDAY_CREDENTIALS_USER_ID_FKEY.getInverseKey());
-
-        return _localdayCredentials;
     }
 
     private transient PracticeLapsPath _practiceLaps;

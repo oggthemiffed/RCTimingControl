@@ -1,4 +1,4 @@
-// Camera-based barcode/QR scanner (L11, ported from frontend-local).
+// Camera-based barcode/QR scanner (L11).
 //
 // Uses the `barcode-detector` package, a BarcodeDetector-shaped ponyfill backed by zxing-wasm,
 // instead of the native (Chromium-only) BarcodeDetector Web API, so the same code path works in

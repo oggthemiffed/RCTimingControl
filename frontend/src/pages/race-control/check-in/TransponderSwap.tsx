@@ -1,6 +1,5 @@
-// Transponder swap for an existing entry (L11, ported from frontend-local's
-// TransponderReassign): find the entry with the shared search, pick its primary or secondary
-// transponder, then enter the new number. Each refusal (entry gone, number in use by another
+// Transponder swap for an existing entry (L11): find the entry with the shared search, pick
+// its primary or secondary transponder, then enter the new number. Each refusal (entry gone, number in use by another
 // competitor, and so on) gets its own message rather than one generic error.
 import { useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';

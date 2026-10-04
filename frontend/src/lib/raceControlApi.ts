@@ -267,10 +267,6 @@ export type EventScheduleDto = {
   entryAvailability: 'ENTRY_OPEN' | 'ENTRY_NOT_YET_OPEN' | 'ENTRY_CLOSED';
   finishedRaceIds: number[];
   championshipId: number | null;
-  // U14/R15/R17: null/false for an event never run via the Local Race Day Program.
-  lastSyncedAt: string | null;
-  syncDelayed: boolean;
-  incompleteData: boolean;
 };
 
 export async function getEventSchedule(): Promise<EventScheduleDto[]> {

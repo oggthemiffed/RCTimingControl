@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-/** Ported from localday's TransponderReassignmentServiceTest, for primary and secondary slots (L11). */
+/** Transponder swap for primary and secondary slots (L11). */
 class TransponderSwapServiceTest {
 
     private static final long EVENT_ID = 1L;

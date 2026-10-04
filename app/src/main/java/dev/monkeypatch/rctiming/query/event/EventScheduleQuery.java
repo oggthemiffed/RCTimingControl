@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS;
-import static dev.monkeypatch.rctiming.jooq.generated.tables.EventOfflineLocks.EVENT_OFFLINE_LOCKS;
-import static dev.monkeypatch.rctiming.jooq.generated.tables.EventSnapshotState.EVENT_SNAPSHOT_STATE;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Events.EVENTS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Races.RACES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
@@ -23,11 +21,6 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
 public class EventScheduleQuery {
 
     private static final Logger log = LoggerFactory.getLogger(EventScheduleQuery.class);
-
-    // R15: how stale event_snapshot_state.last_synced_at must be before the public page's "may
-    // be delayed" indicator lights up. Generous relative to KTD8's 20s push interval — a couple
-    // of missed ticks shouldn't false-positive during ordinary jitter.
-    private static final java.time.Duration SYNC_DELAY_THRESHOLD = java.time.Duration.ofMinutes(2);
 
     private final DSLContext dsl;
 
@@ -71,8 +64,7 @@ public class EventScheduleQuery {
                             r.get(EVENTS.EVENT_DATE),
                             avail,
                             List.of(),   // populated in enrichment pass below
-                            null,        // populated in enrichment pass below
-                            null, false, false);  // populated in enrichment pass below
+                            null);       // populated in enrichment pass below
                 });
 
         if (events.isEmpty()) {
@@ -109,38 +101,14 @@ public class EventScheduleQuery {
                         }
                 ));
 
-        // Pass 3 — R11/R15/R17: last-synced-at and incomplete-data, for events run via the Local
-        // Race Day Program. Absent from both maps for an event that has never used it.
-        Map<Long, Instant> lastSyncedByEvent = dsl
-                .select(EVENT_SNAPSHOT_STATE.EVENT_ID, EVENT_SNAPSHOT_STATE.LAST_SYNCED_AT)
-                .from(EVENT_SNAPSHOT_STATE)
-                .where(EVENT_SNAPSHOT_STATE.EVENT_ID.in(eventIds))
-                .fetch().stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        r -> r.get(EVENT_SNAPSHOT_STATE.EVENT_ID),
-                        r -> r.get(EVENT_SNAPSHOT_STATE.LAST_SYNCED_AT).toInstant()));
-
-        Map<Long, Boolean> incompleteDataByEvent = dsl
-                .select(EVENT_OFFLINE_LOCKS.EVENT_ID, EVENT_OFFLINE_LOCKS.INCOMPLETE_DATA)
-                .from(EVENT_OFFLINE_LOCKS)
-                .where(EVENT_OFFLINE_LOCKS.EVENT_ID.in(eventIds))
-                .fetchMap(EVENT_OFFLINE_LOCKS.EVENT_ID, EVENT_OFFLINE_LOCKS.INCOMPLETE_DATA);
-
-        // Re-map the events list with all enrichment fields populated
-        return events.stream().map(e -> {
-            Instant lastSyncedAt = lastSyncedByEvent.get(e.id());
-            boolean syncDelayed = lastSyncedAt != null
-                    && lastSyncedAt.isBefore(now.minus(SYNC_DELAY_THRESHOLD));
-            return new EventScheduleDto(
-                    e.id(),
-                    e.name(),
-                    e.eventDate(),
-                    e.entryAvailability(),
-                    finishedRacesByEvent.getOrDefault(e.id(), List.of()),
-                    championshipByEvent.get(e.id()),  // null if not found
-                    lastSyncedAt,
-                    syncDelayed,
-                    incompleteDataByEvent.getOrDefault(e.id(), false));
-        }).toList();
+        // Re-map the events list with the two enrichment fields populated
+        return events.stream().map(e -> new EventScheduleDto(
+                e.id(),
+                e.name(),
+                e.eventDate(),
+                e.entryAvailability(),
+                finishedRacesByEvent.getOrDefault(e.id(), List.of()),
+                championshipByEvent.get(e.id())  // null if not found
+        )).toList();
     }
 }

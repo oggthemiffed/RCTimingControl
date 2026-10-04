@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactElement } from 'react';
 import CheckInDesk from './CheckInDesk';
 
-// Ported from frontend-local's CheckInDesk tests (L11).
+// Check-in desk tests (L11).
 
 vi.mock('@/lib/raceControlApi', () => ({
   checkInResolve: vi.fn(),

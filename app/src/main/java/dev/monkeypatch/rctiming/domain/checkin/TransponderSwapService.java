@@ -16,8 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Swaps an entry's primary or secondary transponder on the day (L11, ported from localday's
- * TransponderReassignmentService). Every change is written to the entry audit log as
+ * Swaps an entry's primary or secondary transponder on the day (L11). Every change is written to the entry audit log as
  * TRANSPONDER_SWAP. Lap timing looks transponders up on each passing, so the new number
  * counts from the next passing.
  */

@@ -1,4 +1,4 @@
-// Keyboard-wedge scanner input (L11, ported from frontend-local).
+// Keyboard-wedge scanner input (L11).
 //
 // A keyboard-wedge barcode scanner "types" the scanned code into whatever field has focus,
 // followed by Enter, which looks the same as manual typing. This is a separate entry point
