@@ -171,6 +171,9 @@ function EntriesTable({
                 {entry.transponderNumber ?? (
                   <span className="text-muted-foreground">—</span>
                 )}
+                {entry.secondaryTransponderNumber && (
+                  <span className="text-muted-foreground"> / {entry.secondaryTransponderNumber}</span>
+                )}
               </TableCell>
               <TableCell>
                 <Badge className={entryStatusColor[entry.status]}>

@@ -8,6 +8,7 @@ public record AdminEntryDto(
         Long competitorId,
         String displayName,   // competitor display name (L5)
         String transponderNumber,
+        String secondaryTransponderNumber,
         String status,
         Instant submittedAt,
         Instant withdrawnAt) {

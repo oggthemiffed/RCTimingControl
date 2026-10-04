@@ -26,6 +26,7 @@ public class AdminEntryQueryService {
                         ENTRIES.COMPETITOR_ID,
                         COMPETITORS.DISPLAY_NAME,
                         ENTRIES.TRANSPONDER_NUMBER,
+                        ENTRIES.SECONDARY_TRANSPONDER_NUMBER,
                         ENTRIES.STATUS,
                         ENTRIES.SUBMITTED_AT,
                         ENTRIES.WITHDRAWN_AT)
@@ -40,6 +41,7 @@ public class AdminEntryQueryService {
                         r.get(ENTRIES.COMPETITOR_ID),
                         r.get(COMPETITORS.DISPLAY_NAME),
                         r.get(ENTRIES.TRANSPONDER_NUMBER),
+                        r.get(ENTRIES.SECONDARY_TRANSPONDER_NUMBER),
                         r.get(ENTRIES.STATUS),
                         r.get(ENTRIES.SUBMITTED_AT) == null ? null : r.get(ENTRIES.SUBMITTED_AT).toInstant(),
                         r.get(ENTRIES.WITHDRAWN_AT) == null ? null : r.get(ENTRIES.WITHDRAWN_AT).toInstant()));

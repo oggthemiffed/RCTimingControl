@@ -47,6 +47,10 @@ public class Entry {
     @Column(name = "transponder_label", length = 100)
     private String transponderLabelSnapshot;
 
+    /** Optional second transponder for this entry (L6). Laps from either number count. */
+    @Column(name = "secondary_transponder_number", length = 20)
+    private String secondaryTransponderNumber;
+
     // Membership override — stored via membership_override_by FK column (RACER-14)
     @Column(name = "membership_override_by")
     private Long membershipOverrideByAdminId;
@@ -93,6 +97,9 @@ public class Entry {
 
     public String getTransponderNumberSnapshot() { return transponderNumberSnapshot; }
     public void setTransponderNumberSnapshot(String transponderNumberSnapshot) { this.transponderNumberSnapshot = transponderNumberSnapshot; }
+
+    public String getSecondaryTransponderNumber() { return secondaryTransponderNumber; }
+    public void setSecondaryTransponderNumber(String secondaryTransponderNumber) { this.secondaryTransponderNumber = secondaryTransponderNumber; }
 
     public String getTransponderLabelSnapshot() { return transponderLabelSnapshot; }
     public void setTransponderLabelSnapshot(String transponderLabelSnapshot) { this.transponderLabelSnapshot = transponderLabelSnapshot; }

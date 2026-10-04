@@ -167,6 +167,11 @@ public class Entries extends TableImpl<EntriesRecord> {
      */
     public final TableField<EntriesRecord, Long> COMPETITOR_ID = createField(DSL.name("competitor_id"), SQLDataType.BIGINT, this, "");
 
+    /**
+     * The column <code>public.entries.secondary_transponder_number</code>.
+     */
+    public final TableField<EntriesRecord, String> SECONDARY_TRANSPONDER_NUMBER = createField(DSL.name("secondary_transponder_number"), SQLDataType.VARCHAR(20), this, "");
+
     private Entries(Name alias, Table<EntriesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
