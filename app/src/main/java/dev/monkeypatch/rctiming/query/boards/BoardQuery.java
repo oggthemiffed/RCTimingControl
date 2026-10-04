@@ -36,8 +36,9 @@ public class BoardQuery {
     }
 
     /**
-     * The event to show: {@code requested} if it exists; otherwise the event with a running or
-     * stopped race, then the most recent event in progress. Empty when nothing is racing.
+     * The event to show: {@code requested} if it exists (empty if it doesn't). With no request,
+     * the event with a running or stopped race, else the most recent {@code IN_PROGRESS} event,
+     * so a board keeps its event between races. Empty only when neither exists.
      */
     public Optional<BoardEvent> resolveEvent(Long requested) {
         if (requested != null) {
@@ -69,9 +70,14 @@ public class BoardQuery {
                 .or(() -> first(eventId, RACES.STATUS.eq("STOPPED"), runOrder()));
     }
 
-    /** The first race in run order that has not started (pending or on the grid). */
+    /**
+     * The race up next: one already called to the grid, else the first pending race in run
+     * order. Grid first, because a race director who skips ahead (CTRL-09) calls the grid on
+     * the race they skipped to while earlier races stay pending.
+     */
     public Optional<BoardRaceDto> nextRace(long eventId) {
-        return first(eventId, RACES.STATUS.in("PENDING", "GRID"), runOrder());
+        return first(eventId, RACES.STATUS.eq("GRID"), runOrder())
+                .or(() -> first(eventId, RACES.STATUS.eq("PENDING"), runOrder()));
     }
 
     /** The race that finished most recently. */

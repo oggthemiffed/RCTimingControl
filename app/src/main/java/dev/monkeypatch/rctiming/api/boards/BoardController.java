@@ -39,7 +39,7 @@ public class BoardController {
         this.lapTimingService = lapTimingService;
     }
 
-    /** @param eventId the event to show; defaults to the event racing now */
+    /** @param eventId the event to show; defaults to the event racing now, else the latest in progress */
     @GetMapping("/now-next")
     public NowNextDto nowNext(@RequestParam(required = false) Long eventId) {
         return boardQuery.resolveEvent(eventId)
@@ -52,7 +52,7 @@ public class BoardController {
                 .orElse(new NowNextDto(null, null, null, null, null));
     }
 
-    /** @param eventId the event to show; defaults to the event racing now */
+    /** @param eventId the event to show; defaults to the event racing now, else the latest in progress */
     @GetMapping("/results")
     public ResultsBoardDto results(@RequestParam(required = false) Long eventId) {
         return boardQuery.resolveEvent(eventId)

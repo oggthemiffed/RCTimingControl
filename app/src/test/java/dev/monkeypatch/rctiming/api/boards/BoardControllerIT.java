@@ -140,6 +140,19 @@ class BoardControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void skippedAhead_theRaceOnTheGridIsNextNotTheEarlierPendingOne() {
+        Round q1 = fx.round(RoundType.QUALIFIER, 1, 1);
+        fx.race(q1, 1, RaceStatus.PENDING);
+        fx.race(q1, 2, RaceStatus.PENDING);
+        // CTRL-09: the director skipped to heat 3 and called its grid
+        Race heat3 = fx.race(q1, 3, RaceStatus.GRID);
+
+        Map body = get("/api/v1/boards/now-next?eventId=" + fx.event.getId());
+
+        assertThat(raceId(body, "nextRace")).isEqualTo(heat3.getId());
+    }
+
+    @Test
     void afterTheLastRace_showsOnlyTheLastFinishedRace() {
         Round fin = fx.round(RoundType.FINAL, 1, 1);
         Race aFinal = fx.race(fin, 1, RaceStatus.FINISHED);
