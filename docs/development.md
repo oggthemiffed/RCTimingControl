@@ -295,6 +295,28 @@ make up
 
 Flyway applies migrations automatically on backend startup — you do not need to run them manually.
 
+Migrations live in one folder per database: `app/src/main/resources/db/migration/{vendor}/` (dev seeds in `db/seed/{vendor}/`, test data in `app/src/test/resources/db/testdata/{vendor}/`).
+
+### Keeping the database swappable
+
+The database is chosen in one place. `rctiming.database.vendor` picks it, and `DatabaseConfig` (in `persistence/`) applies it to Flyway, Hibernate and jOOQ. The vendor-specific values themselves live in `persistence/vendor/DatabaseVendor`.
+
+Everywhere else the code stays database-neutral:
+
+- Read queries use the jOOQ DSL only: no `DSL.sql(...)`, `field("...")` or other plain-SQL strings.
+- Repositories use derived queries or JPQL, never `nativeQuery = true`, and entities carry no `columnDefinition`.
+- A vendor-specific statement that can't be avoided goes behind an interface in `persistence/vendor/`, with one implementation per database.
+
+`PersistencePortabilityTest` scans the main sources and fails the build if any of this slips in.
+
+Moving to another database means:
+
+1. Add a constant to `DatabaseVendor` with its migrations folder name, jOOQ dialect and Hibernate dialect.
+2. Add baseline migrations under `db/migration/{vendor}/` (and the dev seeds and test data folders).
+3. Add the JDBC driver and Flyway database support to `app/build.gradle.kts`.
+4. Set `rctiming.database.vendor` and the datasource settings.
+5. Run the whole test suite against it.
+
 ### Submitting a PR
 
 ```bash

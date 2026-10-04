@@ -66,7 +66,7 @@ class V35DropRacerPortalMigrationTest {
     private static void migrateTo(String version) {
         Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
-                .locations("classpath:db/migration")
+                .locations("classpath:db/migration/postgresql")
                 .target(version)
                 .load()
                 .migrate();

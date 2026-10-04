@@ -146,13 +146,13 @@ val flywayMigrateForCodegen by tasks.registering {
     group = "jooq"
     description = "Run Flyway migrations against the jOOQ codegen database"
     dependsOn(waitForJooqDb)
-    inputs.dir("src/main/resources/db/migration")
+    inputs.dir("src/main/resources/db/migration/postgresql")
     doFirst {
         dev.monkeypatch.build.FlywayMigrator.migrate(
             jooqJdbcUrl,
             jooqJdbcUser,
             jooqJdbcPassword,
-            "filesystem:${project.projectDir}/src/main/resources/db/migration"
+            "filesystem:${project.projectDir}/src/main/resources/db/migration/postgresql"
         )
     }
 }
@@ -204,7 +204,7 @@ jooq {
 tasks.withType<nu.studer.gradle.jooq.JooqGenerate>().configureEach {
     dependsOn(flywayMigrateForCodegen)
     finalizedBy(stopJooqDb)
-    inputs.dir("src/main/resources/db/migration")
+    inputs.dir("src/main/resources/db/migration/postgresql")
 }
 
 // jOOQ generated sources are committed at app/src/generated/jooq (Docker builds skip codegen with -x generateJooq)

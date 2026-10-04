@@ -44,7 +44,7 @@ public class Race {
     private Long formatId;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "format_overrides", columnDefinition = "jsonb")
+    @Column(name = "format_overrides")
     private String formatOverrides;
 
     @Column(nullable = false, length = 20)

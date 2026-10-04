@@ -26,7 +26,7 @@ public class ChampionshipExclusion {
     @Column(name = "event_id", nullable = false)
     private Long eventId;
 
-    @Column(nullable = false, columnDefinition = "text")
+    @Column(nullable = false)
     private String reason;
 
     @Column(name = "created_by", nullable = false)

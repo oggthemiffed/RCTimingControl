@@ -20,7 +20,6 @@ public class RacingClass {
     @Column(unique = true, nullable = false)
     private String name;
 
-    @Column(columnDefinition = "text")
     private String description;
 
     @Column(name = "created_at", nullable = false)

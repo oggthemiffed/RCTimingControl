@@ -32,7 +32,6 @@ public class MarshalPenalty {
     @Column(name = "applied_at", nullable = false)
     private Instant appliedAt;
 
-    @Column(columnDefinition = "text")
     private String notes;
 
     public Long getId() { return id; }

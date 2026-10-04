@@ -38,7 +38,7 @@ public class UnknownTransponderLinkAudit {
     @Column(name = "linked_by_user_id")
     private Long linkedByUserId;
 
-    @Column(name = "linked_at", nullable = false, columnDefinition = "TIMESTAMPTZ")
+    @Column(name = "linked_at", nullable = false)
     private Instant linkedAt;
 
     public UnknownTransponderLinkAudit() {}

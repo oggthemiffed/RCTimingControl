@@ -5,7 +5,10 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
-    locations: classpath:db/migration,classpath:db/migration/test
+
+rctiming:
+  database:
+    migration-locations: db/migration, db/testdata
 
 app:
   jwt:
