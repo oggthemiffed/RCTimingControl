@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import axios from 'axios';
 import api from '@/lib/api';
-import { setAccessToken, clearAccessToken } from '@/lib/auth';
+import { setAccessToken, clearAccessToken, NotAnOfficialError } from '@/lib/auth';
 
 export interface AuthUser {
   id: string;
@@ -32,6 +32,12 @@ interface AuthResponse {
   roles: AuthUser['roles'];
 }
 
+const OFFICIAL_ROLES: AuthUser['roles'][number][] = ['ADMIN', 'RACE_DIRECTOR', 'REFEREE'];
+
+function isOfficial(roles: AuthUser['roles']): boolean {
+  return roles.some((r) => OFFICIAL_ROLES.includes(r));
+}
+
 function authResponseToUser(data: AuthResponse): AuthUser {
   return { id: data.id, email: data.email, firstName: data.firstName, lastName: data.lastName, roles: data.roles };
 }
@@ -50,6 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     axios
       .post<AuthResponse>('/api/v1/auth/refresh', {}, { withCredentials: true })
       .then(({ data }) => {
+        // A refresh cookie from an account with no official role does not restore a session
+        if (!isOfficial(data.roles)) return;
         setAccessToken(data.accessToken);
         setAccessTokenState(data.accessToken);
         setUser(authResponseToUser(data));
@@ -65,17 +73,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string, redirectTo?: string): Promise<void> => {
     const { data } = await api.post<AuthResponse>('/api/v1/auth/login', { email, password });
     const authUser = authResponseToUser(data);
+    if (!isOfficial(authUser.roles)) {
+      throw new NotAnOfficialError();
+    }
     setAccessToken(data.accessToken);
     setAccessTokenState(data.accessToken);
     setUser(authUser);
 
-    if (redirectTo) {
-      navigate(redirectTo);
-    } else {
-      const staffRoles: AuthUser['roles'][number][] = ['ADMIN', 'RACE_DIRECTOR', 'REFEREE'];
-      const isStaff = authUser.roles.some((r) => staffRoles.includes(r));
-      navigate(isStaff ? '/admin' : '/racer');
-    }
+    navigate(redirectTo ?? '/admin');
   };
 
   const logout = () => {

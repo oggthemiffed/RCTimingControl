@@ -145,7 +145,7 @@ function EntriesTable({
       <div className="py-12 text-center">
         <h3 className="text-base font-semibold mb-1">No entries</h3>
         <p className="text-sm text-muted-foreground">
-          Entries will appear here once racers register for this class.
+          Entries appear here when you import them from RaceHub or add a walk-in.
         </p>
       </div>
     );

@@ -5,13 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { useSetupProgress } from '@/hooks/setup/useSetupProgress';
 import type { SetupProgressDto } from '@/lib/setupApi';
 
-type Item = { key: keyof SetupProgressDto; label: string; editHref: string };
+// Staff accounts have no admin page yet, so they are edited from the wizard's Staff step
+type Item = { key: keyof SetupProgressDto; label: string; editHref?: string };
 
 const items: Item[] = [
   { key: 'club',    label: 'Club Profile',   editHref: '/admin/club' },
   { key: 'track',   label: 'Track',          editHref: '/admin/tracks' },
   { key: 'format',  label: 'Race Format',    editHref: '/admin/formats' },
-  { key: 'staff',   label: 'Staff Account',  editHref: '/admin/racers' },
+  { key: 'staff',   label: 'Staff Account' },
   { key: 'decoder', label: 'Decoder Config', editHref: '/admin/decoder' },
 ];
 
@@ -40,9 +41,11 @@ export default function SetupCompletePage() {
                   </Badge>
                 )}
               </div>
-              <Link to={it.editHref} className="text-sm underline text-foreground">
-                Edit
-              </Link>
+              {it.editHref && (
+                <Link to={it.editHref} className="text-sm underline text-foreground">
+                  Edit
+                </Link>
+              )}
             </CardContent>
           </Card>
         ))}

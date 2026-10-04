@@ -31,12 +31,6 @@ export interface BlocklistTermDto {
 export const listVoices = () =>
   api.get<VoiceInfo[]>('/api/v1/audio/voices');
 
-/** Preview TTS output for a given voice. Returns audio/wav bytes. */
-export const previewNameClip = (voice?: string) => {
-  const params = voice ? `?voice=${encodeURIComponent(voice)}` : '';
-  return api.get<Blob>(`/api/v1/audio/preview${params}`, { responseType: 'blob' });
-};
-
 /** Fetch the clip URL map for a race (used by race control for pre-generated clips). */
 export const getRaceClipMap = (raceId: number) =>
   api.get<Record<string, string>>(`/api/v1/race/${raceId}/audio-clips`);
@@ -72,9 +66,3 @@ export const addBlocklistTerm = (word: string) =>
 /** Remove a word from the profanity blocklist. */
 export const removeBlocklistTerm = (id: number) =>
   api.delete(`/api/v1/admin/audio/blocklist/${id}`);
-
-// ── Racer voice preference ──────────────────────────────────────────────────
-
-/** Save a racer's preferred TTS voice. */
-export const saveVoicePreference = (voiceId: string | null) =>
-  api.put('/api/v1/racer/audio/voice', { voiceId });
