@@ -1,13 +1,16 @@
 package dev.monkeypatch.rctiming.api.admin;
 
+import dev.monkeypatch.rctiming.api.admin.dto.AdminCreateEntryRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.AdminUpdateTransponderRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.AdminWithdrawRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.MembershipOverrideRequest;
 import dev.monkeypatch.rctiming.api.racer.dto.EntryDto;
+import dev.monkeypatch.rctiming.api.racer.dto.EntryResult;
 import dev.monkeypatch.rctiming.domain.entry.EntryService;
 import dev.monkeypatch.rctiming.query.entry.AdminEntryDto;
 import dev.monkeypatch.rctiming.query.entry.AdminEntryQueryService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -38,6 +42,15 @@ public class AdminEntryController {
     public List<AdminEntryDto> listEntriesForClass(@PathVariable Long eventId,
                                                     @PathVariable Long classId) {
         return adminEntryQueryService.listEntriesForClass(eventId, classId);
+    }
+
+    /** Adds a walk-in entry by hand (L9, #17). */
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
+    public EntryResult createEntry(Authentication auth, @RequestBody @Valid AdminCreateEntryRequest req) {
+        Long adminId = Long.parseLong(auth.getName());
+        return entryService.adminCreateEntry(adminId, req);
     }
 
     @PostMapping("/{id}/withdraw")

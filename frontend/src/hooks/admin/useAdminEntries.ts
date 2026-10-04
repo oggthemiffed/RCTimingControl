@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/lib/adminApi';
+import type { CreateWalkInEntryRequest } from '@/lib/adminApi';
 import { adminQueryKeys } from './adminQueryKeys';
 
 export function useEntriesForClass(eventId: number, classId: number) {
@@ -20,6 +21,19 @@ export function useWithdrawEntry(eventId: number, classId: number) {
         queryKey: adminQueryKeys.events.entriesForClass(eventId, classId),
       });
       qc.invalidateQueries({ queryKey: adminQueryKeys.events.detail(eventId) });
+    },
+  });
+}
+
+/** Adds a walk-in entry by hand (L9). A new competitor shows up in the competitor list too. */
+export function useCreateWalkInEntry(eventId: number, classId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Omit<CreateWalkInEntryRequest, 'eventId' | 'eventClassId'>) =>
+      adminApi.createWalkInEntry({ ...body, eventId, eventClassId: classId }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminQueryKeys.events.entriesForClass(eventId, classId) });
+      qc.invalidateQueries({ queryKey: adminQueryKeys.competitors.all() });
     },
   });
 }

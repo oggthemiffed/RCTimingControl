@@ -1,12 +1,15 @@
 package dev.monkeypatch.rctiming.domain.entry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.api.admin.dto.AdminCreateEntryRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.AdminUpdateTransponderRequest;
 import dev.monkeypatch.rctiming.api.racer.dto.EntryDto;
 import dev.monkeypatch.rctiming.api.racer.dto.EntryResult;
 import dev.monkeypatch.rctiming.api.racer.dto.SubmitEntryRequest;
 import dev.monkeypatch.rctiming.domain.car.Car;
 import dev.monkeypatch.rctiming.domain.car.CarRepository;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
@@ -41,6 +44,7 @@ public class EntryService {
     private final EntryAuditLogRepository auditLogRepository;
     private final ObjectMapper objectMapper;
     private final CompetitorService competitorService;
+    private final CompetitorRepository competitorRepository;
 
     public EntryService(EntryRepository entryRepository,
                         EventRepository eventRepository,
@@ -50,7 +54,8 @@ public class EntryService {
                         UserGoverningBodyMembershipRepository membershipRepository,
                         EntryAuditLogRepository auditLogRepository,
                         ObjectMapper objectMapper,
-                        CompetitorService competitorService) {
+                        CompetitorService competitorService,
+                        CompetitorRepository competitorRepository) {
         this.entryRepository = entryRepository;
         this.eventRepository = eventRepository;
         this.dsl = dsl;
@@ -60,6 +65,7 @@ public class EntryService {
         this.auditLogRepository = auditLogRepository;
         this.objectMapper = objectMapper;
         this.competitorService = competitorService;
+        this.competitorRepository = competitorRepository;
     }
 
     public EntryResult submitEntry(Long userId, SubmitEntryRequest req) {
@@ -135,6 +141,88 @@ public class EntryService {
                     + " has already been entered for this event by another racer.");
         }
 
+        return new EntryResult(EntryDto.from(persisted), warnings);
+    }
+
+    /**
+     * Adds a walk-in entry by hand (L9, #17): an existing competitor or a new one by name, a primary
+     * transponder and an optional secondary. The entry is confirmed straight away, has no login and
+     * no external source. A transponder another active entry in the event already uses is a
+     * warning, not an error. Class membership rules are not checked: staff add walk-ins on the day.
+     */
+    public EntryResult adminCreateEntry(Long adminUserId, AdminCreateEntryRequest req) {
+        Event event = eventRepository.findById(req.eventId())
+                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + req.eventId()));
+        if (event.getStatus() == EventStatus.COMPLETED) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Event is completed");
+        }
+        Long ecEventId = dsl.select(EVENT_CLASSES.EVENT_ID)
+                .from(EVENT_CLASSES)
+                .where(EVENT_CLASSES.ID.eq(req.eventClassId()))
+                .fetchOptional(EVENT_CLASSES.EVENT_ID)
+                .orElseThrow(() -> new EntityNotFoundException("Event class not found: " + req.eventClassId()));
+        if (!req.eventId().equals(ecEventId)) {
+            throw new IllegalArgumentException("Event class does not belong to the event");
+        }
+
+        String primary = req.primaryTransponder().trim();
+        String secondary = req.secondaryTransponder() == null || req.secondaryTransponder().isBlank()
+                ? null : req.secondaryTransponder().trim();
+        if (primary.equals(secondary)) {
+            throw new IllegalArgumentException("The secondary transponder must differ from the primary");
+        }
+
+        boolean hasName = req.competitorName() != null && !req.competitorName().isBlank();
+        if (req.competitorId() != null && hasName) {
+            throw new IllegalArgumentException("Give either an existing competitor or a new name, not both");
+        }
+        Competitor competitor;
+        if (req.competitorId() != null) {
+            competitor = competitorRepository.findById(req.competitorId())
+                    .orElseThrow(() -> new EntityNotFoundException("Competitor not found: " + req.competitorId()));
+        } else if (hasName) {
+            competitor = competitorService.createWalkIn(req.competitorName());
+        } else {
+            throw new IllegalArgumentException("Choose a competitor or enter a name");
+        }
+
+        List<Entry> eventEntries = entryRepository.findByEventId(event.getId()).stream()
+                .filter(e -> e.getStatus() != EntryStatus.WITHDRAWN)
+                .toList();
+        boolean duplicate = eventEntries.stream().anyMatch(e ->
+                competitor.getId().equals(e.getCompetitorId()) && req.eventClassId().equals(e.getEventClassId()));
+        if (duplicate) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    competitor.getDisplayName() + " already has an entry in this class");
+        }
+
+        Instant now = Instant.now();
+        Entry entry = new Entry();
+        entry.setCompetitorId(competitor.getId());
+        entry.setEventId(event.getId());
+        entry.setEventClassId(req.eventClassId());
+        entry.setTransponderNumberSnapshot(primary);
+        entry.setSecondaryTransponderNumber(secondary);
+        entry.setStatus(EntryStatus.CONFIRMED);
+        entry.setSubmittedAt(now);
+        entry.setConfirmedAt(now);
+        entry.setUpdatedAt(now);
+        Entry persisted = entryRepository.save(entry);
+
+        List<String> warnings = new ArrayList<>();
+        for (String number : secondary == null ? List.of(primary) : List.of(primary, secondary)) {
+            boolean inUse = eventEntries.stream().anyMatch(e ->
+                    number.equals(e.getTransponderNumberSnapshot()) || number.equals(e.getSecondaryTransponderNumber()));
+            if (inUse) {
+                warnings.add("Transponder " + number + " is already used by another entry in this event.");
+            }
+        }
+
+        writeAudit(persisted.getId(), adminUserId, "ADMIN_CREATE", null, null, writeJson(Map.of(
+                "competitorId", String.valueOf(competitor.getId()),
+                "eventClassId", String.valueOf(req.eventClassId()),
+                "transponderNumberSnapshot", primary,
+                "secondaryTransponderNumber", String.valueOf(secondary))));
         return new EntryResult(EntryDto.from(persisted), warnings);
     }
 
