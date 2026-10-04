@@ -7,7 +7,6 @@ package dev.monkeypatch.rctiming.jooq.generated.tables;
 import dev.monkeypatch.rctiming.jooq.generated.Indexes;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.Public;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Cars.CarsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.CompetitorsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.EntryAuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
@@ -19,7 +18,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties.MarshalPe
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties.PenaltiesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries.RaceEntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races.RacesPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Transponders.TranspondersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink.UnknownTransponderLinkPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLinks.UnknownTransponderLinksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users.UsersPath;
@@ -113,26 +111,6 @@ public class Entries extends TableImpl<EntriesRecord> {
     public final TableField<EntriesRecord, String> STATUS = createField(DSL.name("status"), SQLDataType.VARCHAR(20).nullable(false).defaultValue(DSL.field(DSL.raw("'PENDING'::character varying"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.entries.membership_override</code>.
-     */
-    public final TableField<EntriesRecord, Boolean> MEMBERSHIP_OVERRIDE = createField(DSL.name("membership_override"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "");
-
-    /**
-     * The column <code>public.entries.membership_override_by</code>.
-     */
-    public final TableField<EntriesRecord, Long> MEMBERSHIP_OVERRIDE_BY = createField(DSL.name("membership_override_by"), SQLDataType.BIGINT, this, "");
-
-    /**
-     * The column <code>public.entries.membership_override_at</code>.
-     */
-    public final TableField<EntriesRecord, OffsetDateTime> MEMBERSHIP_OVERRIDE_AT = createField(DSL.name("membership_override_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6), this, "");
-
-    /**
-     * The column <code>public.entries.membership_override_note</code>.
-     */
-    public final TableField<EntriesRecord, String> MEMBERSHIP_OVERRIDE_NOTE = createField(DSL.name("membership_override_note"), SQLDataType.CLOB, this, "");
-
-    /**
      * The column <code>public.entries.submitted_at</code>.
      */
     public final TableField<EntriesRecord, OffsetDateTime> SUBMITTED_AT = createField(DSL.name("submitted_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
@@ -141,16 +119,6 @@ public class Entries extends TableImpl<EntriesRecord> {
      * The column <code>public.entries.updated_at</code>.
      */
     public final TableField<EntriesRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
-
-    /**
-     * The column <code>public.entries.car_id</code>.
-     */
-    public final TableField<EntriesRecord, Long> CAR_ID = createField(DSL.name("car_id"), SQLDataType.BIGINT, this, "");
-
-    /**
-     * The column <code>public.entries.transponder_id</code>.
-     */
-    public final TableField<EntriesRecord, Long> TRANSPONDER_ID = createField(DSL.name("transponder_id"), SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>public.entries.confirmed_at</code>.
@@ -276,19 +244,7 @@ public class Entries extends TableImpl<EntriesRecord> {
 
     @Override
     public List<ForeignKey<EntriesRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.ENTRIES__ENTRIES_CAR_ID_FKEY, Keys.ENTRIES__ENTRIES_COMPETITOR_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_CLASS_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_ID_FKEY, Keys.ENTRIES__ENTRIES_MEMBERSHIP_OVERRIDE_BY_FKEY, Keys.ENTRIES__ENTRIES_TRANSPONDER_ID_FKEY, Keys.ENTRIES__ENTRIES_USER_ID_FKEY);
-    }
-
-    private transient CarsPath _cars;
-
-    /**
-     * Get the implicit join path to the <code>public.cars</code> table.
-     */
-    public CarsPath cars() {
-        if (_cars == null)
-            _cars = new CarsPath(this, Keys.ENTRIES__ENTRIES_CAR_ID_FKEY, null);
-
-        return _cars;
+        return Arrays.asList(Keys.ENTRIES__ENTRIES_COMPETITOR_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_CLASS_ID_FKEY, Keys.ENTRIES__ENTRIES_EVENT_ID_FKEY, Keys.ENTRIES__ENTRIES_USER_ID_FKEY);
     }
 
     private transient CompetitorsPath _competitors;
@@ -328,42 +284,16 @@ public class Entries extends TableImpl<EntriesRecord> {
         return _events;
     }
 
-    private transient UsersPath _entriesMembershipOverrideByFkey;
+    private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>public.users</code> table, via
-     * the <code>entries_membership_override_by_fkey</code> key.
+     * Get the implicit join path to the <code>public.users</code> table.
      */
-    public UsersPath entriesMembershipOverrideByFkey() {
-        if (_entriesMembershipOverrideByFkey == null)
-            _entriesMembershipOverrideByFkey = new UsersPath(this, Keys.ENTRIES__ENTRIES_MEMBERSHIP_OVERRIDE_BY_FKEY, null);
+    public UsersPath users() {
+        if (_users == null)
+            _users = new UsersPath(this, Keys.ENTRIES__ENTRIES_USER_ID_FKEY, null);
 
-        return _entriesMembershipOverrideByFkey;
-    }
-
-    private transient TranspondersPath _transponders;
-
-    /**
-     * Get the implicit join path to the <code>public.transponders</code> table.
-     */
-    public TranspondersPath transponders() {
-        if (_transponders == null)
-            _transponders = new TranspondersPath(this, Keys.ENTRIES__ENTRIES_TRANSPONDER_ID_FKEY, null);
-
-        return _transponders;
-    }
-
-    private transient UsersPath _entriesUserIdFkey;
-
-    /**
-     * Get the implicit join path to the <code>public.users</code> table, via
-     * the <code>entries_user_id_fkey</code> key.
-     */
-    public UsersPath entriesUserIdFkey() {
-        if (_entriesUserIdFkey == null)
-            _entriesUserIdFkey = new UsersPath(this, Keys.ENTRIES__ENTRIES_USER_ID_FKEY, null);
-
-        return _entriesUserIdFkey;
+        return _users;
     }
 
     private transient EntryAuditLogPath _entryAuditLog;

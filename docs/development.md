@@ -70,7 +70,7 @@ On first run, Flyway applies all migrations and dev seed data automatically:
 - `V4` — racing classes
 - `V5` — race format templates and event classes (JSONB)
 
-**Phase 2 (V6–V14):**
+**Phase 2 (V6–V14):** the racer-portal tables and columns here (V6–V11, entry car/transponder links) were dropped in `V35` when sign-in became officials-only.
 - `V6` — user profile fields (phone, emergency contact, phonetic name)
 - `V7` — governing body memberships (unique per user+code)
 - `V8` — user class ratings (read-only, set by officials)
@@ -94,10 +94,12 @@ On first run, Flyway applies all migrations and dev seed data automatically:
 - `V21` — forwarder_token (BCrypt hash, status, timestamps); dropped in `V29`
 - `V22` — unknown_transponder_link (audit of retroactive transponder→entry links)
 
+**Local-only (V30 onward):** competitors (`V30`–`V31`), secondary transponders (`V32`), RaceHub import (`V33`–`V34`), racer-portal schema dropped (`V35`).
+
 **Dev seeds (V1000–V1003):**
-- `V1000` — racer1/racer2/admin1 accounts
+- `V1000` — admin1 account
 - `V1001/V1002` — racing classes and corrected race format templates
-- `V1003` — full race day: 6 racers, RACE_DIRECTOR account, club profile, "Club Championship Round 1" event (IN_PROGRESS), 6 rounds (P1/P2/Q1/Q2/Q3/Final A), races and race entries
+- `V1003` — full race day: 6 competitors with entries (transponders 101–106), RACE_DIRECTOR account, club profile, "Club Championship Round 1" event (IN_PROGRESS), 6 rounds (P1/P2/Q1/Q2/Q3/Final A), races and race entries
 
 The dev profile connects to `localhost:5432/rctiming_dev`. No additional setup needed.
 

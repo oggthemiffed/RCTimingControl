@@ -10,7 +10,7 @@ export interface AuthUser {
   email: string;
   firstName: string;
   lastName: string;
-  roles: Array<'RACER' | 'ADMIN' | 'RACE_DIRECTOR' | 'REFEREE'>;
+  roles: Array<'ADMIN' | 'RACE_DIRECTOR' | 'REFEREE'>;
 }
 
 export interface AuthContextValue {

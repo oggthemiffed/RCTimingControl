@@ -296,7 +296,7 @@ public class PreRaceReadinessControllerIT extends AbstractIntegrationTest {
         user.setPasswordHash(passwordEncoder.encode("pass123"));
         user.setFirstName("Driver");
         user.setLastName("Test");
-        user.setRoles(Set.of(Role.RACER));
+        user.setRoles(Set.of());
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
         return userRepository.save(user);

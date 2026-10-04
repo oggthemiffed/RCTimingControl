@@ -38,11 +38,6 @@ export type RunOrderItemDto = {
   startedAt: string | null;
 };
 
-export type CarTagDto = {
-  key: string;
-  value: string;
-};
-
 export type ResultRow = {
   position: number;
   entryId: number;
@@ -52,7 +47,6 @@ export type ResultRow = {
   totalTimeMs: number;
   bestLapMs: number | null;
   gapToLeaderMs: number | null;
-  carTags: CarTagDto[] | null;
 };
 
 export type PositionAtLap = {

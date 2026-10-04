@@ -29,7 +29,6 @@ import dev.monkeypatch.rctiming.domain.race.RoundType;
 import dev.monkeypatch.rctiming.domain.race.StartType;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
-import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import org.jooq.DSLContext;
@@ -41,6 +40,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -114,7 +114,7 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
         u.setPasswordHash(passwordEncoder.encode("pass"));
         u.setFirstName(firstName);
         u.setLastName(lastName);
-        u.setRoles(Set.of(Role.RACER));
+        u.setRoles(Set.of());
         Instant now = Instant.now();
         u.setCreatedAt(now);
         u.setUpdatedAt(now);
@@ -203,8 +203,18 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
         return raceRepository.save(race);
     }
 
+    private final Map<Long, Long> competitorIdByUserId = new HashMap<>();
+
+    /** One walk-in competitor per test user, named after the user. */
+    private Long competitorIdFor(Long userId) {
+        return competitorIdByUserId.computeIfAbsent(userId, id -> {
+            User u = userRepository.findById(id).orElseThrow();
+            return competitorService.createWalkIn(u.getFirstName() + " " + u.getLastName()).getId();
+        });
+    }
+
     private Entry makeEntry(Long userId, Long eventId, Long eventClassId) {
-        Entry e = makeCompetitorEntry(competitorService.forUser(userId).getId(), eventId, eventClassId);
+        Entry e = makeCompetitorEntry(competitorIdFor(userId), eventId, eventClassId);
         e.setUserId(userId);
         return entryRepository.save(e);
     }
@@ -286,7 +296,7 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
         assertThat(standings).hasSize(1);
 
         StandingsRowDto row = standings.get(0);
-        assertThat(row.driverId()).isEqualTo(competitorService.forUser(driver.getId()).getId());
+        assertThat(row.driverId()).isEqualTo(competitorIdFor(driver.getId()));
         assertThat(row.displayName()).isEqualTo("Alice Drop");
         // Best 2 from 3: 10 + 8 = 18 (4 pts dropped)
         assertThat(row.totalPoints()).isEqualTo(18);
@@ -408,7 +418,7 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
 
         // DNS driver should appear
         StandingsRowDto dnsDriverRow = standings.stream()
-                .filter(r -> r.driverId().equals(competitorService.forUser(driver.getId()).getId()))
+                .filter(r -> r.driverId().equals(competitorIdFor(driver.getId())))
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("DNS driver not found in standings"));
 

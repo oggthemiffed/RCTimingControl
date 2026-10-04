@@ -7,7 +7,6 @@ import dev.monkeypatch.rctiming.api.setup.dto.SetupStatusDto;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatTemplateRepository;
 import dev.monkeypatch.rctiming.domain.track.TrackRepository;
-import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.domain.user.UserService;
@@ -52,9 +51,9 @@ public class SetupService {
         boolean club = clubProfileRepository.count() > 0;
         boolean track = trackRepository.count() > 0;
         boolean format = raceFormatTemplateRepository.count() > 0;
-        // Staff is complete only when a second non-RACER user exists beyond the bootstrap admin
+        // Staff is complete only when a second official exists beyond the bootstrap admin
         boolean staff = userRepository.findAll().stream()
-                .filter(u -> u.getRoles().stream().anyMatch(r -> r != Role.RACER))
+                .filter(User::isOfficial)
                 .count() >= 2;
         boolean decoder = clubProfileRepository.findAll().stream().findFirst()
                 .map(p -> p.getDecoderHost() != null && p.getDecoderPort() != null && p.getDecoderProtocol() != null)

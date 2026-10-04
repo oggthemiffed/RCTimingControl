@@ -44,9 +44,6 @@ public class EventClass {
     @Column(name = "event_id")
     private Long eventId;
 
-    @Column(name = "required_governing_body_code", length = 50)
-    private String requiredGoverningBodyCode;
-
     @Column(name = "racing_class_id")
     private Long racingClassId;
 
@@ -83,8 +80,6 @@ public class EventClass {
     public Long getEventId() { return eventId; }
     public void setEventId(Long eventId) { this.eventId = eventId; }
 
-    public String getRequiredGoverningBodyCode() { return requiredGoverningBodyCode; }
-    public void setRequiredGoverningBodyCode(String requiredGoverningBodyCode) { this.requiredGoverningBodyCode = requiredGoverningBodyCode; }
 
     public Long getRacingClassId() { return racingClassId; }
     public void setRacingClassId(Long racingClassId) { this.racingClassId = racingClassId; }

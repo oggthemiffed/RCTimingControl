@@ -102,12 +102,6 @@ public class EventClasses extends TableImpl<EventClassesRecord> {
     public final TableField<EventClassesRecord, Long> EVENT_ID = createField(DSL.name("event_id"), SQLDataType.BIGINT, this, "");
 
     /**
-     * The column
-     * <code>public.event_classes.required_governing_body_code</code>.
-     */
-    public final TableField<EventClassesRecord, String> REQUIRED_GOVERNING_BODY_CODE = createField(DSL.name("required_governing_body_code"), SQLDataType.VARCHAR(50), this, "");
-
-    /**
      * The column <code>public.event_classes.racing_class_id</code>.
      */
     public final TableField<EventClassesRecord, Long> RACING_CLASS_ID = createField(DSL.name("racing_class_id"), SQLDataType.BIGINT, this, "");

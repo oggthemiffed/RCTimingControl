@@ -120,89 +120,73 @@ public class EventClassesRecord extends UpdatableRecordImpl<EventClassesRecord> 
     }
 
     /**
-     * Setter for
-     * <code>public.event_classes.required_governing_body_code</code>.
-     */
-    public void setRequiredGoverningBodyCode(String value) {
-        set(7, value);
-    }
-
-    /**
-     * Getter for
-     * <code>public.event_classes.required_governing_body_code</code>.
-     */
-    public String getRequiredGoverningBodyCode() {
-        return (String) get(7);
-    }
-
-    /**
      * Setter for <code>public.event_classes.racing_class_id</code>.
      */
     public void setRacingClassId(Long value) {
-        set(8, value);
+        set(7, value);
     }
 
     /**
      * Getter for <code>public.event_classes.racing_class_id</code>.
      */
     public Long getRacingClassId() {
-        return (Long) get(8);
+        return (Long) get(7);
     }
 
     /**
      * Setter for <code>public.event_classes.combined_race_group</code>.
      */
     public void setCombinedRaceGroup(Long value) {
-        set(9, value);
+        set(8, value);
     }
 
     /**
      * Getter for <code>public.event_classes.combined_race_group</code>.
      */
     public Long getCombinedRaceGroup() {
-        return (Long) get(9);
+        return (Long) get(8);
     }
 
     /**
      * Setter for <code>public.event_classes.finals_count</code>.
      */
     public void setFinalsCount(Integer value) {
-        set(10, value);
+        set(9, value);
     }
 
     /**
      * Getter for <code>public.event_classes.finals_count</code>.
      */
     public Integer getFinalsCount() {
-        return (Integer) get(10);
+        return (Integer) get(9);
     }
 
     /**
      * Setter for <code>public.event_classes.cars_per_final</code>.
      */
     public void setCarsPerFinal(Integer value) {
-        set(11, value);
+        set(10, value);
     }
 
     /**
      * Getter for <code>public.event_classes.cars_per_final</code>.
      */
     public Integer getCarsPerFinal() {
-        return (Integer) get(11);
+        return (Integer) get(10);
     }
 
     /**
      * Setter for <code>public.event_classes.bump_count</code>.
      */
     public void setBumpCount(Integer value) {
-        set(12, value);
+        set(11, value);
     }
 
     /**
      * Getter for <code>public.event_classes.bump_count</code>.
      */
     public Integer getBumpCount() {
-        return (Integer) get(12);
+        return (Integer) get(11);
     }
 
     // -------------------------------------------------------------------------
@@ -228,7 +212,7 @@ public class EventClassesRecord extends UpdatableRecordImpl<EventClassesRecord> 
     /**
      * Create a detached, initialised EventClassesRecord
      */
-    public EventClassesRecord(Long id, JSONB configSnapshot, JSONB configOverride, Long templateId, OffsetDateTime createdAt, OffsetDateTime updatedAt, Long eventId, String requiredGoverningBodyCode, Long racingClassId, Long combinedRaceGroup, Integer finalsCount, Integer carsPerFinal, Integer bumpCount) {
+    public EventClassesRecord(Long id, JSONB configSnapshot, JSONB configOverride, Long templateId, OffsetDateTime createdAt, OffsetDateTime updatedAt, Long eventId, Long racingClassId, Long combinedRaceGroup, Integer finalsCount, Integer carsPerFinal, Integer bumpCount) {
         super(EventClasses.EVENT_CLASSES);
 
         setId(id);
@@ -238,7 +222,6 @@ public class EventClassesRecord extends UpdatableRecordImpl<EventClassesRecord> 
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
         setEventId(eventId);
-        setRequiredGoverningBodyCode(requiredGoverningBodyCode);
         setRacingClassId(racingClassId);
         setCombinedRaceGroup(combinedRaceGroup);
         setFinalsCount(finalsCount);

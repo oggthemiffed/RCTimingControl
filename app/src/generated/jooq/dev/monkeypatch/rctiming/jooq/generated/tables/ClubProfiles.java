@@ -128,13 +128,6 @@ public class ClubProfiles extends TableImpl<ClubProfilesRecord> {
     public final TableField<ClubProfilesRecord, String> DEFAULT_VOICE_ID = createField(DSL.name("default_voice_id"), SQLDataType.VARCHAR(100).nullable(false).defaultValue(DSL.field(DSL.raw("'en_GB-alan-medium'::character varying"), SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>public.club_profiles.show_car_tags_in_results</code>.
-     * When true, car tag key/value pairs are displayed beneath the driver name
-     * in printed results (RESULT-04, D-07, D-08).
-     */
-    public final TableField<ClubProfilesRecord, Boolean> SHOW_CAR_TAGS_IN_RESULTS = createField(DSL.name("show_car_tags_in_results"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("false"), SQLDataType.BOOLEAN)), this, "When true, car tag key/value pairs are displayed beneath the driver name in printed results (RESULT-04, D-07, D-08).");
-
-    /**
      * The column <code>public.club_profiles.decoder_host</code>. Hostname or IP
      * address of the AMB decoder. Null until configured via setup wizard.
      */

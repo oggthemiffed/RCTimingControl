@@ -63,14 +63,14 @@ The AMB/MyLaps decoder client runs on a dedicated background thread (Netty 4.1, 
 
 ## Roles
 
-Staff roles are stackable — one user account can hold any combination:
+Only officials have accounts. Their roles are stackable — one account can hold any combination:
 
 | Role | Permissions |
 |------|-------------|
 | `ADMIN` | Club config, user management, event setup |
 | `RACE_DIRECTOR` | Race control client — start/stop, grid calls, marshal laps |
 | `REFEREE` | Penalties, transponder linking, incident reports |
-| `RACER` | Own profile, cars, transponders, entries |
+| Competitors | No account: entries come from the RaceHub import or are added as walk-ins |
 | Anonymous | Event schedule, live timing, results, standings |
 
 ## Phase roadmap

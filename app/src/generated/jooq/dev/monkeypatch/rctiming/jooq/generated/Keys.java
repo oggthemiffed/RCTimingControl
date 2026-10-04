@@ -4,9 +4,6 @@
 package dev.monkeypatch.rctiming.jooq.generated;
 
 
-import dev.monkeypatch.rctiming.jooq.generated.tables.CarTagCategories;
-import dev.monkeypatch.rctiming.jooq.generated.tables.CarTagValues;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Cars;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
@@ -31,7 +28,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldaySnapshots;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
-import dev.monkeypatch.rctiming.jooq.generated.tables.PasswordResetTokens;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions;
@@ -46,16 +42,10 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.TrackLapThresholds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Transponders;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLinks;
-import dev.monkeypatch.rctiming.jooq.generated.tables.UserClassRatings;
-import dev.monkeypatch.rctiming.jooq.generated.tables.UserGoverningBodyMemberships;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UserRoles;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users;
-import dev.monkeypatch.rctiming.jooq.generated.tables.records.CarTagCategoriesRecord;
-import dev.monkeypatch.rctiming.jooq.generated.tables.records.CarTagValuesRecord;
-import dev.monkeypatch.rctiming.jooq.generated.tables.records.CarsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipClassesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipEventLinksRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipExclusionsRecord;
@@ -80,7 +70,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.records.LocaldaySnapshotsR
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.MarshalAbsencesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.MarshalAdjustmentsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.MarshalPenaltiesRecord;
-import dev.monkeypatch.rctiming.jooq.generated.tables.records.PasswordResetTokensRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PenaltiesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PracticeLapsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PracticeSessionsRecord;
@@ -95,11 +84,8 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.records.ResultSnapshotsRec
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RoundsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.TrackLapThresholdsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.TracksRecord;
-import dev.monkeypatch.rctiming.jooq.generated.tables.records.TranspondersRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.UnknownTransponderLinkRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.UnknownTransponderLinksRecord;
-import dev.monkeypatch.rctiming.jooq.generated.tables.records.UserClassRatingsRecord;
-import dev.monkeypatch.rctiming.jooq.generated.tables.records.UserGoverningBodyMembershipsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.UserRolesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.UsersRecord;
 
@@ -121,11 +107,6 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<CarTagCategoriesRecord> CAR_TAG_CATEGORIES_NAME_KEY = Internal.createUniqueKey(CarTagCategories.CAR_TAG_CATEGORIES, DSL.name("car_tag_categories_name_key"), new TableField[] { CarTagCategories.CAR_TAG_CATEGORIES.NAME }, true);
-    public static final UniqueKey<CarTagCategoriesRecord> CAR_TAG_CATEGORIES_PKEY = Internal.createUniqueKey(CarTagCategories.CAR_TAG_CATEGORIES, DSL.name("car_tag_categories_pkey"), new TableField[] { CarTagCategories.CAR_TAG_CATEGORIES.ID }, true);
-    public static final UniqueKey<CarTagValuesRecord> CAR_TAG_VALUES_CAR_ID_CATEGORY_ID_KEY = Internal.createUniqueKey(CarTagValues.CAR_TAG_VALUES, DSL.name("car_tag_values_car_id_category_id_key"), new TableField[] { CarTagValues.CAR_TAG_VALUES.CAR_ID, CarTagValues.CAR_TAG_VALUES.CATEGORY_ID }, true);
-    public static final UniqueKey<CarTagValuesRecord> CAR_TAG_VALUES_PKEY = Internal.createUniqueKey(CarTagValues.CAR_TAG_VALUES, DSL.name("car_tag_values_pkey"), new TableField[] { CarTagValues.CAR_TAG_VALUES.ID }, true);
-    public static final UniqueKey<CarsRecord> CARS_PKEY = Internal.createUniqueKey(Cars.CARS, DSL.name("cars_pkey"), new TableField[] { Cars.CARS.ID }, true);
     public static final UniqueKey<ChampionshipClassesRecord> CHAMPIONSHIP_CLASSES_CHAMPIONSHIP_ID_RACING_CLASS_ID_KEY = Internal.createUniqueKey(ChampionshipClasses.CHAMPIONSHIP_CLASSES, DSL.name("championship_classes_championship_id_racing_class_id_key"), new TableField[] { ChampionshipClasses.CHAMPIONSHIP_CLASSES.CHAMPIONSHIP_ID, ChampionshipClasses.CHAMPIONSHIP_CLASSES.RACING_CLASS_ID }, true);
     public static final UniqueKey<ChampionshipClassesRecord> CHAMPIONSHIP_CLASSES_PKEY = Internal.createUniqueKey(ChampionshipClasses.CHAMPIONSHIP_CLASSES, DSL.name("championship_classes_pkey"), new TableField[] { ChampionshipClasses.CHAMPIONSHIP_CLASSES.ID }, true);
     public static final UniqueKey<ChampionshipEventLinksRecord> CHAMPIONSHIP_EVENT_LINKS_CHAMPIONSHIP_ID_EVENT_ID_KEY = Internal.createUniqueKey(ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS, DSL.name("championship_event_links_championship_id_event_id_key"), new TableField[] { ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID, ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS.EVENT_ID }, true);
@@ -156,8 +137,6 @@ public class Keys {
     public static final UniqueKey<MarshalAbsencesRecord> MARSHAL_ABSENCES_RACE_ID_ENTRY_ID_KEY = Internal.createUniqueKey(MarshalAbsences.MARSHAL_ABSENCES, DSL.name("marshal_absences_race_id_entry_id_key"), new TableField[] { MarshalAbsences.MARSHAL_ABSENCES.RACE_ID, MarshalAbsences.MARSHAL_ABSENCES.ENTRY_ID }, true);
     public static final UniqueKey<MarshalAdjustmentsRecord> MARSHAL_ADJUSTMENTS_PKEY = Internal.createUniqueKey(MarshalAdjustments.MARSHAL_ADJUSTMENTS, DSL.name("marshal_adjustments_pkey"), new TableField[] { MarshalAdjustments.MARSHAL_ADJUSTMENTS.ID }, true);
     public static final UniqueKey<MarshalPenaltiesRecord> MARSHAL_PENALTIES_PKEY = Internal.createUniqueKey(MarshalPenalties.MARSHAL_PENALTIES, DSL.name("marshal_penalties_pkey"), new TableField[] { MarshalPenalties.MARSHAL_PENALTIES.ID }, true);
-    public static final UniqueKey<PasswordResetTokensRecord> PASSWORD_RESET_TOKENS_PKEY = Internal.createUniqueKey(PasswordResetTokens.PASSWORD_RESET_TOKENS, DSL.name("password_reset_tokens_pkey"), new TableField[] { PasswordResetTokens.PASSWORD_RESET_TOKENS.ID }, true);
-    public static final UniqueKey<PasswordResetTokensRecord> PASSWORD_RESET_TOKENS_TOKEN_HASH_KEY = Internal.createUniqueKey(PasswordResetTokens.PASSWORD_RESET_TOKENS, DSL.name("password_reset_tokens_token_hash_key"), new TableField[] { PasswordResetTokens.PASSWORD_RESET_TOKENS.TOKEN_HASH }, true);
     public static final UniqueKey<PenaltiesRecord> PENALTIES_PKEY = Internal.createUniqueKey(Penalties.PENALTIES, DSL.name("penalties_pkey"), new TableField[] { Penalties.PENALTIES.ID }, true);
     public static final UniqueKey<PracticeLapsRecord> PRACTICE_LAPS_PKEY = Internal.createUniqueKey(PracticeLaps.PRACTICE_LAPS, DSL.name("practice_laps_pkey"), new TableField[] { PracticeLaps.PRACTICE_LAPS.ID }, true);
     public static final UniqueKey<PracticeSessionsRecord> PRACTICE_SESSIONS_PKEY = Internal.createUniqueKey(PracticeSessions.PRACTICE_SESSIONS, DSL.name("practice_sessions_pkey"), new TableField[] { PracticeSessions.PRACTICE_SESSIONS.ID }, true);
@@ -179,14 +158,9 @@ public class Keys {
     public static final UniqueKey<TrackLapThresholdsRecord> TRACK_LAP_THRESHOLDS_PKEY = Internal.createUniqueKey(TrackLapThresholds.TRACK_LAP_THRESHOLDS, DSL.name("track_lap_thresholds_pkey"), new TableField[] { TrackLapThresholds.TRACK_LAP_THRESHOLDS.ID }, true);
     public static final UniqueKey<TrackLapThresholdsRecord> TRACK_LAP_THRESHOLDS_TRACK_ID_RACING_CLASS_ID_KEY = Internal.createUniqueKey(TrackLapThresholds.TRACK_LAP_THRESHOLDS, DSL.name("track_lap_thresholds_track_id_racing_class_id_key"), new TableField[] { TrackLapThresholds.TRACK_LAP_THRESHOLDS.TRACK_ID, TrackLapThresholds.TRACK_LAP_THRESHOLDS.RACING_CLASS_ID }, true);
     public static final UniqueKey<TracksRecord> TRACKS_PKEY = Internal.createUniqueKey(Tracks.TRACKS, DSL.name("tracks_pkey"), new TableField[] { Tracks.TRACKS.ID }, true);
-    public static final UniqueKey<TranspondersRecord> TRANSPONDERS_PKEY = Internal.createUniqueKey(Transponders.TRANSPONDERS, DSL.name("transponders_pkey"), new TableField[] { Transponders.TRANSPONDERS.ID }, true);
-    public static final UniqueKey<TranspondersRecord> TRANSPONDERS_TRANSPONDER_NUMBER_KEY = Internal.createUniqueKey(Transponders.TRANSPONDERS, DSL.name("transponders_transponder_number_key"), new TableField[] { Transponders.TRANSPONDERS.TRANSPONDER_NUMBER }, true);
     public static final UniqueKey<UnknownTransponderLinkRecord> UNKNOWN_TRANSPONDER_LINK_PKEY = Internal.createUniqueKey(UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK, DSL.name("unknown_transponder_link_pkey"), new TableField[] { UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK.ID }, true);
     public static final UniqueKey<UnknownTransponderLinksRecord> UNKNOWN_TRANSPONDER_LINKS_PKEY = Internal.createUniqueKey(UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS, DSL.name("unknown_transponder_links_pkey"), new TableField[] { UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS.ID }, true);
     public static final UniqueKey<UnknownTransponderLinksRecord> UNKNOWN_TRANSPONDER_LINKS_RACE_ID_TRANSPONDER_NUMBER_KEY = Internal.createUniqueKey(UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS, DSL.name("unknown_transponder_links_race_id_transponder_number_key"), new TableField[] { UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS.RACE_ID, UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS.TRANSPONDER_NUMBER }, true);
-    public static final UniqueKey<UserClassRatingsRecord> USER_CLASS_RATINGS_PKEY = Internal.createUniqueKey(UserClassRatings.USER_CLASS_RATINGS, DSL.name("user_class_ratings_pkey"), new TableField[] { UserClassRatings.USER_CLASS_RATINGS.USER_ID, UserClassRatings.USER_CLASS_RATINGS.RACING_CLASS_ID }, true);
-    public static final UniqueKey<UserGoverningBodyMembershipsRecord> USER_GOVERNING_BODY_MEMBERSHIPS_PKEY = Internal.createUniqueKey(UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS, DSL.name("user_governing_body_memberships_pkey"), new TableField[] { UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS.ID }, true);
-    public static final UniqueKey<UserGoverningBodyMembershipsRecord> USER_GOVERNING_BODY_MEMBERSHIPS_USER_ID_GOVERNING_BODY_CODE_KEY = Internal.createUniqueKey(UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS, DSL.name("user_governing_body_memberships_user_id_governing_body_code_key"), new TableField[] { UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS.USER_ID, UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS.GOVERNING_BODY_CODE }, true);
     public static final UniqueKey<UserRolesRecord> USER_ROLES_PKEY = Internal.createUniqueKey(UserRoles.USER_ROLES, DSL.name("user_roles_pkey"), new TableField[] { UserRoles.USER_ROLES.USER_ID, UserRoles.USER_ROLES.ROLE }, true);
     public static final UniqueKey<UsersRecord> USERS_EMAIL_KEY = Internal.createUniqueKey(Users.USERS, DSL.name("users_email_key"), new TableField[] { Users.USERS.EMAIL }, true);
     public static final UniqueKey<UsersRecord> USERS_PKEY = Internal.createUniqueKey(Users.USERS, DSL.name("users_pkey"), new TableField[] { Users.USERS.ID }, true);
@@ -195,11 +169,6 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<CarTagValuesRecord, CarsRecord> CAR_TAG_VALUES__CAR_TAG_VALUES_CAR_ID_FKEY = Internal.createForeignKey(CarTagValues.CAR_TAG_VALUES, DSL.name("car_tag_values_car_id_fkey"), new TableField[] { CarTagValues.CAR_TAG_VALUES.CAR_ID }, Keys.CARS_PKEY, new TableField[] { Cars.CARS.ID }, true);
-    public static final ForeignKey<CarTagValuesRecord, CarTagCategoriesRecord> CAR_TAG_VALUES__CAR_TAG_VALUES_CATEGORY_ID_FKEY = Internal.createForeignKey(CarTagValues.CAR_TAG_VALUES, DSL.name("car_tag_values_category_id_fkey"), new TableField[] { CarTagValues.CAR_TAG_VALUES.CATEGORY_ID }, Keys.CAR_TAG_CATEGORIES_PKEY, new TableField[] { CarTagCategories.CAR_TAG_CATEGORIES.ID }, true);
-    public static final ForeignKey<CarsRecord, RacingClassesRecord> CARS__CARS_PRIMARY_CLASS_ID_FKEY = Internal.createForeignKey(Cars.CARS, DSL.name("cars_primary_class_id_fkey"), new TableField[] { Cars.CARS.PRIMARY_CLASS_ID }, Keys.RACING_CLASSES_PKEY, new TableField[] { RacingClasses.RACING_CLASSES.ID }, true);
-    public static final ForeignKey<CarsRecord, TranspondersRecord> CARS__CARS_TRANSPONDER_ID_FKEY = Internal.createForeignKey(Cars.CARS, DSL.name("cars_transponder_id_fkey"), new TableField[] { Cars.CARS.TRANSPONDER_ID }, Keys.TRANSPONDERS_PKEY, new TableField[] { Transponders.TRANSPONDERS.ID }, true);
-    public static final ForeignKey<CarsRecord, UsersRecord> CARS__CARS_USER_ID_FKEY = Internal.createForeignKey(Cars.CARS, DSL.name("cars_user_id_fkey"), new TableField[] { Cars.CARS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<ChampionshipClassesRecord, ChampionshipsRecord> CHAMPIONSHIP_CLASSES__CHAMPIONSHIP_CLASSES_CHAMPIONSHIP_ID_FKEY = Internal.createForeignKey(ChampionshipClasses.CHAMPIONSHIP_CLASSES, DSL.name("championship_classes_championship_id_fkey"), new TableField[] { ChampionshipClasses.CHAMPIONSHIP_CLASSES.CHAMPIONSHIP_ID }, Keys.CHAMPIONSHIPS_PKEY, new TableField[] { Championships.CHAMPIONSHIPS.ID }, true);
     public static final ForeignKey<ChampionshipClassesRecord, RacingClassesRecord> CHAMPIONSHIP_CLASSES__CHAMPIONSHIP_CLASSES_RACING_CLASS_ID_FKEY = Internal.createForeignKey(ChampionshipClasses.CHAMPIONSHIP_CLASSES, DSL.name("championship_classes_racing_class_id_fkey"), new TableField[] { ChampionshipClasses.CHAMPIONSHIP_CLASSES.RACING_CLASS_ID }, Keys.RACING_CLASSES_PKEY, new TableField[] { RacingClasses.RACING_CLASSES.ID }, true);
     public static final ForeignKey<ChampionshipEventLinksRecord, ChampionshipsRecord> CHAMPIONSHIP_EVENT_LINKS__CHAMPIONSHIP_EVENT_LINKS_CHAMPIONSHIP_ID_FKEY = Internal.createForeignKey(ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS, DSL.name("championship_event_links_championship_id_fkey"), new TableField[] { ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID }, Keys.CHAMPIONSHIPS_PKEY, new TableField[] { Championships.CHAMPIONSHIPS.ID }, true);
@@ -212,12 +181,9 @@ public class Keys {
     public static final ForeignKey<DecoderLoopsRecord, TracksRecord> DECODER_LOOPS__DECODER_LOOPS_TRACK_ID_FKEY = Internal.createForeignKey(DecoderLoops.DECODER_LOOPS, DSL.name("decoder_loops_track_id_fkey"), new TableField[] { DecoderLoops.DECODER_LOOPS.TRACK_ID }, Keys.TRACKS_PKEY, new TableField[] { Tracks.TRACKS.ID }, true);
     public static final ForeignKey<DeviceLossAuditRecord, UsersRecord> DEVICE_LOSS_AUDIT__DEVICE_LOSS_AUDIT_ADMIN_USER_ID_FKEY = Internal.createForeignKey(DeviceLossAudit.DEVICE_LOSS_AUDIT, DSL.name("device_loss_audit_admin_user_id_fkey"), new TableField[] { DeviceLossAudit.DEVICE_LOSS_AUDIT.ADMIN_USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<DeviceLossAuditRecord, EventsRecord> DEVICE_LOSS_AUDIT__DEVICE_LOSS_AUDIT_EVENT_ID_FKEY = Internal.createForeignKey(DeviceLossAudit.DEVICE_LOSS_AUDIT, DSL.name("device_loss_audit_event_id_fkey"), new TableField[] { DeviceLossAudit.DEVICE_LOSS_AUDIT.EVENT_ID }, Keys.EVENTS_PKEY, new TableField[] { Events.EVENTS.ID }, true);
-    public static final ForeignKey<EntriesRecord, CarsRecord> ENTRIES__ENTRIES_CAR_ID_FKEY = Internal.createForeignKey(Entries.ENTRIES, DSL.name("entries_car_id_fkey"), new TableField[] { Entries.ENTRIES.CAR_ID }, Keys.CARS_PKEY, new TableField[] { Cars.CARS.ID }, true);
     public static final ForeignKey<EntriesRecord, CompetitorsRecord> ENTRIES__ENTRIES_COMPETITOR_ID_FKEY = Internal.createForeignKey(Entries.ENTRIES, DSL.name("entries_competitor_id_fkey"), new TableField[] { Entries.ENTRIES.COMPETITOR_ID }, Keys.COMPETITORS_PKEY, new TableField[] { Competitors.COMPETITORS.ID }, true);
     public static final ForeignKey<EntriesRecord, EventClassesRecord> ENTRIES__ENTRIES_EVENT_CLASS_ID_FKEY = Internal.createForeignKey(Entries.ENTRIES, DSL.name("entries_event_class_id_fkey"), new TableField[] { Entries.ENTRIES.EVENT_CLASS_ID }, Keys.EVENT_CLASSES_PKEY, new TableField[] { EventClasses.EVENT_CLASSES.ID }, true);
     public static final ForeignKey<EntriesRecord, EventsRecord> ENTRIES__ENTRIES_EVENT_ID_FKEY = Internal.createForeignKey(Entries.ENTRIES, DSL.name("entries_event_id_fkey"), new TableField[] { Entries.ENTRIES.EVENT_ID }, Keys.EVENTS_PKEY, new TableField[] { Events.EVENTS.ID }, true);
-    public static final ForeignKey<EntriesRecord, UsersRecord> ENTRIES__ENTRIES_MEMBERSHIP_OVERRIDE_BY_FKEY = Internal.createForeignKey(Entries.ENTRIES, DSL.name("entries_membership_override_by_fkey"), new TableField[] { Entries.ENTRIES.MEMBERSHIP_OVERRIDE_BY }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
-    public static final ForeignKey<EntriesRecord, TranspondersRecord> ENTRIES__ENTRIES_TRANSPONDER_ID_FKEY = Internal.createForeignKey(Entries.ENTRIES, DSL.name("entries_transponder_id_fkey"), new TableField[] { Entries.ENTRIES.TRANSPONDER_ID }, Keys.TRANSPONDERS_PKEY, new TableField[] { Transponders.TRANSPONDERS.ID }, true);
     public static final ForeignKey<EntriesRecord, UsersRecord> ENTRIES__ENTRIES_USER_ID_FKEY = Internal.createForeignKey(Entries.ENTRIES, DSL.name("entries_user_id_fkey"), new TableField[] { Entries.ENTRIES.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<EntryAuditLogRecord, UsersRecord> ENTRY_AUDIT_LOG__ENTRY_AUDIT_LOG_ADMIN_USER_ID_FKEY = Internal.createForeignKey(EntryAuditLog.ENTRY_AUDIT_LOG, DSL.name("entry_audit_log_admin_user_id_fkey"), new TableField[] { EntryAuditLog.ENTRY_AUDIT_LOG.ADMIN_USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<EntryAuditLogRecord, EntriesRecord> ENTRY_AUDIT_LOG__ENTRY_AUDIT_LOG_ENTRY_ID_FKEY = Internal.createForeignKey(EntryAuditLog.ENTRY_AUDIT_LOG, DSL.name("entry_audit_log_entry_id_fkey"), new TableField[] { EntryAuditLog.ENTRY_AUDIT_LOG.ENTRY_ID }, Keys.ENTRIES_PKEY, new TableField[] { Entries.ENTRIES.ID }, true);
@@ -242,7 +208,6 @@ public class Keys {
     public static final ForeignKey<MarshalPenaltiesRecord, MarshalAbsencesRecord> MARSHAL_PENALTIES__MARSHAL_PENALTIES_ABSENCE_ID_FKEY = Internal.createForeignKey(MarshalPenalties.MARSHAL_PENALTIES, DSL.name("marshal_penalties_absence_id_fkey"), new TableField[] { MarshalPenalties.MARSHAL_PENALTIES.ABSENCE_ID }, Keys.MARSHAL_ABSENCES_PKEY, new TableField[] { MarshalAbsences.MARSHAL_ABSENCES.ID }, true);
     public static final ForeignKey<MarshalPenaltiesRecord, EntriesRecord> MARSHAL_PENALTIES__MARSHAL_PENALTIES_ENTRY_ID_FKEY = Internal.createForeignKey(MarshalPenalties.MARSHAL_PENALTIES, DSL.name("marshal_penalties_entry_id_fkey"), new TableField[] { MarshalPenalties.MARSHAL_PENALTIES.ENTRY_ID }, Keys.ENTRIES_PKEY, new TableField[] { Entries.ENTRIES.ID }, true);
     public static final ForeignKey<MarshalPenaltiesRecord, EventsRecord> MARSHAL_PENALTIES__MARSHAL_PENALTIES_EVENT_ID_FKEY = Internal.createForeignKey(MarshalPenalties.MARSHAL_PENALTIES, DSL.name("marshal_penalties_event_id_fkey"), new TableField[] { MarshalPenalties.MARSHAL_PENALTIES.EVENT_ID }, Keys.EVENTS_PKEY, new TableField[] { Events.EVENTS.ID }, true);
-    public static final ForeignKey<PasswordResetTokensRecord, UsersRecord> PASSWORD_RESET_TOKENS__PASSWORD_RESET_TOKENS_USER_ID_FKEY = Internal.createForeignKey(PasswordResetTokens.PASSWORD_RESET_TOKENS, DSL.name("password_reset_tokens_user_id_fkey"), new TableField[] { PasswordResetTokens.PASSWORD_RESET_TOKENS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<PenaltiesRecord, EntriesRecord> PENALTIES__PENALTIES_ENTRY_ID_FKEY = Internal.createForeignKey(Penalties.PENALTIES, DSL.name("penalties_entry_id_fkey"), new TableField[] { Penalties.PENALTIES.ENTRY_ID }, Keys.ENTRIES_PKEY, new TableField[] { Entries.ENTRIES.ID }, true);
     public static final ForeignKey<PenaltiesRecord, RacesRecord> PENALTIES__PENALTIES_RACE_ID_FKEY = Internal.createForeignKey(Penalties.PENALTIES, DSL.name("penalties_race_id_fkey"), new TableField[] { Penalties.PENALTIES.RACE_ID }, Keys.RACES_PKEY, new TableField[] { Races.RACES.ID }, true);
     public static final ForeignKey<PracticeLapsRecord, PracticeSessionsRecord> PRACTICE_LAPS__PRACTICE_LAPS_PRACTICE_SESSION_ID_FKEY = Internal.createForeignKey(PracticeLaps.PRACTICE_LAPS, DSL.name("practice_laps_practice_session_id_fkey"), new TableField[] { PracticeLaps.PRACTICE_LAPS.PRACTICE_SESSION_ID }, Keys.PRACTICE_SESSIONS_PKEY, new TableField[] { PracticeSessions.PRACTICE_SESSIONS.ID }, true);
@@ -262,14 +227,10 @@ public class Keys {
     public static final ForeignKey<RoundsRecord, EventsRecord> ROUNDS__ROUNDS_EVENT_ID_FKEY = Internal.createForeignKey(Rounds.ROUNDS, DSL.name("rounds_event_id_fkey"), new TableField[] { Rounds.ROUNDS.EVENT_ID }, Keys.EVENTS_PKEY, new TableField[] { Events.EVENTS.ID }, true);
     public static final ForeignKey<TrackLapThresholdsRecord, RacingClassesRecord> TRACK_LAP_THRESHOLDS__FK_THRESHOLD_RACING_CLASS = Internal.createForeignKey(TrackLapThresholds.TRACK_LAP_THRESHOLDS, DSL.name("fk_threshold_racing_class"), new TableField[] { TrackLapThresholds.TRACK_LAP_THRESHOLDS.RACING_CLASS_ID }, Keys.RACING_CLASSES_PKEY, new TableField[] { RacingClasses.RACING_CLASSES.ID }, true);
     public static final ForeignKey<TrackLapThresholdsRecord, TracksRecord> TRACK_LAP_THRESHOLDS__TRACK_LAP_THRESHOLDS_TRACK_ID_FKEY = Internal.createForeignKey(TrackLapThresholds.TRACK_LAP_THRESHOLDS, DSL.name("track_lap_thresholds_track_id_fkey"), new TableField[] { TrackLapThresholds.TRACK_LAP_THRESHOLDS.TRACK_ID }, Keys.TRACKS_PKEY, new TableField[] { Tracks.TRACKS.ID }, true);
-    public static final ForeignKey<TranspondersRecord, UsersRecord> TRANSPONDERS__TRANSPONDERS_USER_ID_FKEY = Internal.createForeignKey(Transponders.TRANSPONDERS, DSL.name("transponders_user_id_fkey"), new TableField[] { Transponders.TRANSPONDERS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<UnknownTransponderLinkRecord, EntriesRecord> UNKNOWN_TRANSPONDER_LINK__UNKNOWN_TRANSPONDER_LINK_ENTRY_ID_FKEY = Internal.createForeignKey(UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK, DSL.name("unknown_transponder_link_entry_id_fkey"), new TableField[] { UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK.ENTRY_ID }, Keys.ENTRIES_PKEY, new TableField[] { Entries.ENTRIES.ID }, true);
     public static final ForeignKey<UnknownTransponderLinkRecord, UsersRecord> UNKNOWN_TRANSPONDER_LINK__UNKNOWN_TRANSPONDER_LINK_LINKED_BY_USER_ID_FKEY = Internal.createForeignKey(UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK, DSL.name("unknown_transponder_link_linked_by_user_id_fkey"), new TableField[] { UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK.LINKED_BY_USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<UnknownTransponderLinkRecord, RacesRecord> UNKNOWN_TRANSPONDER_LINK__UNKNOWN_TRANSPONDER_LINK_RACE_ID_FKEY = Internal.createForeignKey(UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK, DSL.name("unknown_transponder_link_race_id_fkey"), new TableField[] { UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK.RACE_ID }, Keys.RACES_PKEY, new TableField[] { Races.RACES.ID }, true);
     public static final ForeignKey<UnknownTransponderLinksRecord, EntriesRecord> UNKNOWN_TRANSPONDER_LINKS__UNKNOWN_TRANSPONDER_LINKS_LINKED_ENTRY_ID_FKEY = Internal.createForeignKey(UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS, DSL.name("unknown_transponder_links_linked_entry_id_fkey"), new TableField[] { UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS.LINKED_ENTRY_ID }, Keys.ENTRIES_PKEY, new TableField[] { Entries.ENTRIES.ID }, true);
     public static final ForeignKey<UnknownTransponderLinksRecord, RacesRecord> UNKNOWN_TRANSPONDER_LINKS__UNKNOWN_TRANSPONDER_LINKS_RACE_ID_FKEY = Internal.createForeignKey(UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS, DSL.name("unknown_transponder_links_race_id_fkey"), new TableField[] { UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS.RACE_ID }, Keys.RACES_PKEY, new TableField[] { Races.RACES.ID }, true);
-    public static final ForeignKey<UserClassRatingsRecord, RacingClassesRecord> USER_CLASS_RATINGS__USER_CLASS_RATINGS_RACING_CLASS_ID_FKEY = Internal.createForeignKey(UserClassRatings.USER_CLASS_RATINGS, DSL.name("user_class_ratings_racing_class_id_fkey"), new TableField[] { UserClassRatings.USER_CLASS_RATINGS.RACING_CLASS_ID }, Keys.RACING_CLASSES_PKEY, new TableField[] { RacingClasses.RACING_CLASSES.ID }, true);
-    public static final ForeignKey<UserClassRatingsRecord, UsersRecord> USER_CLASS_RATINGS__USER_CLASS_RATINGS_USER_ID_FKEY = Internal.createForeignKey(UserClassRatings.USER_CLASS_RATINGS, DSL.name("user_class_ratings_user_id_fkey"), new TableField[] { UserClassRatings.USER_CLASS_RATINGS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
-    public static final ForeignKey<UserGoverningBodyMembershipsRecord, UsersRecord> USER_GOVERNING_BODY_MEMBERSHIPS__USER_GOVERNING_BODY_MEMBERSHIPS_USER_ID_FKEY = Internal.createForeignKey(UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS, DSL.name("user_governing_body_memberships_user_id_fkey"), new TableField[] { UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<UserRolesRecord, UsersRecord> USER_ROLES__USER_ROLES_USER_ID_FKEY = Internal.createForeignKey(UserRoles.USER_ROLES, DSL.name("user_roles_user_id_fkey"), new TableField[] { UserRoles.USER_ROLES.USER_ID }, Keys.USERS_PKEY, new TableField[] { Users.USERS.ID }, true);
 }

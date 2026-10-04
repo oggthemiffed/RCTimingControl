@@ -97,7 +97,7 @@ class SetupControllerIT extends AbstractIntegrationTest {
         String jwt = bootstrapResp.getBody().accessToken();
 
         // After bootstrap: staff=false — bootstrap admin alone does not satisfy Step 4;
-        // requires a second non-RACER user created through the wizard
+        // requires a second official created through the wizard
         SetupProgressDto progress1 = getProgress(jwt);
         assertThat(progress1.club()).isFalse();
         assertThat(progress1.track()).isFalse();

@@ -232,29 +232,11 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
     }
 
     /**
-     * Setter for <code>public.club_profiles.show_car_tags_in_results</code>.
-     * When true, car tag key/value pairs are displayed beneath the driver name
-     * in printed results (RESULT-04, D-07, D-08).
-     */
-    public void setShowCarTagsInResults(Boolean value) {
-        set(15, value);
-    }
-
-    /**
-     * Getter for <code>public.club_profiles.show_car_tags_in_results</code>.
-     * When true, car tag key/value pairs are displayed beneath the driver name
-     * in printed results (RESULT-04, D-07, D-08).
-     */
-    public Boolean getShowCarTagsInResults() {
-        return (Boolean) get(15);
-    }
-
-    /**
      * Setter for <code>public.club_profiles.decoder_host</code>. Hostname or IP
      * address of the AMB decoder. Null until configured via setup wizard.
      */
     public void setDecoderHost(String value) {
-        set(16, value);
+        set(15, value);
     }
 
     /**
@@ -262,7 +244,7 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
      * address of the AMB decoder. Null until configured via setup wizard.
      */
     public String getDecoderHost() {
-        return (String) get(16);
+        return (String) get(15);
     }
 
     /**
@@ -270,7 +252,7 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
      * -&gt; 5100, P3 -&gt; 5403. Null until configured.
      */
     public void setDecoderPort(Integer value) {
-        set(17, value);
+        set(16, value);
     }
 
     /**
@@ -278,7 +260,7 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
      * -&gt; 5100, P3 -&gt; 5403. Null until configured.
      */
     public Integer getDecoderPort() {
-        return (Integer) get(17);
+        return (Integer) get(16);
     }
 
     /**
@@ -287,7 +269,7 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
      * Null until configured.
      */
     public void setDecoderProtocol(String value) {
-        set(18, value);
+        set(17, value);
     }
 
     /**
@@ -296,7 +278,7 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
      * Null until configured.
      */
     public String getDecoderProtocol() {
-        return (String) get(18);
+        return (String) get(17);
     }
 
     // -------------------------------------------------------------------------
@@ -322,7 +304,7 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
     /**
      * Create a detached, initialised ClubProfilesRecord
      */
-    public ClubProfilesRecord(Long id, String name, String email, String phone, String websiteUrl, Double latitude, Double longitude, String timezone, byte[] logo, String logoType, OffsetDateTime createdAt, OffsetDateTime updatedAt, String logoUrl, JSONB audioSettings, String defaultVoiceId, Boolean showCarTagsInResults, String decoderHost, Integer decoderPort, String decoderProtocol) {
+    public ClubProfilesRecord(Long id, String name, String email, String phone, String websiteUrl, Double latitude, Double longitude, String timezone, byte[] logo, String logoType, OffsetDateTime createdAt, OffsetDateTime updatedAt, String logoUrl, JSONB audioSettings, String defaultVoiceId, String decoderHost, Integer decoderPort, String decoderProtocol) {
         super(ClubProfiles.CLUB_PROFILES);
 
         setId(id);
@@ -340,7 +322,6 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
         setLogoUrl(logoUrl);
         setAudioSettings(audioSettings);
         setDefaultVoiceId(defaultVoiceId);
-        setShowCarTagsInResults(showCarTagsInResults);
         setDecoderHost(decoderHost);
         setDecoderPort(decoderPort);
         setDecoderProtocol(decoderProtocol);

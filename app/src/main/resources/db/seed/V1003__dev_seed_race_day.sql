@@ -1,21 +1,12 @@
 -- V1003: Dev seed — full race day for UAT testing
--- Creates event, event_class, entries, rounds, races, race_entries for UAT
+-- Creates event, event_class, competitors, entries, rounds, races, race_entries for UAT
 
--- ── Additional racer users (racer1/racer2 already exist from V1000) ──────────
+-- ── Race director account ────────────────────────────────────────────────────
 insert into users (email, password_hash, first_name, last_name, created_at, updated_at) values
-    ('racer3@example.com',  '$2b$10$QWNPqLhXElyx9PhFCXKZsOWMudKPFrvHBdP.wnQa92WYoP5Trg9oe', 'Dave',    'Harris',   now(), now()),
-    ('racer4@example.com',  '$2b$10$QWNPqLhXElyx9PhFCXKZsOWMudKPFrvHBdP.wnQa92WYoP5Trg9oe', 'Chris',   'Webb',     now(), now()),
-    ('racer5@example.com',  '$2b$10$QWNPqLhXElyx9PhFCXKZsOWMudKPFrvHBdP.wnQa92WYoP5Trg9oe', 'Tom',     'Clarke',   now(), now()),
-    ('racer6@example.com',  '$2b$10$QWNPqLhXElyx9PhFCXKZsOWMudKPFrvHBdP.wnQa92WYoP5Trg9oe', 'Phil',    'Evans',    now(), now()),
     ('director@example.com','$2b$10$QWNPqLhXElyx9PhFCXKZsOWMudKPFrvHBdP.wnQa92WYoP5Trg9oe', 'Race',    'Director', now(), now())
 on conflict (email) do nothing;
 
--- Passwords above are all: Racer1Pass!
-
-insert into user_roles (user_id, role)
-select id, 'RACER' from users where email in (
-    'racer3@example.com','racer4@example.com','racer5@example.com','racer6@example.com'
-) on conflict do nothing;
+-- Password above is: Racer1Pass!
 
 insert into user_roles (user_id, role)
 select id, 'RACE_DIRECTOR' from users where email = 'director@example.com'
@@ -46,58 +37,28 @@ select
 from race_format_templates t
 where t.name = 'Standard Timed — 5 min';
 
--- ── Transponders (one per racer, numbers 101–106) ────────────────────────────
-insert into transponders (user_id, transponder_number, label, created_at)
-select
-    u.id,
-    (100 + row_number() over (order by u.id))::varchar,
-    'AMB-' || (100 + row_number() over (order by u.id)),
-    now()
-from users u
-where u.email in (
-    'racer1@example.com','racer2@example.com',
-    'racer3@example.com','racer4@example.com',
-    'racer5@example.com','racer6@example.com'
-)
-on conflict (transponder_number) do nothing;
+-- ── Competitors (six walk-in drivers; racers have no accounts, L10 #18) ─────
+insert into competitors (display_name, created_at, updated_at) values
+    ('Racer One',    now(), now()),
+    ('Racer Two',    now(), now()),
+    ('Dave Harris',  now(), now()),
+    ('Chris Webb',   now(), now()),
+    ('Tom Clarke',   now(), now()),
+    ('Phil Evans',   now(), now());
 
--- ── Cars (one per racer, linked to their transponder) ─────────────────────────
-insert into cars (user_id, name, transponder_id, primary_class_id, created_at, updated_at)
+-- ── Entries (one per competitor, transponders 101–106) ───────────────────────
+insert into entries (competitor_id, event_id, event_class_id, transponder_number, transponder_label, status, submitted_at, updated_at)
 select
-    u.id,
-    u.first_name || '''s Buggy',
-    t.id,
-    (select id from racing_classes where name = 'Mod Buggy'),
-    now(), now()
-from users u
-join transponders t on t.user_id = u.id
-where u.email in (
-    'racer1@example.com','racer2@example.com',
-    'racer3@example.com','racer4@example.com',
-    'racer5@example.com','racer6@example.com'
-)
-on conflict do nothing;
-
--- ── Entries (6 racers, car + transponder FKs properly set) ───────────────────
-insert into entries (user_id, event_id, event_class_id, car_id, transponder_id, transponder_number, transponder_label, status, submitted_at, updated_at)
-select
-    u.id,
-    1,
-    1,
     c.id,
-    t.id,
-    t.transponder_number,
-    t.label,
+    1,
+    1,
+    (100 + row_number() over (order by c.id))::varchar,
+    'AMB-' || (100 + row_number() over (order by c.id)),
     'CONFIRMED',
     now(), now()
-from users u
-join transponders t on t.user_id = u.id
-join cars c on c.user_id = u.id and c.transponder_id = t.id
-where u.email in (
-    'racer1@example.com','racer2@example.com',
-    'racer3@example.com','racer4@example.com',
-    'racer5@example.com','racer6@example.com'
-)
+from competitors c
+where c.display_name in ('Racer One','Racer Two','Dave Harris','Chris Webb','Tom Clarke','Phil Evans')
+  and c.external_source is null
 on conflict do nothing;
 
 -- Reset entries sequence past inserted rows

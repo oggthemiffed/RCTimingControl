@@ -30,10 +30,6 @@ public class UserService {
         if (roles == null || roles.isEmpty()) {
             throw new IllegalArgumentException("At least one role required");
         }
-        if (roles.contains(Role.RACER)) {
-            // Only officials have accounts (L10, #18)
-            throw new IllegalArgumentException("Staff accounts cannot hold the RACER role");
-        }
         if (userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email already registered");
         }

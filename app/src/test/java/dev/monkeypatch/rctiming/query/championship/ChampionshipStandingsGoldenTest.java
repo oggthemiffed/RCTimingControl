@@ -28,7 +28,6 @@ import dev.monkeypatch.rctiming.domain.race.RoundType;
 import dev.monkeypatch.rctiming.domain.race.StartType;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
-import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import org.jooq.DSLContext;
@@ -180,11 +179,11 @@ class ChampionshipStandingsGoldenTest extends AbstractIntegrationTest {
         u.setPasswordHash("x");
         u.setFirstName(firstName);
         u.setLastName(lastName);
-        u.setRoles(Set.of(Role.RACER));
+        u.setRoles(Set.of());
         u.setCreatedAt(Instant.now());
         u.setUpdatedAt(Instant.now());
         u = userRepository.save(u);
-        return new Driver(u, competitorService.forUser(u.getId()));
+        return new Driver(u, competitorService.createWalkIn(firstName + " " + lastName));
     }
 
     /** Excludes a driver from an event, keyed the way the standings query keys drivers. */

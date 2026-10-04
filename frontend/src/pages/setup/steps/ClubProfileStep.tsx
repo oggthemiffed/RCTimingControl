@@ -65,7 +65,6 @@ export default function ClubProfileStep({ onNext }: Props) {
         longitude: null,
         timezone: values.timezone,
         logoType: null,
-        showCarTagsInResults: false,
       });
       queryClient.invalidateQueries({ queryKey: ['setup-status'] });
       queryClient.invalidateQueries({ queryKey: ['setup-progress'] });

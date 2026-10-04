@@ -6,22 +6,16 @@ package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.Public;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Cars.CarsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DeviceLossAudit.DeviceLossAuditPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.EntryAuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayCredentials.LocaldayCredentialsPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.PasswordResetTokens.PasswordResetTokensPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps.PracticeLapsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions.PracticeSessionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ProfanityBlocklist.ProfanityBlocklistPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RacingClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens.RefreshTokensPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Transponders.TranspondersPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink.UnknownTransponderLinkPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.UserClassRatings.UserClassRatingsPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.UserGoverningBodyMemberships.UserGoverningBodyMembershipsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UserRoles.UserRolesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.UsersRecord;
 
@@ -109,31 +103,6 @@ public class Users extends TableImpl<UsersRecord> {
      */
     public final TableField<UsersRecord, OffsetDateTime> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.TIMESTAMPWITHTIMEZONE(6).nullable(false).defaultValue(DSL.field(DSL.raw("now()"), SQLDataType.TIMESTAMPWITHTIMEZONE)), this, "");
 
-    /**
-     * The column <code>public.users.phone_number</code>.
-     */
-    public final TableField<UsersRecord, String> PHONE_NUMBER = createField(DSL.name("phone_number"), SQLDataType.VARCHAR(30), this, "");
-
-    /**
-     * The column <code>public.users.emergency_contact_name</code>.
-     */
-    public final TableField<UsersRecord, String> EMERGENCY_CONTACT_NAME = createField(DSL.name("emergency_contact_name"), SQLDataType.VARCHAR(100), this, "");
-
-    /**
-     * The column <code>public.users.emergency_contact_phone</code>.
-     */
-    public final TableField<UsersRecord, String> EMERGENCY_CONTACT_PHONE = createField(DSL.name("emergency_contact_phone"), SQLDataType.VARCHAR(30), this, "");
-
-    /**
-     * The column <code>public.users.phonetic_name</code>.
-     */
-    public final TableField<UsersRecord, String> PHONETIC_NAME = createField(DSL.name("phonetic_name"), SQLDataType.VARCHAR(255), this, "");
-
-    /**
-     * The column <code>public.users.preferred_voice_id</code>.
-     */
-    public final TableField<UsersRecord, String> PREFERRED_VOICE_ID = createField(DSL.name("preferred_voice_id"), SQLDataType.VARCHAR(100), this, "");
-
     private Users(Name alias, Table<UsersRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -216,18 +185,6 @@ public class Users extends TableImpl<UsersRecord> {
         return Arrays.asList(Keys.USERS_EMAIL_KEY);
     }
 
-    private transient CarsPath _cars;
-
-    /**
-     * Get the implicit to-many join path to the <code>public.cars</code> table
-     */
-    public CarsPath cars() {
-        if (_cars == null)
-            _cars = new CarsPath(this, null, Keys.CARS__CARS_USER_ID_FKEY.getInverseKey());
-
-        return _cars;
-    }
-
     private transient ChampionshipExclusionsPath _championshipExclusions;
 
     /**
@@ -254,30 +211,17 @@ public class Users extends TableImpl<UsersRecord> {
         return _deviceLossAudit;
     }
 
-    private transient EntriesPath _entriesMembershipOverrideByFkey;
+    private transient EntriesPath _entries;
 
     /**
      * Get the implicit to-many join path to the <code>public.entries</code>
-     * table, via the <code>entries_membership_override_by_fkey</code> key
+     * table
      */
-    public EntriesPath entriesMembershipOverrideByFkey() {
-        if (_entriesMembershipOverrideByFkey == null)
-            _entriesMembershipOverrideByFkey = new EntriesPath(this, null, Keys.ENTRIES__ENTRIES_MEMBERSHIP_OVERRIDE_BY_FKEY.getInverseKey());
+    public EntriesPath entries() {
+        if (_entries == null)
+            _entries = new EntriesPath(this, null, Keys.ENTRIES__ENTRIES_USER_ID_FKEY.getInverseKey());
 
-        return _entriesMembershipOverrideByFkey;
-    }
-
-    private transient EntriesPath _entriesUserIdFkey;
-
-    /**
-     * Get the implicit to-many join path to the <code>public.entries</code>
-     * table, via the <code>entries_user_id_fkey</code> key
-     */
-    public EntriesPath entriesUserIdFkey() {
-        if (_entriesUserIdFkey == null)
-            _entriesUserIdFkey = new EntriesPath(this, null, Keys.ENTRIES__ENTRIES_USER_ID_FKEY.getInverseKey());
-
-        return _entriesUserIdFkey;
+        return _entries;
     }
 
     private transient EntryAuditLogPath _entryAuditLog;
@@ -304,19 +248,6 @@ public class Users extends TableImpl<UsersRecord> {
             _localdayCredentials = new LocaldayCredentialsPath(this, null, Keys.LOCALDAY_CREDENTIALS__LOCALDAY_CREDENTIALS_USER_ID_FKEY.getInverseKey());
 
         return _localdayCredentials;
-    }
-
-    private transient PasswordResetTokensPath _passwordResetTokens;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.password_reset_tokens</code> table
-     */
-    public PasswordResetTokensPath passwordResetTokens() {
-        if (_passwordResetTokens == null)
-            _passwordResetTokens = new PasswordResetTokensPath(this, null, Keys.PASSWORD_RESET_TOKENS__PASSWORD_RESET_TOKENS_USER_ID_FKEY.getInverseKey());
-
-        return _passwordResetTokens;
     }
 
     private transient PracticeLapsPath _practiceLaps;
@@ -371,19 +302,6 @@ public class Users extends TableImpl<UsersRecord> {
         return _refreshTokens;
     }
 
-    private transient TranspondersPath _transponders;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.transponders</code> table
-     */
-    public TranspondersPath transponders() {
-        if (_transponders == null)
-            _transponders = new TranspondersPath(this, null, Keys.TRANSPONDERS__TRANSPONDERS_USER_ID_FKEY.getInverseKey());
-
-        return _transponders;
-    }
-
     private transient UnknownTransponderLinkPath _unknownTransponderLink;
 
     /**
@@ -397,32 +315,6 @@ public class Users extends TableImpl<UsersRecord> {
         return _unknownTransponderLink;
     }
 
-    private transient UserClassRatingsPath _userClassRatings;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.user_class_ratings</code> table
-     */
-    public UserClassRatingsPath userClassRatings() {
-        if (_userClassRatings == null)
-            _userClassRatings = new UserClassRatingsPath(this, null, Keys.USER_CLASS_RATINGS__USER_CLASS_RATINGS_USER_ID_FKEY.getInverseKey());
-
-        return _userClassRatings;
-    }
-
-    private transient UserGoverningBodyMembershipsPath _userGoverningBodyMemberships;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>public.user_governing_body_memberships</code> table
-     */
-    public UserGoverningBodyMembershipsPath userGoverningBodyMemberships() {
-        if (_userGoverningBodyMemberships == null)
-            _userGoverningBodyMemberships = new UserGoverningBodyMembershipsPath(this, null, Keys.USER_GOVERNING_BODY_MEMBERSHIPS__USER_GOVERNING_BODY_MEMBERSHIPS_USER_ID_FKEY.getInverseKey());
-
-        return _userGoverningBodyMemberships;
-    }
-
     private transient UserRolesPath _userRoles;
 
     /**
@@ -434,14 +326,6 @@ public class Users extends TableImpl<UsersRecord> {
             _userRoles = new UserRolesPath(this, null, Keys.USER_ROLES__USER_ROLES_USER_ID_FKEY.getInverseKey());
 
         return _userRoles;
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the
-     * <code>public.racing_classes</code> table
-     */
-    public RacingClassesPath racingClasses() {
-        return userClassRatings().racingClasses();
     }
 
     @Override

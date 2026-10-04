@@ -4,9 +4,6 @@
 package dev.monkeypatch.rctiming.jooq.generated;
 
 
-import dev.monkeypatch.rctiming.jooq.generated.tables.CarTagCategories;
-import dev.monkeypatch.rctiming.jooq.generated.tables.CarTagValues;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Cars;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
@@ -21,7 +18,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldayInstanceSecrets;
 import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldaySnapshots;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
-import dev.monkeypatch.rctiming.jooq.generated.tables.PasswordResetTokens;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions;
@@ -30,10 +26,8 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Races;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Transponders;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLinks;
-import dev.monkeypatch.rctiming.jooq.generated.tables.UserGoverningBodyMemberships;
 
 import org.jooq.Index;
 import org.jooq.OrderField;
@@ -51,14 +45,10 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
-    public static final Index IDX_CAR_TAG_CATEGORIES_ARCHIVED = Internal.createIndex(DSL.name("idx_car_tag_categories_archived"), CarTagCategories.CAR_TAG_CATEGORIES, new OrderField[] { CarTagCategories.CAR_TAG_CATEGORIES.ARCHIVED }, false);
-    public static final Index IDX_CARS_TRANSPONDER_ID = Internal.createIndex(DSL.name("idx_cars_transponder_id"), Cars.CARS, new OrderField[] { Cars.CARS.TRANSPONDER_ID }, false);
-    public static final Index IDX_CARS_USER_ID = Internal.createIndex(DSL.name("idx_cars_user_id"), Cars.CARS, new OrderField[] { Cars.CARS.USER_ID }, false);
     public static final Index IDX_CHAMPIONSHIP_CLASSES_CHAMPIONSHIP_ID = Internal.createIndex(DSL.name("idx_championship_classes_championship_id"), ChampionshipClasses.CHAMPIONSHIP_CLASSES, new OrderField[] { ChampionshipClasses.CHAMPIONSHIP_CLASSES.CHAMPIONSHIP_ID }, false);
     public static final Index IDX_CHAMPIONSHIP_EVENT_LINKS_CHAMPIONSHIP_ID = Internal.createIndex(DSL.name("idx_championship_event_links_championship_id"), ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS, new OrderField[] { ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID }, false);
     public static final Index IDX_CHAMPIONSHIP_EXCLUSIONS_CHAMPIONSHIP_ID = Internal.createIndex(DSL.name("idx_championship_exclusions_championship_id"), ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS, new OrderField[] { ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS.CHAMPIONSHIP_ID }, false);
     public static final Index IDX_CHAMPIONSHIP_EXCLUSIONS_DRIVER_ID = Internal.createIndex(DSL.name("idx_championship_exclusions_driver_id"), ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS, new OrderField[] { ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID }, false);
-    public static final Index IDX_CTV_CAR_ID = Internal.createIndex(DSL.name("idx_ctv_car_id"), CarTagValues.CAR_TAG_VALUES, new OrderField[] { CarTagValues.CAR_TAG_VALUES.CAR_ID }, false);
     public static final Index IDX_DEVICE_LOSS_AUDIT_EVENT_ID = Internal.createIndex(DSL.name("idx_device_loss_audit_event_id"), DeviceLossAudit.DEVICE_LOSS_AUDIT, new OrderField[] { DeviceLossAudit.DEVICE_LOSS_AUDIT.EVENT_ID }, false);
     public static final Index IDX_ENTRIES_COMPETITOR_ID = Internal.createIndex(DSL.name("idx_entries_competitor_id"), Entries.ENTRIES, new OrderField[] { Entries.ENTRIES.COMPETITOR_ID }, false);
     public static final Index IDX_ENTRIES_EVENT_ID = Internal.createIndex(DSL.name("idx_entries_event_id"), Entries.ENTRIES, new OrderField[] { Entries.ENTRIES.EVENT_ID }, false);
@@ -79,7 +69,6 @@ public class Indexes {
     public static final Index IDX_LOCALDAY_SNAPSHOTS_EVENT_SNAPSHOT = Internal.createIndex(DSL.name("idx_localday_snapshots_event_snapshot"), LocaldaySnapshots.LOCALDAY_SNAPSHOTS, new OrderField[] { LocaldaySnapshots.LOCALDAY_SNAPSHOTS.EVENT_ID, LocaldaySnapshots.LOCALDAY_SNAPSHOTS.SNAPSHOT_ID }, true);
     public static final Index IDX_MARSHAL_ABSENCES_EVENT_ID = Internal.createIndex(DSL.name("idx_marshal_absences_event_id"), MarshalAbsences.MARSHAL_ABSENCES, new OrderField[] { MarshalAbsences.MARSHAL_ABSENCES.EVENT_ID }, false);
     public static final Index IDX_MARSHAL_ADJUSTMENTS_RACE_ID = Internal.createIndex(DSL.name("idx_marshal_adjustments_race_id"), MarshalAdjustments.MARSHAL_ADJUSTMENTS, new OrderField[] { MarshalAdjustments.MARSHAL_ADJUSTMENTS.RACE_ID }, false);
-    public static final Index IDX_PASSWORD_RESET_TOKENS_USER_ID = Internal.createIndex(DSL.name("idx_password_reset_tokens_user_id"), PasswordResetTokens.PASSWORD_RESET_TOKENS, new OrderField[] { PasswordResetTokens.PASSWORD_RESET_TOKENS.USER_ID }, false);
     public static final Index IDX_PENALTIES_RACE_ID = Internal.createIndex(DSL.name("idx_penalties_race_id"), Penalties.PENALTIES, new OrderField[] { Penalties.PENALTIES.RACE_ID }, false);
     public static final Index IDX_PRACTICE_LAPS_SESSION = Internal.createIndex(DSL.name("idx_practice_laps_session"), PracticeLaps.PRACTICE_LAPS, new OrderField[] { PracticeLaps.PRACTICE_LAPS.PRACTICE_SESSION_ID }, false);
     public static final Index IDX_PRACTICE_LAPS_TRANSPONDER = Internal.createIndex(DSL.name("idx_practice_laps_transponder"), PracticeLaps.PRACTICE_LAPS, new OrderField[] { PracticeLaps.PRACTICE_LAPS.TRANSPONDER_NUMBER }, false);
@@ -91,9 +80,6 @@ public class Indexes {
     public static final Index IDX_REFRESH_TOKENS_USER_ID = Internal.createIndex(DSL.name("idx_refresh_tokens_user_id"), RefreshTokens.REFRESH_TOKENS, new OrderField[] { RefreshTokens.REFRESH_TOKENS.USER_ID }, false);
     public static final Index IDX_RESULT_SNAPSHOTS_RACE_ID = Internal.createIndex(DSL.name("idx_result_snapshots_race_id"), ResultSnapshots.RESULT_SNAPSHOTS, new OrderField[] { ResultSnapshots.RESULT_SNAPSHOTS.RACE_ID }, false);
     public static final Index IDX_ROUNDS_EVENT_ID = Internal.createIndex(DSL.name("idx_rounds_event_id"), Rounds.ROUNDS, new OrderField[] { Rounds.ROUNDS.EVENT_ID }, false);
-    public static final Index IDX_TRANSPONDERS_NUMBER = Internal.createIndex(DSL.name("idx_transponders_number"), Transponders.TRANSPONDERS, new OrderField[] { Transponders.TRANSPONDERS.TRANSPONDER_NUMBER }, false);
-    public static final Index IDX_TRANSPONDERS_USER_ID = Internal.createIndex(DSL.name("idx_transponders_user_id"), Transponders.TRANSPONDERS, new OrderField[] { Transponders.TRANSPONDERS.USER_ID }, false);
-    public static final Index IDX_UGBM_USER_ID = Internal.createIndex(DSL.name("idx_ugbm_user_id"), UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS, new OrderField[] { UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS.USER_ID }, false);
     public static final Index IDX_UNKNOWN_TRANSPONDER_LINK_RACE = Internal.createIndex(DSL.name("idx_unknown_transponder_link_race"), UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK, new OrderField[] { UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK.RACE_ID }, false);
     public static final Index IDX_UNKNOWN_TRANSPONDER_LINKS_RACE_ID = Internal.createIndex(DSL.name("idx_unknown_transponder_links_race_id"), UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS, new OrderField[] { UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS.RACE_ID }, false);
 }

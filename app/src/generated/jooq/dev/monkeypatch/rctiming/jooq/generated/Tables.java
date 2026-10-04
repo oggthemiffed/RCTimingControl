@@ -4,9 +4,6 @@
 package dev.monkeypatch.rctiming.jooq.generated;
 
 
-import dev.monkeypatch.rctiming.jooq.generated.tables.CarTagCategories;
-import dev.monkeypatch.rctiming.jooq.generated.tables.CarTagValues;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Cars;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
@@ -31,7 +28,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.LocaldaySnapshots;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
-import dev.monkeypatch.rctiming.jooq.generated.tables.PasswordResetTokens;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions;
@@ -46,11 +42,8 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.TrackLapThresholds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks;
-import dev.monkeypatch.rctiming.jooq.generated.tables.Transponders;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLinks;
-import dev.monkeypatch.rctiming.jooq.generated.tables.UserClassRatings;
-import dev.monkeypatch.rctiming.jooq.generated.tables.UserGoverningBodyMemberships;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UserRoles;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users;
 
@@ -60,21 +53,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Users;
  */
 @SuppressWarnings({ "all", "unchecked", "rawtypes", "this-escape" })
 public class Tables {
-
-    /**
-     * The table <code>public.car_tag_categories</code>.
-     */
-    public static final CarTagCategories CAR_TAG_CATEGORIES = CarTagCategories.CAR_TAG_CATEGORIES;
-
-    /**
-     * The table <code>public.car_tag_values</code>.
-     */
-    public static final CarTagValues CAR_TAG_VALUES = CarTagValues.CAR_TAG_VALUES;
-
-    /**
-     * The table <code>public.cars</code>.
-     */
-    public static final Cars CARS = Cars.CARS;
 
     /**
      * The table <code>public.championship_classes</code>.
@@ -224,11 +202,6 @@ public class Tables {
     public static final MarshalPenalties MARSHAL_PENALTIES = MarshalPenalties.MARSHAL_PENALTIES;
 
     /**
-     * The table <code>public.password_reset_tokens</code>.
-     */
-    public static final PasswordResetTokens PASSWORD_RESET_TOKENS = PasswordResetTokens.PASSWORD_RESET_TOKENS;
-
-    /**
      * The table <code>public.penalties</code>.
      */
     public static final Penalties PENALTIES = Penalties.PENALTIES;
@@ -299,11 +272,6 @@ public class Tables {
     public static final Tracks TRACKS = Tracks.TRACKS;
 
     /**
-     * The table <code>public.transponders</code>.
-     */
-    public static final Transponders TRANSPONDERS = Transponders.TRANSPONDERS;
-
-    /**
      * The table <code>public.unknown_transponder_link</code>.
      */
     public static final UnknownTransponderLink UNKNOWN_TRANSPONDER_LINK = UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK;
@@ -312,16 +280,6 @@ public class Tables {
      * The table <code>public.unknown_transponder_links</code>.
      */
     public static final UnknownTransponderLinks UNKNOWN_TRANSPONDER_LINKS = UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS;
-
-    /**
-     * The table <code>public.user_class_ratings</code>.
-     */
-    public static final UserClassRatings USER_CLASS_RATINGS = UserClassRatings.USER_CLASS_RATINGS;
-
-    /**
-     * The table <code>public.user_governing_body_memberships</code>.
-     */
-    public static final UserGoverningBodyMemberships USER_GOVERNING_BODY_MEMBERSHIPS = UserGoverningBodyMemberships.USER_GOVERNING_BODY_MEMBERSHIPS;
 
     /**
      * The table <code>public.user_roles</code>.
