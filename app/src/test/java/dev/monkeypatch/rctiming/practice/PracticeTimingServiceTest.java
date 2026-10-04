@@ -141,6 +141,31 @@ class PracticeTimingServiceTest {
     }
 
     @Test
+    void getSnapshot_afterStop_stillNamesTheCompetitorFromTheEventEntries() {
+        Event event = new Event();
+        setField(Event.class, event, "id", 7L);
+        runningSession.setEvent(event);
+        PracticeLap lap = new PracticeLap();
+        lap.setPracticeSession(runningSession);
+        lap.setTransponderNumber("T9");
+        lap.setLapNumber(1);
+        lap.setLapTimeMs(60_000L);
+        lap.setCrossingTime(Instant.now());
+        Competitor ada = new Competitor();
+        ada.setDisplayName("Ada Lovelace");
+        when(sessionRepository.findById(42L)).thenReturn(Optional.of(runningSession));
+        when(lapRepository.findByPracticeSessionIdOrderByCrossingTimeAsc(42L)).thenReturn(List.of(lap));
+        when(entryRepository.findByEventId(7L)).thenReturn(List.of(entry(2L, 200L, "T9", null, EntryStatus.CONFIRMED)));
+        when(competitorRepository.findById(200L)).thenReturn(Optional.of(ada));
+
+        service.stopSession(42L);
+        PracticeTimingRowDto row = service.getSnapshot(42L).get(0);
+
+        assertThat(row.racerName()).isEqualTo("Ada Lovelace");
+        assertThat(row.isUnknown()).isFalse();
+    }
+
+    @Test
     void getSnapshot_returnsCurrentPositions() {
         when(sessionRepository.findRunningSession()).thenReturn(Optional.of(runningSession));
         when(lapRepository.findByPracticeSessionIdAndTransponderNumberOrderByLapNumberAsc(anyLong(), anyString()))

@@ -19,8 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -209,12 +211,14 @@ public class PracticeTimingService {
         LivePracticeState state = new LivePracticeState(sessionId, session.getBestLapN());
         List<PracticeLap> laps = lapRepository.findByPracticeSessionIdOrderByCrossingTimeAsc(sessionId);
 
+        // Laps recorded before L10 carry a user; later ones are named through the event's entries
+        Map<String, Optional<String>> competitorNames = new HashMap<>();
         for (PracticeLap lap : laps) {
             Long userId = lap.getUser() != null ? lap.getUser().getId() : null;
-            String racerName = null;
-            if (lap.getUser() != null) {
-                racerName = lap.getUser().getFirstName() + " " + lap.getUser().getLastName();
-            }
+            String racerName = lap.getUser() != null
+                    ? lap.getUser().getFirstName() + " " + lap.getUser().getLastName()
+                    : competitorNames.computeIfAbsent(lap.getTransponderNumber(),
+                            t -> Optional.ofNullable(resolveCompetitorName(session, t))).orElse(null);
             state.recordLap(
                     lap.getTransponderNumber(),
                     userId,
