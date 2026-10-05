@@ -27,6 +27,7 @@ public class ResultSnapshotRepository extends JooqRepository<ResultSnapshot, Res
         resultSnapshot.setRaceId(r.getRaceId());
         resultSnapshot.setFinishedAt(r.getFinishedAt());
         resultSnapshot.setPositionsJson(r.getPositionsJson());
+        resultSnapshot.setTimedPositionsJson(r.getTimedPositionsJson());
         resultSnapshot.setLapHistoryJson(r.getLapHistoryJson());
         resultSnapshot.setCreatedAt(r.getCreatedAt());
         return resultSnapshot;
@@ -37,6 +38,7 @@ public class ResultSnapshotRepository extends JooqRepository<ResultSnapshot, Res
         r.setRaceId(resultSnapshot.getRaceId());
         r.setFinishedAt(resultSnapshot.getFinishedAt());
         r.setPositionsJson(resultSnapshot.getPositionsJson());
+        r.setTimedPositionsJson(resultSnapshot.getTimedPositionsJson());
         r.setLapHistoryJson(resultSnapshot.getLapHistoryJson());
         r.setCreatedAt(resultSnapshot.getCreatedAt());
     }
