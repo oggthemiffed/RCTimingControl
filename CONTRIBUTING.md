@@ -2,7 +2,7 @@
 
 ## Recommended workflow
 
-Work happens on **feature branches**. `main` is always green and deployable — direct pushes are discouraged (see [branch protection](#optional-branch-protection) below).
+Work happens on **feature branches**. `main` is always green and releasable, and changes reach it through pull requests.
 
 ```
 main  ─────────────────────────────────────────────────────► always deployable
@@ -11,6 +11,18 @@ main  ────────────────────────�
               │           │              │
 feat/login ──►          feat/timing ──►    fix/seed-bug ──►
 ```
+
+---
+
+## Pull requests
+
+Every PR follows the same steps:
+
+1. **Open it as a draft early**, linked to its issue: first thing, or straight after your first change.
+2. **Commit and push small changes often**, so progress shows on the PR.
+3. **Mark it ready for review only when it's done**: the issue's acceptance is met and CI is green.
+4. **Wait for Copilot's review.** Request one if it isn't triggered automatically. Fix and push important findings (bugs, security issues, broken behaviour, missed acceptance criteria), and reply to each Copilot comment saying it's fixed or why it stays as is.
+5. **Merge only when that's done** and CI is green again.
 
 ---
 
@@ -25,12 +37,12 @@ flowchart TD
     E --> F{More changes?}
     F -- Yes --> D
     F -- No --> G[Push branch\ngit push origin feat/my-feature]
-    G --> H[Open Pull Request on GitHub]
+    G --> H[Open a draft PR early\nand keep pushing]
     H --> I[CI runs automatically\nbackend · frontend · E2E]
     I --> J{All checks pass?}
     J -- No --> K[Fix issues locally]
     K --> E
-    J -- Yes --> L[Review & merge PR]
+    J -- Yes --> L[Mark ready, wait for Copilot,\nfix findings, merge]
     L --> M[Delete feature branch]
     M --> N([main updated & green])
 ```
@@ -41,7 +53,7 @@ flowchart TD
 |------|---------|---------|
 | New feature | `feat/<description>` | `feat/championship-pdf-export` |
 | Bug fix | `fix/<description>` | `fix/seed-duplicate-transponder` |
-| Documentation | `docs/<description>` | `docs/forwarder-setup-guide` |
+| Documentation | `docs/<description>` | `docs/decoder-setup-guide` |
 | Chore / tooling | `chore/<description>` | `chore/bump-spring-boot-3.5` |
 
 ### Commit messages
@@ -79,7 +91,7 @@ flowchart LR
 | Job | What it tests | Approx time |
 |-----|--------------|-------------|
 | `test-backend` | JUnit 5 on temporary SQLite databases (no Docker) — API/domain/timing, plus `decoder-simulator` and `decoder-protocol` | 3–6 min |
-| `test-frontend` | Vitest — cloud React components, hooks, utilities | < 1 min |
+| `test-frontend` | Vitest — React components, hooks, utilities | < 1 min |
 | `test-e2e` | Playwright smoke tests against the app jar with the UI inside, the demo club and the simulator | 5–8 min |
 
 Playwright reports are uploaded as a GitHub Actions artifact on every run (retained 14 days) as `playwright-report`.
