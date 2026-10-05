@@ -6,6 +6,10 @@ Each release on the [Releases page](https://github.com/oggthemiffed/RCTimingCont
 
 ## Upgrade notes
 
+### The profanity blocklist is gone (#30)
+
+The **Profanity Blocklist** card under **Admin → Audio** is removed, and the upgrade drops any words a club added to it. Nothing had been checked against it since racers stopped typing in their own names (#18).
+
 ### The release after 0.1.x: the database moved to SQLite (#26)
 
 The app now keeps its data in a single SQLite file instead of a PostgreSQL server. There is no migration path: an existing PostgreSQL database cannot be upgraded and its data is not carried over.

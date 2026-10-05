@@ -13,9 +13,9 @@ No Docker needed: the tests run on a temporary SQLite database file, created fre
 # Run a specific test class
 ./gradlew :app:test --tests "dev.monkeypatch.rctiming.api.auth.AuthControllerIT"
 
-# Run tests scoped to a phase
-./gradlew :app:test --tests "dev.monkeypatch.rctiming.api.admin.*"        # Phase 3 — admin panel
-./gradlew :app:test --tests "dev.monkeypatch.rctiming.api.racecontrol.*"  # Phase 4 — race control
+# Run one package
+./gradlew :app:test --tests "dev.monkeypatch.rctiming.api.admin.*"
+./gradlew :app:test --tests "dev.monkeypatch.rctiming.api.racecontrol.*"
 
 # Skip jOOQ codegen (faster when schema hasn't changed)
 ./gradlew :app:test -x generateJooq
@@ -23,7 +23,7 @@ No Docker needed: the tests run on a temporary SQLite database file, created fre
 
 ### Frontend
 
-Vitest unit tests cover pure logic (referee alerts, proximity detection):
+Vitest and React Testing Library cover the pages, hooks and helpers:
 
 ```bash
 cd frontend
@@ -31,6 +31,19 @@ npm test              # Run Vitest unit tests
 npm run build         # Type-check + bundle (tsc -b && vite build)
 npm run lint          # ESLint
 ```
+
+### End-to-end tests
+
+The Playwright tests in `frontend/e2e/` run against the app with the UI built in, the demo club and the simulator, the same way CI runs them:
+
+```bash
+./gradlew -PbundleFrontend :app:bootJar -x generateJooq
+RCTIMING_DATA_DIR=/tmp/rctiming-e2e java -jar app/build/libs/app.jar --spring.profiles.active=demo --tts.enabled=false
+java -jar app/build/libs/app.jar simulate        # in a second terminal
+cd frontend && npx playwright install chromium && npm run test:e2e
+```
+
+They use `http://localhost:8080` unless `BASE_URL` says otherwise. Delete `/tmp/rctiming-e2e` afterwards for a fresh demo club next time.
 
 ---
 
@@ -96,9 +109,11 @@ Log in as `director@example.com` or `admin1@example.com` to access these.
 
 ---
 
-## Triggering synthetic lap passings (dev only)
+## Live laps without a decoder
 
-With a race in RUNNING state, POST to the dev endpoint to generate a fake lap passing:
+Run `make simulator` and set the decoder host to `localhost` in **Admin → Decoder**: it sends laps for the seed transponders (101–106) on port 5100, the same as a real RC-4 decoder. See [decoder.md](decoder.md).
+
+For a single lap without the simulator, POST to the dev-only endpoint with a race in RUNNING state:
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/dev/race/{raceId}/synthetic-passing \
@@ -118,6 +133,6 @@ manual testing for new work.
 | Phase | UAT document | Status |
 |-------|-------------|--------|
 | Phase 1 — Domain Foundation | [01-HUMAN-UAT.md](../.planning/phases/01-domain-foundation/01-HUMAN-UAT.md) | Complete (4/4) |
-| Phase 2 — Racer Portal | [02-HUMAN-UAT.md](../.planning/phases/02-racer-portal/02-HUMAN-UAT.md) | Complete (8/8) |
+| Phase 2 — Racer Portal (removed in #18) | [02-HUMAN-UAT.md](../.planning/phases/02-racer-portal/02-HUMAN-UAT.md) | Complete (8/8) |
 | Phase 3 — Admin Panel | [03-HUMAN-UAT.md](../.planning/phases/03-admin-panel-event-management/03-HUMAN-UAT.md) | Complete (18/18) |
 | Phase 4 — Race Control | [04-UAT.md](../.planning/phases/04-race-state-machine/04-UAT.md) | Complete |

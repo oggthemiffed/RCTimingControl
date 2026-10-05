@@ -6,8 +6,8 @@ export default function DecoderSettingsPage() {
     <div>
       <h1 className="text-2xl font-semibold mb-2">Decoder</h1>
       <p className="text-sm text-muted-foreground mb-6">
-        The AMB decoder that RCTC reads live laps from. RCTC connects to it directly; no separate
-        forwarder is needed.
+        The AMB decoder that RCTC reads live laps from. RCTC connects to it directly over the venue
+        network.
       </p>
 
       <Card className="max-w-xl">

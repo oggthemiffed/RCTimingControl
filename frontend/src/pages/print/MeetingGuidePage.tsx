@@ -27,6 +27,19 @@ export default function MeetingGuidePage() {
             Event</span> to transition it.
           </li>
           <li>
+            <span className="font-semibold">Bring the entries up to date:</span> On the event's
+            Entries tab, click <span className="font-semibold">Import entries from RaceHub</span> and
+            choose the latest Entry Export file. A newer file updates the same entries. Add
+            anyone who did not book through RaceHub with <span className="font-semibold">Add
+            entry</span> as a walk-in.
+          </li>
+          <li>
+            <span className="font-semibold">Run the check-in desk:</span> In race control, open
+            <span className="font-semibold"> Check-in</span>. Scan or type each driver's transponder
+            as they arrive and confirm. Swap a transponder there if a driver has changed it on the
+            day; the swap is logged.
+          </li>
+          <li>
             <span className="font-semibold">Check the decoder connection:</span> RCTC connects
             to the AMB decoder on its own (port 5100 for the RC-4 text protocol). Confirm the
             DECODER status shows "connected" in the race-control bar before proceeding.

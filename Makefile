@@ -27,6 +27,7 @@ help:
 	@printf '\n'
 	@printf '  $(BOLD)Backend$(RESET)\n'
 	@printf '    make dev         Start backend in dev mode (no Docker needed)\n'
+	@printf '    make dev-setup-test  Start backend without seed data, to try the setup wizard\n'
 	@printf '    make generate-db Regenerate jOOQ sources from the SQLite migrations\n'
 	@printf '    make build       Compile the backend (regenerates jOOQ if sources missing)\n'
 	@printf '    make test        Run all backend + simulator integration tests\n'

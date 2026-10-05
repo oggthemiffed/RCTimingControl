@@ -60,9 +60,9 @@ On first run, Flyway creates the database file and applies the baseline migratio
 - `V3` — competitors, entries, entry audit log, RaceHub class mappings
 - `V4` — rounds, races, race entries, marshal adjustments/absences/penalties, penalties, incident reports, unknown transponder links
 - `V5` — result snapshots and championships
-- `V6` — practice sessions and laps, profanity blocklist
+- `V6` — practice sessions and laps
 
-The baseline replaced the PostgreSQL history (V1–V36) in #26; `V1` lists the type conventions.
+The baseline replaced the PostgreSQL history (V1–V36) in #26; `V1` lists the type conventions. Later migrations: `V7` the results export outbox (#27), `V8` the per-event live feed switch (#28), and `V9` drops the profanity blocklist (#30).
 
 **Dev seeds (`db/seed/sqlite/`, V1000+):**
 - `V1001` — tracks, racing classes and race format templates
@@ -147,78 +147,49 @@ Open http://localhost:8080 and sign in as `admin@example.com` / `trial123`. The 
 ```
 app/src/main/java/dev/monkeypatch/rctiming/
 ├── api/
-│   ├── auth/            # Officials' login and refresh
-│   ├── admin/           # Admin CRUD controllers (club, tracks, formats, entries, competitors, RaceHub import)
-│   │   └── dto/
-│   ├── pub/             # Public read endpoints (event schedule, results, championships)
-│   └── racecontrol/     # Race lifecycle commands, marshal, referee, result snapshots
-│       └── dto/
-├── domain/
-│   ├── user/            # User entity + RacerProfileService, memberships, class ratings
-│   ├── auth/            # RefreshToken, PasswordResetToken, PasswordResetService
-│   ├── club/            # ClubProfile, GoverningBodyAffiliation, ClubProfileService
-│   ├── track/           # Track, DecoderLoop, TrackLapThreshold, TrackService
-│   ├── raceclass/       # RacingClass, RacingClassService
-│   ├── format/          # RaceFormatConfig (sealed), RaceFormatTemplate, RaceFormatService
-│   ├── car/             # Car, CarTagCategory, CarTagValue, CarService, CarTagCategoryService
-│   ├── transponder/     # Transponder, TransponderService
-│   ├── event/           # Event, EventStatus, EventRepository
-│   ├── entry/           # Entry, EntryStatus, EntryAuditLog, EntryService
-│   └── race/            # Race, Round, RaceEntry, RaceStatus, RaceStateMachineService
-│                        # MarshalAdjustment, MarshalAbsence, Penalty, IncidentReport
-├── query/               # jOOQ read-side (never uses Hibernate)
-│   ├── car/             # CarQueryService, CarWithTagsDto
-│   ├── event/           # EventScheduleQuery, EventScheduleDto, AdminEventQueryService
-│   ├── entry/           # EntryQueryService, RacerEntryHistoryDto
-│   └── racecontrol/     # PreRaceReadinessQuery, RunOrderQuery, ResultSnapshotQuery
-├── service/             # Pure service layer
-│   ├── RoundGeneratorService.java   # Snake-draft heat assignment, round sequencing
-│   ├── BumpUpSeedingService.java    # Finals seeding + bump-up promotion chain
-│   ├── QualifyingStandingsService.java  # FTQ standings sort
-│   └── ResultSnapshotService.java   # Persists final result on FINISHED transition
-├── timing/              # In-process live timing
-│   ├── LapPassingEvent.java         # Domain event from TCP receiver
-│   ├── LiveRaceState.java           # In-memory position model (synchronized)
-│   ├── LapTimingService.java        # ConcurrentHashMap<raceId, LiveRaceState>
-│   └── LiveTimingHub.java           # STOMP broadcasts on /timing, /state, /marshal
-├── security/
-│   ├── JwtTokenService.java
-│   ├── JwtAuthenticationFilter.java
-│   ├── WebSocketJwtChannelInterceptor.java  # JWT on STOMP CONNECT frame
-│   └── SecurityConfig.java
-└── config/
-    ├── JacksonConfig.java           # Primary JSON mapper + yamlObjectMapper bean
-    └── websocket/WebSocketConfig.java  # STOMP broker on /ws/timing
+│   ├── auth/            # Officials' sign-in and refresh
+│   ├── admin/           # Admin controllers: club, tracks, classes, formats, events, entries,
+│   │                    #   competitors, RaceHub import, championships, backups, results exports
+│   ├── audio/           # Announcer voices and clips
+│   ├── boards/          # Anonymous spectator boards and the overlay's race clock
+│   ├── pub/             # Anonymous event schedule, results, championships, about
+│   ├── racecontrol/     # Race lifecycle, marshal, referee, check-in, practice, live feed switch
+│   └── setup/           # First-run setup wizard
+├── domain/              # JPA entities, repositories and write-side services
+│   ├── club/ track/ raceclass/ format/ event/ race/ championship/ practice/
+│   ├── competitor/      # Competitors (display name, RaceHub driver ID, BRCA number, club)
+│   ├── entry/           # Entries with primary and secondary transponders, audit log
+│   ├── racehub/         # Entry Export v1 import and class mapping
+│   ├── checkin/         # Check-in desk and transponder swaps
+│   └── user/ auth/      # Officials and refresh tokens
+├── query/               # jOOQ read side (never uses Hibernate): boards, championship standings,
+│                        #   competitors, entries, events, race control, results export
+├── service/             # Round generation, bump-up seeding, qualifying standings, result snapshots
+├── timing/              # Decoder listener, live race state, race clock, STOMP broadcasts
+├── practice/            # Open practice timing
+├── livefeed/            # Live Feed v1 to a relay (docs/live-feed-v1.md)
+├── resultsexport/       # Results Export v1 to RaceHub (docs/results-export-v1.md)
+├── backup/              # Scheduled and on-demand backups, the restore command
+├── infrastructure/      # Announcer (audio, tts), file storage, LAN addresses
+├── persistence/         # Database choice, connection pools, converters; vendor code in vendor/
+├── security/            # JWT sign-in, STOMP CONNECT check, security rules
+└── config/              # Async, SPA serving, storage, TTS, WebSocket (STOMP on /ws/timing)
 ```
+
+`decoder-protocol/` holds the pure RC-4 parser, and `decoder-simulator/` the fake decoder and the live feed test relay.
 
 ---
 
 ## Running tests
 
-### Unit tests
-
 ```bash
-./gradlew :app:test --tests "dev.monkeypatch.rctiming.domain.*"
-./gradlew :app:test --tests "dev.monkeypatch.rctiming.service.*"
+make test-fast                         # app and simulator tests, using the committed jOOQ sources
+./gradlew :decoder-protocol:test       # the protocol parser
+./gradlew :app:test --tests "dev.monkeypatch.rctiming.timing.*"   # one package
+cd frontend && npm test -- --run       # frontend unit tests
 ```
 
-Covers format config serialization, race state machine transitions, round generator logic, and bump-up seeding.
-
-### Integration tests (no Docker)
-
-```bash
-./gradlew :app:test
-```
-
-Each test run creates a temporary SQLite database, shared by all integration test classes (one Spring context). `SqliteConcurrencyIT` writes laps while readers poll, and `CrashRecoveryIT` kills the app mid-session and checks no committed lap is lost.
-
-**Phase 1:** `AuthControllerIT`, `SecurityIT`, `ClubControllerIT`, `TrackControllerIT`, `RacingClassControllerIT`, `FormatControllerIT`
-
-**Phase 2:** `CarControllerIT`, `CarTagCategoryIT`, `RacerProfileControllerIT`, `TransponderControllerIT`, `EntryControllerIT`, `EventScheduleControllerIT`, `AdminEntryControllerIT`
-
-**Phase 3:** `AdminEventControllerIT`, `AdminChampionshipControllerIT`, `AdminEntryManagementIT`
-
-**Phase 4:** `RaceStateMachineServiceTest` (unit, 4 tests), `RoundGeneratorServiceTest` (unit, 2 tests), `PreRaceReadinessControllerIT` (4 tests), `RaceControlControllerIT` (7 tests + 1 @Disabled pending Phase 7), `RefereeControllerIT` (5 tests)
+None of them needs Docker. Each backend test run creates a temporary SQLite database, shared by all integration test classes (one Spring context). `SqliteConcurrencyIT` writes laps while readers poll, and `CrashRecoveryIT` kills the app mid-session and checks no committed lap is lost. The Playwright end-to-end tests run against the demo club and the simulator; see [testing.md](testing.md#end-to-end-tests).
 
 ---
 
@@ -226,13 +197,18 @@ Each test run creates a temporary SQLite database, shared by all integration tes
 
 | Path | Access | Description |
 |------|--------|-------------|
-| `/login` | Public | Officials' login |
-| `/events` | Public | Event schedule |
-| `/admin/*` | ADMIN / RACE_DIRECTOR / REFEREE | Admin panel |
-| `/admin/race-control` | ADMIN / RACE_DIRECTOR / REFEREE | Select in-progress event for race control |
+| `/login` | Public | Officials' sign-in |
+| `/setup` | Public until set up | First-run setup wizard |
+| `/events`, `/results/:raceId`, `/championships/:id` | Public | Event schedule, results and championship standings |
+| `/boards/now-next`, `/boards/results`, `/boards/overlay` | Public | Spectator boards and the streaming overlay for OBS |
+| `/about` | Public | Version and the addresses other devices can open |
+| `/admin/*` | ADMIN / RACE_DIRECTOR / REFEREE | Admin panel (decoder, backups and results exports are ADMIN only) |
+| `/admin/race-control` | ADMIN / RACE_DIRECTOR / REFEREE | Pick an in-progress event for race control |
 | `/race-control/event/:id` | ADMIN / RACE_DIRECTOR / REFEREE | Race control cockpit |
+| `/race-control/event/:id/check-in` | ADMIN / RACE_DIRECTOR / REFEREE | Check-in desk |
 | `/race-control/event/:id/referee` | ADMIN / RACE_DIRECTOR / REFEREE | Referee timing view |
-| `/race-control/event/:id/results/:raceId` | ADMIN / RACE_DIRECTOR / REFEREE | Print results |
+| `/race-control/event/:id/practice` | ADMIN / RACE_DIRECTOR / REFEREE | Open practice |
+| `/print/meeting-guide`, `/print/admin-guide` | Public | Printable guides |
 
 ---
 
@@ -243,14 +219,16 @@ Run `make help` to see all targets. Quick reference:
 | Target | What it does |
 |--------|-------------|
 | `make dev-start` | Start everything: backend (dev) + frontend (background), plus Piper if Docker is available |
-| `make stop` | Kill backend and frontend processes |
+| `make stop` | Kill backend and frontend processes, and stop Piper |
 | `make up` | Start Piper (`docker compose up -d`); skipped without Docker |
 | `make down` | `docker compose down` |
 | `make clean-db` | Delete the dev SQLite database (re-runs all seeds on next start) |
 | `make dev` | Backend only, foreground |
+| `make dev-setup-test` | Backend without the dev seed data, to try the setup wizard from scratch |
+| `make generate-db` | Regenerate the jOOQ sources from the migrations |
 | `make ui` | Frontend only, foreground |
-| `make build` | Compile backend (no tests, no jOOQ codegen) |
-| `make test` | Full integration test suite — app + decoder simulator |
+| `make build` | Compile the backend (no tests; runs jOOQ codegen only if its sources are missing) |
+| `make test` | App and decoder simulator tests, regenerating jOOQ first |
 | `make test-fast` | Tests skipping jOOQ codegen |
 | `make simulator` | Run fake decoder in generative mode on :5100 |
 | `make simulator-playback` | Replay a .dump file through the fake decoder |

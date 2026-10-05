@@ -1,9 +1,9 @@
 ### Dev Race Control — synthetic timing & race lifecycle
 ### Requires VS Code REST Client extension (humao.rest-client)
 ###
-### Seed credentials (all passwords: Racer1Pass!)
-###   director@example.com  — RACE_DIRECTOR + REFEREE
-###   admin@example.com     — ADMIN
+### Dev seed accounts (make dev):
+###   director@example.com / Racer1Pass!  — RACE_DIRECTOR + REFEREE
+###   admin1@example.com   / Admin1Pass!  — ADMIN
 ###
 ### Seed transponder numbers: 101–106 (the six seeded competitors)
 
@@ -53,18 +53,25 @@ Authorization: Bearer {{token}}
 
 ###
 
-# Resume Race (STOPPED → RUNNING)
-POST {{baseUrl}}/race-control/race/5/resume
+# Resume Race (STOPPED → RUNNING): the same start command
+POST {{baseUrl}}/race-control/race/5/start
 Authorization: Bearer {{token}}
 
 ###
 
-# Finish / Abandon Race (RUNNING or STOPPED → FINISHED)
-POST {{baseUrl}}/race-control/race/5/finish
+# Restart Race (back to PENDING)
+POST {{baseUrl}}/race-control/race/5/restart
 Authorization: Bearer {{token}}
 
 ###
 
-# ── 4. Run order (GET — no auth required) ───────────────────────────────────
+# Abandon Race (RUNNING or STOPPED → FINISHED)
+POST {{baseUrl}}/race-control/race/5/abandon
+Authorization: Bearer {{token}}
 
-GET {{baseUrl}}/event/1/run-order
+###
+
+# ── 4. Run order ─────────────────────────────────────────────────────────────
+
+GET {{baseUrl}}/race-control/event/1/run-order
+Authorization: Bearer {{token}}
