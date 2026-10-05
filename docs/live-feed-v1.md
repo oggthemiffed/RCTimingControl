@@ -18,7 +18,7 @@ Each message is one race as it stands: the whole running order, not a change sin
 | `race.clock` | `elapsed_ms` (race time so far, not counting time stopped), `duration_ms` and `remaining_ms` (null when the format sets no length) and `running` |
 | `standings[]` | In position order: `position`, `display_name`, `car_number`, `laps`, `last_lap_ms`, `best_lap_ms`, `gap_to_leader_ms`, `gap_to_ahead_ms` and `laps_down` |
 
-A car one or more laps behind the leader has `laps_down` above 0 and no time gaps. `sequence` goes up by one with every message the app sends, across all races, so a viewer can ignore a message older than one it already has. It starts again from 1 when the app restarts.
+A car one or more laps behind the leader has `laps_down` above 0 and no time gaps. `sequence` goes up with every message, across all races, so a viewer can ignore a message older than one it already has. It can skip numbers (for messages that couldn't be sent while the relay was down), and starts again from 1 when the app restarts.
 
 The clock in a message is right when it is sent. While `running` is true a viewer can count it on locally between messages, as the test viewer does.
 
