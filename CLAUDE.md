@@ -4,13 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-A web-based RC club management and race timing system replacing RCResults. Two user roles: **racers** (self-service portal for profile, cars, transponders, online event entry) and **officials** (browser-based race control client for running a full meeting). Live lap timing is received from AMB/MyLaps decoder hardware over TCP via a separate forwarder application.
+RC club race timing and race control, replacing RCResults. It is part of the RaceHub suite: RaceHub (a separate cloud app) owns booking, racer accounts and event entry, and RCTimingControl (RCTC) is the timing side, run only at the venue (local-only plan, tracking issue #8).
 
-See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUIREMENTS.md` for the full v1 requirement list (91 requirements across AUTH, RACER, CLUB, TRACK, EVENT, FORMAT, FORWARDER, TIMING, CTRL, AUDIO, OFFICIAL, PRACTICE, CHAMP, and RESULT domains; see `docs/architecture.md`).
+RCTC is one program on a laptop at the track. It installs as a background service, reads the AMB/MyLaps decoder directly over TCP, and serves race control, the announcer, check-in and the spectator boards to browsers on the venue network. It keeps the club's results and championships. Only **officials** sign in. Racers never log in to RCTC: their entries arrive in a RaceHub export file, or officials add them as walk-ins.
 
-## Planned Stack
+See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for the full requirement list (current, planned and removed), and `docs/architecture.md`.
 
-**Backend:** Spring Boot 3.4.x, Java 21 (LTS), Maven or Gradle (Kotlin DSL)
+## Stack
+
+**Backend:** Spring Boot 3.4.x, Java 21 (LTS), Gradle (Kotlin DSL)
 
 **Frontend:** React 18 + Vite, TypeScript, Tailwind CSS + shadcn/ui, TanStack Query v5, TanStack Table v8, React Hook Form v7, Zod, `@stomp/stompjs` (native WebSocket — no SockJS)
 
@@ -28,10 +30,17 @@ See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUI
 - `/topic/race/{raceId}/timing` — live lap passings, positions, gaps
 - `/topic/race/{raceId}/state` — race lifecycle changes
 - `/topic/race/{raceId}/marshal` — marshal lap adjustments
+- `/topic/race/{raceId}/unknown-transponder`, `/audio`, `/bump-up-alert` — referee, announcer and bump-up prompts
+- `/topic/practice/{sessionId}/timing` and `/unknown-transponder` — open practice
+- `/topic/system/decoder-status` — whether the decoder is connected
 
-**TCP decoder client:** Netty 4.1.x. Two protocols must be supported: (1) **RC-4 text** (`LineBasedFrameDecoder`, port 5100) for firmware < 4.5 decoders — the dominant club hardware; (2) **AMB P3 binary** (`ByteToMessageDecoder`, 0x8E/0x8F delimiters, TLV body, 0x8D byte-stuffing, port 5403) for firmware ≥ 4.5. See `docs/AMB_DECODER_PROTOCOL.md`. Protocol parsing itself lives in the shared `decoder-protocol/` module (pure, Spring-free `byte[] → LapPassingEvent`), used by `app/`'s decoder listener.
+**TCP decoder client:** Netty 4.1.x, in `app/`'s `DecoderListener` (a `SmartLifecycle`), which reads the decoder's host and port from the club profile. **RC-4 text** (`LineBasedFrameDecoder`, port 5100) for firmware < 4.5 decoders, the dominant club hardware, is implemented. **AMB P3 binary** (`ByteToMessageDecoder`, 0x8E/0x8F delimiters, TLV body, 0x8D byte-stuffing, port 5403) for firmware ≥ 4.5 is deferred. See `docs/AMB_DECODER_PROTOCOL.md`. Protocol parsing lives in the shared `decoder-protocol/` module (pure and Spring-free), used by the decoder listener and the simulator.
 
-**Forwarder:** Separate Java Gradle submodule. Connects to the AMB decoder via TCP (via `decoder-protocol/`), forwards timing events to the cloud service via gRPC bidirectional streaming.
+**Decoder simulator:** `decoder-simulator/` is a fake RC-4 decoder for development and trying the app out. The app runs it with `RCTimingControl simulate` (or `java -jar app.jar simulate`).
+
+**Entries:** imported from RaceHub's Entry Export v1 JSON (`domain/racehub`), or added by hand as walk-ins. Each entry points at a **competitor** (`domain/competitor`: display name, RaceHub driver ID, BRCA number, home club) and carries a primary and an optional secondary transponder for that event.
+
+**Packaging:** Spring Boot serves the built React app (`-PbundleFrontend`). `jpackage` wraps the jar with its own Java runtime into a Windows `.msi`, macOS `.pkg` or Linux `.deb` that installs a background service. See `docs/installing.md`. There is no Docker or internet deployment.
 
 **Testing:** JUnit 5 + Mockito on temporary SQLite databases, no Docker (backend); Vitest + React Testing Library (frontend)
 
@@ -46,6 +55,11 @@ See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUI
 - RabbitMQ / Kafka (in-process STOMP broker is sufficient for single-club deployment)
 - Liquibase (Flyway plain-SQL is simpler)
 - `spring.jpa.hibernate.ddl-auto=update` or `create-drop` in any non-throwaway environment
+- PostgreSQL or Testcontainers (SQLite in-process; tests run on temporary SQLite files)
+- Vendor-specific SQL in Java code (jOOQ DSL, JPQL and the shared converters only; the vendor lives in `persistence/vendor/`)
+- gRPC, a separate forwarder process, or cloud sync for timing (the app reads the decoder directly)
+- Racer accounts, self-registration or a `RACER` role (RaceHub owns racer identity)
+- Docker, nginx or TLS for deployment (the app installs natively and stays on the venue network)
 
 ## Architecture
 
@@ -55,27 +69,31 @@ See `docs/PROJECT.md` for the authoritative requirements summary and `docs/REQUI
 
 | Component | Responsibility |
 |-----------|---------------|
-| **Racer Portal API** | Profile, cars, transponders, event entry CRUD |
-| **Admin Panel API** | Event/championship creation and configuration |
-| **Race Control API** | Race lifecycle commands, marshal laps, grid calls |
+| **Admin Panel API** | Club, tracks, classes, formats, events, championships, officials, backups |
+| **Entries** | RaceHub import (upsert by `entry_id`, higher `entry_version` wins, withdraw never delete, class mapping), walk-ins, competitors |
+| **Check-in** | Check-in desk (barcode or keyboard-wedge input) and on-the-day transponder swap, audit-logged |
+| **Race Control API** | Race lifecycle commands, marshal laps, grid calls, referee tools |
+| **Boards** | Spectator "now and next" and results boards (`/api/v1/boards`) |
+| **Backups** | Scheduled and on-demand SQLite backups, and the `restore` command |
 | **Domain Core** | Business logic, aggregates, domain events |
 | **Race State Machine** | Enforces `PENDING → GRID → RUNNING → STOPPED/FINISHED` transitions |
-| **TCP Receiver** | Netty component parsing AMB decoder frames (RC-4 text or P3 binary), emits `LapPassingEvent`s |
+| **Decoder Listener** | Netty client reading the decoder (RC-4 text), emits `LapPassingEvent`s and decoder status |
 | **Live Timing Hub** | Broadcasts real-time updates to browsers via STOMP |
 | **Domain module** | Hibernate entities, JPA repositories, write-side business logic |
 | **Query module** | jOOQ read queries — scoring, standings, lap aggregates, results projections |
 
 The domain and query modules are a hard seam: Hibernate sessions stay in the domain module; jOOQ queries stay in the query module. Neither crosses into the other's territory. This maps to a CQRS-lite split within the monolith — write-side logic operates on JPA-managed objects, read-side never lazy-loads.
 
-### TCP Decoder → Live Display Flow
+### Decoder → Live Display Flow
 
 ```
-AMB Decoder (TCP) → TCP Receiver (Netty) → LapTimingService
-  → calculates lap time, resolves transponder→car→racer, persists LapTime
+AMB Decoder (TCP) → DecoderListener (Netty) → LapTimingService
+  → resolves transponder → entry (primary or secondary number) → competitor
+  → updates the race's in-memory state and positions
   → LiveTimingHub → STOMP broadcast → browser clients
 ```
 
-The TCP receiver runs on a **dedicated background thread** (via `SmartLifecycle` or `ApplicationRunner`), completely isolated from the Tomcat thread pool. It posts parsed `LapPassingEvent`s to `LapTimingService` via `ApplicationEventPublisher` (async listener).
+The decoder listener runs on a **dedicated background thread** (`SmartLifecycle`), completely isolated from the Tomcat thread pool. It posts parsed `LapPassingEvent`s to `LapTimingService` via `ApplicationEventPublisher` (async listener). A transponder that matches no entry in the running race, or more than one, goes to the referee's unknown-transponder flow and is never silently credited.
 
 ### Race State Machine
 
@@ -101,9 +119,10 @@ Staff roles are **stackable** — a single user account can hold any combination
 
 - Lap timestamps: for P3 binary decoders use the `RTC_TIME` field (GPS/NTP-synchronised UTC microseconds). For RC-4 text decoders use server-anchored offset (no absolute timestamp in protocol). Every timestamp column is `BIGINT` UTC microseconds, mapped to `Instant` by converters in `persistence/convert/`.
 - **Do not store live race positions in the database during a race** — calculate in memory, broadcast over WebSocket, persist only the final result snapshot on `FINISHED`.
-- `MyLapsProtocolParser` must be a pure function (`byte[] → LapPassingEvent`) with no Spring dependencies. Protocol I/O is separate from domain logic.
+- Protocol parsing (`Rc4TextParser` in `decoder-protocol/`) must stay pure, with no Spring dependencies. Protocol I/O is separate from domain logic.
 - Championship points: calculate on demand from result snapshots; do not increment incrementally.
-- Transponder numbers are unique system-wide. Entry records a transponder snapshot at submission time.
+- Transponders belong to an entry, not a racer: a primary and an optional secondary number per entry, not unique system-wide. A number already used in the event is accepted with a warning on import or walk-in (one competitor may use it in several classes); check-in refuses to swap in a number another competitor holds. RaceHub's export snapshots them at booking; check-in swaps are audit-logged. At race time a number matching more than one entry in the running race goes to the referee.
+- Competitors have no login. Results, live timing and championship standings group by competitor. RCTC stores no contact, date of birth, guardian or payment data.
 - Race format config is snapshot-at-assignment — template edits do not affect existing events (FORMAT-06).
 
 ## AMB Decoder Protocol (Two Protocols — Choose by Firmware)
@@ -128,24 +147,24 @@ See `docs/AMB_DECODER_PROTOCOL.md` for the full reference. Summary:
 
 **Firmware 4.5 boundary:** firmware 4.5 disables MRT transponders (common cheap club transponders). Most clubs stay on firmware ≤ 4.4 and use port 5100 text protocol.
 
-**Before starting the forwarder:** Build a TCP simulator (fake decoder) emitting RC-4 text records for development without physical hardware. Wireshark captures from the club's RCResults installation confirm the port in use.
+**Without hardware:** `decoder-simulator/` emits RC-4 text records (see Stack above). Wireshark captures from the club's RCResults installation confirmed port 5100.
 
-## Build Order
+## Build History
 
-All ten originally-planned phases below are complete (see `README.md` for the current feature-area breakdown):
+The ten original phases are complete. Some of what they built has since been removed by the local-only plan (#8):
 
 1. Domain Foundation — entities, Flyway, basic CRUD, no UI
-2. Racer Portal — auth, event entry, self-service frontend
+2. Racer Portal — auth, event entry, self-service frontend (removed in #18: racers book through RaceHub)
 3. Admin Panel — event/championship CRUD, admin frontend
 4. Race State Machine + Race Control API — lifecycle commands, HTTP 409 on bad transitions
-5. WebSocket Live Timing Infrastructure — STOMP config, domain event → broadcast (use synthetic events)
-6. Forwarder + AMB TCP Receiver — Netty parser, gRPC streaming, simulator for testing
+5. WebSocket Live Timing Infrastructure — STOMP config, domain event → broadcast
+6. Forwarder + AMB TCP Receiver — Netty parser, simulator (the forwarder and gRPC were replaced by the app's own decoder listener in #9 and #10)
 7. Results & Championship Standings — result snapshots, best-X-from-Y scoring, PDF export
 8. First-run setup wizard
 9. User manual & in-app documentation
-10. Docker trial environment
+10. Docker trial environment (replaced by the installers in #23 and #24)
 
-A later initiative extracted the shared decoder-protocol parser (`decoder-protocol/`). It also built a separate offline race-day app, which was retired in #21 when timing moved to running locally in the main app; its plans are archived under `docs/plans/archive/`. The local-only plan (#8) then replaced the Docker trial and production stacks with native installers for the venue laptop (#23, #24); the app is not deployed to the internet.
+A later initiative extracted the shared decoder-protocol parser (`decoder-protocol/`) and built a separate offline race-day app, which was retired in #21; its plans are archived under `docs/plans/archive/`. The local-only plan then added competitors, per-event transponders, the RaceHub import and walk-ins, officials-only login, the check-in desk, spectator boards, the SQLite database, backups and the installers. Still to come: results export to RaceHub, a live feed relay and a streaming overlay (#27 to #29).
 
 ## General Good Developer Rules
 
@@ -165,3 +184,10 @@ A later initiative extracted the shared decoder-protocol parser (`decoder-protoc
    Examples that MUST be local: GitHub Actions setup guides, GHCR configuration steps, branch protection runbooks, environment variable references, deployment checklists, service account details.
 
    Examples that are safe to commit: architecture decisions, API contracts, user-facing feature docs, contribution guidelines (no internal URLs), quickstart guides for end users.
+
+5. **Every PR follows the same workflow:**
+   1. Open it as a draft early, linked to its issue: first thing, or straight after the first change.
+   2. Commit and push small changes often, so progress shows on the PR.
+   3. Mark it ready for review only when the issue's acceptance is met and CI is green.
+   4. Request a Copilot review if one isn't triggered automatically, and wait for it. Fix and push important findings (bugs, security issues, broken behaviour, missed acceptance criteria), and reply to each Copilot comment saying it's fixed or why it stays as is.
+   5. Merge only when that's done and CI is green again.

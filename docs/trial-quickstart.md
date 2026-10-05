@@ -10,7 +10,7 @@ Use a computer you are not using for real race meetings, or uninstall afterwards
 
 ## What you get
 
-- The full app, pre-loaded with a demo club (Wyvern RC Club), its racers, cars and transponders, and a completed past event.
+- The full app, pre-loaded with a demo club (Wyvern RC Club), its competitors, entries and transponders, and a completed past event.
 - A simulated AMB decoder on the same computer, sending lap passings for the demo transponders so race control shows live timing.
 - Every feature to explore: race control, the admin panel, results and championship standings.
 

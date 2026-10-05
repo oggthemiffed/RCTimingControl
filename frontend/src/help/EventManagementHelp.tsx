@@ -4,14 +4,15 @@ export function EventManagementHelp() {
       <p className="text-sm text-muted-foreground">
         The Event Detail page manages a single event's lifecycle, classes, and entries. It
         has three tabs — Overview (name, date, track), Classes (racing classes included in
-        the event), and Entries (all submitted entries). Event details can only be edited
-        while the event is in Draft status.
+        the event), and Entries (entries imported from RaceHub and walk-ins). Event details
+        can only be edited while the event is in Draft status.
       </p>
 
       <ul className="mt-3 space-y-1.5 text-sm">
-        <li><span className="font-semibold">Publish Event:</span> Click "Publish Event" to make the event visible to racers on the portal so they can browse it.</li>
-        <li><span className="font-semibold">Open Entries:</span> Click "Open Entries" to allow racers to submit their class entries for this event.</li>
-        <li><span className="font-semibold">Close Entries:</span> Click "Close Entries" (shown as a destructive button) to stop accepting new entries before the meeting day.</li>
+        <li><span className="font-semibold">Publish Event:</span> Click "Publish Event" to show the event on the public schedule.</li>
+        <li><span className="font-semibold">Import entries:</span> On the Entries tab, click "Import entries from RaceHub" and choose the Entry Export file. You see the changes before anything is saved, and importing a newer file later updates the same entries.</li>
+        <li><span className="font-semibold">Add a walk-in:</span> On the Entries tab, click "Add entry" for a driver who did not book through RaceHub.</li>
+        <li><span className="font-semibold">Open Entries / Close Entries:</span> These mark on the public schedule whether the event is taking entries. Booking itself happens in RaceHub, and walk-ins can still be added on the day.</li>
         <li><span className="font-semibold">Start Event:</span> Click "Start Event" to mark the meeting as In Progress — this enables the Race Control link in the Events list.</li>
         <li><span className="font-semibold">Complete Event:</span> Click "Complete Event" to finalise the event and publish results.</li>
       </ul>
@@ -22,7 +23,8 @@ export function EventManagementHelp() {
           Event Name, Date, and Track can only be changed while the event is in Draft
           status — fields are read-only once published. Status transitions are one-way
           (except Draft ↔ Published): you cannot revert from Entries Closed back to Open.
-          Confirm the entry list is correct before clicking "Close Entries".
+          Map every RaceHub class to one of the event's classes before importing: an import
+          with an unmapped class saves nothing.
         </p>
       </div>
 

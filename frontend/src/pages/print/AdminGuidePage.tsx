@@ -131,13 +131,14 @@ export default function AdminGuidePage() {
           </li>
           <li>
             <span className="font-semibold">Open entries:</span> Click
-            <span className="font-semibold"> Open Entries</span> when ready to accept
-            submissions. Entries come in through RaceHub; import them from the event's Entries tab.
+            <span className="font-semibold"> Open Entries</span> to show on the public
+            schedule that the event is taking entries. Booking happens in RaceHub; import the
+            entries from the event&apos;s Entries tab.
           </li>
           <li>
             <span className="font-semibold">Close entries:</span> Click
-            <span className="font-semibold"> Close Entries</span> to stop accepting new
-            entries. This action requires confirmation as it is destructive.
+            <span className="font-semibold"> Close Entries</span> to show that booking has
+            closed. It cannot be undone, but walk-ins can still be added on the day.
           </li>
           <li>
             <span className="font-semibold">Start the event:</span> On the day, click
@@ -157,8 +158,8 @@ export default function AdminGuidePage() {
         <h2 className="text-xl font-semibold mb-3">5. Managing Classes and Entries</h2>
         <p className="text-sm mb-3">
           Within an event, the Classes tab manages which racing classes are running and
-          their format assignment. The Entries tab shows all submitted entries for
-          the event.
+          their format assignment. The Entries tab shows the event&apos;s entries,
+          imported from RaceHub or added as walk-ins.
         </p>
         <ol className="list-decimal list-inside space-y-2 text-sm">
           <li>
@@ -188,9 +189,9 @@ export default function AdminGuidePage() {
             new name, and enter their transponder.
           </li>
           <li>
-            <span className="font-semibold">Remove an entry:</span> Click the delete icon
-            beside an entry to remove it. This should only be done before the event
-            starts.
+            <span className="font-semibold">Withdraw an entry:</span> Click
+            <span className="font-semibold"> Withdraw</span> beside an entry and give a
+            reason. The entry is kept, marked withdrawn, with an audit record.
           </li>
         </ol>
       </section>

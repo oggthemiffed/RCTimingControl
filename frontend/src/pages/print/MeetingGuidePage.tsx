@@ -237,8 +237,8 @@ export default function MeetingGuidePage() {
           </li>
           <li>
             <span className="font-semibold">Link an unknown transponder:</span> If a
-            transponder appears that is not registered to any entry, the Race Director
-            can link it during the race. Select the transponder from the Unknown
+            transponder matches no entry in the race (or more than one), its laps are held
+            back and the Race Director can link it during the race. Select the transponder from the Unknown
             Transponders alert in the Cockpit and assign it to the correct entry via
             the Link Transponder dialog.
           </li>
