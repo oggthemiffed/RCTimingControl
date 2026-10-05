@@ -116,6 +116,52 @@ export interface RaceHubImportResult {
   }[];
 }
 
+// RC-Timing CSV import (#39, #40)
+
+export type CsvImportGroup = 'NEW' | 'CHANGED' | 'UNCHANGED' | 'MISSING' | 'SKIPPED';
+
+export interface CsvImportRow {
+  group: CsvImportGroup;
+  /** Identifies a file row; changed rows are picked for update by it */
+  key: string | null;
+  /** Line in the file; null for a missing entry */
+  line: number | null;
+  name: string | null;
+  brcaNumber: number | null;
+  className: string | null;
+  classNumber: number | null;
+  eventClassId: number | null;
+  /** The entry in RCTC; missing entries are picked for withdrawal by it */
+  entryId: number | null;
+  primaryTransponder: string | null;
+  secondaryTransponder: string | null;
+  changes: { field: string; before: string | null; after: string | null }[];
+  /** RC-Timing columns RCTC doesn't keep, such as Grade and Car Make */
+  info: Record<string, string>;
+  applied: boolean;
+  reason: string | null;
+}
+
+export interface CsvImportResult {
+  dryRun: boolean;
+  blocked: boolean;
+  applied: boolean;
+  summary: {
+    newEntries: number;
+    changed: number;
+    unchanged: number;
+    missing: number;
+    skipped: number;
+    created: number;
+    updated: number;
+    withdrawn: number;
+  };
+  unmappedClasses: { key: string; className: string | null; classNumber: number | null; entryCount: number }[];
+  errors: string[];
+  warnings: string[];
+  rows: CsvImportRow[];
+}
+
 export interface RaceHubClassMappingDto {
   racehubEventClassId: string;
   eventClassId: number;
@@ -422,6 +468,21 @@ export const adminApi = {
         { params: { dryRun }, validateStatus: s => (s >= 200 && s < 300) || s === 422 },
       )
       .then(r => r.data),
+
+  // RC-Timing CSV import. Without dryRun, creates the new rows and applies only the picked updates
+  // and withdrawals. A blocked import answers 422 with the same preview body, so return it.
+  importCsvEntries: (eventId: number, file: File, dryRun: boolean, update: string[] = [], withdraw: number[] = []) => {
+    const form = new FormData();
+    form.append('file', file);
+    update.forEach(key => form.append('update', key));
+    withdraw.forEach(id => form.append('withdraw', String(id)));
+    return api
+      .post<CsvImportResult>(`/api/v1/admin/events/${eventId}/csv-import`, form, {
+        params: { dryRun },
+        validateStatus: s => (s >= 200 && s < 300) || s === 422,
+      })
+      .then(r => r.data);
+  },
 
   listRaceHubClassMappings: (eventId: number) =>
     api

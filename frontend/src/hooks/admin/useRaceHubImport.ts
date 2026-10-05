@@ -35,3 +35,20 @@ export function useRaceHubImport(eventId: number) {
     },
   });
 }
+
+/**
+ * Runs a dry-run preview of an RC-Timing CSV, or the real import with the picked updates and
+ * withdrawals. A real import refreshes the event and its entries.
+ */
+export function useCsvImport(eventId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (args: { file: File; dryRun: boolean; update?: string[]; withdraw?: number[] }) =>
+      adminApi.importCsvEntries(eventId, args.file, args.dryRun, args.update, args.withdraw),
+    onSuccess: result => {
+      if (result.applied) {
+        qc.invalidateQueries({ queryKey: adminQueryKeys.events.detail(eventId) });
+      }
+    },
+  });
+}

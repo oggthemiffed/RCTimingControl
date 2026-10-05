@@ -40,6 +40,7 @@ import { EventManagementHelp } from '@/help/EventManagementHelp';
 import EventClassSection from './EventClassSection';
 import EntryListSection from './EntryListSection';
 import RaceHubImportDialog from './RaceHubImportDialog';
+import CsvImportDialog from './CsvImportDialog';
 import DownloadResultsButton from './DownloadResultsButton';
 
 // ── Status colors ──────────────────────────────────────────────────────────
@@ -145,6 +146,7 @@ export default function EventDetailPage() {
   const [transitionTarget, setTransitionTarget] = useState<EventStatus | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [csvImportOpen, setCsvImportOpen] = useState(false);
 
   const {
     register,
@@ -376,6 +378,9 @@ export default function EventDetailPage() {
             <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
               Import entries from RaceHub
             </Button>
+            <Button size="sm" variant="outline" onClick={() => setCsvImportOpen(true)}>
+              Import from a CSV file
+            </Button>
           </div>
           <EntryListSection eventId={id} classes={data.classes} />
           <RaceHubImportDialog
@@ -383,6 +388,12 @@ export default function EventDetailPage() {
             classes={data.classes}
             open={importOpen}
             onOpenChange={setImportOpen}
+          />
+          <CsvImportDialog
+            eventId={id}
+            classes={data.classes}
+            open={csvImportOpen}
+            onOpenChange={setCsvImportOpen}
           />
         </TabsContent>
       </Tabs>
