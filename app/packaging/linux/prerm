@@ -1,0 +1,30 @@
+#!/bin/sh
+# prerm for rctimingcontrol (#23): stop the service before its files change. On removal it is
+# also disabled; on upgrade it stays enabled and the new postinst starts it again.
+set -e
+
+UNIT=rctimingcontrol-RCTimingControl.service
+
+case "$1" in
+    remove|deconfigure)
+        if [ -d /run/systemd/system ]; then
+            systemctl disable --now "$UNIT" || true
+        fi
+    ;;
+
+    upgrade)
+        if [ -d /run/systemd/system ]; then
+            systemctl stop "$UNIT" || true
+        fi
+    ;;
+
+    failed-upgrade)
+    ;;
+
+    *)
+        echo "prerm called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0
