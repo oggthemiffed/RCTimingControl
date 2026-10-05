@@ -10,6 +10,7 @@ import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
+import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.practice.dto.PracticeTimingRowDto;
 import dev.monkeypatch.rctiming.timing.LapPassingEvent;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +48,8 @@ class PracticeTimingServiceTest {
     @Mock
     CompetitorRepository competitorRepository;
     @Mock
+    UserRepository userRepository;
+    @Mock
     PracticeTimingHub timingHub;
 
     PracticeTimingService service;
@@ -56,7 +59,7 @@ class PracticeTimingServiceTest {
     void setUp() {
         service = new PracticeTimingService(
                 sessionRepository, lapRepository,
-                entryRepository, competitorRepository, timingHub);
+                entryRepository, competitorRepository, userRepository, timingHub);
 
         runningSession = new PracticeSession();
         runningSession.setName("Test Session");
@@ -114,7 +117,7 @@ class PracticeTimingServiceTest {
         // Lap should be saved with null user
         ArgumentCaptor<PracticeLap> captor = ArgumentCaptor.forClass(PracticeLap.class);
         verify(lapRepository).save(captor.capture());
-        assertThat(captor.getValue().getUser()).isNull();
+        assertThat(captor.getValue().getUserId()).isNull();
         assertThat(captor.getValue().getTransponderNumber()).isEqualTo("UNKNOWN");
     }
 
@@ -141,7 +144,7 @@ class PracticeTimingServiceTest {
     void getSnapshot_afterStop_stillNamesTheCompetitorFromTheEventEntries() {
         runningSession.setEventId(7L);
         PracticeLap lap = new PracticeLap();
-        lap.setPracticeSession(runningSession);
+        lap.setPracticeSessionId(runningSession.getId());
         lap.setTransponderNumber("T9");
         lap.setLapNumber(1);
         lap.setLapTimeMs(60_000L);

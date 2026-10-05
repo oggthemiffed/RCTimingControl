@@ -1,43 +1,121 @@
 package dev.monkeypatch.rctiming.resultsexport;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.ResultsOutboxRecord;
+import dev.monkeypatch.rctiming.persistence.JooqRepository;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
-public interface ResultsOutboxRepository extends JpaRepository<ResultsOutboxItem, Long> {
+import static dev.monkeypatch.rctiming.jooq.generated.tables.ResultsOutbox.RESULTS_OUTBOX;
 
-    List<ResultsOutboxItem> findByStatusInAndNextAttemptAtLessThanEqualOrderByIdAsc(
-            Collection<OutboxStatus> statuses, Instant due);
+@Repository
+public class ResultsOutboxRepository extends JooqRepository<ResultsOutboxItem, ResultsOutboxRecord> {
 
-    List<ResultsOutboxItem> findByEventIdAndStatusIn(Long eventId, Collection<OutboxStatus> statuses);
+    public ResultsOutboxRepository(DSLContext dsl) {
+        super(dsl, RESULTS_OUTBOX, RESULTS_OUTBOX.ID);
+    }
+
+    public List<ResultsOutboxItem> findByStatusInAndNextAttemptAtLessThanEqualOrderByIdAsc(
+            Collection<OutboxStatus> statuses, Instant due) {
+        return findWhere(RESULTS_OUTBOX.STATUS.in(names(statuses)).and(RESULTS_OUTBOX.NEXT_ATTEMPT_AT.le(due)));
+    }
+
+    /** Marks the event's exports still waiting to go as superseded by a newer one. */
+    @Transactional
+    public int supersedeWaiting(long eventId) {
+        return dsl.update(RESULTS_OUTBOX)
+                .set(RESULTS_OUTBOX.STATUS, OutboxStatus.SUPERSEDED.name())
+                .where(RESULTS_OUTBOX.EVENT_ID.eq(eventId).and(waiting()))
+                .execute();
+    }
+
+    /** Makes a waiting export due now. One already sent or superseded is left alone. */
+    @Transactional
+    public int makeDue(long id, Instant now) {
+        return dsl.update(RESULTS_OUTBOX)
+                .set(RESULTS_OUTBOX.NEXT_ATTEMPT_AT, now)
+                .where(RESULTS_OUTBOX.ID.eq(id).and(waiting()))
+                .execute();
+    }
 
     /** Records a delivered export. It was sent, so this holds even if a newer one superseded it meanwhile. */
     @Transactional
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-            UPDATE ResultsOutboxItem i SET i.status = dev.monkeypatch.rctiming.resultsexport.OutboxStatus.SENT,
-                i.sentAt = :sentAt, i.attempts = i.attempts + 1, i.lastError = null
-            WHERE i.id = :id""")
-    int recordSent(@Param("id") long id, @Param("sentAt") Instant sentAt);
+    public int recordSent(long id, Instant sentAt) {
+        return dsl.update(RESULTS_OUTBOX)
+                .set(RESULTS_OUTBOX.STATUS, OutboxStatus.SENT.name())
+                .set(RESULTS_OUTBOX.SENT_AT, sentAt)
+                .set(RESULTS_OUTBOX.ATTEMPTS, RESULTS_OUTBOX.ATTEMPTS.plus(1))
+                .setNull(RESULTS_OUTBOX.LAST_ERROR)
+                .where(RESULTS_OUTBOX.ID.eq(id))
+                .execute();
+    }
 
     /**
      * Records a failed attempt, only while the export is still waiting to go. One a newer export superseded
      * during the attempt stays superseded, so it is never sent after the newer one.
      */
     @Transactional
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-            UPDATE ResultsOutboxItem i SET i.status = dev.monkeypatch.rctiming.resultsexport.OutboxStatus.FAILED,
-                i.attempts = i.attempts + 1, i.lastError = :error, i.nextAttemptAt = :nextAttemptAt
-            WHERE i.id = :id
-              AND i.status IN (dev.monkeypatch.rctiming.resultsexport.OutboxStatus.QUEUED,
-                               dev.monkeypatch.rctiming.resultsexport.OutboxStatus.FAILED)""")
-    int recordFailure(@Param("id") long id, @Param("error") String error,
-                      @Param("nextAttemptAt") Instant nextAttemptAt);
+    public int recordFailure(long id, String error, Instant nextAttemptAt) {
+        return dsl.update(RESULTS_OUTBOX)
+                .set(RESULTS_OUTBOX.STATUS, OutboxStatus.FAILED.name())
+                .set(RESULTS_OUTBOX.ATTEMPTS, RESULTS_OUTBOX.ATTEMPTS.plus(1))
+                .set(RESULTS_OUTBOX.LAST_ERROR, error)
+                .set(RESULTS_OUTBOX.NEXT_ATTEMPT_AT, nextAttemptAt)
+                .where(RESULTS_OUTBOX.ID.eq(id).and(waiting()))
+                .execute();
+    }
+
+    private static Condition waiting() {
+        return RESULTS_OUTBOX.STATUS.in(OutboxStatus.QUEUED.name(), OutboxStatus.FAILED.name());
+    }
+
+    private static List<String> names(Collection<OutboxStatus> statuses) {
+        return statuses.stream().map(Enum::name).toList();
+    }
+
+    @Override
+    protected ResultsOutboxItem toEntity(ResultsOutboxRecord r) {
+        ResultsOutboxItem i = new ResultsOutboxItem();
+        i.setId(r.getId());
+        i.setEventId(r.getEventId());
+        i.setRevision(r.getRevision());
+        i.setReason(r.getReason() == null ? null : ExportReason.valueOf(r.getReason()));
+        i.setPayload(r.getPayload());
+        i.setStatus(r.getStatus() == null ? null : OutboxStatus.valueOf(r.getStatus()));
+        i.setAttempts(r.getAttempts());
+        i.setNextAttemptAt(r.getNextAttemptAt());
+        i.setLastError(r.getLastError());
+        i.setCreatedAt(r.getCreatedAt());
+        i.setSentAt(r.getSentAt());
+        return i;
+    }
+
+    @Override
+    protected void toRecord(ResultsOutboxItem i, ResultsOutboxRecord r) {
+        r.setEventId(i.getEventId());
+        r.setRevision(i.getRevision());
+        r.setReason(i.getReason() == null ? null : i.getReason().name());
+        r.setPayload(i.getPayload());
+        r.setStatus(i.getStatus() == null ? null : i.getStatus().name());
+        r.setAttempts(i.getAttempts());
+        r.setNextAttemptAt(i.getNextAttemptAt());
+        r.setLastError(i.getLastError());
+        r.setCreatedAt(i.getCreatedAt());
+        r.setSentAt(i.getSentAt());
+    }
+
+    @Override
+    protected Long idOf(ResultsOutboxItem i) {
+        return i.getId();
+    }
+
+    @Override
+    protected void setId(ResultsOutboxItem i, Long id) {
+        i.setId(id);
+    }
 }

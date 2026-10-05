@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -114,10 +113,7 @@ public class ResultsExportService {
         long revision = event.nextResultsExportRevision();
         eventRepository.save(event);
 
-        for (ResultsOutboxItem older : outboxRepository.findByEventIdAndStatusIn(eventId,
-                EnumSet.of(OutboxStatus.QUEUED, OutboxStatus.FAILED))) {
-            older.setStatus(OutboxStatus.SUPERSEDED);
-        }
+        outboxRepository.supersedeWaiting(eventId);
 
         ResultsOutboxItem item = new ResultsOutboxItem();
         item.setEventId(eventId);
@@ -145,10 +141,10 @@ public class ResultsExportService {
     public ResultsOutboxItem retryNow(long itemId) {
         ResultsOutboxItem item = outboxRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Results export not found: " + itemId));
-        if (item.getStatus() == OutboxStatus.QUEUED || item.getStatus() == OutboxStatus.FAILED) {
-            item.setNextAttemptAt(Instant.now());
+        if (outboxRepository.makeDue(itemId, Instant.now()) == 0) {
+            return item;
         }
-        return item;
+        return outboxRepository.findById(itemId).orElseThrow();
     }
 
     private String toJson(ResultsExportV1 export) {

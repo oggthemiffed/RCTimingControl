@@ -56,7 +56,7 @@ public class PracticeSessionService {
         }
 
         if (createdByEmail != null) {
-            userRepository.findByEmail(createdByEmail).ifPresent(session::setCreatedBy);
+            session.setCreatedByUserId(userRepository.findByEmail(createdByEmail).map(User::getId).orElse(null));
         }
 
         session = sessionRepository.save(session);
