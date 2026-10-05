@@ -6,6 +6,11 @@ export default function SetupGuard({ children }: { children: React.ReactNode }) 
   const { data, isLoading } = useSetupStatus();
   const location = useLocation();
 
+  // The streaming overlay sits over a live stream: no spinner or setup redirect, which would show on air
+  if (location.pathname.startsWith('/boards/overlay')) {
+    return <>{children}</>;
+  }
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">

@@ -5,8 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.auth.LoginRequest;
+import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
+import dev.monkeypatch.rctiming.domain.format.RaceFormatService;
+import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.RaceStatusChangedEvent;
+import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
@@ -15,6 +19,7 @@ import dev.monkeypatch.rctiming.timing.LapPassingEvent;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.LiveRaceState;
 import dev.monkeypatch.rctiming.timing.LiveTimingHub;
+import dev.monkeypatch.rctiming.timing.RaceClockService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,6 +71,10 @@ class LiveFeedIT extends AbstractIntegrationTest {
     @Autowired LiveFeedRaceLookup raceLookup;
     @Autowired LapTimingService lapTimingService;
     @Autowired LiveTimingHub liveTimingHub;
+    @Autowired RaceRepository raceRepository;
+    @Autowired RoundRepository roundRepository;
+    @Autowired EventClassRepository eventClassRepository;
+    @Autowired RaceFormatService raceFormatService;
 
     private final HttpClient client = HttpClient.newHttpClient();
     private final MutableClock clock = new MutableClock(Instant.parse("2026-10-18T14:00:00Z"));
@@ -74,6 +83,7 @@ class LiveFeedIT extends AbstractIntegrationTest {
     private long raceId;
     private LiveFeedTestRelay relay;
     private LiveFeedPublisher publisher;
+    private RaceClockService raceClocks;
 
     @BeforeEach
     void setUp() throws InterruptedException {
@@ -104,11 +114,13 @@ class LiveFeedIT extends AbstractIntegrationTest {
         passing(state, grace, "2" + run, start + 21_000_000L);
         passing(state, ada, "1" + run, start + 40_000_000L);
 
+        raceClocks = new RaceClockService(raceRepository, roundRepository, eventClassRepository, raceFormatService,
+                clock);
         relay = new LiveFeedTestRelay(0, RELAY_KEY);
         int port = relay.start();
         publisher = publisher(new LiveFeedProperties(URI.create("ws://127.0.0.1:" + port + "/publish"), RELAY_KEY));
-        publisher.onRaceStatusChanged(new RaceStatusChangedEvent(this, raceId, RaceStatus.GRID));
-        publisher.onRaceStatusChanged(new RaceStatusChangedEvent(this, raceId, RaceStatus.RUNNING));
+        status(publisher, RaceStatus.GRID);
+        status(publisher, RaceStatus.RUNNING);
     }
 
     @AfterEach
@@ -207,7 +219,7 @@ class LiveFeedIT extends AbstractIntegrationTest {
         LiveFeedPublisher restarted = publisher(new LiveFeedProperties(
                 URI.create("ws://127.0.0.1:" + relay.port() + "/publish"), RELAY_KEY));
         try {
-            restarted.onRaceStatusChanged(new RaceStatusChangedEvent(this, raceId, RaceStatus.RUNNING));
+            status(restarted, RaceStatus.RUNNING);
             restarted.tick();
             await(() -> seen.size() == 2);
         } finally {
@@ -281,7 +293,7 @@ class LiveFeedIT extends AbstractIntegrationTest {
 
         clock.advance(Duration.ofSeconds(270));
         jdbc.update("update races set status = 'FINISHED' where id = ?", raceId);
-        publisher.onRaceStatusChanged(new RaceStatusChangedEvent(this, raceId, RaceStatus.FINISHED));
+        status(publisher, RaceStatus.FINISHED);
         // As finishing does straight after the event: the result is stored and the live state let go
         lapTimingService.releaseState(raceId);
         publisher.tick();
@@ -310,7 +322,7 @@ class LiveFeedIT extends AbstractIntegrationTest {
     @Test
     void withoutARelaySetUpTheFeedSaysWhatIsMissing() {
         LiveFeedPublisher notSetUp = publisher(new LiveFeedProperties(null, null));
-        notSetUp.onRaceStatusChanged(new RaceStatusChangedEvent(this, raceId, RaceStatus.RUNNING));
+        status(notSetUp, RaceStatus.RUNNING);
 
         notSetUp.tick();
 
@@ -355,8 +367,15 @@ class LiveFeedIT extends AbstractIntegrationTest {
     // ── Helpers ───────────────────────────────────────────────────────────────────
 
     private LiveFeedPublisher publisher(LiveFeedProperties properties) {
-        return new LiveFeedPublisher(properties, raceLookup, lapTimingService, liveTimingHub, objectMapper, clock,
-                new LiveFeedConnection());
+        return new LiveFeedPublisher(properties, raceLookup, lapTimingService, raceClocks, liveTimingHub,
+                objectMapper, clock, new LiveFeedConnection());
+    }
+
+    /** A race status change, as the app's beans all receive it. */
+    private void status(LiveFeedPublisher target, RaceStatus newStatus) {
+        RaceStatusChangedEvent event = new RaceStatusChangedEvent(this, raceId, newStatus);
+        raceClocks.onRaceStatusChanged(event);
+        target.onRaceStatusChanged(event);
     }
 
     private long entry(long eventClassId, String name, String transponder, Integer carNumber) {

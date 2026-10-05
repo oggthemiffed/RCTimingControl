@@ -5,6 +5,10 @@
     <link rel="icon" type="image/jpeg" href="/glasgow-rc-logo.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Glasgow RC — Racing &amp; Events</title>
+    <script>
+      // The streaming overlay for OBS must be see-through from the first paint, before the app loads
+      if (location.pathname.indexOf('/boards/overlay') === 0) document.documentElement.classList.add('overlay-page');
+    </script>
   </head>
   <body>
     <div id="root"></div>

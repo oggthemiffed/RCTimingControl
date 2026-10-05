@@ -68,6 +68,19 @@ Then set the decoder host to `localhost` and click **Test Connection**. See the 
 
 Point a TV's browser at `/boards/now-next` (the race on track with live timing, then what's next) or `/boards/results` (the last finished race). No login is needed. Add `?event=ID` to pin a board to one event; otherwise it follows the event that is racing.
 
+### Streaming overlay
+
+For a live stream, add a **Browser** source in OBS pointing at `http://<laptop>:8080/boards/overlay` (about 450 × 520 pixels). It shows the race on track over the video on a transparent background: the running order, laps, last lap and the race clock (time to go, or time so far when the format sets no length). It is empty between races. Options go in the address:
+
+| Option | Default | Effect |
+|--------|---------|--------|
+| `top=N` | `10` | Show the first N cars (up to 40) |
+| `class=hide` | shown | Leave out the race and class name |
+| `theme=light` | `dark` | Dark text on a light panel instead of light on dark |
+| `event=ID` | the event racing | Follow one event |
+
+For example `/boards/overlay?top=6&theme=light`.
+
 ### Running tests
 
 ```bash
@@ -86,11 +99,10 @@ See [docs/testing.md](docs/testing.md) for the full test matrix, including `deco
 | Club setup | First-run wizard, club profile, tracks and decoder loops, racing classes, race formats, officials and their roles |
 | Entries | RaceHub Entry Export v1 import with class mapping, walk-ins added by hand, competitors with no login, a primary and secondary transponder per entry |
 | Race day | Check-in desk with barcode input and transponder swaps, round generator, race control (grid, start/stop, marshal laps), referee tools, unknown-transponder linking, open practice |
-| Live timing | Direct AMB RC-4 decoder listener, WebSocket live display, voice announcements (Piper TTS or the browser's voice), spectator boards, a live feed to a relay for remote viewers |
+| Live timing | Direct AMB RC-4 decoder listener, WebSocket live display, voice announcements (Piper TTS or the browser's voice), spectator boards, a streaming overlay for OBS, a live feed to a relay for remote viewers |
 | Results | Result snapshots, best-X-from-Y championship standings, public results pages, printable results, results sent back to RaceHub through a queue that waits for the network |
 | Running it | One installer per system that runs as a background service, scheduled backups and a restore command, in-app help and printable guides |
 
-Still to come: a streaming overlay (#29).
 
 ---
 
