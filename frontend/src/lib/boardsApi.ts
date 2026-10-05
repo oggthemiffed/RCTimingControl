@@ -48,3 +48,18 @@ export async function getBoardLiveTiming(raceId: number): Promise<LiveTimingRowD
   const { data } = await api.get<LiveTimingRowDto[]>(`/api/v1/boards/races/${raceId}/live-timing`);
   return data;
 }
+
+/** A race's clock: race time so far without stoppages, its length from the format, and whether it is counting. */
+export type RaceClockDto = {
+  raceId: number;
+  status: BoardRaceDto['status'];
+  elapsedMs: number;
+  durationMs: number | null;
+  remainingMs: number | null;
+  running: boolean;
+};
+
+export async function getRaceClock(raceId: number): Promise<RaceClockDto> {
+  const { data } = await api.get<RaceClockDto>(`/api/v1/boards/races/${raceId}/clock`);
+  return data;
+}

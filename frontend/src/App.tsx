@@ -39,6 +39,7 @@ import AdminGuidePage from '@/pages/print/AdminGuidePage';
 import AboutPage from '@/pages/AboutPage';
 import NowNextBoard from '@/pages/boards/NowNextBoard';
 import ResultsBoard from '@/pages/boards/ResultsBoard';
+import OverlayBoard from '@/pages/boards/OverlayBoard';
 
 function RootLayout() {
   return (
@@ -123,6 +124,7 @@ const router = createBrowserRouter([
       { path: '/about', element: <AboutPage /> },
       { path: '/boards/now-next', element: <NowNextBoard /> },
       { path: '/boards/results', element: <ResultsBoard /> },
+      { path: '/boards/overlay', element: <OverlayBoard /> },
       { path: '/unauthorized', element: <UnauthorizedPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
