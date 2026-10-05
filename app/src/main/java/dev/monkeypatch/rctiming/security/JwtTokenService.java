@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.security;
 
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
+import dev.monkeypatch.rctiming.persistence.DatabaseProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -29,9 +30,13 @@ public class JwtTokenService {
     private final long refreshTokenTtlMs;
 
     public JwtTokenService(
-            @Value("${app.jwt.secret}") String base64Secret,
+            @Value("${app.jwt.secret:}") String base64Secret,
             @Value("${app.jwt.access-token-ttl-ms}") long accessTokenTtlMs,
-            @Value("${app.jwt.refresh-token-ttl-ms}") long refreshTokenTtlMs) {
+            @Value("${app.jwt.refresh-token-ttl-ms}") long refreshTokenTtlMs,
+            DatabaseProperties database) {
+        if (base64Secret == null || base64Secret.isBlank()) {
+            base64Secret = JwtSecretFile.loadOrCreate(database.effectiveDataDirectory());
+        }
         this.signingAlg = Jwts.SIG.HS256;
         this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
         this.accessTokenTtlMs = accessTokenTtlMs;

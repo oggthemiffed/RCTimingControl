@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -99,7 +101,28 @@ public enum DatabaseVendor {
             }
             Path partial = sibling(database, ".restoring");
             Files.copy(backup, partial, StandardCopyOption.REPLACE_EXISTING);
+            giveToFolderOwner(partial, dataDirectory);
             Files.move(partial, database, StandardCopyOption.ATOMIC_MOVE);
+        }
+
+        /**
+         * The installed Linux service runs as its own user (#23) but a restore is run with sudo, so
+         * the copy would belong to root and the service could not write to it. It gets the data
+         * folder's owner and group instead, as the files the service made itself have.
+         */
+        private void giveToFolderOwner(Path file, Path dataDirectory) throws IOException {
+            PosixFileAttributeView view = Files.getFileAttributeView(file, PosixFileAttributeView.class);
+            if (view == null) {
+                return;
+            }
+            PosixFileAttributes folder = Files.readAttributes(dataDirectory, PosixFileAttributes.class);
+            PosixFileAttributes current = view.readAttributes();
+            if (!current.owner().equals(folder.owner())) {
+                view.setOwner(folder.owner());
+            }
+            if (!current.group().equals(folder.group())) {
+                view.setGroup(folder.group());
+            }
         }
 
         /** The running app keeps the file open, so an exclusive lock can only be had when it is stopped. */

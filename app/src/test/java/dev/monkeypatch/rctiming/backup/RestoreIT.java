@@ -16,12 +16,15 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.UserPrincipal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Back up, wipe, restore (#22): the restore command puts a backup in place and the app starts on
@@ -68,6 +71,25 @@ class RestoreIT extends AbstractIntegrationTest {
             assertThat(restored.getBean(ChampionshipRepository.class).findAll().stream()
                     .map(Championship::getName).sorted().toList()).isEqualTo(championships);
         }
+    }
+
+    @Test
+    void aRestoreRunWithSudoLeavesTheDatabaseWithTheServiceUser() throws Exception {
+        // The installed Linux service has its own user; only root can hand a file to another user
+        assumeTrue("root".equals(System.getProperty("user.name")));
+        UserPrincipal serviceUser = newInstall.getFileSystem().getUserPrincipalLookupService()
+                .lookupPrincipalByName("nobody");
+        Files.setOwner(newInstall, serviceUser);
+        Path backup = backupService.directory().resolve(backupService.backup("manual").name());
+
+        int exit = RestoreCommand.run(new String[] {
+                backup.toString(), "--rctiming.database.data-directory=" + newInstall});
+
+        assertThat(exit).isZero();
+        PosixFileAttributes restored = Files.readAttributes(newInstall.resolve("rctiming.db"), PosixFileAttributes.class);
+        PosixFileAttributes folder = Files.readAttributes(newInstall, PosixFileAttributes.class);
+        assertThat(restored.owner()).isEqualTo(serviceUser);
+        assertThat(restored.group()).isEqualTo(folder.group());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.infrastructure.storage;
 
+import dev.monkeypatch.rctiming.persistence.DatabaseProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -9,7 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Stores uploads on local disk under {@code storage.local-path}, served back over HTTP by
+ * Stores uploads on local disk under {@link StorageFolder}, served back over HTTP by
  * {@link dev.monkeypatch.rctiming.config.StaticStorageConfig}'s resource handler. Replaces the
  * former MinIO/S3-backed implementation — a single-instance venue deployment has no need for a
  * separate object-storage server, and it removes a dependency on an external image registry
@@ -21,9 +22,10 @@ public class FilesystemObjectStorageService implements ObjectStorageService {
     private final Path rootDir;
     private final String publicBaseUrl;
 
-    public FilesystemObjectStorageService(@Value("${storage.local-path}") String localPath,
-                                           @Value("${storage.public-base-url}") String publicBaseUrl) {
-        this.rootDir = Path.of(localPath).toAbsolutePath().normalize();
+    public FilesystemObjectStorageService(@Value("${storage.local-path:}") String localPath,
+                                           @Value("${storage.public-base-url}") String publicBaseUrl,
+                                           DatabaseProperties database) {
+        this.rootDir = StorageFolder.resolve(localPath, database);
         this.publicBaseUrl = publicBaseUrl.replaceAll("/$", "");
         try {
             Files.createDirectories(rootDir);

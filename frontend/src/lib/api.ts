@@ -52,6 +52,8 @@ export default api;
 export interface AboutDto {
   version: string;
   buildTime: string;
+  /** URLs other devices on the venue network can open */
+  addresses: string[];
 }
 
 export async function getAboutInfo(): Promise<AboutDto> {

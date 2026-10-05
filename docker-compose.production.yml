@@ -6,7 +6,7 @@ services:
       RCTIMING_DATA_DIR: /app/data/db
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       STORAGE_LOCAL_PATH: /app/data/uploads
-      STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:?Set STORAGE_PUBLIC_BASE_URL in .env}
+      STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-/storage}
       TTS_ENDPOINT: piper:10200
       TTS_DEFAULT_VOICE: ${TTS_DEFAULT_VOICE:-en_GB-alan-medium}
       TTS_ENABLED: ${TTS_ENABLED:-true}

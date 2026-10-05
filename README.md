@@ -4,6 +4,10 @@
 
 Web-based RC club management and race timing system. Replaces RCResults with a modern browser-based race control client for club officials. Entries come from RaceHub or are added as walk-ins.
 
+## Install on a venue laptop
+
+The app installs as one package that carries its own Java runtime and runs as a background service. Phones, tablets and boards on the venue network open it in a browser. See [docs/installing.md](docs/installing.md).
+
 ## Try it out
 
 If you want to evaluate the system without setting up a development environment, use the Docker trial:

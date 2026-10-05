@@ -7,9 +7,9 @@ services:
       # Loads the Wyvern RC Club demo data into a fresh database
       SPRING_PROFILES_ACTIVE: demo
       RCTIMING_DATA_DIR: /app/data/db
-      JWT_SECRET: ${JWT_SECRET:-dGhpcyBpcyBhIGRldmVsb3BtZW50IHNlY3JldCBrZXkgdGhhdCBtdXN0IGJlIGF0IGxlYXN0IDI1NiBiaXRz}
+      # Unset, the app creates its own signing key in the data volume
+      JWT_SECRET: ${JWT_SECRET:-}
       STORAGE_LOCAL_PATH: /app/data/uploads
-      STORAGE_PUBLIC_BASE_URL: http://localhost/storage
       TTS_ENDPOINT: piper:10200
       TTS_DEFAULT_VOICE: en_GB-alan-medium
       TTS_ENABLED: "true"

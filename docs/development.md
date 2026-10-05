@@ -87,12 +87,21 @@ Vite dev server starts on `http://localhost:5173` with API proxy to `localhost:8
 
 | Variable | Default (dev) | Description |
 |----------|---------------|-------------|
-| `JWT_SECRET` | base64-encoded dev key | HMAC-SHA256 signing key — **change in production** |
+| `JWT_SECRET` | unset: a random key in `jwt-secret` in the data directory | Base64 HMAC-SHA256 key that signs officials' sign-in tokens |
 | `RCTIMING_DATA_DIR` | per-user app-data folder (dev profile: `app/data/db`) | Folder holding the SQLite database file `rctiming.db` |
+| `STORAGE_LOCAL_PATH` | `uploads` inside the data directory | Folder for the club logo and announcer clips |
+| `STORAGE_PUBLIC_BASE_URL` | `/storage` | Base URL the browser loads uploads from; relative, so it works on any address |
+| `SERVER_PORT`, `SERVER_ADDRESS` | `8080`, all interfaces | Port and bind address. Phones and boards reach the app on any of the laptop's addresses. |
 
-Outside the dev profile the database lives in the user's app-data folder: `%LOCALAPPDATA%\RCTimingControl` on Windows, `~/Library/Application Support/RCTimingControl` on macOS, and `$XDG_DATA_HOME/rctimingcontrol` (or `~/.local/share/rctimingcontrol`) on Linux.
+Outside the dev profile the database lives in the user's app-data folder: `%LOCALAPPDATA%\RCTimingControl` on Windows, `~/Library/Application Support/RCTimingControl` on macOS, and `$XDG_DATA_HOME/rctimingcontrol` (or `~/.local/share/rctimingcontrol`) on Linux. The installed packages run the app as a service with `-Drctiming.data-scope=machine`, which moves it to the per-machine folder instead (see [installing.md](installing.md)).
 
-The dev JWT secret is baked into `application.yml` as a fallback default — fine for development, must be overridden in production via environment variable.
+Without `JWT_SECRET`, the first start writes a random key to `jwt-secret` in the data directory and later starts reuse it, so no two installs share a signing key.
+
+### Serving the frontend from the app
+
+`./gradlew -PbundleFrontend :app:bootJar` builds the frontend into the jar, and `SpaConfig` serves it with REST and WebSocket on the same port. Paths that are not a file and not under `/api`, `/ws`, `/storage` or `/actuator` get `index.html`, so deep links work on refresh. The UI and API share one origin, so no CORS settings are needed, and the WebSocket's same-origin check accepts whichever address a device used. In dev, Vite serves the frontend and proxies `/api`, `/ws` and `/storage` to the backend. `./gradlew -PbundleFrontend :app:installer` wraps the jar in a native installer; see [installing.md](installing.md#building-the-installers).
+
+On start the app logs the addresses other devices should open, and `/about` lists them.
 
 ### Backups
 
@@ -114,7 +123,7 @@ It finds the data directory the way the app does (`RCTIMING_DATA_DIR`, `--rctimi
 
 ### Production checklist
 
-- Set `JWT_SECRET` to a cryptographically random 256-bit base64 value
+- Set `JWT_SECRET` to a cryptographically random 256-bit base64 value, or leave it unset and keep the generated `jwt-secret` file private
 - Set `secure=true` on the refresh cookie (requires HTTPS): override `ResponseCookie.from(...).secure(true)` in `AuthController`
 - Set `spring.profiles.active=prod` and configure datasource via env vars
 - Do **not** use `ddl-auto=update` or `create-drop` — Flyway manages the schema
@@ -236,6 +245,7 @@ Run `make help` to see all targets. Quick reference:
 | `make ui-build` | TypeScript check + production bundle |
 | `make ui-lint` | ESLint |
 | `make clean` | Stop everything, `./gradlew clean`, remove `frontend/dist` |
+| `make installer` | Native installer for this system, with the UI built in (see [installing.md](installing.md#building-the-installers)) |
 
 ## Useful commands
 

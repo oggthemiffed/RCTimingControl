@@ -1,0 +1,33 @@
+#!/bin/sh
+# postinst for rctimingcontrol (#23). Replaces jpackage's own, which enables the unit by its
+# /lib path. On merged-/usr systems systemd then treats it as a linked unit and refuses to
+# disable it later, so upgrades and removal fail. Here the unit is always used by name. It also
+# creates the user the service runs as.
+set -e
+
+UNIT=rctimingcontrol-RCTimingControl.service
+
+case "$1" in
+    configure)
+        # The service's own unprivileged user (see the unit file)
+        if ! getent passwd rctiming >/dev/null; then
+            useradd --system --user-group --home-dir /var/lib/rctimingcontrol --no-create-home \
+                --shell /usr/sbin/nologin --comment "RC Timing Control" rctiming
+        fi
+        if [ -d /run/systemd/system ]; then
+            systemctl daemon-reload
+            systemctl enable "$UNIT"
+            systemctl restart "$UNIT"
+        fi
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0

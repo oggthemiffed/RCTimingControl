@@ -24,6 +24,12 @@ The app now keeps its data in a single SQLite file instead of a PostgreSQL serve
 - The trial stack loads its demo club through the app's `demo` profile rather than a seed container.
 - Developers: delete any old local database with `make clean-db`.
 
+### Installers and the shared signing key (#23)
+
+- Windows, macOS and Linux installers are built by the Installers workflow on each `v*` tag and kept as workflow artifacts. See [docs/installing.md](docs/installing.md).
+- The app no longer falls back to a signing key written in the source. Without `JWT_SECRET` it creates its own key in the data folder. Docker stacks that relied on the old default get a new key on upgrade, so officials sign in again once.
+- Uploads default to an `uploads` folder beside the database, and logos load from the relative `/storage` path. `STORAGE_PUBLIC_BASE_URL` is now optional. A logo uploaded before this release keeps its old absolute URL; upload it again if it does not show on other devices.
+
 ---
 
 ## Step-by-step release checklist
