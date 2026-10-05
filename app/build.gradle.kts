@@ -52,6 +52,8 @@ dependencies {
 
     // L1: the app reads the decoder directly (DecoderListener) using the shared RC-4 parser
     implementation(project(":decoder-protocol"))
+    // `RCTimingControl simulate` runs the fake decoder, so the installed app can be tried without one (#24)
+    implementation(project(":decoder-simulator"))
 
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
 

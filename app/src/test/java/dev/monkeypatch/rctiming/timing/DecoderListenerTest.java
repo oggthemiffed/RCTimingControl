@@ -182,7 +182,7 @@ class DecoderListenerTest {
         listener.start();
         assertThat(statusCallbacks).isEmpty();
 
-        // Settings written directly to the database (for example by the trial seed), with no event.
+        // Settings written directly to the database (for example by the demo data), with no event.
         when(clubProfileService.getDecoderSettings()).thenReturn(new DecoderSettings("fake-decoder", 5100, "RC4"));
         listener.reconcile();
 

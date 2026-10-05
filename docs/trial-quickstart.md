@@ -1,145 +1,100 @@
-# RCTimingControl Trial — Quickstart Guide
+# Trying RC Timing Control
 
-> **Early pre-release (v0.1)** — This is a preview build for club evaluation. Features are complete but the software has not been through a full race meeting yet. Please report anything that doesn't work.
+> **Early pre-release (v0.1)**: this is a preview build for clubs to evaluate. The features are all there, but the software has not yet been used at a full race meeting. Please report anything that doesn't work.
 
-This guide gets you from zero to a fully running system in about five minutes. You do **not** need to install Java, Node, or any developer tools — just Docker.
+This guide sets up a copy of the app with a demo club and a simulated decoder, so you can explore race control with live laps. It takes about five minutes and needs no developer tools.
+
+Use a computer you are not using for real race meetings, or uninstall afterwards. The demo club goes into the app's database alongside anything else in it.
 
 ---
 
 ## What you get
 
-- Full race management system pre-loaded with a demo club (Wyvern RC Club)
-- Eight demo racer accounts with cars, transponders, and a completed historical event
-- A fake AMB decoder running in the background, sending live lap data so the race control display is active
-- Every feature available to explore: racer portal, race control, admin panel, championship standings
+- The full app, pre-loaded with a demo club (Wyvern RC Club), its racers, cars and transponders, and a completed past event.
+- A simulated AMB decoder on the same computer, sending lap passings for the demo transponders so race control shows live timing.
+- Every feature to explore: race control, the admin panel, results and championship standings.
 
 ---
 
-## Step 1 — Install Docker Desktop
+## Step 1: Install the app
 
-If you don't have Docker already:
+Download the installer for your computer from the [latest release](https://github.com/oggthemiffed/RCTimingControl/releases/latest) and install it as described in [installing.md](installing.md). Don't set the club up yet.
 
-- **Windows / Mac:** Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) and run the installer. Accept all defaults.
-- **Linux:** Follow the instructions for your distribution at [docs.docker.com/engine/install](https://docs.docker.com/engine/install/).
+## Step 2: Turn on the demo club
 
-Once installed, open Docker Desktop and make sure it says **"Docker Desktop is running"** before continuing.
+Stop the service, add a setting that loads the demo club, then start the service again. The data folder and the start and stop commands for each system are listed in [installing.md](installing.md).
 
----
+Create a file called `application.properties` in the data folder containing:
 
-## Step 2 — Download the trial files
+```properties
+spring.profiles.active=demo
+```
 
-Go to the [latest release page](https://github.com/oggthemiffed/RCTimingControl/releases/latest) and download the two files attached to the release:
-
-| File | What it is |
-|------|-----------|
-| `docker-compose.ghcr.yml` | Tells Docker which services to start |
-| `.env.example` | Configuration template |
-
-Save both into a new folder on your computer (e.g. `rctiming-trial` on your Desktop), then **rename** `.env.example` to `.env` (remove the `.example` part).
-
----
-
-## Step 3 — Start the system
-
-Open a terminal (Command Prompt or PowerShell on Windows, Terminal on Mac/Linux), navigate to your `rctiming-trial` folder, and run:
+On Linux, for example:
 
 ```bash
-docker compose -f docker-compose.ghcr.yml up
+sudo systemctl stop rctimingcontrol-RCTimingControl
+echo 'spring.profiles.active=demo' | sudo tee /var/lib/rctimingcontrol/application.properties
+sudo systemctl start rctimingcontrol-RCTimingControl
 ```
 
-The first run downloads the images — this takes a few minutes depending on your internet connection. You'll see a lot of log output. When you see lines like:
+The app loads the demo club when it starts.
 
-```
-app    | Started RcTimingControlApplication in ...
-```
+## Step 3: Start the simulated decoder
 
-the system is ready.
+Open a terminal (Command Prompt on Windows) and run:
 
----
+| System | Command |
+|--------|---------|
+| Windows | `"C:\Program Files\RCTimingControl\RCTimingControl.exe" simulate` |
+| macOS | `/Applications/RCTimingControl.app/Contents/MacOS/RCTimingControl simulate` |
+| Linux | `/opt/rctimingcontrol/bin/RCTimingControl simulate` |
 
-## Step 4 — Open the app
+It sends laps for the demo club's eight transponders on port 5100, where the demo club's decoder settings point. Leave the window open. Press `Ctrl+C` to stop it.
 
-Go to **[http://localhost](http://localhost)** in your browser.
+## Step 4: Open the app
 
----
-
-## Demo accounts
-
-All accounts use the password: **`trial123`**
-
-| Email | Role | What you can do |
-|-------|------|-----------------|
-| `admin@example.com` | Admin / Race Director / Referee | Everything — admin panel, race control, referee tools |
-| `dave.racer@example.com` | Racer | Racer portal — profile, cars, transponders, entries |
-| `sam.speed@example.com` | Racer | Same as above |
-| `jo.turner@example.com` | Racer | Same as above |
+Go to **[http://localhost:8080](http://localhost:8080)** and sign in as `admin@example.com` with the password **`trial123`**. That account is an admin, race director and referee, so it can use everything.
 
 ---
 
 ## Things to try
 
-### As a racer (`dave.racer@example.com`)
+### Admin
 
-1. Log in and view your profile, car, and transponder
-2. Look at the event schedule — the Wyvern Winter Series Round 4 is listed as an upcoming open event
-3. View your entry history and past results
-
-### As admin (`admin@example.com`)
-
-1. Go to **Admin** → **Events** to see the championship event and its races
-2. Go to **Admin** → **Championships** to see the points standings
-3. Go to **Admin** → **Club Profile** to see the club profile (you can edit this to match your own club)
-4. Go to **Admin** → **Decoder** to see how the decoder connection is configured
+1. Go to **Admin** → **Events** to see the championship event and its races.
+2. Go to **Admin** → **Championships** to see the points standings.
+3. Go to **Admin** → **Club Profile** to see the club's details. You can edit them to match your own club.
+4. Go to **Admin** → **Decoder** to see how the decoder connection is set up.
 
 ### Race control
 
-1. Log in as `admin@example.com`
-2. Go to **Race Control** from the top navigation
-3. The fake decoder is sending live lap passings — you should see timing data updating in real time
-4. Try starting a race: select a race, click **Call Grid**, then **Start**
+1. Go to **Race Control** from the top navigation.
+2. The simulated decoder is sending lap passings, so timing data updates as you watch.
+3. Try a race: pick one, click **Call Grid**, then **Start**.
 
-### Event schedule (public)
+### Public pages
 
-Open [http://localhost/events](http://localhost/events) in a second browser tab — this is the public-facing event schedule, no login required.
+Open [http://localhost:8080/events](http://localhost:8080/events) in a second tab. This is the public event schedule, which needs no sign-in. Phones on the same network can open it too, using the addresses listed on the About page.
 
 ---
 
-## Stopping the system
+## Finishing
 
-Press `Ctrl+C` in the terminal where Docker is running, then:
-
-```bash
-docker compose -f docker-compose.ghcr.yml down
-```
-
-Your data is preserved between restarts. To wipe everything and start fresh:
-
-```bash
-docker compose -f docker-compose.ghcr.yml down -v
-```
+To stop trying it, stop the simulated decoder with `Ctrl+C`. Then uninstall the app and delete its data folder, as described in [installing.md](installing.md). If you want to use the same computer for real race meetings, install again afterwards and set up your own club.
 
 ---
 
 ## Troubleshooting
 
-**Port 80 is already in use**
+**Nothing opens at http://localhost:8080.** The service takes a few seconds to start. If something else on the computer already uses port 8080, add `server.port=8081` (or another free port) to `application.properties`, restart the service and use that port.
 
-Edit `.env` and change `HOST_PORT=80` to `HOST_PORT=8080` (or any free port), then restart. Access the app at `http://localhost:8080`.
+**No demo club.** The setting has to be in place before the service starts. Check the file is called `application.properties` (not `application.properties.txt`) and is in the data folder, then restart the service. The app's log, `logs/rctiming.log` in the data folder, lists `wyvern demo club` among the database steps when it loads the demo club.
 
-**Services keep restarting / app won't start**
-
-Wait a bit longer — on first boot the app creates its database and loads the demo club, which can take a minute. Check progress with `docker compose -f docker-compose.ghcr.yml logs app`.
-
-**"Set RCTIMING_VERSION in .env" error**
-
-Make sure you renamed `.env.example` to `.env` (not `.env.example`).
-
-**Everything looks blank / no demo data**
-
-The app loads the demo club the first time it creates its database. Run `docker compose -f docker-compose.ghcr.yml logs app` and look for `wyvern demo club` in the Flyway lines. To start again from a fresh demo, run `docker compose -f docker-compose.ghcr.yml down -v` and bring the stack back up.
+**No live laps.** Check the simulated decoder window is still open and shows `Client connected`. The decoder status in race control shows whether the app is connected to it.
 
 ---
 
 ## Feedback
 
-This is an early pre-release (v0.1). If something doesn't work or a feature is missing, please let us know — that's exactly what this trial is for.
+This is an early pre-release (v0.1). If something doesn't work or a feature is missing, please tell us. That's what this trial is for.

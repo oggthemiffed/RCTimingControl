@@ -6,21 +6,17 @@ Web-based RC club management and race timing system. Replaces RCResults with a m
 
 ## Install on a venue laptop
 
-The app installs as one package that carries its own Java runtime and runs as a background service. Phones, tablets and boards on the venue network open it in a browser. See [docs/installing.md](docs/installing.md).
+Download the installer for the laptop from the [latest release](https://github.com/oggthemiffed/RCTimingControl/releases/latest): the `.msi` for Windows, the `.pkg` for macOS or the `.deb` for Ubuntu and other Debian-based Linux. It carries its own Java runtime and installs the app as a background service that starts with the laptop.
+
+1. Run the installer.
+2. Open **http://localhost:8080** on the laptop and follow the setup wizard to create the first official and the club.
+3. Open the About page to see the addresses phones, tablets and boards on the venue network should use.
+
+See [docs/installing.md](docs/installing.md) for each system, the data folder, backups and upgrades.
 
 ## Try it out
 
-If you want to evaluate the system without setting up a development environment, use the Docker trial:
-
-```bash
-# 1. Copy the config template
-cp .env.example .env
-
-# 2. Start everything (downloads images on first run — a few minutes)
-docker compose -f docker-compose.ghcr.yml up
-```
-
-Open **http://localhost** — demo data and a live fake decoder are included. See [docs/trial-quickstart.md](docs/trial-quickstart.md) for the full walkthrough including demo credentials.
+To explore the app with a demo club and a simulated decoder sending live laps, install it and follow [docs/trial-quickstart.md](docs/trial-quickstart.md).
 
 ---
 
@@ -30,13 +26,13 @@ Open **http://localhost** — demo data and a live fake decoder are included. Se
 |-----------|-------------|
 | `app/` | Spring Boot 3.4 backend — REST API, JWT auth, WebSocket timing hub, direct AMB decoder listener, event/championship organization |
 | `frontend/` | React 18 + Vite + Tailwind + shadcn/ui — admin panel and race control for officials |
-| `decoder-simulator/` | Fake AMB decoder over TCP for development and the trial stack (generative and playback modes) |
+| `decoder-simulator/` | Fake AMB decoder over TCP for development and trying the app out (generative and playback modes); the app runs it with `simulate` |
 | `decoder-protocol/` | Shared AMB/MyLaps decoder protocol parsing (RC-4 text + P3 binary) — used by `app/` and `decoder-simulator/` |
 | `docker-compose.yml` | Piper (TTS), optional, for announcer voices. The database is a SQLite file and club logos and TTS clips are stored on local disk, so nothing else needs Docker. |
 
 ### Quick start (dev)
 
-**Prerequisites:** Java 21, Docker, Node 20+, `make`
+**Prerequisites:** Java 21, Node 20+, `make`; Docker only for the optional Piper voices
 
 ```bash
 make dev-start
@@ -98,13 +94,14 @@ All ten planned phases are complete:
 | 7 | Results & championship — result snapshots, best-X-from-Y standings, public results pages |
 | 8 | First-run setup wizard — guided onboarding for new club installations |
 | 9 | User manual & documentation — in-app help system, printable race meeting guide |
-| 10 | Docker trial environment — single-command demo stack with fake decoder and seed data |
+| 10 | Docker trial environment — single-command demo stack with fake decoder and seed data (replaced by the installers in #23 and #24) |
 
 ---
 
 ## Docs
 
-- [Trial quickstart](docs/trial-quickstart.md) — run the demo environment, no developer setup needed
+- [Installing](docs/installing.md) — install on a venue laptop, data folder, backups, upgrades
+- [Trying it out](docs/trial-quickstart.md) — a demo club and a simulated decoder, no developer setup needed
 - [Decoder setup guide](docs/forwarder.md) — connecting the AMB decoder, simulator, status
 - [API reference](docs/api.md) — all endpoints with example requests
 - [Development guide](docs/development.md) — environment setup, config, env vars

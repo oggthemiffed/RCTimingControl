@@ -1,15 +1,6 @@
-# Release Process
+# Releases
 
-This document describes how to cut a release of RCTimingControl.
-
-## Overview
-
-Releases are driven by git tags. Pushing a `v*` tag to GitHub automatically:
-1. Builds and publishes three Docker images to GHCR
-2. Creates a GitHub Release with `docker-compose.ghcr.yml` and `.env.example` attached
-3. Marks the release as pre-release if the version starts with `0.` (i.e. `0.x.x`)
-
-The `VERSION` file in the repo root is the single source of truth. It controls the Gradle build version, the Spring Boot build-info (displayed on the About page), and the default `RCTIMING_VERSION` in `.env.example`.
+Each release on the [Releases page](https://github.com/oggthemiffed/RCTimingControl/releases) has installers for Windows (`.msi`), macOS (`.pkg`) and Debian-based Linux (`.deb`); see [docs/installing.md](docs/installing.md). Versions starting with `0.` are pre-releases. The About page shows which version is installed.
 
 ---
 
@@ -26,137 +17,19 @@ The app now keeps its data in a single SQLite file instead of a PostgreSQL serve
 
 ### Installers and the shared signing key (#23)
 
-- Windows, macOS and Linux installers are built by the Installers workflow on each `v*` tag and kept as workflow artifacts. See [docs/installing.md](docs/installing.md).
+- Windows, macOS and Linux installers are attached to each release. See [docs/installing.md](docs/installing.md).
 - The app no longer falls back to a signing key written in the source. Without `JWT_SECRET` it creates its own key in the data folder. Docker stacks that relied on the old default get a new key on upgrade, so officials sign in again once.
 - Uploads default to an `uploads` folder beside the database, and logos load from the relative `/storage` path. `STORAGE_PUBLIC_BASE_URL` is now optional. A logo uploaded before this release keeps its old absolute URL; upload it again if it does not show on other devices.
 
----
+### The Docker stacks are gone (#24)
 
-## Step-by-step release checklist
+The installers are now the only way to run the app. The production, GHCR and trial Docker stacks, their images and nginx are removed, and the app is not deployed to the internet. To try the app with the demo club, follow [docs/trial-quickstart.md](docs/trial-quickstart.md).
 
-### 1. Decide the version number
+To move a club's data from a Docker stack to an installed copy:
 
-Follow [Semantic Versioning](https://semver.org/):
+1. In the Docker copy, take a backup under **Admin → Backups**.
+2. Copy it out of the container: `docker compose -f <compose file> cp app:/app/data/db/backups/<file> .`
+3. Install the new version on the venue laptop, then restore the backup as described in [docs/installing.md](docs/installing.md#restoring-a-backup).
 
-| Change | Example |
-|--------|---------|
-| Bug fixes only | `0.1.0` → `0.1.1` |
-| New features, backwards-compatible | `0.1.0` → `0.2.0` |
-| Breaking changes | `0.x.x` → `1.0.0` |
+Officials sign in again afterwards, because the installed copy has its own signing key.
 
-While version is `0.x.x` the software is considered **pre-release** and GitHub will mark it accordingly.
-
-### 2. Update the VERSION file
-
-```bash
-echo "0.2.0" > VERSION
-```
-
-### 3. Update .env.example
-
-Edit `.env.example` and set `RCTIMING_VERSION=v0.2.0` to match.
-
-### 4. Commit
-
-```bash
-git add VERSION .env.example
-git commit -m "chore: bump version to 0.2.0"
-```
-
-### 5. Verify CI is green
-
-Check that the CI workflow passes on `main` before tagging:
-https://github.com/oggthemiffed/RCTimingControl/actions
-
-### 6. Tag and push
-
-```bash
-git tag v0.2.0
-git push origin main
-git push origin v0.2.0
-```
-
-### 7. Wait for the release workflow
-
-GitHub Actions will:
-- Build all 5 Docker images and push to GHCR (5–10 minutes)
-- Create a GitHub Release at https://github.com/oggthemiffed/RCTimingControl/releases
-- Attach `docker-compose.ghcr.yml` and `.env.example` to the release
-
-Monitor progress at:
-https://github.com/oggthemiffed/RCTimingControl/actions/workflows/publish-trial-images.yml
-
-### 8. Verify the release
-
-Once the workflow finishes:
-- Open the release page and confirm the assets are attached
-- Pull the new images locally and test:
-  ```bash
-  cp .env.example .env
-  # Set RCTIMING_VERSION=v0.2.0 in .env
-  docker compose -f docker-compose.ghcr.yml up
-  ```
-- Open http://localhost and confirm the About page shows `v0.2.0`
-
----
-
-## Hotfix releases
-
-For urgent bug fixes on a tagged release:
-
-```bash
-# Branch from the tag
-git checkout -b hotfix/0.1.1 v0.1.0
-
-# Fix the bug
-# ... make changes ...
-
-git add .
-git commit -m "fix: description of the bug"
-
-# Bump VERSION
-echo "0.1.1" > VERSION
-git add VERSION .env.example
-git commit -m "chore: bump version to 0.1.1"
-
-# Tag and push
-git tag v0.1.1
-git push origin hotfix/0.1.1
-git push origin v0.1.1
-
-# Merge the fix back into main
-git checkout main
-git merge hotfix/0.1.1
-git push origin main
-```
-
----
-
-## What the CI/CD pipeline does
-
-### On every push / pull request (`ci.yml`)
-
-| Job | What it runs |
-|-----|-------------|
-| `test-backend` | Gradle test suite — JUnit 5 on temporary SQLite databases (Java 21, no Docker); also runs `decoder-simulator` and `decoder-protocol` |
-| `test-frontend` | Vitest unit tests (Node 20) |
-| `test-e2e` | Playwright smoke tests against the full `docker-compose.trial.yml` stack |
-
-### On `v*` tag push (`publish-trial-images.yml`)
-
-| Job | What it does |
-|-----|-------------|
-| `build-and-push` | Builds 3 Docker images and publishes them to GHCR tagged with the version |
-| `create-release` | Creates a GitHub Release with install instructions and file assets |
-
----
-
-## GHCR image locations
-
-| Image | Registry path |
-|-------|---------------|
-| App (Spring Boot) | `ghcr.io/oggthemiffed/rctimingcontrol/app:<version>` |
-| Frontend (nginx) | `ghcr.io/oggthemiffed/rctimingcontrol/frontend:<version>` |
-| Fake decoder | `ghcr.io/oggthemiffed/rctimingcontrol/fake-decoder:<version>` |
-
-Images are tagged with the exact semver (e.g. `0.1.0`) without the `v` prefix. There is no `latest` tag — consumers must pin to a specific version via `RCTIMING_VERSION` in `.env`.
