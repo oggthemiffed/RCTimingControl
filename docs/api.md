@@ -119,6 +119,8 @@ Request body:
 }
 ```
 
+`membershipRequired` is stored but not checked when entries are added: entries come from the RaceHub import or are walk-ins added on the day.
+
 ---
 
 ## Admin — Tracks
@@ -330,6 +332,59 @@ GET /events/{id}
 ```
 
 Returns published events with their classes, entry availability, and entry window dates.
+
+---
+
+## Admin — RaceHub import
+
+Entries come from RaceHub's Entry Export v1 JSON. RaceHub owns booking, racer identity and payment; the export carries only what timing needs, with no contact, date of birth, guardian or payment data.
+
+### Import an export
+
+```http
+POST /admin/events/{eventId}/racehub-import?dryRun=true
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "schema_version": 1, "event": { ... }, "revision": 12, "entries": [ ... ] }
+```
+
+Requires `ADMIN`. With `dryRun=true` it returns the preview and saves nothing. Each entry is matched by its RaceHub `entry_id` and applied only if its `entry_version` is higher than the one already imported, so a replay is safe. A withdrawn entry is marked `WITHDRAWN`, never deleted, and keeps its race history. Each entry's driver becomes a competitor, matched by RaceHub driver ID.
+
+**200 OK** (or **422** for a real import blocked by unmapped classes or invalid rows, with nothing saved):
+```json
+{
+  "dryRun": true, "blocked": false, "applied": false,
+  "racehubEventName": "Winter Series Round 4", "revision": 12,
+  "summary": { "created": 18, "updated": 2, "withdrawn": 1, "unchanged": 0, "stale": 0, "skipped": 0 },
+  "unmappedClasses": [], "errors": [], "warnings": [],
+  "rows": [ { "entryId": "…", "entryVersion": 3, "driverDisplayName": "Sam Speed", "action": "CREATE", "eventClassId": 11, "rctcEntryId": null } ]
+}
+```
+
+`action` is `CREATE`, `UPDATE`, `WITHDRAW`, `UNCHANGED` (a replay), `STALE` (an older version) or `SKIP` (withdrawn and never imported).
+
+### Class mappings
+
+```http
+GET /admin/events/{eventId}/racehub-class-mappings
+PUT /admin/events/{eventId}/racehub-class-mappings
+
+[ { "racehubEventClassId": "c1a2…", "eventClassId": 11 } ]
+```
+
+Requires `ADMIN`. Each RaceHub class is matched to the event class whose racing class name equals its `rc_class_name`, ignoring case. These mappings set the match for classes whose names differ. `PUT` replaces the event's mappings.
+
+---
+
+## Admin — Competitors
+
+```http
+GET /admin/competitors
+Authorization: Bearer <token>
+```
+
+Requires an official role. Lists competitors: the people entries point at. A competitor has no account. One imported from RaceHub is keyed by its RaceHub driver ID; a walk-in is created by name. Results, live timing and championship standings group by competitor.
 
 ---
 

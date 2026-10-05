@@ -2,7 +2,7 @@
 
 > **Early pre-release — v0.1**
 
-Web-based RC club management and race timing system. Replaces RCResults with a modern browser-based race control client for club officials. Entries come from RaceHub or are added as walk-ins.
+RC club race timing and race control, replacing RCResults. It runs on a laptop at the track, reads the AMB/MyLaps decoder directly, and serves race control, check-in, the announcer and the spectator boards to browsers on the venue network. It is the timing side of the RaceHub suite: entries come from a RaceHub export or are added as walk-ins, and only officials sign in.
 
 ## Install on a venue laptop
 
@@ -24,10 +24,10 @@ To explore the app with a demo club and a simulated decoder sending live laps, i
 
 | Component | Description |
 |-----------|-------------|
-| `app/` | Spring Boot 3.4 backend — REST API, JWT auth, WebSocket timing hub, direct AMB decoder listener, event/championship organization |
-| `frontend/` | React 18 + Vite + Tailwind + shadcn/ui — admin panel and race control for officials |
+| `app/` | Spring Boot 3.4 backend — REST API, officials' JWT auth, WebSocket timing hub, direct AMB decoder listener, RaceHub import, events, championships, backups; serves the built frontend |
+| `frontend/` | React 18 + Vite + Tailwind + shadcn/ui — admin panel, check-in, race control, spectator boards and public results |
 | `decoder-simulator/` | Fake AMB decoder over TCP for development and trying the app out (generative and playback modes); the app runs it with `simulate` |
-| `decoder-protocol/` | Shared AMB/MyLaps decoder protocol parsing (RC-4 text + P3 binary) — used by `app/` and `decoder-simulator/` |
+| `decoder-protocol/` | Shared AMB/MyLaps decoder protocol parsing (RC-4 text; P3 binary is deferred) — used by `app/` and `decoder-simulator/` |
 | `docker-compose.yml` | Piper (TTS), optional, for announcer voices. The database is a SQLite file and club logos and TTS clips are stored on local disk, so nothing else needs Docker. |
 
 ### Quick start (dev)
@@ -50,7 +50,7 @@ make stop       # shut everything down
 make clean-db   # wipe the database and start fresh
 ```
 
-Two racer accounts are seeded automatically in dev mode — see [docs/testing.md](docs/testing.md) for credentials.
+Two officials (an admin and a race director) and a seed event with six competitors are created automatically in dev mode — see [docs/testing.md](docs/testing.md) for credentials.
 
 For manual setup or individual service control see the [Development guide](docs/development.md).
 
@@ -71,7 +71,7 @@ Point a TV's browser at `/boards/now-next` (the race on track with live timing, 
 ### Running tests
 
 ```bash
-make test       # full integration suite — app + decoder simulator (requires Docker)
+make test       # full integration suite — app + decoder simulator (no Docker needed)
 make test-fast  # skip jOOQ codegen for faster reruns
 ```
 
@@ -81,20 +81,16 @@ See [docs/testing.md](docs/testing.md) for the full test matrix, including `deco
 
 ## What's implemented
 
-All ten planned phases are complete:
+| Area | What it does |
+|------|-------------|
+| Club setup | First-run wizard, club profile, tracks and decoder loops, racing classes, race formats, officials and their roles |
+| Entries | RaceHub Entry Export v1 import with class mapping, walk-ins added by hand, competitors with no login, a primary and secondary transponder per entry |
+| Race day | Check-in desk with barcode input and transponder swaps, round generator, race control (grid, start/stop, marshal laps), referee tools, unknown-transponder linking, open practice |
+| Live timing | Direct AMB RC-4 decoder listener, WebSocket live display, voice announcements (Piper TTS or the browser's voice), spectator boards |
+| Results | Result snapshots, best-X-from-Y championship standings, public results pages, printable results |
+| Running it | One installer per system that runs as a background service, scheduled backups and a restore command, in-app help and printable guides |
 
-| Phase | Feature area |
-|-------|-------------|
-| 1 | Domain foundation — entities, Flyway schema, JWT auth, club/track/format config APIs |
-| 2 | Racer portal — profile, cars, transponders, online event entry |
-| 3 | Admin panel — event/championship CRUD, entry management, event state machine |
-| 4 | Race control — browser cockpit, race state machine, marshal laps, referee tools, round generator |
-| 5 | Live timing — AMB RC-4 TCP parser, WebSocket live display |
-| 6 | Audio & practice — voice announcements (Piper TTS + Web Speech API), open practice sessions |
-| 7 | Results & championship — result snapshots, best-X-from-Y standings, public results pages |
-| 8 | First-run setup wizard — guided onboarding for new club installations |
-| 9 | User manual & documentation — in-app help system, printable race meeting guide |
-| 10 | Docker trial environment — single-command demo stack with fake decoder and seed data (replaced by the installers in #23 and #24) |
+Still to come: results export to RaceHub, a live feed relay for remote viewers and a streaming overlay (#27 to #29).
 
 ---
 
