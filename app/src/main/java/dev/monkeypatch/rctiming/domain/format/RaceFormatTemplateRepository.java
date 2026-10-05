@@ -3,7 +3,10 @@ package dev.monkeypatch.rctiming.domain.format;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RaceFormatTemplatesRecord;
 import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 import static dev.monkeypatch.rctiming.jooq.generated.tables.RaceFormatTemplates.RACE_FORMAT_TEMPLATES;
 
@@ -33,6 +36,12 @@ public class RaceFormatTemplateRepository extends JooqRepository<RaceFormatTempl
         r.setConfig(CONFIG.convertToDatabaseColumn(t.getConfig()));
         r.setCreatedAt(t.getCreatedAt());
         r.setUpdatedAt(t.getUpdatedAt());
+    }
+
+    /** The creation time is set once, on insert. */
+    @Override
+    protected List<Field<?>> insertOnly() {
+        return List.of(RACE_FORMAT_TEMPLATES.CREATED_AT);
     }
 
     @Override

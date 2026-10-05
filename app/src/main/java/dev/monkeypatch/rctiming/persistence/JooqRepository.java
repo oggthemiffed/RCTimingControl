@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.persistence;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.SortField;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -47,6 +48,11 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
 
     protected abstract void setId(E entity, Long id);
 
+    /** Columns written on insert and never changed by an update, such as a creation time. */
+    protected List<Field<?>> insertOnly() {
+        return List.of();
+    }
+
     public Optional<E> findById(Long entityId) {
         return findOne(id.eq(entityId));
     }
@@ -83,10 +89,12 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
         }
         record.set(id, entityId);
         record.changed(id, false);
+        insertOnly().forEach(field -> record.changed(field, false));
         int updated = dsl.update(table).set(record).where(id.eq(entityId)).execute();
         if (updated == 0) {
             // As JPA's merge does, an entity whose row has gone is inserted again with its id
             record.changed(id, true);
+            insertOnly().forEach(field -> record.changed(field, true));
             dsl.insertInto(table).set(record).execute();
         }
         return entity;

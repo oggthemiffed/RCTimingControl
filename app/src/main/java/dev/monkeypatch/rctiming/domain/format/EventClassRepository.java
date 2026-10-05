@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.records.EventClassesRecord
 import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import dev.monkeypatch.rctiming.persistence.convert.JsonMapConverter;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -74,6 +75,12 @@ public class EventClassRepository extends JooqRepository<EventClass, EventClasse
         r.setFinalsCount(ec.getFinalsCount());
         r.setCarsPerFinal(ec.getCarsPerFinal());
         r.setBumpCount(ec.getBumpCount());
+    }
+
+    /** The creation time is set once, on insert. */
+    @Override
+    protected List<Field<?>> insertOnly() {
+        return List.of(EVENT_CLASSES.CREATED_AT);
     }
 
     @Override

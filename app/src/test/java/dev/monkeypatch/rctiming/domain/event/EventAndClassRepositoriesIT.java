@@ -69,11 +69,15 @@ class EventAndClassRepositoriesIT extends AbstractIntegrationTest {
         RaceFormatTemplate saved = assertSavedAndReloaded(templates, template(), t -> {
             t.setName("10-minute timed");
             t.setConfig(new TimedRaceConfig(10, StartType.GRID, QualifyingType.FTQ, 3, 4));
-            t.setCreatedAt(T2);
             t.setUpdatedAt(T2);
             return t;
         }, RaceFormatTemplate::getId);
         cleanup.add(() -> templates.deleteById(saved.getId()));
+
+        saved.setCreatedAt(T2);
+        templates.save(saved);
+        assertThat(templates.findById(saved.getId()).orElseThrow().getCreatedAt())
+                .as("creation time is set on insert only").isEqualTo(T1);
     }
 
     @Test
@@ -148,10 +152,13 @@ class EventAndClassRepositoriesIT extends AbstractIntegrationTest {
             c.setFinalsCount(null);
             c.setCarsPerFinal(null);
             c.setBumpCount(null);
-            c.setCreatedAt(T2);
             c.setUpdatedAt(T2);
             return c;
         }, EventClass::getId);
+        saved.setCreatedAt(T2);
+        eventClasses.save(saved);
+        assertThat(eventClasses.findById(saved.getId()).orElseThrow().getCreatedAt())
+                .as("creation time is set on insert only").isEqualTo(T1);
 
         assertThat(eventClasses.findByEventId(event.getId())).extracting(EventClass::getId).containsExactly(saved.getId());
         assertThat(eventClasses.findRefsByEventId(event.getId()))
