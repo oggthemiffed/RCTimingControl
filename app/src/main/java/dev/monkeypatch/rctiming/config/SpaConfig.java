@@ -25,8 +25,8 @@ public class SpaConfig implements WebMvcConfigurer {
 
     static final String LOCATION = "classpath:/static/";
 
-    /** Paths owned by the server; an unknown one is a real 404, not a page of the app. */
-    private static final List<String> SERVER_PREFIXES = List.of("api/", "ws/", "storage/", "actuator/", "error");
+    /** Paths owned by the server, with everything under them; an unknown one is a real 404, not a page. */
+    private static final List<String> SERVER_ROOTS = List.of("api", "ws", "storage", "actuator", "error");
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -42,7 +42,7 @@ public class SpaConfig implements WebMvcConfigurer {
     }
 
     static boolean isServerPath(String path) {
-        return SERVER_PREFIXES.stream().anyMatch(path::startsWith);
+        return SERVER_ROOTS.stream().anyMatch(root -> path.equals(root) || path.startsWith(root + "/"));
     }
 
     private static final class IndexFallbackResolver extends PathResourceResolver {

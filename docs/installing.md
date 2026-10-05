@@ -49,7 +49,7 @@ The data lives outside the install folder, so installing a newer version keeps i
 | macOS | `/Library/Application Support/RCTimingControl` |
 | Linux | `/var/lib/rctimingcontrol` |
 
-On Linux the service runs as its own unprivileged user, so use `sudo` to look in the folder. The folder holds:
+On Linux the service runs as its own unprivileged user, `rctiming`, so use `sudo` to look in the folder. The folder holds:
 
 - `rctiming.db`, the database;
 - `backups/`, the automatic backups;
@@ -67,6 +67,8 @@ server.port=80
 # Keep backups on a USB stick
 rctiming.backup.directory=E:/rctiming-backups
 ```
+
+On Linux the backup folder must be one the `rctiming` user can write to. For a folder on the laptop's own disk, create it with `sudo install -d -o rctiming -g rctiming /srv/rctiming-backups`. A USB stick or network share has to be mounted so that user can write to it, for example with `uid=rctiming,gid=rctiming` in its mount options. The desktop's automatic mount under `/media/<your name>` is private to you, so the service can't use it.
 
 ## Starting and stopping the service
 
@@ -88,7 +90,7 @@ Stop the service, then run the restore command as an administrator (Windows) or 
 | macOS | `sudo /Applications/RCTimingControl.app/Contents/MacOS/RCTimingControl restore "/Library/Application Support/RCTimingControl/backups/<file>"` |
 | Linux | `sudo /opt/rctimingcontrol/bin/RCTimingControl restore /var/lib/rctimingcontrol/backups/<file>` |
 
-Then start the service again.
+Then start the service again. The restored database is given the data folder's owner, so on Linux the service can still write to it after a restore run with `sudo`.
 
 ## Upgrading
 

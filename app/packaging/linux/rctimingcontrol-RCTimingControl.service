@@ -9,12 +9,16 @@ Restart=on-failure
 RestartSec=5
 SuccessExitStatus=143
 # The app is reachable from every device on the venue network, so it runs as its own unprivileged
-# user, not root. DynamicUser also turns on ProtectSystem=strict, PrivateTmp and NoNewPrivileges.
-# StateDirectory gives that user /var/lib/rctimingcontrol (data, logs, optional settings) and
-# keeps it owned by the service on every start, including after a restore run with sudo.
-DynamicUser=yes
+# user, not root. postinst creates the rctiming system user; a folder for backups on a USB stick
+# or share only has to be writable by that user. StateDirectory gives it /var/lib/rctimingcontrol
+# (data, logs, optional settings).
+User=rctiming
+Group=rctiming
 StateDirectory=rctimingcontrol
 StateDirectoryMode=0750
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
 ProtectHome=yes
 
 [Install]

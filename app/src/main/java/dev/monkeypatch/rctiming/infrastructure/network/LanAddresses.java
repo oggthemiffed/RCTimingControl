@@ -76,9 +76,15 @@ public class LanAddresses {
         }
         List<String> urls = new ArrayList<>();
         for (String host : hosts) {
-            urls.add("http://" + host + (port == 80 ? "" : ":" + port) + "/");
+            urls.add(url(host, port));
         }
         return urls;
+    }
+
+    /** {@code http://host:port/}, with an IPv6 address in brackets and no port for 80. */
+    static String url(String host, int port) {
+        String authority = host.contains(":") && !host.startsWith("[") ? "[" + host + "]" : host;
+        return "http://" + authority + (port == 80 ? "" : ":" + port) + "/";
     }
 
     private static boolean isWildcard(String address) {

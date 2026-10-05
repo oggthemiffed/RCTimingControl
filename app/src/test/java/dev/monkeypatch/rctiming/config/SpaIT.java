@@ -73,6 +73,12 @@ class SpaIT extends AbstractIntegrationTest {
                 new HttpEntity<>(adminHeaders()), String.class);
         assertThat(unknown.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(unknown.getBody()).doesNotContain("<div id=\"root\">");
+
+        for (String root : new String[] {"/api", "/api/", "/ws", "/storage", "/actuator", "/error"}) {
+            ResponseEntity<String> page = restTemplate.getForEntity(root, String.class);
+            assertThat(page.getStatusCode()).as(root).isNotEqualTo(HttpStatus.OK);
+            assertThat(String.valueOf(page.getBody())).as(root).doesNotContain("<div id=\"root\">");
+        }
     }
 
     @Test

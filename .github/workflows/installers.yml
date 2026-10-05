@@ -122,13 +122,36 @@ jobs:
               pid=$(systemctl show -p MainPID --value rctimingcontrol-RCTimingControl)
               user=$(ps -o user= -p "$pid")
               echo "Service runs as $user"
-              test "$user" != root ;;
+              test "$user" = rctiming ;;
             macOS)   sudo launchctl print system/dev.monkeypatch.rctiming-RCTimingControl | grep -E 'state|path' ;;
             Windows)
               start_type=$(powershell -NoProfile -Command "(Get-Service RCTimingControl).StartType" | tr -d '\r')
               echo "Service start type: $start_type"
               test "$start_type" = Automatic ;;
           esac
+
+      - name: Check the sign-in key is private
+        run: |
+          case "$RUNNER_OS" in
+            Linux)   test "$(sudo stat -c %a /var/lib/rctimingcontrol/jwt-secret)" = 600 ;;
+            macOS)   test "$(sudo stat -f %Lp "/Library/Application Support/RCTimingControl/jwt-secret")" = 600 ;;
+            Windows)
+              acl=$(icacls 'C:\ProgramData\RCTimingControl\jwt-secret' | tr -d '\r')
+              echo "$acl"
+              if echo "$acl" | grep -Eqi 'Users|Everyone'; then exit 1; fi ;;
+          esac
+
+      - name: Check a restore keeps the service working (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          token=$(curl -sf -X POST http://localhost:8080/api/v1/auth/login -H 'Content-Type: application/json' \
+            -d '{"email":"smoke@example.com","password":"smoke-test-password"}' | jq -r .accessToken)
+          name=$(curl -sf -X POST http://localhost:8080/api/v1/admin/backups -H "Authorization: Bearer $token" | jq -r .name)
+          sudo systemctl stop rctimingcontrol-RCTimingControl
+          sudo /opt/rctimingcontrol/bin/RCTimingControl restore "/var/lib/rctimingcontrol/backups/$name"
+          test "$(sudo stat -c %U /var/lib/rctimingcontrol/rctiming.db)" = rctiming
+          sudo systemctl start rctimingcontrol-RCTimingControl
+          scripts/installer-smoke.sh upgraded
 
       - name: Check other devices are let through the firewall (Windows)
         if: runner.os == 'Windows'

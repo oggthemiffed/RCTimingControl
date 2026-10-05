@@ -11,6 +11,7 @@ import java.util.Base64;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /** Without JWT_SECRET, each install signs tokens with its own key, kept across restarts (#23). */
 class JwtSecretFileTest {
@@ -28,6 +29,18 @@ class JwtSecretFileTest {
             Path file = dataDirectory.resolve("new-folder").resolve(JwtSecretFile.FILE_NAME);
             assertThat(PosixFilePermissions.toString(Files.getPosixFilePermissions(file))).isEqualTo("rw-------");
         }
+    }
+
+    @Test
+    void aKeyFileOthersCanReadIsTightenedOnStart() throws Exception {
+        assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"));
+        Path file = dataDirectory.resolve(JwtSecretFile.FILE_NAME);
+        Files.writeString(file, "c2VjcmV0LWtleS1mcm9tLWFuLW9sZGVyLXZlcnNpb24=");
+        Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rw-r--r--"));
+
+        JwtSecretFile.loadOrCreate(dataDirectory);
+
+        assertThat(PosixFilePermissions.toString(Files.getPosixFilePermissions(file))).isEqualTo("rw-------");
     }
 
     @Test
