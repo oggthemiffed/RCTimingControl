@@ -124,7 +124,7 @@
 - [x] **AUDIO-11**: If a pre-generated clip is unavailable at playback time, the client falls back to Web Speech API synthesis; clip unavailability is non-blocking and never prevents a race from running
 - ~~**AUDIO-12**: Racer profile includes an optional **phonetic spelling** field for their display name, editable by the racer and admins; if set, it is used as the TTS input instead of the display name~~ **Removed** (#18): phonetic spellings were part of racer profiles.
 - ~~**AUDIO-13**: Racer can preview their generated name clip from their profile and select a preferred TTS voice from the voices available for the configured provider; the voice preference is stored per racer and used for all announcements of their name; admin configures the system default voice~~ **Removed** (#18): name clip previews and voice choice were part of racer profiles. Admins still set the voice.
-- [x] **AUDIO-14**: Display name and phonetic spelling fields are screened against a configurable profanity blocklist before saving; if a match is found the save is rejected with a validation error informing the racer their submission contains inappropriate content; admins can extend the blocklist with club-specific terms **Changed**: admins still manage the blocklist, but no names are typed in by racers now, so nothing is screened against it. Its future is decided in #30.
+- ~~**AUDIO-14**: Display name and phonetic spelling fields are screened against a configurable profanity blocklist before saving; if a match is found the save is rejected with a validation error informing the racer their submission contains inappropriate content; admins can extend the blocklist with club-specific terms~~ **Removed** (#30): names were screened as racers typed them into their own profiles. Racer accounts went in #18, so the blocklist and its admin screen were removed; RaceHub, where racers now enter their names, is the place to screen them.
 - ~~**AUDIO-15**: Admin can review any racer's phonetic spelling, override it, or clear the generated clip to force regeneration~~ **Removed** (#18): there are no racer phonetic spellings to review.
 
 ### Race Official Views
@@ -313,7 +313,7 @@
 | AUDIO-11 | Phase 6 | Complete |
 | AUDIO-12 | Phase 6 | Removed (#18) |
 | AUDIO-13 | Phase 6 | Removed (#18) |
-| AUDIO-14 | Phase 6 | Changed |
+| AUDIO-14 | Phase 6 | Removed (#30) |
 | AUDIO-15 | Phase 6 | Removed (#18) |
 | OFFICIAL-01 | Phase 4 | Complete |
 | OFFICIAL-02 | Phase 4 | Complete |
@@ -359,11 +359,12 @@
 
 **Coverage:**
 - Requirements: 126 total (106 from the original v1 plan, 20 added for local-only timing)
-- Complete: 86, changed and complete: 17, removed: 23, planned: 0
+- Complete: 86, changed and complete: 16, removed: 24, planned: 0
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-10-05 — local-only timing (#8, #25): racer, forwarder and P3-forwarder requirements removed, changed requirements annotated, Local-only timing section added, traceability brought up to date*
+*Last updated: 2026-10-05 — AUDIO-14 removed with the profanity blocklist (#30)*
+*Previously updated: 2026-10-05 — local-only timing (#8, #25): racer, forwarder and P3-forwarder requirements removed, changed requirements annotated, Local-only timing section added, traceability brought up to date*
 *Previously updated: 2026-10-04 — removed the offline race-day app's requirements (retired in #21; race day moves to RCTC run locally at the venue, #8)*
 *Previously updated: 2026-10-03 — added the offline race-day app's requirements; removed "Offline mode" from Out of Scope (superseded)*
 *Previously updated: 2026-04-16 — added track entity (TRACK-01–03), EVENT-07 (track association), governing body membership (RACER-13–14, CLUB-01); removed min/max lap times from FORMAT section (moved to track config); renumbered FORMAT-10–13; removed FORMAT-03 (Reedy — deferred post-v1); added FORMAT-14 (race config JSON import/export); added AUTH-05 (stackable roles: ADMIN/RACE_DIRECTOR/REFEREE); added CLUB-02 (club profile); renumbered v2 CLUB-02→CLUB-03; updated TRACK-01 (optional track length); added TRACK-04 (decoder loop configuration); traceability populated (roadmap created)*

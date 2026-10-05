@@ -19,12 +19,6 @@ export interface AudioSettingsDto {
   countdownIntervals?: number[];
 }
 
-export interface BlocklistTermDto {
-  id: number;
-  word: string;
-  addedAt: string;
-}
-
 // ── Public audio endpoints ─────────────────────────────────────────────────
 
 /** List available TTS voices. */
@@ -54,15 +48,3 @@ export const getAdminAudioSettings = () =>
 /** PUT admin-level audio settings. */
 export const saveAdminAudioSettings = (settings: AudioSettingsDto) =>
   api.put<AudioSettingsDto>('/api/v1/admin/audio/settings', settings);
-
-/** GET profanity blocklist. */
-export const getBlocklist = () =>
-  api.get<BlocklistTermDto[]>('/api/v1/admin/audio/blocklist');
-
-/** Add a word to the profanity blocklist. */
-export const addBlocklistTerm = (word: string) =>
-  api.post<BlocklistTermDto>('/api/v1/admin/audio/blocklist', { word });
-
-/** Remove a word from the profanity blocklist. */
-export const removeBlocklistTerm = (id: number) =>
-  api.delete(`/api/v1/admin/audio/blocklist/${id}`);
