@@ -180,7 +180,7 @@
 - [x] **INSTALL-01**: One installer per system (Windows, macOS, Linux) installs the app with its own Java runtime as a background service (#23, #24)
 - [x] **INSTALL-02**: A demo club and a simulated decoder can be turned on from the installed app for trying it out (#24)
 - [x] **RESULTS-EXPORT-01**: Results Export v1 is pushed to RaceHub through an outbound queue that waits for a connection (#27)
-- [ ] **LIVE-FEED-01**: A live feed relay lets remote viewers follow timing (#28)
+- [x] **LIVE-FEED-01**: A live feed relay lets remote viewers follow timing (#28)
 - [ ] **OVERLAY-01**: A streaming overlay page shows live timing in OBS (#29)
 
 
@@ -354,12 +354,12 @@
 | INSTALL-01 | #23, #24 | Complete |
 | INSTALL-02 | #24 | Complete |
 | RESULTS-EXPORT-01 | #27 | Complete |
-| LIVE-FEED-01 | #28 | Planned |
+| LIVE-FEED-01 | #28 | Complete |
 | OVERLAY-01 | #29 | Planned |
 
 **Coverage:**
 - Requirements: 126 total (106 from the original v1 plan, 20 added for local-only timing)
-- Complete: 84, changed and complete: 17, removed: 23, planned: 2
+- Complete: 85, changed and complete: 17, removed: 23, planned: 1
 
 ---
 *Requirements defined: 2026-04-15*

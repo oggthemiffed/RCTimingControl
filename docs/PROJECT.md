@@ -31,10 +31,10 @@ Officials run a full race meeting from a laptop at the track, on Windows, macOS 
 - [x] Scheduled backups and a restore command — #22
 - [x] One installer per system that runs the app as a background service — #23, #24
 - [x] Results Export v1 sent back to RaceHub through an outbound queue — #27
+- [x] Live feed to a relay so remote viewers can follow timing — #28
 
 ### Active
 
-- [ ] Live feed relay so remote viewers can follow timing (#28)
 - [ ] Streaming overlay page for OBS (#29)
 - [ ] Entry import from other systems: RC-Timing CSV and pull from a URL (#38)
 - [ ] AMB P3 binary protocol for decoders on firmware 4.5 or later (deferred)
@@ -94,4 +94,4 @@ Keep this document accurate as the project changes.
 4. Update Context to reflect current state
 
 ---
-*Last updated: 2026-10-05 — local-only timing in place through #27; live feed and overlay to come (#28, #29)*
+*Last updated: 2026-10-05 — local-only timing in place through #28; streaming overlay to come (#29)*

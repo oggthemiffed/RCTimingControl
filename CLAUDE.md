@@ -33,10 +33,11 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 - `/topic/race/{raceId}/unknown-transponder`, `/audio`, `/bump-up-alert` — referee, announcer and bump-up prompts
 - `/topic/practice/{sessionId}/timing` and `/unknown-transponder` — open practice
 - `/topic/system/decoder-status` — whether the decoder is connected
+- `/topic/system/live-feed-status` — whether the live feed is connected to its relay
 
 **TCP decoder client:** Netty 4.1.x, in `app/`'s `DecoderListener` (a `SmartLifecycle`), which reads the decoder's host and port from the club profile. **RC-4 text** (`LineBasedFrameDecoder`, port 5100) for firmware < 4.5 decoders, the dominant club hardware, is implemented. **AMB P3 binary** (`ByteToMessageDecoder`, 0x8E/0x8F delimiters, TLV body, 0x8D byte-stuffing, port 5403) for firmware ≥ 4.5 is deferred. See `docs/AMB_DECODER_PROTOCOL.md`. Protocol parsing lives in the shared `decoder-protocol/` module (pure and Spring-free), used by the decoder listener and the simulator.
 
-**Decoder simulator:** `decoder-simulator/` is a fake RC-4 decoder for development and trying the app out. The app runs it with `RCTimingControl simulate` (or `java -jar app.jar simulate`).
+**Decoder simulator:** `decoder-simulator/` is a fake RC-4 decoder for development and trying the app out. The app runs it with `RCTimingControl simulate` (or `java -jar app.jar simulate`). It also holds a test relay and viewer page for the live feed, run with `RCTimingControl relay`.
 
 **Entries:** imported from RaceHub's Entry Export v1 JSON (`domain/racehub`), or added by hand as walk-ins. Each entry points at a **competitor** (`domain/competitor`: display name, RaceHub driver ID, BRCA number, home club) and carries a primary and an optional secondary transponder for that event.
 
@@ -75,6 +76,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 | **Race Control API** | Race lifecycle commands, marshal laps, grid calls, referee tools |
 | **Boards** | Spectator "now and next" and results boards (`/api/v1/boards`) |
 | **Backups** | Scheduled and on-demand SQLite backups, and the `restore` command |
+| **Live feed** | Live Feed v1 to a relay for remote viewers (`livefeed/`): one outbound WebSocket, on its own thread, per-event switch, display names only; see `docs/live-feed-v1.md` |
 | **Results export** | Results Export v1 to RaceHub (`resultsexport/`): an outbox queued on finish, correction and day close, sent in the background with retries; see `docs/results-export-v1.md` |
 | **Domain Core** | Business logic, aggregates, domain events |
 | **Race State Machine** | Enforces `PENDING → GRID → RUNNING → STOPPED/FINISHED` transitions |
@@ -165,7 +167,7 @@ The ten original phases are complete. Some of what they built has since been rem
 9. User manual & in-app documentation
 10. Docker trial environment (replaced by the installers in #23 and #24)
 
-A later initiative extracted the shared decoder-protocol parser (`decoder-protocol/`) and built a separate offline race-day app, which was retired in #21; its plans are archived under `docs/plans/archive/`. The local-only plan then added competitors, per-event transponders, the RaceHub import and walk-ins, officials-only login, the check-in desk, spectator boards, the SQLite database, backups and the installers. It also sends results back to RaceHub (#27). Still to come: a live feed relay and a streaming overlay (#28, #29).
+A later initiative extracted the shared decoder-protocol parser (`decoder-protocol/`) and built a separate offline race-day app, which was retired in #21; its plans are archived under `docs/plans/archive/`. The local-only plan then added competitors, per-event transponders, the RaceHub import and walk-ins, officials-only login, the check-in desk, spectator boards, the SQLite database, backups and the installers. It also sends results back to RaceHub (#27) and a live feed to a relay for remote viewers (#28). Still to come: a streaming overlay (#29).
 
 ## General Good Developer Rules
 

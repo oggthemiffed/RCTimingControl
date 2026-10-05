@@ -81,6 +81,17 @@ rctiming.racehub.token=the-key-from-racehub
 
 The address must start with `https://`, since the key goes with every request. Without both settings the results wait in the app, and are sent once they are set and the service restarted. The laptop doesn't need to be online while racing: results queue while the network is down and go when it is back. **Results to RaceHub** in the admin panel shows what has been sent, and each event's page has a **Download results** button for taking the file across by hand.
 
+## Sending a live feed
+
+The app can send each race as it runs to a relay on the internet, so people away from the track can follow it (see [live-feed-v1.md](live-feed-v1.md)). The laptop connects out to the relay; nothing connects in to it. Give it the relay's address and the club's key in `application.properties`:
+
+```properties
+rctiming.livefeed.relay-url=wss://relay.example/publish
+rctiming.livefeed.token=the-key-from-the-relay
+```
+
+The address must start with `wss://`, since the key goes with the connection. Restart the service after setting them. Race control then shows the live feed's state in its status bar, with a **Send this event** switch that the race director turns on for each event to be sent. If the network or the relay drops out, racing carries on and the feed picks up again when it is back.
+
 ## Starting and stopping the service
 
 | System | Stop | Start |
