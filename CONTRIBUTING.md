@@ -58,15 +58,9 @@ test: add E2E test for race control login
 
 ---
 
-## Release workflow
-
-Releases are **tag-driven**. Bump `VERSION`, merge to `main`, then push a `v*` tag. The Installers workflow builds and tests the Windows, macOS and Linux installers and attaches them to a GitHub Release for that tag. Upgrade notes for each release go in [RELEASES.md](RELEASES.md).
-
----
-
 ## CI pipeline
 
-Three jobs run on every push and pull request. Changes to packaging also run the Installers workflow, which installs and upgrades the package on all three systems.
+Three jobs run on every push and pull request:
 
 ```mermaid
 flowchart LR

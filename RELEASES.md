@@ -1,6 +1,6 @@
 # Releases
 
-Each release is a `v*` tag. The Installers workflow builds the Windows, macOS and Linux installers for it, tests that each one installs and upgrades cleanly, and attaches them to the tag's GitHub Release. Versions starting with `0.` are marked as pre-releases. The `VERSION` file sets the version shown on the About page and in the installers.
+Each release on the [Releases page](https://github.com/oggthemiffed/RCTimingControl/releases) has installers for Windows (`.msi`), macOS (`.pkg`) and Debian-based Linux (`.deb`); see [docs/installing.md](docs/installing.md). Versions starting with `0.` are pre-releases. The About page shows which version is installed.
 
 ---
 
@@ -17,7 +17,7 @@ The app now keeps its data in a single SQLite file instead of a PostgreSQL serve
 
 ### Installers and the shared signing key (#23)
 
-- Windows, macOS and Linux installers are built by the Installers workflow on each `v*` tag. See [docs/installing.md](docs/installing.md).
+- Windows, macOS and Linux installers are attached to each release. See [docs/installing.md](docs/installing.md).
 - The app no longer falls back to a signing key written in the source. Without `JWT_SECRET` it creates its own key in the data folder. Docker stacks that relied on the old default get a new key on upgrade, so officials sign in again once.
 - Uploads default to an `uploads` folder beside the database, and logos load from the relative `/storage` path. `STORAGE_PUBLIC_BASE_URL` is now optional. A logo uploaded before this release keeps its old absolute URL; upload it again if it does not show on other devices.
 
