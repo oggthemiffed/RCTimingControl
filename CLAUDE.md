@@ -40,7 +40,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 
 **Decoder simulator:** `decoder-simulator/` is a fake RC-4 decoder for development and trying the app out. The app runs it with `RCTimingControl simulate` (or `java -jar app.jar simulate`). It also holds a test relay and viewer page for the live feed, run with `RCTimingControl relay`.
 
-**Entries:** imported from RaceHub's Entry Export v1 JSON (`domain/racehub`), or added by hand as walk-ins. Each entry points at a **competitor** (`domain/competitor`: display name, RaceHub driver ID, BRCA number, home club) and carries a primary and an optional secondary transponder for that event.
+**Entries:** imported from RaceHub's Entry Export v1 JSON (`domain/racehub`) or an RC-Timing style driver CSV (`domain/csvimport`, a preview-and-pick adapter), or added by hand as walk-ins. Each entry points at a **competitor** (`domain/competitor`: display name, RaceHub driver ID, BRCA number, home club) and carries a primary and an optional secondary transponder for that event.
 
 **Packaging:** Spring Boot serves the built React app (`-PbundleFrontend`). `jpackage` wraps the jar with its own Java runtime into a Windows `.msi`, macOS `.pkg` or Linux `.deb` that installs a background service. See `docs/installing.md`. There is no Docker or internet deployment.
 
@@ -72,7 +72,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 | Component | Responsibility |
 |-----------|---------------|
 | **Admin Panel API** | Club, tracks, classes, formats, events, championships, officials, backups |
-| **Entries** | RaceHub import (upsert by `entry_id`, higher `entry_version` wins, withdraw never delete, class mapping), walk-ins, competitors |
+| **Entries** | RaceHub import (upsert by `entry_id`, higher `entry_version` wins, withdraw never delete, class mapping), RC-Timing CSV import (preview new/changed/missing, apply only what the official picks, never withdraw walk-ins), walk-ins, competitors |
 | **Check-in** | Check-in desk (barcode or keyboard-wedge input) and on-the-day transponder swap, audit-logged |
 | **Race Control API** | Race lifecycle commands, marshal laps, grid calls, referee tools |
 | **Boards** | Spectator "now and next" and results boards, and the streaming overlay for OBS (`/boards/overlay`), all anonymous (`/api/v1/boards`); the race clock comes from `timing/RaceClockService` |
