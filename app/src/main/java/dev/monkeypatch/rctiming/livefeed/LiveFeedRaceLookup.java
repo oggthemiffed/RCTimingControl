@@ -1,5 +1,8 @@
 package dev.monkeypatch.rctiming.livefeed;
 
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
+import dev.monkeypatch.rctiming.domain.entry.Entry;
+import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.format.BumpUpConfig;
@@ -20,8 +23,8 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /** Reads what the live feed needs to know about a race, fresh each time (#28). */
@@ -34,11 +37,14 @@ public class LiveFeedRaceLookup {
     private final EventClassRepository eventClassRepository;
     private final RacingClassRepository racingClassRepository;
     private final RaceEntryRepository raceEntryRepository;
+    private final EntryRepository entryRepository;
+    private final CompetitorRepository competitorRepository;
     private final RaceFormatService raceFormatService;
 
     public LiveFeedRaceLookup(RaceRepository raceRepository, RoundRepository roundRepository,
                               EventRepository eventRepository, EventClassRepository eventClassRepository,
                               RacingClassRepository racingClassRepository, RaceEntryRepository raceEntryRepository,
+                              EntryRepository entryRepository, CompetitorRepository competitorRepository,
                               RaceFormatService raceFormatService) {
         this.raceRepository = raceRepository;
         this.roundRepository = roundRepository;
@@ -46,6 +52,8 @@ public class LiveFeedRaceLookup {
         this.eventClassRepository = eventClassRepository;
         this.racingClassRepository = racingClassRepository;
         this.raceEntryRepository = raceEntryRepository;
+        this.entryRepository = entryRepository;
+        this.competitorRepository = competitorRepository;
         this.raceFormatService = raceFormatService;
     }
 
@@ -54,11 +62,20 @@ public class LiveFeedRaceLookup {
      *
      * @param feedOn     whether its event has the live feed turned on
      * @param durationMs its length from the class's format, or null
-     * @param carNumbers entry id to car number, for the cars that have one
+     * @param grid       the cars in the race, in grid order
      */
     public record RaceInfo(long raceId, String status, boolean feedOn, LiveFeedV1.Event event, String className,
                            String roundType, int roundNumber, int heatNumber, String finalLetter, Long durationMs,
-                           Map<Long, Integer> carNumbers) {
+                           List<GridCar> grid) {
+
+        Integer carNumber(long entryId) {
+            return grid.stream().filter(car -> car.entryId() == entryId).findFirst()
+                    .map(GridCar::carNumber).orElse(null);
+        }
+    }
+
+    /** A car in the race: its entry, the driver's display name and its car number, if it has one. */
+    public record GridCar(long entryId, String displayName, Integer carNumber) {
     }
 
     @Transactional(readOnly = true)
@@ -76,11 +93,14 @@ public class LiveFeedRaceLookup {
                 : eventClassRepository.findById(race.getEventClassId()).orElse(null);
         String className = eventClass == null || eventClass.getRacingClassId() == null ? null
                 : racingClassRepository.findById(eventClass.getRacingClassId()).map(c -> c.getName()).orElse(null);
-        Map<Long, Integer> carNumbers = new HashMap<>();
+        List<GridCar> grid = new ArrayList<>();
         for (RaceEntry raceEntry : raceEntryRepository.findByRaceIdOrderByGridPosition(raceId)) {
-            if (raceEntry.getCarNumber() != null) {
-                carNumbers.put(raceEntry.getEntryId(), raceEntry.getCarNumber());
-            }
+            String name = entryRepository.findById(raceEntry.getEntryId())
+                    .map(Entry::getCompetitorId)
+                    .flatMap(competitorRepository::findById)
+                    .map(competitor -> competitor.getDisplayName())
+                    .orElse(null);
+            grid.add(new GridCar(raceEntry.getEntryId(), name, raceEntry.getCarNumber()));
         }
         return Optional.of(new RaceInfo(
                 raceId,
@@ -93,7 +113,7 @@ public class LiveFeedRaceLookup {
                 race.getHeatNumber(),
                 race.getFinalLetter(),
                 durationMs(eventClass, round.getType()),
-                carNumbers));
+                grid));
     }
 
     /** The race length its class's format gives, by round type. */

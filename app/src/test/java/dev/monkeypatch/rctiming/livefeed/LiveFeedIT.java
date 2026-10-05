@@ -176,6 +176,49 @@ class LiveFeedIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void carsThatHaveNotCrossedTheLineFollowInGridOrder() throws Exception {
+        long eventClassId = jdbc.queryForObject("select event_class_id from races where id = ?", Long.class, raceId);
+        entry(eventClassId, "Walk-in Wendy", "3" + run, 9);
+        List<String> seen = watch(relay.port());
+
+        publisher.tick();
+
+        await(() -> !seen.isEmpty());
+        JsonNode message = objectMapper.readTree(seen.get(0));
+        assertThat(LiveFeedV1GoldenTest.validate(message)).isEmpty();
+        JsonNode third = message.at("/standings/2");
+        assertThat(third.at("/position").asInt()).isEqualTo(3);
+        assertThat(third.at("/display_name").asText()).isEqualTo("Walk-in Wendy");
+        assertThat(third.at("/car_number").asInt()).isEqualTo(9);
+        assertThat(third.at("/laps").asInt()).isZero();
+        assertThat(third.at("/laps_down").asInt()).isEqualTo(2);
+        assertThat(third.at("/last_lap_ms").isNull()).isTrue();
+    }
+
+    @Test
+    void sequenceKeepsGoingUpWhenTheAppRestarts() throws Exception {
+        List<String> seen = watch(relay.port());
+        publisher.tick();
+        await(() -> seen.size() == 1);
+        publisher.stop();
+
+        // A fresh publisher, as after the app restarts a moment later
+        clock.advance(Duration.ofSeconds(1));
+        LiveFeedPublisher restarted = publisher(new LiveFeedProperties(
+                URI.create("ws://127.0.0.1:" + relay.port() + "/publish"), RELAY_KEY));
+        try {
+            restarted.onRaceStatusChanged(new RaceStatusChangedEvent(this, raceId, RaceStatus.RUNNING));
+            restarted.tick();
+            await(() -> seen.size() == 2);
+        } finally {
+            restarted.stop();
+        }
+
+        assertThat(objectMapper.readTree(seen.get(1)).at("/sequence").asLong())
+                .isGreaterThan(objectMapper.readTree(seen.get(0)).at("/sequence").asLong());
+    }
+
+    @Test
     void nothingIsSentForAnEventWithTheFeedOff() {
         jdbc.update("update events set live_feed_enabled = 0 where id = ?", eventId);
 
@@ -239,6 +282,8 @@ class LiveFeedIT extends AbstractIntegrationTest {
         clock.advance(Duration.ofSeconds(270));
         jdbc.update("update races set status = 'FINISHED' where id = ?", raceId);
         publisher.onRaceStatusChanged(new RaceStatusChangedEvent(this, raceId, RaceStatus.FINISHED));
+        // As finishing does straight after the event: the result is stored and the live state let go
+        lapTimingService.releaseState(raceId);
         publisher.tick();
 
         await(() -> seen.size() == 2);
@@ -246,6 +291,10 @@ class LiveFeedIT extends AbstractIntegrationTest {
         assertThat(last.at("/race/status").asText()).isEqualTo("FINISHED");
         assertThat(last.at("/race/clock/elapsed_ms").asLong()).isEqualTo(300_000);
         assertThat(last.at("/race/clock/running").asBoolean()).isFalse();
+        // The final running order survives the live state being let go
+        assertThat(last.at("/standings/0/display_name").asText()).isEqualTo("Ada Lovelace");
+        assertThat(last.at("/standings/0/laps").asInt()).isEqualTo(2);
+        assertThat(last.at("/standings/1/display_name").asText()).isEqualTo("Grace Hopper");
         assertThat(last.at("/sequence").asLong()).isGreaterThan(objectMapper.readTree(seen.get(0)).at("/sequence").asLong());
 
         clock.advance(LiveFeedPublisher.RESEND_EVERY);

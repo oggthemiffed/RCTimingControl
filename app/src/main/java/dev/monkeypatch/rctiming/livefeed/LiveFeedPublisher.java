@@ -21,10 +21,12 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -67,7 +69,8 @@ public class LiveFeedPublisher implements SmartLifecycle {
     private final Map<Long, RaceClock> races = new ConcurrentHashMap<>();
     /** Per race, what was last sent and when; only touched on the feed's thread. */
     private final Map<Long, Sent> sent = new ConcurrentHashMap<>();
-    private final AtomicLong sequence = new AtomicLong();
+    /** Starts from the clock, so it keeps going up across restarts and viewers never mistake a new message for an old one. */
+    private final AtomicLong sequence;
 
     private volatile LiveFeedState state;
     private ScheduledExecutorService executor;
@@ -95,6 +98,7 @@ public class LiveFeedPublisher implements SmartLifecycle {
         this.connection = connection;
         this.state = properties.configured() ? LiveFeedState.IDLE : LiveFeedState.NOT_SET_UP;
         this.lastActivity = clock.instant();
+        this.sequence = new AtomicLong(clock.millis());
     }
 
     // ── Status ─────────────────────────────────────────────────────────────────────
@@ -130,7 +134,14 @@ public class LiveFeedPublisher implements SmartLifecycle {
         switch (event.getNewStatus()) {
             case GRID -> races.put(raceId, new RaceClock());
             case RUNNING -> races.computeIfAbsent(raceId, id -> new RaceClock()).start(now);
-            case STOPPED, FINISHED -> races.computeIfAbsent(raceId, id -> new RaceClock()).stop(now);
+            case STOPPED -> races.computeIfAbsent(raceId, id -> new RaceClock()).stop(now);
+            case FINISHED -> {
+                // Keep the final running order: finishing stores the result and lets the live state go
+                // straight after this event, before the feed's next pass
+                RaceClock raceClock = races.computeIfAbsent(raceId, id -> new RaceClock());
+                raceClock.stop(now);
+                raceClock.freeze(lapTimingService.peek(raceId).map(LiveRaceState::calculatePositions).orElse(List.of()));
+            }
             default -> { }
         }
     }
@@ -256,21 +267,24 @@ public class LiveFeedPublisher implements SmartLifecycle {
     }
 
     private Content content(LiveFeedRaceLookup.RaceInfo race, RaceClock raceClock, Instant now) {
-        List<LiveTimingRowDto> rows = lapTimingService.peek(race.raceId())
-                .map(LiveRaceState::calculatePositions)
-                .orElse(List.of());
-        List<LiveFeedV1.Standing> standings = rows.stream()
-                .map(r -> new LiveFeedV1.Standing(
-                        r.position(),
-                        r.driverName(),
-                        race.carNumbers().get(r.entryId()),
-                        r.lapsCompleted(),
-                        r.lastLapMs(),
-                        r.bestLapMs(),
-                        r.gapToLeaderMs(),
-                        r.gapToAheadMs(),
-                        r.lapsDown()))
-                .toList();
+        List<LiveTimingRowDto> rows = raceClock.frozenRows() != null ? raceClock.frozenRows()
+                : lapTimingService.peek(race.raceId()).map(LiveRaceState::calculatePositions).orElse(List.of());
+        List<LiveFeedV1.Standing> standings = new ArrayList<>();
+        Set<Long> timed = new HashSet<>();
+        for (LiveTimingRowDto r : rows) {
+            timed.add(r.entryId());
+            standings.add(new LiveFeedV1.Standing(r.position(), r.driverName(), race.carNumber(r.entryId()),
+                    r.lapsCompleted(), r.lastLapMs(), r.bestLapMs(), r.gapToLeaderMs(), r.gapToAheadMs(),
+                    r.lapsDown()));
+        }
+        // Cars on the grid that haven't crossed the line yet follow, in grid order
+        int leaderLaps = rows.isEmpty() ? 0 : rows.get(0).lapsCompleted();
+        for (LiveFeedRaceLookup.GridCar car : race.grid()) {
+            if (car.displayName() != null && !timed.contains(car.entryId())) {
+                standings.add(new LiveFeedV1.Standing(standings.size() + 1, car.displayName(), car.carNumber(),
+                        0, null, null, null, null, leaderLaps));
+            }
+        }
         boolean pending = RaceStatus.PENDING.name().equals(race.status());
         long elapsed = pending ? 0 : raceClock.elapsedMs(now);
         Long remaining = race.durationMs() == null ? null : Math.max(0, race.durationMs() - elapsed);
@@ -356,6 +370,17 @@ public class LiveFeedPublisher implements SmartLifecycle {
 
         synchronized boolean running() {
             return runningSince != null;
+        }
+
+        /** The running order at the finish, kept once the live state has gone. */
+        private List<LiveTimingRowDto> finalRows;
+
+        synchronized void freeze(List<LiveTimingRowDto> rows) {
+            finalRows = List.copyOf(rows);
+        }
+
+        synchronized List<LiveTimingRowDto> frozenRows() {
+            return finalRows;
         }
     }
 
