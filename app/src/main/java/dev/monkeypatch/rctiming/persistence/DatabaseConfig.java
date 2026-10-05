@@ -3,13 +3,11 @@ package dev.monkeypatch.rctiming.persistence;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import dev.monkeypatch.rctiming.persistence.vendor.DatabaseVendor;
-import org.hibernate.cfg.AvailableSettings;
 import org.jooq.ConnectionProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.flyway.FlywayConfigurationCustomizer;
 import org.springframework.boot.autoconfigure.jooq.DefaultConfigurationCustomizer;
 import org.springframework.boot.autoconfigure.jooq.ExceptionTranslatorExecuteListener;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,11 +24,11 @@ import java.nio.file.Path;
 
 /**
  * The one place that knows which database the app runs on (#26). It applies the vendor from
- * {@code rctiming.database.vendor} to the connection pools, Flyway, Hibernate and jOOQ. No other
+ * {@code rctiming.database.vendor} to the connection pools, Flyway and jOOQ. No other
  * class may name a vendor-specific class or dialect; {@code PersistencePortabilityTest} enforces
  * that.
  *
- * <p>There are two pools on the same database. JPA, Flyway and anything inside a transaction use
+ * <p>There are two pools on the same database. Flyway and anything inside a transaction use
  * the write pool, which the vendor may limit to one connection. jOOQ read queries outside a
  * transaction use a read-only pool.
  */
@@ -83,17 +81,12 @@ public class DatabaseConfig {
     }
 
     @Bean
-    HibernatePropertiesCustomizer vendorHibernateDialect() {
-        return hibernateProperties -> hibernateProperties.put(AvailableSettings.DIALECT, vendor.hibernateDialect());
-    }
-
-    @Bean
     DefaultConfigurationCustomizer vendorJooqDialect() {
         return configuration -> configuration.set(vendor.jooqDialect());
     }
 
     /**
-     * jOOQ reports a failed constraint as Spring's data integrity violation, as JPA did. Other
+     * jOOQ reports a failed constraint as Spring's data integrity violation. Other
      * errors get Spring's usual translation.
      */
     @Bean

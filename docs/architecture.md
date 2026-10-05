@@ -17,7 +17,7 @@ Modular monolith — one Spring Boot process, single SQLite database file, insta
 │         │                                       │
 │  ┌──────▼──────────────────────────────────┐    │
 │  │           Domain Core                   │    │
-│  │  JPA entities · services · repositories │    │
+│  │  entities · services · jOOQ repositories│    │
 │  └──────┬──────────────────────────────────┘    │
 │         │                                       │
 │  ┌──────▼────────────┐  ┌───────────────────┐   │
@@ -47,7 +47,7 @@ Live feed relay (internet)           Venue laptop (RCTC)
 
 ### CQRS-lite split
 
-The domain module owns all writes via Hibernate/JPA. A separate query module (`query/`) uses jOOQ for read-side projections — scoring calculations, standings, results, boards. **Hibernate sessions never cross into the query module; jOOQ never lazy-loads.** This boundary is enforced by package structure, not a framework.
+Both sides use jOOQ, with no ORM (#69). The domain module owns all writes: plain entities, each saved and loaded by a repository built on `persistence/JooqRepository`. A separate query module (`query/`) builds the read-side projections in SQL: scoring calculations, standings, results, boards. Nothing is lazy-loaded or saved implicitly; a changed entity reaches the database only through its repository's `save`. This boundary is enforced by package structure, not a framework.
 
 ### Entries come from RaceHub
 
@@ -80,7 +80,7 @@ Stateless — no server-side session. Access tokens (15-min TTL) are returned in
 
 ### Race format config (JSON)
 
-Format configurations are stored as JSON text (checked with `json_valid`) and converted by a JPA `AttributeConverter` (`RaceFormatConfigConverter`). The Java type is a sealed interface (`RaceFormatConfig`) with three record subtypes (`TimedRaceConfig`, `BumpUpConfig`, `PointsFinalsConfig`). Jackson's `@JsonTypeInfo` on the interface provides polymorphic serde. A `type` discriminator column on the table enables SQL-side filtering without deserializing the blob.
+Format configurations are stored as JSON text (checked with `json_valid`) and converted by `RaceFormatConfigConverter`, a `JsonTextConverter` the format repositories use. The Java type is a sealed interface (`RaceFormatConfig`) with three record subtypes (`TimedRaceConfig`, `BumpUpConfig`, `PointsFinalsConfig`). Jackson's `@JsonTypeInfo` on the interface provides polymorphic serde. A `type` discriminator column on the table enables SQL-side filtering without deserializing the blob.
 
 Override patches (FORMAT-07) are stored in a second `configOverride` JSON column and merged at read time — base config from the template snapshot, patches applied on top. Template edits do not affect existing event classes (snapshot-at-assignment, FORMAT-06).
 
@@ -120,7 +120,7 @@ Only officials have accounts. Their roles are stackable — one account can hold
 
 ### Data, backups and packaging
 
-The SQLite file lives in a per-machine data folder outside the install folder, so upgrades keep it. The vendor is chosen in one place (`persistence/DatabaseConfig`), Java code uses only the jOOQ DSL, JPQL and shared converters, and `PersistencePortabilityTest` fails the build on vendor-specific code, so the database could be swapped later (see [development.md](development.md)). Backups are taken when a race day closes, every night and on demand, while racing carries on; `restore` puts one back. The installers (`jpackage`, with their own Java runtime) install the app as a Windows service, a launchd daemon or a systemd unit; see [installing.md](installing.md).
+The SQLite file lives in a per-machine data folder outside the install folder, so upgrades keep it. The vendor is chosen in one place (`persistence/DatabaseConfig`), Java code uses only the jOOQ DSL and shared converters, and `PersistencePortabilityTest` fails the build on vendor-specific code, so the database could be swapped later (see [development.md](development.md)). Backups are taken when a race day closes, every night and on demand, while racing carries on; `restore` puts one back. The installers (`jpackage`, with their own Java runtime) install the app as a Windows service, a launchd daemon or a systemd unit; see [installing.md](installing.md).
 
 ## What's built
 

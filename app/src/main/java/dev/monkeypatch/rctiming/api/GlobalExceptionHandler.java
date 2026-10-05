@@ -3,7 +3,7 @@ package dev.monkeypatch.rctiming.api;
 import dev.monkeypatch.rctiming.domain.user.OfficialChangeRefusedException;
 import dev.monkeypatch.rctiming.backup.BackupFailedException;
 import dev.monkeypatch.rctiming.domain.event.IllegalStateTransitionException;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;

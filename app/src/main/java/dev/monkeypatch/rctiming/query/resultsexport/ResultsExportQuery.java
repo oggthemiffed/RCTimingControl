@@ -7,7 +7,7 @@ import dev.monkeypatch.rctiming.query.championship.ChampionshipStandingsQuery;
 import dev.monkeypatch.rctiming.query.championship.RoundResultDto;
 import dev.monkeypatch.rctiming.query.championship.StandingsRowDto;
 import dev.monkeypatch.rctiming.resultsexport.ResultsExportV1;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.springframework.stereotype.Component;

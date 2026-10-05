@@ -8,7 +8,7 @@ import dev.monkeypatch.rctiming.api.admin.dto.TrackDto;
 import dev.monkeypatch.rctiming.api.admin.dto.TrackLapThresholdDto;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

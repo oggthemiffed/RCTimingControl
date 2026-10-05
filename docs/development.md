@@ -165,14 +165,14 @@ app/src/main/java/dev/monkeypatch/rctiming/
 │   ├── pub/             # Anonymous event schedule, results, championships, about
 │   ├── racecontrol/     # Race lifecycle, marshal, referee, check-in, practice, live feed switch
 │   └── setup/           # First-run setup wizard
-├── domain/              # JPA entities, repositories and write-side services
+├── domain/              # Entities, jOOQ repositories and write-side services
 │   ├── club/ track/ raceclass/ format/ event/ race/ championship/ practice/
 │   ├── competitor/      # Competitors (display name, RaceHub driver ID, BRCA number, club)
 │   ├── entry/           # Entries with primary and secondary transponders, audit log
 │   ├── racehub/         # Entry Export v1 import and class mapping
 │   ├── checkin/         # Check-in desk and transponder swaps
 │   └── user/ auth/      # Officials and refresh tokens
-├── query/               # jOOQ read side (never uses Hibernate): boards, championship standings,
+├── query/               # jOOQ read side: boards, championship standings,
 │                        #   competitors, entries, events, race control, results export
 ├── service/             # Round generation, bump-up seeding, qualifying standings, result snapshots
 ├── timing/              # Decoder listener, live race state, race clock, STOMP broadcasts
@@ -269,7 +269,7 @@ Run `make help` to see all targets. Quick reference:
 ### Making a change
 
 1. Start the dev environment: `make dev-start`
-2. Implement the change, following the patterns in `CLAUDE.md` (domain module for writes, jOOQ query module for reads, no cross-module Hibernate)
+2. Implement the change, following the patterns in `CLAUDE.md` (domain module and its jOOQ repositories for writes, query module for reads)
 3. If adding a database column or table, add a Flyway migration (`V{next}__description.sql`) and re-run `./gradlew :app:generateJooq`
 4. Write or update tests — backend integration tests in `app/src/test/`, frontend unit tests in `frontend/src/`
 5. Run `make test-fast` (backend) and `npm test` in `frontend/` before pushing — add `./gradlew :decoder-protocol:test` if you touched the protocol parser
@@ -288,23 +288,31 @@ Migrations live in one folder per database: `app/src/main/resources/db/migration
 
 ### Keeping the database swappable
 
-The database is chosen in one place. `rctiming.database.vendor` picks it, and `DatabaseConfig` (in `persistence/`) applies it to Flyway, Hibernate and jOOQ. The vendor-specific values themselves live in `persistence/vendor/DatabaseVendor`: the JDBC URL, connection settings (for SQLite: WAL, `synchronous=NORMAL`, foreign keys on, a 5 second busy timeout), how many write connections it allows, and the dialects.
+The database is chosen in one place. `rctiming.database.vendor` picks it, and `DatabaseConfig` (in `persistence/`) applies it to Flyway and jOOQ. The vendor-specific values themselves live in `persistence/vendor/DatabaseVendor`: the JDBC URL, connection settings (for SQLite: WAL, `synchronous=NORMAL`, foreign keys on, a 5 second busy timeout), how many write connections it allows, and the jOOQ dialect.
 
-The app opens two pools on the database: a write pool (one connection for SQLite, used by JPA, Flyway and Spring transactions) and a read pool of `rctiming.database.read-connections` (default 4) whose connections refuse writes. jOOQ queries outside a transaction go to the read pool; inside a transaction they share the writer.
+The app opens two pools on the database: a write pool (one connection for SQLite, used by Flyway and Spring transactions) and a read pool of `rctiming.database.read-connections` (default 4) whose connections refuse writes. jOOQ queries outside a transaction go to the read pool; inside a transaction they share the writer.
 
-Column types the databases disagree on are mapped by converters in `persistence/convert/`, not by the schema: timestamps are `Instant` stored as UTC microseconds, date-only values are ISO text, and JSON columns are text read through `JsonTextConverter` subclasses.
+Column types the databases disagree on are mapped in Java, not by the schema: timestamps are `Instant` stored as UTC microseconds (`InstantMicrosConverter`, applied by the jOOQ codegen), date-only values are ISO text, and JSON columns are text read through subclasses of `persistence/convert/JsonTextConverter` (such as `domain/format/RaceFormatConfigConverter`).
 
 Everywhere else the code stays database-neutral:
 
 - Read queries use the jOOQ DSL only: no `DSL.sql(...)`, `field("...")` or other plain-SQL strings.
-- Repositories use derived queries or JPQL, never `nativeQuery = true`, and entities carry no `columnDefinition`.
+- Repositories use the same jOOQ DSL, extending `persistence/JooqRepository`.
 - A vendor-specific statement that can't be avoided goes behind an interface in `persistence/vendor/`, with one implementation per database.
 
 `PersistencePortabilityTest` scans the main sources, and the compiled classes for any jOOQ method marked `@PlainSQL` (so SQL in a variable is caught too), and fails the build if any of this slips in.
 
+### Keeping the code in step with the schema
+
+With Hibernate gone, nothing checks the schema against the entities at startup (there is no `ddl-auto: validate`). Three things catch a mismatch instead:
+
+- **Generated sources.** Compiling `:app` runs Flyway's migrations into a scratch SQLite file and regenerates the jOOQ classes in `app/src/generated/jooq` from it. A renamed or removed column then breaks the build wherever a repository or query uses it. Commit the regenerated sources with the migration; CI builds with `-x generateJooq`, so it compiles against the committed copy.
+- **Save-and-reload tests.** Each repository has an integration test that saves an entity with every field set, reloads it and changes every field (`persistence/RoundTrip.assertSavedAndReloaded`). A column missing from `toRecord` or `toEntity` fails it. A new column needs a line in the repository and in its test.
+- **Real migrations in tests.** The integration tests run against a SQLite file built by the same migrations, so constraints and defaults are the real ones.
+
 Moving to another database means:
 
-1. Add a constant to `DatabaseVendor` with its migrations folder name, jOOQ and Hibernate dialects, JDBC URL, connection settings and write-connection limit.
+1. Add a constant to `DatabaseVendor` with its migrations folder name, jOOQ dialect, JDBC URL, connection settings and write-connection limit.
 2. Add baseline migrations under `db/migration/{vendor}/` (and the dev seeds and test data folders).
 3. Add the JDBC driver and Flyway database support to `app/build.gradle.kts`.
 4. Set `rctiming.database.vendor`, and point the jOOQ codegen in `app/build.gradle.kts` at the new migrations.

@@ -63,7 +63,7 @@ class PracticeTimingServiceTest {
 
         runningSession = new PracticeSession();
         runningSession.setName("Test Session");
-        // Use reflection to set id since JPA @GeneratedValue won't be called in unit tests
+        // Use reflection to set the id the repository would set on save
         try {
             var idField = PracticeSession.class.getDeclaredField("id");
             idField.setAccessible(true);

@@ -32,7 +32,6 @@ configurations.named("jooqGenerator") {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
@@ -46,9 +45,9 @@ dependencies {
 
     // #26: the app keeps its data in one SQLite file; only persistence/ may use these directly
     implementation("org.xerial:sqlite-jdbc:3.50.3.0")
-    implementation("org.hibernate.orm:hibernate-community-dialects")
 
-    implementation("org.jooq:jooq")
+    // jOOQ for all reads and writes, with Spring JDBC transactions and the Hikari pools (#69)
+    implementation("org.springframework.boot:spring-boot-starter-jooq")
 
     // L1: the app reads the decoder directly (DecoderListener) using the shared RC-4 parser
     implementation(project(":decoder-protocol"))

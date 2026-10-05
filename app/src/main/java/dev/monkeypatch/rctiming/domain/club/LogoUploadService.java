@@ -1,7 +1,7 @@
 package dev.monkeypatch.rctiming.domain.club;
 
 import dev.monkeypatch.rctiming.infrastructure.storage.ObjectStorageService;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;

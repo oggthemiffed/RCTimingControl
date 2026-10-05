@@ -11,7 +11,7 @@ import dev.monkeypatch.rctiming.timing.LiveRaceState;
 import dev.monkeypatch.rctiming.timing.RaceClockService;
 import dev.monkeypatch.rctiming.timing.dto.RaceClockDto;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -15,7 +15,7 @@ import dev.monkeypatch.rctiming.domain.racehub.RaceHubEntryExport.ExportEntry;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult.Action;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult.Row;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult.UnmappedClass;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

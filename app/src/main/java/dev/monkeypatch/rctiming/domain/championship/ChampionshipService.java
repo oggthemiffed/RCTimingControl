@@ -15,7 +15,7 @@ import dev.monkeypatch.rctiming.api.admin.dto.UpdatePointsScaleRequest;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

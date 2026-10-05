@@ -3,17 +3,13 @@ spring:
     resources:
       # SpaConfig serves the bundled frontend instead of Boot's default static mapping
       add-mappings: false
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    open-in-view: false
   flyway:
     enabled: true
 
 rctiming:
   database:
-    # The database the app runs on. DatabaseConfig applies it to the connection pools, Flyway,
-    # Hibernate and jOOQ.
+    # The database the app runs on. DatabaseConfig applies it to the connection pools, Flyway
+    # and jOOQ.
     vendor: sqlite
     # Folder holding the database file. Unset, it is the per-user app-data folder.
     data-directory: ${RCTIMING_DATA_DIR:}
