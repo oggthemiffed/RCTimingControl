@@ -118,6 +118,20 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
         return (Instant) get(6);
     }
 
+    /**
+     * Setter for <code>users.disabled_at</code>.
+     */
+    public void setDisabledAt(Instant value) {
+        set(7, value);
+    }
+
+    /**
+     * Getter for <code>users.disabled_at</code>.
+     */
+    public Instant getDisabledAt() {
+        return (Instant) get(7);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -141,7 +155,7 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
     /**
      * Create a detached, initialised UsersRecord
      */
-    public UsersRecord(Long id, String email, String passwordHash, String firstName, String lastName, Instant createdAt, Instant updatedAt) {
+    public UsersRecord(Long id, String email, String passwordHash, String firstName, String lastName, Instant createdAt, Instant updatedAt, Instant disabledAt) {
         super(Users.USERS);
 
         setId(id);
@@ -151,6 +165,7 @@ public class UsersRecord extends UpdatableRecordImpl<UsersRecord> {
         setLastName(lastName);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
+        setDisabledAt(disabledAt);
         resetChangedOnNotNull();
     }
 }
