@@ -40,6 +40,7 @@ import { EventManagementHelp } from '@/help/EventManagementHelp';
 import EventClassSection from './EventClassSection';
 import EntryListSection from './EntryListSection';
 import RaceHubImportDialog from './RaceHubImportDialog';
+import DownloadResultsButton from './DownloadResultsButton';
 
 // ── Status colors ──────────────────────────────────────────────────────────
 
@@ -226,6 +227,7 @@ export default function EventDetailPage() {
   const validNextStatuses = VALID_NEXT[data.status];
   const confirmCopy = transitionTarget ? transitionConfirmCopy[transitionTarget] : null;
   const canEditDetails = data.status === 'DRAFT';
+  const hasResults = data.status === 'IN_PROGRESS' || data.status === 'COMPLETED';
   const trackName = tracks.find(t => t.id === data.trackId)?.name ?? null;
 
   return (
@@ -254,8 +256,9 @@ export default function EventDetailPage() {
           </p>
         </div>
 
-        {validNextStatuses.length > 0 && (
+        {(validNextStatuses.length > 0 || hasResults) && (
           <div className="flex gap-2 flex-wrap">
+            {hasResults && <DownloadResultsButton eventId={id} />}
             {validNextStatuses.map(target => (
               <Button
                 key={target}

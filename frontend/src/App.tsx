@@ -21,6 +21,7 @@ import FormatsPage from '@/pages/admin/formats/FormatsPage';
 import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
 import DecoderSettingsPage from '@/pages/admin/decoder/DecoderSettingsPage';
 import BackupsPage from '@/pages/admin/backups/BackupsPage';
+import ResultsExportsPage from '@/pages/admin/results-exports/ResultsExportsPage';
 import CompetitorsPage from '@/pages/admin/competitors/CompetitorsPage';
 import CheckInPage from '@/pages/race-control/check-in/CheckInPage';
 import RaceControlLayout from '@/pages/race-control/RaceControlLayout';
@@ -77,6 +78,7 @@ const router = createBrowserRouter([
           { path: 'race-control', element: <RaceControlSelectPage /> },
           { path: 'decoder', element: <ProtectedRoute roles={['ADMIN']}><DecoderSettingsPage /></ProtectedRoute> },
           { path: 'backups', element: <ProtectedRoute roles={['ADMIN']}><BackupsPage /></ProtectedRoute> },
+          { path: 'results-exports', element: <ProtectedRoute roles={['ADMIN']}><ResultsExportsPage /></ProtectedRoute> },
           { path: 'audio', element: <AdminAudioSettingsPage /> },
           { path: 'competitors', element: <CompetitorsPage /> },
         ],
