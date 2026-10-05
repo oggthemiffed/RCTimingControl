@@ -148,7 +148,6 @@ public class ResultSnapshotService {
     private Map<Long, EntryInfo> resolveEntryInfo(long raceId) {
         List<RaceEntry> raceEntries = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId);
         return raceEntries.stream()
-                .filter(re -> re.getEntryId() != 0L)
                 .collect(Collectors.toMap(
                         RaceEntry::getEntryId,
                         re -> {

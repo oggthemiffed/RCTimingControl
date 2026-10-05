@@ -361,19 +361,10 @@ public class RoundGeneratorService {
                     race.setStatus(RaceStatus.PENDING);
                     race.setCreatedAt(roundNow);
                     race.setUpdatedAt(roundNow);
-                    Race savedRace = raceRepository.save(race);
-
-                    // Create empty RaceEntry rows with no gridPosition — seeded by BumpUpSeedingService
-                    // after qualifying completes (called from plan 05 state machine transition).
-                    int carsPerFinal = finalsConfig[1];
-                    for (int slot = 0; slot < carsPerFinal; slot++) {
-                        RaceEntry entry = new RaceEntry();
-                        entry.setRaceId(savedRace.getId());
-                        entry.setEntryId(0L); // placeholder — BumpUpSeedingService fills this
-                        entry.setGridPosition(null);
-                        entry.setBumped(f < finalsCount - 1 && slot >= (carsPerFinal - finalsConfig[2]));
-                        raceEntryRepository.save(entry);
-                    }
+                    // Finals start with an empty grid: BumpUpSeedingService seeds it from the
+                    // qualifying standings and reserves its bump slots. No placeholder rows, since
+                    // every race_entries row must point at a real entry (#45).
+                    raceRepository.save(race);
                 }
             }
         }

@@ -65,6 +65,7 @@ public class RaceRepository extends JooqRepository<Race, RacesRecord> {
         race.setStartedAt(r.getStartedAt());
         race.setFinishedAt(r.getFinishedAt());
         race.setAbandonedAt(r.getAbandonedAt());
+        race.setBumpSlots(r.getBumpSlots() == null ? 0 : r.getBumpSlots());
         race.setCreatedAt(r.getCreatedAt());
         race.setUpdatedAt(r.getUpdatedAt());
         return race;
@@ -84,6 +85,7 @@ public class RaceRepository extends JooqRepository<Race, RacesRecord> {
         r.setStartedAt(race.getStartedAt());
         r.setFinishedAt(race.getFinishedAt());
         r.setAbandonedAt(race.getAbandonedAt());
+        r.setBumpSlots(race.getBumpSlots());
         r.setCreatedAt(race.getCreatedAt());
         r.setUpdatedAt(race.getUpdatedAt());
     }

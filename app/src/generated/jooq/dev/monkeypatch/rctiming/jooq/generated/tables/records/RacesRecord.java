@@ -230,6 +230,20 @@ public class RacesRecord extends UpdatableRecordImpl<RacesRecord> {
         return (Instant) get(14);
     }
 
+    /**
+     * Setter for <code>races.bump_slots</code>.
+     */
+    public void setBumpSlots(Integer value) {
+        set(15, value);
+    }
+
+    /**
+     * Getter for <code>races.bump_slots</code>.
+     */
+    public Integer getBumpSlots() {
+        return (Integer) get(15);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -253,7 +267,7 @@ public class RacesRecord extends UpdatableRecordImpl<RacesRecord> {
     /**
      * Create a detached, initialised RacesRecord
      */
-    public RacesRecord(Long id, Long roundId, Long eventClassId, Integer heatNumber, Integer sequenceInRound, String finalLetter, String startType, Long formatId, String formatOverrides, String status, Instant startedAt, Instant finishedAt, Instant createdAt, Instant updatedAt, Instant abandonedAt) {
+    public RacesRecord(Long id, Long roundId, Long eventClassId, Integer heatNumber, Integer sequenceInRound, String finalLetter, String startType, Long formatId, String formatOverrides, String status, Instant startedAt, Instant finishedAt, Instant createdAt, Instant updatedAt, Instant abandonedAt, Integer bumpSlots) {
         super(Races.RACES);
 
         setId(id);
@@ -271,6 +285,7 @@ public class RacesRecord extends UpdatableRecordImpl<RacesRecord> {
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
         setAbandonedAt(abandonedAt);
+        setBumpSlots(bumpSlots);
         resetChangedOnNotNull();
     }
 }
