@@ -15,6 +15,8 @@ repositories {
 
 dependencies {
     implementation("org.slf4j:slf4j-api:2.0.13")
+    // The live feed test relay (#28); the app already carries Netty for the decoder listener
+    implementation("io.netty:netty-all:4.1.121.Final")
     runtimeOnly("ch.qos.logback:logback-classic:1.5.6")
 
     testImplementation(project(":decoder-protocol"))
@@ -33,6 +35,14 @@ tasks.register<JavaExec>("runSimulator") {
     classpath = sourceSets["main"].runtimeClasspath
     mainClass.set("dev.monkeypatch.rctiming.simulator.SimulatorMain")
     // Pass-through args: ./gradlew :decoder-simulator:runSimulator --args="--mode=generative --port=5100"
+}
+
+tasks.register<JavaExec>("runRelay") {
+    group = "application"
+    description = "Run the live feed test relay and viewer page"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("dev.monkeypatch.rctiming.simulator.relay.LiveFeedRelayMain")
+    // ./gradlew :decoder-simulator:runRelay --args="--port=8099 --token=dev-relay-token"
 }
 
 tasks.test {

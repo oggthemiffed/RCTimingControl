@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useStomp } from '@/hooks/race-control/useStomp';
 import { Badge } from '@/components/ui/badge';
@@ -53,7 +53,8 @@ function StatusPill({ component, state }: StatusPillProps) {
   );
 }
 
-export function DecoderStatusBar() {
+/** The connection status bar at the top of race control; anything passed in sits at its right-hand end. */
+export function DecoderStatusBar({ children }: { children?: ReactNode }) {
   const [decoderState, setDecoderState] = useState<ConnectionState | null>(null);
 
   // Seed initial state from REST on mount and re-poll every 5s to catch missed STOMP disconnects
@@ -82,6 +83,7 @@ export function DecoderStatusBar() {
   return (
     <div className="flex h-8 items-center gap-3 px-4 bg-card border-b shrink-0">
       <StatusPill component="DECODER" state={decoderState} />
+      {children && <div className="ml-auto">{children}</div>}
     </div>
   );
 }

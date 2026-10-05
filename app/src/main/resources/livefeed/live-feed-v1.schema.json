@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rctimingcontrol.local/schemas/live-feed-v1.schema.json",
+  "title": "Live Feed v1",
+  "description": "One race update from RCTimingControl to the live feed relay (#28). People appear by display name only.",
+  "type": "object",
+  "required": ["schema_version", "type", "sequence", "sent_at", "event", "race", "standings"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "type": { "const": "race" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "sent_at": { "type": "string", "format": "date-time" },
+    "event": {
+      "type": "object",
+      "required": ["rctc_event_id", "name", "date"],
+      "properties": {
+        "rctc_event_id": { "type": "integer" },
+        "name": { "type": "string" },
+        "date": { "type": "string", "format": "date" }
+      }
+    },
+    "race": {
+      "type": "object",
+      "required": ["rctc_race_id", "class_name", "round_type", "round_number", "heat_number", "final_letter", "status",
+        "clock"],
+      "properties": {
+        "rctc_race_id": { "type": "integer" },
+        "class_name": { "type": ["string", "null"] },
+        "round_type": { "enum": ["PRACTICE", "QUALIFIER", "FINAL"] },
+        "round_number": { "type": "integer" },
+        "heat_number": { "type": "integer" },
+        "final_letter": { "type": ["string", "null"] },
+        "status": { "enum": ["PENDING", "GRID", "RUNNING", "STOPPED", "FINISHED"] },
+        "clock": {
+          "type": "object",
+          "required": ["elapsed_ms", "duration_ms", "remaining_ms", "running"],
+          "properties": {
+            "elapsed_ms": { "type": "integer", "minimum": 0 },
+            "duration_ms": { "type": ["integer", "null"], "minimum": 0 },
+            "remaining_ms": { "type": ["integer", "null"], "minimum": 0 },
+            "running": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "standings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["position", "display_name", "car_number", "laps", "last_lap_ms", "best_lap_ms", "gap_to_leader_ms",
+          "gap_to_ahead_ms", "laps_down"],
+        "additionalProperties": false,
+        "properties": {
+          "position": { "type": "integer", "minimum": 1 },
+          "display_name": { "type": "string" },
+          "car_number": { "type": ["integer", "null"] },
+          "laps": { "type": "integer", "minimum": 0 },
+          "last_lap_ms": { "type": ["integer", "null"], "minimum": 0 },
+          "best_lap_ms": { "type": ["integer", "null"], "minimum": 0 },
+          "gap_to_leader_ms": { "type": ["integer", "null"], "minimum": 0 },
+          "gap_to_ahead_ms": { "type": ["integer", "null"], "minimum": 0 },
+          "laps_down": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}

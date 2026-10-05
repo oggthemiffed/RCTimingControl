@@ -1,0 +1,93 @@
+package dev.monkeypatch.rctiming.livefeed;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.WebSocket;
+import java.time.Duration;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * The one outbound WebSocket to the relay (#28). Used only from the live feed's own thread, so sends never
+ * overlap. Any failure closes it; the caller decides when to open it again.
+ */
+class LiveFeedConnection {
+
+    private static final Logger log = LoggerFactory.getLogger(LiveFeedConnection.class);
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    private static final long SEND_TIMEOUT_SECONDS = 5;
+
+    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build();
+    private volatile WebSocket webSocket;
+
+    boolean isOpen() {
+        WebSocket ws = webSocket;
+        return ws != null && !ws.isOutputClosed() && !ws.isInputClosed();
+    }
+
+    /** Opens the connection, waiting at most a few seconds. Throws if the relay can't be reached or refuses. */
+    void open(URI relayUrl, String token) throws Exception {
+        close();
+        webSocket = httpClient.newWebSocketBuilder()
+                .connectTimeout(CONNECT_TIMEOUT)
+                .header("Authorization", "Bearer " + token)
+                .buildAsync(relayUrl, new Listener())
+                .get(CONNECT_TIMEOUT.toSeconds() + 1, TimeUnit.SECONDS);
+    }
+
+    /** Sends one message, waiting at most a few seconds. Throws, and closes, if it can't. */
+    void send(String text) throws Exception {
+        WebSocket ws = webSocket;
+        if (ws == null) {
+            throw new IllegalStateException("Not connected to the relay");
+        }
+        try {
+            ws.sendText(text, true).get(SEND_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            close();
+            throw e;
+        }
+    }
+
+    void close() {
+        WebSocket ws = webSocket;
+        webSocket = null;
+        if (ws != null) {
+            try {
+                ws.sendClose(WebSocket.NORMAL_CLOSURE, "").orTimeout(1, TimeUnit.SECONDS);
+            } catch (RuntimeException e) {
+                // Already gone
+            }
+            ws.abort();
+        }
+    }
+
+    /** The relay sends nothing the feed needs; keep reading so pings are answered, and note a close. */
+    private final class Listener implements WebSocket.Listener {
+        @Override
+        public CompletionStage<?> onText(WebSocket ws, CharSequence data, boolean last) {
+            ws.request(1);
+            return null;
+        }
+
+        @Override
+        public CompletionStage<?> onClose(WebSocket ws, int statusCode, String reason) {
+            log.info("Live feed relay closed the connection ({} {})", statusCode, reason);
+            if (webSocket == ws) {
+                webSocket = null;
+            }
+            return null;
+        }
+
+        @Override
+        public void onError(WebSocket ws, Throwable error) {
+            log.info("Live feed connection to the relay failed: {}", error.toString());
+            if (webSocket == ws) {
+                webSocket = null;
+            }
+        }
+    }
+}

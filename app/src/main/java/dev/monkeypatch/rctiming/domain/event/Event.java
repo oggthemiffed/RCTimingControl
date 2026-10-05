@@ -68,6 +68,10 @@ public class Event {
     @Column(name = "results_export_pending", length = 30)
     private String resultsExportPending;
 
+    /** Whether race control sends this event's live timing to the relay while its races run (#28). */
+    @Column(name = "live_feed_enabled", nullable = false)
+    private boolean liveFeedEnabled;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -111,4 +115,7 @@ public class Event {
 
     public String getResultsExportPending() { return resultsExportPending; }
     public void setResultsExportPending(String resultsExportPending) { this.resultsExportPending = resultsExportPending; }
+
+    public boolean isLiveFeedEnabled() { return liveFeedEnabled; }
+    public void setLiveFeedEnabled(boolean liveFeedEnabled) { this.liveFeedEnabled = liveFeedEnabled; }
 }

@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "type": "race",
+  "sequence": 1842,
+  "sent_at": "2026-10-18T14:21:07.512Z",
+  "event": {
+    "rctc_event_id": 21,
+    "name": "Club Round 3",
+    "date": "2026-10-18"
+  },
+  "race": {
+    "rctc_race_id": 412,
+    "class_name": "2WD Buggy",
+    "round_type": "FINAL",
+    "round_number": 1,
+    "heat_number": 1,
+    "final_letter": "A",
+    "status": "RUNNING",
+    "clock": {
+      "elapsed_ms": 183400,
+      "duration_ms": 300000,
+      "remaining_ms": 116600,
+      "running": true
+    }
+  },
+  "standings": [
+    {
+      "position": 1,
+      "display_name": "Ada Lovelace",
+      "car_number": 1,
+      "laps": 13,
+      "last_lap_ms": 13870,
+      "best_lap_ms": 13102,
+      "gap_to_leader_ms": null,
+      "gap_to_ahead_ms": null,
+      "laps_down": 0
+    },
+    {
+      "position": 2,
+      "display_name": "Grace Hopper",
+      "car_number": 2,
+      "laps": 13,
+      "last_lap_ms": 14020,
+      "best_lap_ms": 13250,
+      "gap_to_leader_ms": 2310,
+      "gap_to_ahead_ms": 2310,
+      "laps_down": 0
+    },
+    {
+      "position": 3,
+      "display_name": "Walk-in Wendy",
+      "car_number": null,
+      "laps": 12,
+      "last_lap_ms": 15400,
+      "best_lap_ms": 14011,
+      "gap_to_leader_ms": null,
+      "gap_to_ahead_ms": null,
+      "laps_down": 1
+    }
+  ]
+}

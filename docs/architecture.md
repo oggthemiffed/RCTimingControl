@@ -37,6 +37,10 @@ RaceHub (cloud)                      Venue laptop (RCTC)
   Entry Export v1 JSON                walk-ins added by hand ─┘
   results            ◀──HTTPS POST──  results outbox ◀─ finished races, corrections, day close
   Results Export v1 JSON              (sent in the background, retried until RaceHub answers)
+
+Live feed relay (internet)           Venue laptop (RCTC)
+  viewers' browsers ◀── relay ◀─WSS──  live feed publisher ◀─ live timing (read only)
+                                      (one outbound connection, about once a second)
 ```
 
 ## Key design decisions
@@ -59,6 +63,10 @@ Officials add walk-ins by hand in the admin entry list. A file works with no int
 ### Results go back to RaceHub
 
 For an event imported from RaceHub, the app queues a **Results Export v1** document (`resultsexport/`) when a race finishes, when a finished race is corrected and when the race day is closed. Each one is the whole event with the next revision number, and replaces any older one that hasn't gone yet. A scheduled sender posts them to RaceHub with the club's key and an idempotency key, and retries with a growing wait while RaceHub can't be reached. The request is a mark on the event, saved in race control's own transaction so it survives a crash; a background job builds the export from it, and a slow or missing network never holds a race up. See [results-export-v1.md](results-export-v1.md).
+
+### Live feed to remote viewers
+
+For an event with the feed turned on, `livefeed/LiveFeedPublisher` sends each race on the grid or running to a relay as **Live Feed v1** messages: the running order with display names only, laps, last and best lap, gaps and the race clock. It runs on a thread of its own, opens one outbound WebSocket with the club's key, reads the in-memory live timing and never writes anything, so a slow or missing relay can't hold timing up. A dropped connection is retried with a growing wait, and every race is sent in full when it comes back. See [live-feed-v1.md](live-feed-v1.md).
 
 ### Competitors and transponders
 
@@ -96,6 +104,7 @@ The AMB/MyLaps decoder client runs on a dedicated background thread (Netty 4.1, 
 | `/topic/race/{raceId}/bump-up-alert` | Bump-up prompts when a race finishes |
 | `/topic/practice/{sessionId}/timing`, `/unknown-transponder` | Open practice |
 | `/topic/system/decoder-status` | Whether the decoder is connected |
+| `/topic/system/live-feed-status` | Whether the live feed is connected to its relay |
 
 ## Roles
 
@@ -115,4 +124,4 @@ The SQLite file lives in a per-machine data folder outside the install folder, s
 
 ## What's built
 
-See the [README](../README.md#whats-implemented) for the current feature areas. Still to come: results export to RaceHub, a live feed relay and a streaming overlay (#27 to #29).
+See the [README](../README.md#whats-implemented) for the current feature areas. Still to come: a streaming overlay (#29).

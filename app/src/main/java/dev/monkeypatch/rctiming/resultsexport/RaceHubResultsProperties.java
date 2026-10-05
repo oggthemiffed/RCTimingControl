@@ -1,10 +1,9 @@
 package dev.monkeypatch.rctiming.resultsexport;
 
+import dev.monkeypatch.rctiming.config.LoopbackHosts;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +26,7 @@ public record RaceHubResultsProperties(URI resultsUrl, String token) {
             resultsUrl = null;
         }
         if (resultsUrl != null && !"https".equalsIgnoreCase(resultsUrl.getScheme())
-                && !("http".equalsIgnoreCase(resultsUrl.getScheme()) && isLoopback(resultsUrl.getHost()))) {
+                && !("http".equalsIgnoreCase(resultsUrl.getScheme()) && LoopbackHosts.isLoopback(resultsUrl.getHost()))) {
             throw new IllegalArgumentException(URL_SETTING + " must be an https address, so the club's key "
                     + "isn't sent in the clear (plain http works only to this machine), not " + resultsUrl);
         }
@@ -51,25 +50,5 @@ public record RaceHubResultsProperties(URI resultsUrl, String token) {
             missing.add(TOKEN_SETTING);
         }
         return missing;
-    }
-
-    private static boolean isLoopback(String host) {
-        if (host == null) {
-            return false;
-        }
-        if ("localhost".equalsIgnoreCase(host)) {
-            return true;
-        }
-        String literal = host.startsWith("[") && host.endsWith("]") ? host.substring(1, host.length() - 1) : host;
-        // Only IP literals are checked, so no name lookup happens while the settings load
-        boolean ipLiteral = literal.matches("\\d{1,3}(\\.\\d{1,3}){3}") || literal.contains(":");
-        if (!ipLiteral) {
-            return false;
-        }
-        try {
-            return InetAddress.getByName(literal).isLoopbackAddress();
-        } catch (UnknownHostException e) {
-            return false;
-        }
     }
 }

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live feed viewer</title>
+  <style>
+    :root { color-scheme: light dark; --muted: #6b7280; --line: #d1d5db; --live: #16a34a; --warn: #d97706; }
+    body { font-family: system-ui, sans-serif; margin: 0 auto; padding: 16px; max-width: 900px; }
+    header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    h1 { font-size: 1.25rem; margin: 0; }
+    #connection { font-size: 0.85rem; color: var(--warn); }
+    #connection.live { color: var(--live); }
+    .race { margin-top: 24px; }
+    .race h2 { font-size: 1.05rem; margin: 0 0 4px; }
+    .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+    th { font-size: 0.75rem; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+    td.num, th.num { text-align: right; }
+    .empty { color: var(--muted); padding: 24px 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Live feed viewer</h1>
+    <span id="connection">Connecting…</span>
+  </header>
+  <p class="meta">Development viewer for the live feed test relay. It shows each race the app sends.</p>
+  <main id="races"><p class="empty">Waiting for a race. Turn the live feed on for an event in race control and start a race.</p></main>
+
+  <script>
+    const races = new Map();   // race id -> { message, receivedAt }
+    const connection = document.getElementById('connection');
+    const container = document.getElementById('races');
+
+    function time(ms) {
+      if (ms == null) return '';
+      const total = Math.max(0, Math.round(ms / 1000));
+      return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+    }
+    function lap(ms) { return ms == null ? '' : (ms / 1000).toFixed(3); }
+    function gap(row) {
+      if (row.position === 1) return '';
+      if (row.laps_down > 0) return `+${row.laps_down} lap${row.laps_down === 1 ? '' : 's'}`;
+      return row.gap_to_leader_ms == null ? '' : `+${(row.gap_to_leader_ms / 1000).toFixed(3)}`;
+    }
+    function cell(tr, text, numeric) {
+      const td = document.createElement('td');
+      td.textContent = text ?? '';
+      if (numeric) td.className = 'num';
+      tr.appendChild(td);
+    }
+
+    function render() {
+      if (races.size === 0) return;
+      container.replaceChildren();
+      const now = Date.now();
+      for (const { message, receivedAt } of [...races.values()].sort((a, b) => b.message.race.rctc_race_id - a.message.race.rctc_race_id)) {
+        const race = message.race;
+        const clock = race.clock;
+        const elapsed = clock.elapsed_ms + (clock.running ? now - receivedAt : 0);
+        const section = document.createElement('section');
+        section.className = 'race';
+        const title = document.createElement('h2');
+        const round = race.round_type === 'FINAL' ? `Final ${race.final_letter ?? ''}` : `${race.round_type.toLowerCase()} round ${race.round_number}, heat ${race.heat_number}`;
+        title.textContent = `${race.class_name ?? 'Race'}: ${round}`;
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const remaining = clock.duration_ms == null ? '' : ` · ${time(Math.max(0, clock.duration_ms - elapsed))} to go`;
+        meta.textContent = `${message.event.name} · ${race.status.toLowerCase()} · ${time(elapsed)}${remaining}`;
+        section.append(title, meta);
+
+        const table = document.createElement('table');
+        table.innerHTML = '<thead><tr><th>Pos</th><th>Driver</th><th class="num">Car</th><th class="num">Laps</th><th class="num">Last</th><th class="num">Best</th><th class="num">Gap</th></tr></thead>';
+        const body = document.createElement('tbody');
+        for (const row of message.standings) {
+          const tr = document.createElement('tr');
+          cell(tr, row.position);
+          cell(tr, row.display_name);
+          cell(tr, row.car_number, true);
+          cell(tr, row.laps, true);
+          cell(tr, lap(row.last_lap_ms), true);
+          cell(tr, lap(row.best_lap_ms), true);
+          cell(tr, gap(row), true);
+          body.appendChild(tr);
+        }
+        table.appendChild(body);
+        section.appendChild(table);
+        container.appendChild(section);
+      }
+    }
+
+    function connect() {
+      const socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/watch`);
+      socket.onopen = () => { connection.textContent = 'Connected to the relay'; connection.className = 'live'; };
+      socket.onmessage = event => {
+        const message = JSON.parse(event.data);
+        if (message.schema_version !== 1 || message.type !== 'race') return;
+        const known = races.get(message.race.rctc_race_id);
+        if (known && known.message.sequence > message.sequence) return;
+        races.set(message.race.rctc_race_id, { message, receivedAt: Date.now() });
+        render();
+      };
+      socket.onclose = () => {
+        connection.textContent = 'Relay unreachable, retrying…';
+        connection.className = '';
+        setTimeout(connect, 2000);
+      };
+    }
+
+    connect();
+    setInterval(render, 1000);
+  </script>
+</body>
+</html>

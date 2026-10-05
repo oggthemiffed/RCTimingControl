@@ -14,6 +14,7 @@ export function RaceControlHelp() {
         <li><span className="font-semibold">Start / Stop:</span> Use the "Start" button from the Grid editor to begin timing, and the "Stop" button during a running race to pause it.</li>
         <li><span className="font-semibold">Link unknown transponder:</span> If a transponder is detected but not linked to an entry, a badge appears with a "Link to entry" button — resolve it during the race.</li>
         <li><span className="font-semibold">Jump to race:</span> Select a pending race while another is active and click "Jump to this race" to skip ahead in the run order.</li>
+        <li><span className="font-semibold">Live feed:</span> When the club has a live feed relay set up, the status bar shows LIVE FEED next to the decoder. Turn on "Send this event" so people away from the track can follow each race; racing carries on as normal if the feed drops out.</li>
       </ul>
 
       <div className="mt-4 rounded-md bg-muted p-3 text-sm">

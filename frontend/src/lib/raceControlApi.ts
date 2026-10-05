@@ -287,6 +287,36 @@ export async function fetchDecoderStatus(): Promise<DecoderStatusDto> {
   return data;
 }
 
+// ── Live feed for remote viewers (#28) ───────────────────────────────────────
+
+export type LiveFeedState = 'NOT_SET_UP' | 'IDLE' | 'CONNECTING' | 'CONNECTED' | 'RECONNECTING';
+
+export type LiveFeedStatusDto = {
+  state: LiveFeedState;
+  /** The relay's host name; null when no relay is set. */
+  relayHost: string | null;
+  missingSettings: string[];
+};
+
+export type LiveFeedSettingDto = {
+  enabled: boolean;
+};
+
+export async function fetchLiveFeedStatus(): Promise<LiveFeedStatusDto> {
+  const { data } = await api.get<LiveFeedStatusDto>('/api/v1/race-control/live-feed/status');
+  return data;
+}
+
+export async function getLiveFeedSetting(eventId: number): Promise<LiveFeedSettingDto> {
+  const { data } = await api.get<LiveFeedSettingDto>(`/api/v1/race-control/events/${eventId}/live-feed`);
+  return data;
+}
+
+export async function setLiveFeedSetting(eventId: number, enabled: boolean): Promise<LiveFeedSettingDto> {
+  const { data } = await api.put<LiveFeedSettingDto>(`/api/v1/race-control/events/${eventId}/live-feed`, { enabled });
+  return data;
+}
+
 // ── Check-in desk and transponder swap (L11) ─────────────────────────────────
 
 export type CheckInEntry = {

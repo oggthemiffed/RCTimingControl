@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.timing;
 
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.timing.dto.DecoderStatusDto;
+import dev.monkeypatch.rctiming.timing.dto.LiveFeedStatusDto;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
 import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import dev.monkeypatch.rctiming.timing.dto.RaceStateChangeDto;
@@ -61,5 +62,10 @@ public class LiveTimingHub {
     public void broadcastBumpUpAlert(long finishedRaceId, List<Long> promotedEntryIds) {
         messagingTemplate.convertAndSend("/topic/race/" + finishedRaceId + "/bump-up-alert",
                 Map.of("finishedRaceId", finishedRaceId, "promotedEntryIds", promotedEntryIds));
+    }
+
+    /** The live feed's connection to the relay, for the race-control status bar (#28). */
+    public void broadcastLiveFeedStatus(LiveFeedStatusDto status) {
+        messagingTemplate.convertAndSend("/topic/system/live-feed-status", status);
     }
 }

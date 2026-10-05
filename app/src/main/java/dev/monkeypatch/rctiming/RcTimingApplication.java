@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming;
 import dev.monkeypatch.rctiming.backup.RestoreCommand;
 import dev.monkeypatch.rctiming.persistence.DataDirectories;
 import dev.monkeypatch.rctiming.simulator.SimulatorMain;
+import dev.monkeypatch.rctiming.simulator.relay.LiveFeedRelayMain;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -21,6 +22,11 @@ public class RcTimingApplication {
         }
         if (args.length > 0 && args[0].equals("restore")) {
             System.exit(RestoreCommand.run(Arrays.copyOfRange(args, 1, args.length)));
+        }
+        if (args.length > 0 && args[0].equals("relay")) {
+            // A stand-in relay and viewer page for trying the live feed (#28)
+            LiveFeedRelayMain.main(Arrays.copyOfRange(args, 1, args.length));
+            return;
         }
         if (args.length > 0 && args[0].equals("simulate")) {
             SimulatorMain.main(simulatorArguments(Arrays.copyOfRange(args, 1, args.length)));

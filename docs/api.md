@@ -509,6 +509,23 @@ GET /api/v1/admin/events/{eventId}/results-export
 
 ---
 
+## Race control — Live feed
+
+See [live-feed-v1.md](live-feed-v1.md) for what is sent and when. Any official may read; only `RACE_DIRECTOR` or `ADMIN` may change an event's setting.
+
+```http
+GET /api/v1/race-control/live-feed/status
+```
+**200 OK** — `{ "state": "CONNECTED", "relayHost": "relay.example", "missingSettings": [] }`. `state` is `NOT_SET_UP` (the relay address or key is missing, named in `missingSettings`), `IDLE`, `CONNECTING`, `CONNECTED` or `RECONNECTING`. The same object is pushed to `/topic/system/live-feed-status` whenever the state changes.
+
+```http
+GET /api/v1/race-control/events/{eventId}/live-feed
+PUT /api/v1/race-control/events/{eventId}/live-feed   { "enabled": true }
+```
+**200 OK** — `{ "enabled": true }`: whether the event's races are sent. **404** for an unknown event; **403** for a `PUT` by a referee.
+
+---
+
 ## Error responses
 
 All errors use [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457):

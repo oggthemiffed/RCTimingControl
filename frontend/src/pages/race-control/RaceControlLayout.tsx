@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/sheet';
 import { useHelp } from '@/context/HelpContext';
 import { DecoderStatusBar } from './panels/DecoderStatusBar';
+import { LiveFeedStatus } from './panels/LiveFeedStatus';
 import { RaceControlErrorBoundary } from '@/components/RaceControlErrorBoundary';
 
 export default function RaceControlLayout() {
@@ -100,7 +101,9 @@ export default function RaceControlLayout() {
 
       <Separator />
 
-      <DecoderStatusBar />
+      <DecoderStatusBar>
+        {eventId && <LiveFeedStatus eventId={Number(eventId)} />}
+      </DecoderStatusBar>
 
       {/* Page content fills remaining height */}
       <div className="flex-1 overflow-hidden">
