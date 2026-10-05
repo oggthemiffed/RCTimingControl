@@ -124,7 +124,10 @@ jobs:
               echo "Service runs as $user"
               test "$user" != root ;;
             macOS)   sudo launchctl print system/dev.monkeypatch.rctiming-RCTimingControl | grep -E 'state|path' ;;
-            Windows) powershell -Command "(Get-Service RCTimingControl).StartType" | tee /dev/stderr | grep -q Automatic ;;
+            Windows)
+              start_type=$(powershell -NoProfile -Command "(Get-Service RCTimingControl).StartType" | tr -d '\r')
+              echo "Service start type: $start_type"
+              test "$start_type" = Automatic ;;
           esac
 
       - name: Check other devices are let through the firewall (Windows)
