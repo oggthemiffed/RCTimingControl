@@ -48,7 +48,7 @@ public class PracticeSessionService {
         if (request.eventId() != null) {
             Event event = eventRepository.findById(request.eventId())
                     .orElseThrow(() -> new IllegalArgumentException("Event not found: " + request.eventId()));
-            session.setEvent(event);
+            session.setEventId(event.getId());
         }
 
         if (request.bestLapN() != null) {
@@ -117,8 +117,10 @@ public class PracticeSessionService {
         return new PracticeSessionDto(
                 session.getId(),
                 session.getName(),
-                session.getEvent() != null ? session.getEvent().getId() : null,
-                session.getEvent() != null ? session.getEvent().getName() : null,
+                session.getEventId(),
+                session.getEventId() != null
+                        ? eventRepository.findById(session.getEventId()).map(Event::getName).orElse(null)
+                        : null,
                 session.getStatus(),
                 session.getBestLapN(),
                 session.getStartedAt(),

@@ -53,6 +53,7 @@ public class LiveFeedController {
     public LiveFeedSettingDto update(@PathVariable long eventId, @Valid @RequestBody LiveFeedSettingDto request) {
         Event event = event(eventId);
         event.setLiveFeedEnabled(request.enabled());
+        eventRepository.save(event);
         return new LiveFeedSettingDto(event.isLiveFeedEnabled());
     }
 

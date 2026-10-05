@@ -233,10 +233,10 @@ public class PracticeTimingService {
 
     /** The competitor whose active entry in the session's event uses this transponder, if any. */
     private String resolveCompetitorName(PracticeSession session, String transponderNumber) {
-        if (session.getEvent() == null) {
+        if (session.getEventId() == null) {
             return null;
         }
-        return entryRepository.findByEventId(session.getEvent().getId()).stream()
+        return entryRepository.findByEventId(session.getEventId()).stream()
                 .filter(e -> e.getStatus() != EntryStatus.WITHDRAWN)
                 .filter(e -> transponderNumber.equals(e.getTransponderNumberSnapshot())
                         || transponderNumber.equals(e.getSecondaryTransponderNumber()))

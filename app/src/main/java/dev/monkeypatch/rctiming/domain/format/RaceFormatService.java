@@ -88,7 +88,7 @@ public class RaceFormatService {
 
         EventClass eventClass = new EventClass();
         eventClass.setConfigSnapshot(snapshot);
-        eventClass.setTemplate(template);
+        eventClass.setTemplateId(template.getId());
         return eventClass;
     }
 

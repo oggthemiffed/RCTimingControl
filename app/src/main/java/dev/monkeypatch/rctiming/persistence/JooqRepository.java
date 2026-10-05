@@ -55,6 +55,12 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
         return findWhere(null);
     }
 
+    public List<E> findAllById(Iterable<Long> ids) {
+        List<Long> wanted = new ArrayList<>();
+        ids.forEach(wanted::add);
+        return wanted.isEmpty() ? List.of() : findWhere(id.in(wanted));
+    }
+
     public boolean existsById(Long entityId) {
         return dsl.fetchExists(table, id.eq(entityId));
     }
@@ -84,6 +90,16 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
             dsl.insertInto(table).set(record).execute();
         }
         return entity;
+    }
+
+    /** The same as {@link #save}: jOOQ writes straight away, so there is nothing to flush. */
+    @Transactional
+    public E saveAndFlush(E entity) {
+        return save(entity);
+    }
+
+    /** Does nothing: jOOQ writes straight away. Kept so callers written for JPA still compile. */
+    public void flush() {
     }
 
     @Transactional

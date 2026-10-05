@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.domain.practice;
 
-import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.user.User;
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -16,9 +15,8 @@ public class PracticeSession {
     @Column(nullable = false, length = 200)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id")
-    private Event event;  // nullable for standalone sessions
+    @Column(name = "event_id")
+    private Long eventId;  // nullable for standalone sessions
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -49,8 +47,8 @@ public class PracticeSession {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; this.updatedAt = Instant.now(); }
 
-    public Event getEvent() { return event; }
-    public void setEvent(Event event) { this.event = event; this.updatedAt = Instant.now(); }
+    public Long getEventId() { return eventId; }
+    public void setEventId(Long eventId) { this.eventId = eventId; this.updatedAt = Instant.now(); }
 
     public PracticeStatus getStatus() { return status; }
     public void setStatus(PracticeStatus status) { this.status = status; this.updatedAt = Instant.now(); }
