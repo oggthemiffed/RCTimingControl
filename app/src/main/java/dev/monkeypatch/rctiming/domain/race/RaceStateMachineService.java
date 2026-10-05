@@ -120,6 +120,12 @@ public class RaceStateMachineService {
         }
         race.setStatus(target);
 
+        // Save before anything reacts, so the result snapshot and the listeners read the race's new
+        // status and times from the database
+        if (raceRepository != null && race.getId() != null) {
+            raceRepository.save(race);
+        }
+
         // Publish domain event for audio/other listeners
         if (eventPublisher != null && race.getId() != null) {
             eventPublisher.publishEvent(new RaceStatusChangedEvent(this, race.getId(), target));

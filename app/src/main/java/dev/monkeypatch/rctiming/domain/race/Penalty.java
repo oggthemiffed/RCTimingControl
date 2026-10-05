@@ -1,41 +1,25 @@
 package dev.monkeypatch.rctiming.domain.race;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-@Entity
-@Table(name = "penalties")
 public class Penalty {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "race_id", nullable = false)
     private Long raceId;
 
-    @Column(name = "entry_id", nullable = false)
     private Long entryId;
 
-    @Column(name = "penalty_type", nullable = false, length = 20)
     private String penaltyType;
 
-    @Column(nullable = false)
     private BigDecimal value;
 
     private String reason;
 
-    @Column(name = "applied_by", nullable = false)
     private Long appliedBy;
 
-    @Column(name = "applied_at", nullable = false)
     private Instant appliedAt;
 
     public Long getId() { return id; }

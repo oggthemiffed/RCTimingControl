@@ -1,33 +1,18 @@
 package dev.monkeypatch.rctiming.domain.race;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
-@Entity
-@Table(name = "race_entries")
 public class RaceEntry {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "race_id", nullable = false)
     private Long raceId;
 
-    @Column(name = "entry_id", nullable = false)
     private Long entryId;
 
-    @Column(name = "grid_position")
     private Integer gridPosition;
 
-    @Column(nullable = false)
     private boolean bumped = false;
 
-    @Column(name = "car_number")
     private Integer carNumber;
 
     public Long getId() { return id; }

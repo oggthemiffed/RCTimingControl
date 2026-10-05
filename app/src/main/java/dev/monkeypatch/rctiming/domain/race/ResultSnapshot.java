@@ -1,35 +1,20 @@
 package dev.monkeypatch.rctiming.domain.race;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-@Entity
-@Table(name = "result_snapshots")
 public class ResultSnapshot {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "race_id", nullable = false, unique = true)
     private Long raceId;
 
-    @Column(name = "finished_at", nullable = false)
     private Instant finishedAt;
 
-    @Column(name = "positions_json", nullable = false)
     private String positionsJson;
 
-    @Column(name = "lap_history_json", nullable = false)
     private String lapHistoryJson;
 
-    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     public Long getId() { return id; }
