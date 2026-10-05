@@ -53,6 +53,14 @@ public class Event {
     @Column(name = "racehub_last_revision")
     private Long racehubLastRevision;
 
+    /** The RaceHub event the imported entries came from (#27), so results can be sent back. Null if never imported. */
+    @Column(name = "racehub_event_id", length = 100)
+    private String racehubEventId;
+
+    /** The last revision given to this event's results export (#27); each new export takes the next one. */
+    @Column(name = "results_export_revision", nullable = false)
+    private long resultsExportRevision;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -85,4 +93,12 @@ public class Event {
 
     public Long getRacehubLastRevision() { return racehubLastRevision; }
     public void setRacehubLastRevision(Long racehubLastRevision) { this.racehubLastRevision = racehubLastRevision; }
+
+    public String getRacehubEventId() { return racehubEventId; }
+    public void setRacehubEventId(String racehubEventId) { this.racehubEventId = racehubEventId; }
+
+    public long getResultsExportRevision() { return resultsExportRevision; }
+
+    /** Takes the next results export revision. Load the event with {@code findByIdForUpdate} first. */
+    public long nextResultsExportRevision() { return ++resultsExportRevision; }
 }

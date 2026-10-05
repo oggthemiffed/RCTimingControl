@@ -11,9 +11,13 @@ import dev.monkeypatch.rctiming.domain.race.MarshalPenalty;
 import dev.monkeypatch.rctiming.domain.race.MarshalPenaltyRepository;
 import dev.monkeypatch.rctiming.domain.race.Penalty;
 import dev.monkeypatch.rctiming.domain.race.PenaltyRepository;
+import dev.monkeypatch.rctiming.domain.race.RaceRepository;
+import dev.monkeypatch.rctiming.domain.race.RaceStatus;
+import dev.monkeypatch.rctiming.resultsexport.FinishedRaceCorrected;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.LiveTimingHub;
 import jakarta.validation.Valid;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,19 +46,25 @@ public class RefereeController {
     private final MarshalPenaltyRepository marshalPenaltyRepository;
     private final LapTimingService lapTimingService;
     private final LiveTimingHub liveTimingHub;
+    private final RaceRepository raceRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RefereeController(IncidentReportRepository incidentReportRepository,
                               PenaltyRepository penaltyRepository,
                               MarshalAbsenceRepository marshalAbsenceRepository,
                               MarshalPenaltyRepository marshalPenaltyRepository,
                               LapTimingService lapTimingService,
-                              LiveTimingHub liveTimingHub) {
+                              LiveTimingHub liveTimingHub,
+                              RaceRepository raceRepository,
+                              ApplicationEventPublisher eventPublisher) {
         this.incidentReportRepository = incidentReportRepository;
         this.penaltyRepository = penaltyRepository;
         this.marshalAbsenceRepository = marshalAbsenceRepository;
         this.marshalPenaltyRepository = marshalPenaltyRepository;
         this.lapTimingService = lapTimingService;
         this.liveTimingHub = liveTimingHub;
+        this.raceRepository = raceRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @PostMapping("/race/{raceId}/incident-report")
@@ -95,6 +105,11 @@ public class RefereeController {
         penalty.setAppliedBy(userId);
         penalty.setAppliedAt(Instant.now());
         penaltyRepository.save(penalty);
+
+        if (raceRepository.findById(raceId).map(r -> r.getStatus() == RaceStatus.FINISHED).orElse(false)) {
+            // The race's results have gone out already; send them again with the penalty (#27)
+            eventPublisher.publishEvent(new FinishedRaceCorrected(raceId));
+        }
 
         if ("LAP".equals(req.penaltyType())) {
             lapTimingService.peek(raceId).ifPresent(state -> {

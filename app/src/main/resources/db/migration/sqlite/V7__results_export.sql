@@ -3,10 +3,14 @@
 -- events.racehub_event_id: the RaceHub event an import came from, so results can be sent back to it.
 -- events.results_export_revision: the last revision handed out for the event's results export; each
 --   new export takes the next number, so RaceHub can keep the highest it has seen.
+-- entries.racehub_event_class_id: the RaceHub event_class_id an imported entry was booked in, so
+--   result rows can name it.
 -- races.abandoned_at: set when race control abandons a race, which otherwise finishes like any other.
 -- results_outbox: exports waiting to be sent to RaceHub, and the outcome of each attempt.
 ALTER TABLE events ADD COLUMN racehub_event_id VARCHAR(100);
 ALTER TABLE events ADD COLUMN results_export_revision BIGINT NOT NULL DEFAULT 0;
+
+ALTER TABLE entries ADD COLUMN racehub_event_class_id VARCHAR(100);
 
 ALTER TABLE races ADD COLUMN abandoned_at BIGINT;
 
