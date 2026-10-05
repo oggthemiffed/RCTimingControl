@@ -34,11 +34,11 @@ flowchart TD
     B --> C[Create feature branch\ngit checkout -b feat/my-feature]
     C --> D[Write code & tests]
     D --> E[Commit\ngit commit -m 'feat: description']
-    E --> F{More changes?}
+    E --> G[Push branch\ngit push origin feat/my-feature]
+    G --> H[Open a draft PR after the first push,\nif there isn't one yet]
+    H --> F{More changes?}
     F -- Yes --> D
-    F -- No --> G[Push branch\ngit push origin feat/my-feature]
-    G --> H[Open a draft PR early\nand keep pushing]
-    H --> I[CI runs automatically\nbackend · frontend · E2E]
+    F -- No --> I[CI runs automatically\nbackend · frontend · E2E]
     I --> J{All checks pass?}
     J -- No --> K[Fix issues locally]
     K --> E

@@ -22,7 +22,7 @@
 - ~~**RACER-02**: Racer can add and edit cars (name, primary class, notes); primary class is used for filtering entries and is not a hard constraint~~ **Removed** (#18): competitors have no account; RaceHub owns racer identity, garage and entry.
 - ~~**RACER-03**: Racer owns transponders independently of cars; transponder is selected at entry time, not permanently assigned to a car~~ **Removed** (#18): competitors have no account; RaceHub owns racer identity, garage and entry.
 - ~~**RACER-04**: Racer can view their own entry history and past race results~~ **Removed** (#18): competitors have no account; RaceHub owns racer identity, garage and entry.
-- [x] **RACER-05**: Transponder numbers are unique system-wide; duplicate registration is rejected and flagged for admin resolution **Changed**: transponders belong to an entry, a primary and an optional secondary, and are unique within an event, not system-wide (#14).
+- [x] **RACER-05**: Transponder numbers are unique system-wide; duplicate registration is rejected and flagged for admin resolution **Changed**: transponders belong to an entry, a primary and an optional secondary, and are not unique system-wide. A number already used in the event is accepted with a warning (see RACER-09), check-in refuses a number another competitor holds (#19), and a passing that matches more than one entry goes to the referee (TIMING-08) (#14).
 - ~~**RACER-06**: Cars are archived not deleted; archived cars preserve race history and cannot be used for new entries~~ **Removed** (#18): competitors have no account; RaceHub owns racer identity, garage and entry.
 - [x] **RACER-07**: Entry records a transponder snapshot at submission time; subsequent changes to the racer's transponder list do not affect existing entries **Changed**: the snapshot is the transponders in the RaceHub export, or those typed in for a walk-in (#15, #17).
 - [x] **RACER-08**: Race director can update the transponder assignment on an entry before race start (equipment swap); change is audit-logged **Changed**: the check-in desk swaps a transponder on the day, with an audit entry (#19).
@@ -170,7 +170,7 @@
 - [x] **WALKIN-01**: An admin or race director adds a walk-in entry by hand, with a competitor, class and transponders, until the event is completed (#17)
 - [x] **COMPETITOR-01**: A competitor is the person an entry belongs to (display name, RaceHub driver ID, BRCA number, home club) and has no login (#12)
 - [x] **COMPETITOR-02**: Results, live timing and championship standings group by competitor across meetings (#13)
-- [x] **TRANSPONDER-01**: Each entry has a primary and an optional secondary transponder, unique within the event (#14)
+- [x] **TRANSPONDER-01**: Each entry has a primary and an optional secondary transponder; a number already used in the event is accepted with a warning, not refused (#14)
 - [x] **CHECKIN-01**: A check-in desk marks competitors present, accepts barcode input and swaps transponders on the day with an audit entry (#19)
 - [x] **BOARDS-01**: Spectator boards show the race on now and next, live timing and results on screens at the venue without signing in (#20)
 - [x] **LOCAL-01**: A full meeting runs with no internet connection at the venue (#21)

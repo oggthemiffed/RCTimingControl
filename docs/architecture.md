@@ -58,7 +58,7 @@ Officials add walk-ins by hand in the admin entry list. A file works with no int
 
 A **competitor** is the person an entry belongs to: a display name, the RaceHub driver ID it came from, a BRCA number and a home club. Competitors have no login. Results, live timing and championship standings group by competitor, so one person's history carries across meetings.
 
-Transponders belong to an **entry**, for one event: a primary and an optional secondary number. They are unique within the event, not system-wide. RaceHub snapshots them at booking; the check-in desk can swap them on the day, with an audit trail. When a lap arrives, `LapTimingService` matches the number against both transponders of the entries in the running race. A number that matches nothing, or more than one entry, goes to the referee's unknown-transponder flow and is never silently credited.
+Transponders belong to an **entry**, for one event: a primary and an optional secondary number. They are not unique system-wide, and a number already used in the event is accepted with a warning on import or walk-in, since one competitor may run it in several classes. RaceHub snapshots them at booking; the check-in desk can swap them on the day, with an audit trail, and refuses a number another competitor in the event holds. When a lap arrives, `LapTimingService` matches the number against both transponders of the entries in the running race. A number that matches nothing, or more than one entry, goes to the referee's unknown-transponder flow and is never silently credited.
 
 ### JWT authentication
 

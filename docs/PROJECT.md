@@ -23,7 +23,7 @@ Officials run a full race meeting from a laptop at the track, on Windows, macOS 
 - [x] Entries imported from RaceHub's Entry Export v1, with class mapping — #15, #16
 - [x] Walk-in entries added by hand — #17
 - [x] Competitors with no login; results, live timing and standings group by competitor — #12, #13
-- [x] A primary and a secondary transponder per entry, unique within an event — #14
+- [x] A primary and an optional secondary transponder per entry; a number already used in the event is warned about, not refused — #14
 - [x] Only officials sign in — #18
 - [x] Check-in desk with barcode input and on-the-day transponder swaps; spectator boards — #19, #20
 - [x] A full meeting runs with no internet connection at the venue — #8, #21

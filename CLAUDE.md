@@ -121,7 +121,7 @@ Staff roles are **stackable** — a single user account can hold any combination
 - **Do not store live race positions in the database during a race** — calculate in memory, broadcast over WebSocket, persist only the final result snapshot on `FINISHED`.
 - Protocol parsing (`Rc4TextParser` in `decoder-protocol/`) must stay pure, with no Spring dependencies. Protocol I/O is separate from domain logic.
 - Championship points: calculate on demand from result snapshots; do not increment incrementally.
-- Transponders belong to an entry, not a racer: a primary and an optional secondary number per entry, unique within an event, not system-wide. RaceHub's export snapshots them at booking; check-in can swap them on the day, with an audit trail.
+- Transponders belong to an entry, not a racer: a primary and an optional secondary number per entry, not unique system-wide. A number already used in the event is accepted with a warning on import or walk-in (one competitor may use it in several classes); check-in refuses to swap in a number another competitor holds. RaceHub's export snapshots them at booking; check-in swaps are audit-logged. At race time a number matching more than one entry in the running race goes to the referee.
 - Competitors have no login. Results, live timing and championship standings group by competitor. RCTC stores no contact, date of birth, guardian or payment data.
 - Race format config is snapshot-at-assignment — template edits do not affect existing events (FORMAT-06).
 
