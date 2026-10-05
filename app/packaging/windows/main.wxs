@@ -107,14 +107,16 @@
 
     <UIRef Id="JpUI"/>
 
-    <!-- RC Timing: allow inbound connections to the service, whatever port it is set to use. The
+    <!-- RC Timing: allow inbound connections to the service, whatever port it is set to use, on
+         private and domain networks only, so the laptop is not open to strangers on public Wi-Fi.
+         The
          rule is deleted first so a repair or upgrade does not leave duplicates, and deleted again
          on uninstall. An upgrade removes the old version first (RemoveExistingProducts below), so
          the new version's rule is the one left. -->
     <CustomAction Id="RcClearFirewallRule" Directory="TARGETDIR" Execute="deferred" Impersonate="no" Return="ignore"
                   ExeCommand='"[System64Folder]netsh.exe" advfirewall firewall delete rule name="RC Timing Control"'/>
     <CustomAction Id="RcAddFirewallRule" Directory="TARGETDIR" Execute="deferred" Impersonate="no" Return="ignore"
-                  ExeCommand='"[System64Folder]netsh.exe" advfirewall firewall add rule name="RC Timing Control" dir=in action=allow enable=yes profile=any program="[INSTALLDIR]$(var.JpAppName).exe"'/>
+                  ExeCommand='"[System64Folder]netsh.exe" advfirewall firewall add rule name="RC Timing Control" dir=in action=allow enable=yes profile=private,domain program="[INSTALLDIR]$(var.JpAppName).exe"'/>
     <CustomAction Id="RcRemoveFirewallRule" Directory="TARGETDIR" Execute="deferred" Impersonate="no" Return="ignore"
                   ExeCommand='"[System64Folder]netsh.exe" advfirewall firewall delete rule name="RC Timing Control"'/>
 

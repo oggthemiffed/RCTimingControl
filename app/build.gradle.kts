@@ -243,6 +243,8 @@ val installer by tasks.registering(Exec::class) {
             throw GradleException("Run the installer task with -PbundleFrontend so the package includes the UI")
         }
         delete(installerDir.map { it.dir("out") })
+        // A platform with no customised resources (macOS) stages nothing, but jpackage needs the folder
+        installerDir.get().dir("resources").asFile.mkdirs()
     }
     val jdkHome = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
             .map { it.metadata.installationPath.asFile }

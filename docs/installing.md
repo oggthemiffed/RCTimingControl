@@ -17,7 +17,7 @@ To build an installer yourself, see [Building the installers](#building-the-inst
 
 ## Install
 
-**Windows.** Double-click the `.msi` file and follow the prompts. Windows may say it protected your PC, because the installer is not signed yet. Choose **More info**, then **Run anyway**. The installer also adds a Windows Firewall rule so other devices can connect.
+**Windows.** Double-click the `.msi` file and follow the prompts. Windows may say it protected your PC, because the installer is not signed yet. Choose **More info**, then **Run anyway**. The installer also adds a Windows Firewall rule so other devices can connect on private networks. When the laptop joins the venue network, set that network to **Private** (**Settings → Network & internet → Wi-Fi** or **Ethernet → the network → Private network**). Windows treats new networks as public, and blocks phones from reaching the app on a public network.
 
 **macOS.** The package is not signed yet, so double-clicking it shows a warning. Right-click the `.pkg` file, choose **Open**, then **Open** again. Or open **System Settings → Privacy & Security** and choose **Open Anyway**.
 
@@ -37,7 +37,7 @@ The service starts as soon as the install finishes.
 
 The address by the laptop's name, such as `http://timing-laptop:8080/`, works on most phones and keeps working if the laptop gets a different IP address. If it does not work on a phone, use the IP address instead.
 
-If a phone cannot connect, check that it is on the same network as the laptop and not on mobile data. Then check the laptop's firewall. On macOS with the firewall turned on, allow incoming connections for RC Timing Control in **System Settings → Network → Firewall → Options**. On Linux with `ufw` enabled, run `sudo ufw allow 8080/tcp`.
+If a phone cannot connect, check that it is on the same network as the laptop and not on mobile data. Then check the laptop's firewall. On Windows, check the venue network is set to Private. On macOS with the firewall turned on, allow incoming connections for RC Timing Control in **System Settings → Network → Firewall → Options**. On Linux with `ufw` enabled, run `sudo ufw allow 8080/tcp`.
 
 ## Where things are kept
 
@@ -49,7 +49,7 @@ The data lives outside the install folder, so installing a newer version keeps i
 | macOS | `/Library/Application Support/RCTimingControl` |
 | Linux | `/var/lib/rctimingcontrol` |
 
-The folder holds:
+On Linux the service runs as its own unprivileged user, so use `sudo` to look in the folder. The folder holds:
 
 - `rctiming.db`, the database;
 - `backups/`, the automatic backups;

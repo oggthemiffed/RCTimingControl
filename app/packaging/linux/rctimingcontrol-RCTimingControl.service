@@ -7,8 +7,15 @@ After=network-online.target
 ExecStart=APPLICATION_LAUNCHER
 Restart=on-failure
 RestartSec=5
-# Data, logs and optional settings live in /var/lib/rctimingcontrol, not the install folder
 SuccessExitStatus=143
+# The app is reachable from every device on the venue network, so it runs as its own unprivileged
+# user, not root. DynamicUser also turns on ProtectSystem=strict, PrivateTmp and NoNewPrivileges.
+# StateDirectory gives that user /var/lib/rctimingcontrol (data, logs, optional settings) and
+# keeps it owned by the service on every start, including after a restore run with sudo.
+DynamicUser=yes
+StateDirectory=rctimingcontrol
+StateDirectoryMode=0750
+ProtectHome=yes
 
 [Install]
 WantedBy=multi-user.target

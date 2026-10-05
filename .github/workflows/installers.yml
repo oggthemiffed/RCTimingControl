@@ -14,6 +14,9 @@ on:
       - 'scripts/installer-smoke.sh'
       - '.github/workflows/installers.yml'
 
+permissions:
+  contents: read
+
 jobs:
   installer:
     name: ${{ matrix.name }}
@@ -114,7 +117,12 @@ jobs:
       - name: Check the service starts on boot
         run: |
           case "$RUNNER_OS" in
-            Linux)   systemctl is-enabled rctimingcontrol-RCTimingControl ;;
+            Linux)
+              systemctl is-enabled rctimingcontrol-RCTimingControl
+              pid=$(systemctl show -p MainPID --value rctimingcontrol-RCTimingControl)
+              user=$(ps -o user= -p "$pid")
+              echo "Service runs as $user"
+              test "$user" != root ;;
             macOS)   sudo launchctl print system/dev.monkeypatch.rctiming-RCTimingControl | grep -E 'state|path' ;;
             Windows) powershell -Command "(Get-Service RCTimingControl).StartType" | tee /dev/stderr | grep -q Automatic ;;
           esac
