@@ -417,6 +417,22 @@ GET /boards/races/{raceId}/live-timing
 
 ---
 
+## Admin — Backups
+
+`ADMIN` only. The app also backs up by itself when an event is marked `COMPLETED` and every night (see `docs/development.md` → Backups).
+
+```http
+GET /api/v1/admin/backups
+```
+**200 OK** — `{ "directory": "/media/usb/rctiming", "backups": [BackupFile] }`, newest first. Each `BackupFile` is `{ "name": "rctiming-20261004-220000-day-close.db", "sizeBytes": 3145728, "createdAt": "2026-10-04T22:00:00Z", "reason": "day-close" }`; `reason` is `manual`, `nightly` or `day-close`.
+
+```http
+POST /api/v1/admin/backups
+```
+**201 Created** — the new `BackupFile`. Safe while a race is running. **500** with a `detail` message when the backup folder can't be written (missing, read-only or full).
+
+---
+
 ## Error responses
 
 All errors use [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457):

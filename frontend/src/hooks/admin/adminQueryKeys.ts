@@ -30,4 +30,7 @@ export const adminQueryKeys = {
   competitors: {
     all: () => ['admin', 'competitors'] as const,
   },
+  backups: {
+    all: () => ['admin', 'backups'] as const,
+  },
 };

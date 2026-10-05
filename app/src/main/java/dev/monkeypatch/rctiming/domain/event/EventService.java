@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.api.admin.dto.CreateEventRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.EventDto;
 import dev.monkeypatch.rctiming.api.admin.dto.UpdateEventRequest;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,11 +16,14 @@ public class EventService {
 
     private final EventRepository eventRepository;
     private final EventStateMachineService stateMachineService;
+    private final ApplicationEventPublisher events;
 
     public EventService(EventRepository eventRepository,
-                        EventStateMachineService stateMachineService) {
+                        EventStateMachineService stateMachineService,
+                        ApplicationEventPublisher events) {
         this.eventRepository = eventRepository;
         this.stateMachineService = stateMachineService;
+        this.events = events;
     }
 
     public EventDto create(CreateEventRequest request) {
@@ -51,7 +55,11 @@ public class EventService {
         Event event = getEventOrThrow(id);
         stateMachineService.transition(event, targetStatus);
         event.setUpdatedAt(Instant.now());
-        return EventDto.from(eventRepository.save(event));
+        EventDto saved = EventDto.from(eventRepository.save(event));
+        if (targetStatus == EventStatus.COMPLETED) {
+            events.publishEvent(new EventCompleted(event.getId()));
+        }
+        return saved;
     }
 
     @Transactional(readOnly = true)

@@ -94,6 +94,24 @@ Outside the dev profile the database lives in the user's app-data folder: `%LOCA
 
 The dev JWT secret is baked into `application.yml` as a fallback default — fine for development, must be overridden in production via environment variable.
 
+### Backups
+
+The app copies its database into a backup folder when an event is marked completed (the race day closes) and every night, and keeps the newest copies. Admins can see them and take one now under **Admin → Backups**. Backing up is safe while a race is running. The database makes the copy in one read transaction (`VACUUM INTO` on SQLite), and laps keep committing meanwhile.
+
+| Setting | Default | Meaning |
+|---------|---------|---------|
+| `RCTIMING_BACKUP_DIRECTORY` (`rctiming.backup.directory`) | `backups` inside the data directory | Where backups go; may be a USB stick or network share |
+| `RCTIMING_BACKUP_KEEP` (`rctiming.backup.keep`) | `14` | How many backups to keep; older ones are deleted |
+| `RCTIMING_BACKUP_NIGHTLY_CRON` (`rctiming.backup.nightly-cron`) | `0 0 2 * * *` | When the nightly backup runs (server time); `-` turns it off |
+
+To restore, stop the app, then run:
+
+```bash
+java -jar app.jar restore /media/usb/rctiming/rctiming-20261004-220000-day-close.db
+```
+
+It finds the data directory the way the app does (`RCTIMING_DATA_DIR`, `--rctiming.database.data-directory=...`, or the default folder), checks the backup is sound, and moves the current database aside as `rctiming.db.before-restore-<time>`. Then it puts the backup in its place. It refuses while the app has the database open. When the app next starts, it migrates the restored database if it came from an older version. With the Docker trial or production stack, stop the app and run the command in a one-off container from the same compose file, for example `docker compose -f docker-compose.production.yml run --rm app restore /app/data/db/backups/<file>`.
+
 ### Production checklist
 
 - Set `JWT_SECRET` to a cryptographically random 256-bit base64 value

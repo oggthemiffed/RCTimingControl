@@ -20,6 +20,7 @@ import TracksPage from '@/pages/admin/tracks/TracksPage';
 import FormatsPage from '@/pages/admin/formats/FormatsPage';
 import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
 import DecoderSettingsPage from '@/pages/admin/decoder/DecoderSettingsPage';
+import BackupsPage from '@/pages/admin/backups/BackupsPage';
 import CompetitorsPage from '@/pages/admin/competitors/CompetitorsPage';
 import CheckInPage from '@/pages/race-control/check-in/CheckInPage';
 import RaceControlLayout from '@/pages/race-control/RaceControlLayout';
@@ -75,6 +76,7 @@ const router = createBrowserRouter([
           { path: 'formats', element: <FormatsPage /> },
           { path: 'race-control', element: <RaceControlSelectPage /> },
           { path: 'decoder', element: <ProtectedRoute roles={['ADMIN']}><DecoderSettingsPage /></ProtectedRoute> },
+          { path: 'backups', element: <ProtectedRoute roles={['ADMIN']}><BackupsPage /></ProtectedRoute> },
           { path: 'audio', element: <AdminAudioSettingsPage /> },
           { path: 'competitors', element: <CompetitorsPage /> },
         ],

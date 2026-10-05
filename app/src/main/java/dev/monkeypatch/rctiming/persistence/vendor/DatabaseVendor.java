@@ -3,7 +3,17 @@ package dev.monkeypatch.rctiming.persistence.vendor;
 import org.jooq.SQLDialect;
 import org.sqlite.SQLiteConfig;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -20,7 +30,7 @@ public enum DatabaseVendor {
     SQLITE("sqlite", SQLDialect.SQLITE, SqliteDialect.class.getName(), 1) {
         @Override
         public String jdbcUrl(Path dataDirectory) {
-            return "jdbc:sqlite:" + dataDirectory.resolve("rctiming.db");
+            return "jdbc:sqlite:" + dataDirectory.resolve(DATABASE_FILE);
         }
 
         @Override
@@ -37,7 +47,81 @@ public enum DatabaseVendor {
         public String readOnlySessionSql() {
             return "PRAGMA query_only = 1";
         }
+
+        /**
+         * {@code VACUUM INTO} writes a compact, consistent copy from one read transaction, so
+         * laps keep committing while it runs (#22). It needs a connection of its own: the read
+         * pool's connections are query-only, which SQLite treats as forbidding it.
+         */
+        @Override
+        public void backup(Path dataDirectory, Path target) throws SQLException {
+            try (Connection connection = DriverManager.getConnection(jdbcUrl(dataDirectory), connectionProperties());
+                 PreparedStatement vacuum = connection.prepareStatement("VACUUM INTO ?")) {
+                vacuum.setString(1, target.toString());
+                vacuum.execute();
+            }
+        }
+
+        @Override
+        public void checkBackup(Path backup) throws SQLException {
+            SQLiteConfig config = new SQLiteConfig();
+            config.setReadOnly(true);
+            try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + backup, config.toProperties());
+                 Statement statement = connection.createStatement()) {
+                try (ResultSet integrity = statement.executeQuery("PRAGMA integrity_check")) {
+                    String result = integrity.next() ? integrity.getString(1) : "no result";
+                    if (!"ok".equals(result)) {
+                        throw new SQLException("Backup " + backup + " is damaged: " + result);
+                    }
+                }
+                try (ResultSet history = statement.executeQuery(
+                        "SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'flyway_schema_history'")) {
+                    if (!history.next() || history.getInt(1) == 0) {
+                        throw new SQLException(backup + " is not an RCTimingControl database");
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void restore(Path backup, Path dataDirectory) throws SQLException, IOException {
+            checkBackup(backup);
+            Path database = dataDirectory.resolve(DATABASE_FILE);
+            if (Files.exists(database)) {
+                ensureNotInUse(database);
+            }
+            Files.createDirectories(dataDirectory);
+            String suffix = ".before-restore-" + System.currentTimeMillis();
+            for (Path file : List.of(database, sibling(database, "-wal"), sibling(database, "-shm"))) {
+                if (Files.exists(file)) {
+                    Files.move(file, sibling(file, suffix));
+                }
+            }
+            Path partial = sibling(database, ".restoring");
+            Files.copy(backup, partial, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(partial, database, StandardCopyOption.ATOMIC_MOVE);
+        }
+
+        /** The running app keeps the file open, so an exclusive lock can only be had when it is stopped. */
+        private void ensureNotInUse(Path database) throws SQLException {
+            Properties settings = new Properties();
+            settings.setProperty("busy_timeout", "0");
+            try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + database, settings);
+                 Statement statement = connection.createStatement()) {
+                statement.execute("PRAGMA locking_mode = EXCLUSIVE");
+                statement.execute("BEGIN EXCLUSIVE");
+                statement.execute("ROLLBACK");
+            } catch (SQLException e) {
+                throw new SQLException("The database " + database + " is in use. Stop the app before restoring.", e);
+            }
+        }
+
+        private static Path sibling(Path file, String suffix) {
+            return file.resolveSibling(file.getFileName() + suffix);
+        }
     };
+
+    private static final String DATABASE_FILE = "rctiming.db";
 
     private final String migrationFolder;
     private final SQLDialect jooqDialect;
@@ -59,6 +143,18 @@ public enum DatabaseVendor {
 
     /** Statement that makes a connection refuse writes; run on each read-pool connection. */
     public abstract String readOnlySessionSql();
+
+    /** Writes a consistent copy of the live database to {@code target}, while the app keeps running. */
+    public abstract void backup(Path dataDirectory, Path target) throws SQLException;
+
+    /** Fails unless {@code backup} is an undamaged copy of the app's database. */
+    public abstract void checkBackup(Path backup) throws SQLException;
+
+    /**
+     * Puts {@code backup} in place as the database in {@code dataDirectory}, keeping the files it
+     * replaces beside it. Refuses while the app has the database open.
+     */
+    public abstract void restore(Path backup, Path dataDirectory) throws SQLException, IOException;
 
     /** Sub-folder holding this vendor's Flyway scripts under each migration location. */
     public String migrationFolder() {

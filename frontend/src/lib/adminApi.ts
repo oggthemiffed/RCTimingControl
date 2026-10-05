@@ -334,6 +334,20 @@ export interface UpdateClubProfileRequest {
 
 // ── API client ─────────────────────────────────────────────────────────────
 
+export interface BackupFileDto {
+  name: string;
+  sizeBytes: number;
+  createdAt: string;
+  /** manual, nightly or day-close */
+  reason: string;
+}
+
+export interface BackupsDto {
+  /** The folder backups are written to, as the server sees it */
+  directory: string;
+  backups: BackupFileDto[];
+}
+
 export const adminApi = {
   // RaceHub import. A blocked import answers 422 with the same preview body, so return it.
   importRaceHubEntries: (eventId: number, exportDocument: unknown, dryRun: boolean) =>
@@ -514,5 +528,13 @@ export const adminApi = {
   competitors: {
     list: () =>
       api.get<CompetitorSummaryDto[]>('/api/v1/admin/competitors').then(r => r.data),
+  },
+
+  // Database backups (#22)
+  backups: {
+    list: () =>
+      api.get<BackupsDto>('/api/v1/admin/backups').then(r => r.data),
+    create: () =>
+      api.post<BackupFileDto>('/api/v1/admin/backups').then(r => r.data),
   },
 };
