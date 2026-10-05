@@ -58,10 +58,18 @@ class ResultsOutboxRepositoryIT extends AbstractIntegrationTest {
             x.setAttempts(3);
             x.setNextAttemptAt(T2);
             x.setLastError(null);
-            x.setCreatedAt(T2);
             x.setSentAt(null);
             return x;
         }, ResultsOutboxItem::getId);
+    }
+
+    @Test
+    void theCreationTimeIsSetOnInsertOnly() {
+        ResultsOutboxItem saved = outbox.save(item(1, OutboxStatus.QUEUED, T1));
+        saved.setCreatedAt(T2);
+        outbox.save(saved);
+
+        assertThat(outbox.findById(saved.getId()).orElseThrow().getCreatedAt()).isEqualTo(T1);
     }
 
     @Test

@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.records.ResultsOutboxRecor
 import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,6 +77,11 @@ public class ResultsOutboxRepository extends JooqRepository<ResultsOutboxItem, R
 
     private static List<String> names(Collection<OutboxStatus> statuses) {
         return statuses.stream().map(Enum::name).toList();
+    }
+
+    @Override
+    protected List<Field<?>> insertOnly() {
+        return List.of(RESULTS_OUTBOX.CREATED_AT);
     }
 
     @Override
