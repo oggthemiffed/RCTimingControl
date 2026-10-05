@@ -31,7 +31,7 @@ public enum DatabaseVendor {
      * One SQLite file inside the app process (#26). WAL lets readers carry on while a write
      * commits; a single writer connection means writes never contend for the lock.
      */
-    SQLITE("sqlite", SQLDialect.SQLITE, SqliteDialect.class.getName(), 1) {
+    SQLITE("sqlite", SQLDialect.SQLITE, 1) {
         @Override
         public String jdbcUrl(Path dataDirectory) {
             return "jdbc:sqlite:" + dataDirectory.resolve(DATABASE_FILE);
@@ -59,7 +59,7 @@ public enum DatabaseVendor {
 
         /**
          * A failed unique, foreign key, check or not-null constraint becomes Spring's
-         * {@link DataIntegrityViolationException}, as {@code SqliteDialect} does for Hibernate.
+         * {@link DataIntegrityViolationException}.
          */
         @Override
         public SQLExceptionTranslator exceptionTranslator() {
@@ -169,13 +169,11 @@ public enum DatabaseVendor {
 
     private final String migrationFolder;
     private final SQLDialect jooqDialect;
-    private final String hibernateDialect;
     private final int maxWriteConnections;
 
-    DatabaseVendor(String migrationFolder, SQLDialect jooqDialect, String hibernateDialect, int maxWriteConnections) {
+    DatabaseVendor(String migrationFolder, SQLDialect jooqDialect, int maxWriteConnections) {
         this.migrationFolder = migrationFolder;
         this.jooqDialect = jooqDialect;
-        this.hibernateDialect = hibernateDialect;
         this.maxWriteConnections = maxWriteConnections;
     }
 
@@ -218,12 +216,7 @@ public enum DatabaseVendor {
         return jooqDialect;
     }
 
-    /** Hibernate dialect class name. */
-    public String hibernateDialect() {
-        return hibernateDialect;
-    }
-
-    /** Size of the pool JPA writes through. */
+    /** Size of the pool that writes and transactions use. */
     public int maxWriteConnections() {
         return maxWriteConnections;
     }

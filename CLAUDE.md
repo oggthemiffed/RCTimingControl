@@ -18,11 +18,12 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 
 **Persistence:** SQLite (one file, sqlite-jdbc; WAL, one write connection plus a read pool), Flyway for migrations. The vendor is chosen in one place (`rctiming.database.vendor`, `persistence/DatabaseConfig`); vendor-specific code lives only in `persistence/vendor/`, and `PersistencePortabilityTest` enforces it. See `docs/development.md` → "Keeping the database swappable".
 
-**ORM — write side (domain module):** Spring Data JPA + Hibernate 6. Entity lifecycle, associations, and repositories. Hibernate sessions must not cross into the read/query module.
+**Data access:** jOOQ 3.19.x for every read and write, with no ORM (#69). jOOQ's DSL is generated from the Flyway schema into `app/src/generated/jooq`.
+- **Write side (domain module):** entities are plain classes holding ids, not associations. Each has a `@Repository` class extending `persistence/JooqRepository`, which maps it to its table's record and keeps the method names Spring Data had (`findById`, `save`, `findByEventId` and so on). There is no dirty checking: a changed entity reaches the database only through `save`, and must be saved before anything reloads it by id. Columns written once, such as creation times, go in the repository's `insertOnly()`.
+- **Read side (query module):** type-safe SQL for all projections and aggregations: scoring calculations, championship standings, lap aggregates, results views.
+- Writes run in Spring transactions on the write connection. Reads outside a transaction use the read pool and see only committed data, so a read that must wait for a write in progress needs `@Transactional(readOnly = true)`.
 
-**ORM — read side (query module):** jOOQ 3.19.x. Type-safe SQL for all projections and aggregations: scoring calculations, championship standings, lap aggregates, results views. jOOQ's DSL is generated from the live schema. No Hibernate involvement on this side.
-
-**Race format config:** Stored as JSON text (`CHECK (json_valid(...))`) with a `type` discriminator, converted by a JPA `AttributeConverter`. Validated against a sealed Java class hierarchy on write. Override patches (FORMAT-07) stored as a second JSON column and merged at read time. Supports JSON import/export (FORMAT-14).
+**Race format config:** Stored as JSON text (`CHECK (json_valid(...))`) with a `type` discriminator, converted by a `JsonTextConverter` subclass in its repository. Validated against a sealed Java class hierarchy on write. Override patches (FORMAT-07) stored as a second JSON column and merged at read time. Supports JSON import/export (FORMAT-14).
 
 **Auth:** Spring Security + JWT (stateless). JJWT 0.12.x. JWT in `Authorization: Bearer` header for REST; passed in STOMP `CONNECT` frame for WebSocket.
 
@@ -55,7 +56,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 - SockJS (venue LAN in 2026 does not need WebSocket fallback)
 - RabbitMQ / Kafka (in-process STOMP broker is sufficient for single-club deployment)
 - Liquibase (Flyway plain-SQL is simpler)
-- `spring.jpa.hibernate.ddl-auto=update` or `create-drop` in any non-throwaway environment
+- Spring Data JPA or Hibernate (dropped for jOOQ in #69)
 - PostgreSQL or Testcontainers (SQLite in-process; tests run on temporary SQLite files)
 - Vendor-specific SQL in Java code (jOOQ DSL, JPQL and the shared converters only; the vendor lives in `persistence/vendor/`)
 - gRPC, a separate forwarder process, or cloud sync for timing (the app reads the decoder directly)
@@ -82,10 +83,10 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 | **Race State Machine** | Enforces `PENDING → GRID → RUNNING → STOPPED/FINISHED` transitions |
 | **Decoder Listener** | Netty client reading the decoder (RC-4 text), emits `LapPassingEvent`s and decoder status |
 | **Live Timing Hub** | Broadcasts real-time updates to browsers via STOMP |
-| **Domain module** | Hibernate entities, JPA repositories, write-side business logic |
+| **Domain module** | Entities, jOOQ repositories, write-side business logic |
 | **Query module** | jOOQ read queries — scoring, standings, lap aggregates, results projections |
 
-The domain and query modules are a hard seam: Hibernate sessions stay in the domain module; jOOQ queries stay in the query module. Neither crosses into the other's territory. This maps to a CQRS-lite split within the monolith — write-side logic operates on JPA-managed objects, read-side never lazy-loads.
+The domain and query modules are a seam: entities and their repositories stay in the domain module, and projections stay in the query module. This maps to a CQRS-lite split within the monolith — write-side logic loads and saves entities, the read side builds its views in SQL.
 
 ### Decoder → Live Display Flow
 

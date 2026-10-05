@@ -161,7 +161,7 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
     }
 
     /**
-     * Insert event_class via jOOQ to bypass JPA config_snapshot serialization complexity.
+     * Inserts an event_class row directly with jOOQ.
      * config_snapshot is NOT NULL but not used in standings logic.
      */
     private Long makeEventClass(Long eventId) {

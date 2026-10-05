@@ -72,7 +72,7 @@ class PublicResultsControllerTest extends AbstractIntegrationTest {
         event.setUpdatedAt(now);
         event = eventRepository.save(event);
 
-        // racing class + event_class (via jOOQ to bypass config_snapshot JPA complexity)
+        // racing class + event_class, inserted directly with jOOQ
         RacingClass rc = new RacingClass();
         rc.setName("GT12-" + UUID.randomUUID());
         rc.setCreatedAt(now);

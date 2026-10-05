@@ -1,7 +1,7 @@
 package dev.monkeypatch.rctiming.domain.user;
 
 import dev.monkeypatch.rctiming.domain.auth.RefreshTokenRepository;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;

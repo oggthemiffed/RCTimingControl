@@ -7,7 +7,7 @@ import dev.monkeypatch.rctiming.api.admin.dto.EventClassDto;
 import dev.monkeypatch.rctiming.api.admin.dto.UpdateEventClassOverrideRequest;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

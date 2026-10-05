@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Keeps the database swappable (#26): only {@code DatabaseConfig} and the
  * {@code persistence/vendor/} package may know which database the app runs on. Everywhere else,
- * reads go through the jOOQ DSL and writes through JPA, with no vendor classes and no SQL strings.
+ * reads and writes go through the jOOQ DSL, with no vendor classes and no SQL strings.
  *
  * <p>Two checks: the sources are scanned for vendor imports, native queries and SQL literals, and
  * the compiled classes are scanned for any call to a jOOQ method marked {@link PlainSQL}, which
@@ -46,14 +46,9 @@ class PersistencePortabilityTest {
 
     private static final Map<String, Pattern> RULES = Map.of(
             "imports a database driver or dialect",
-            Pattern.compile("import\\s+(static\\s+)?(org\\.sqlite|org\\.postgresql|org\\.hibernate\\.community\\.dialect"
-                    + "|org\\.hibernate\\.dialect|org\\.jooq\\.SQLDialect)\\b"),
+            Pattern.compile("import\\s+(static\\s+)?(org\\.sqlite|org\\.postgresql|org\\.jooq\\.SQLDialect)\\b"),
             "names a jOOQ dialect",
             Pattern.compile("\\bSQLDialect\\."),
-            "uses a native JPA query",
-            Pattern.compile("nativeQuery\\s*=\\s*true|createNativeQuery\\s*\\("),
-            "writes column DDL in Java",
-            Pattern.compile("columnDefinition\\s*="),
             "uses jOOQ plain SQL",
             Pattern.compile("\\b(sql|field|condition|table|query|resultQuery|fetch|fetchOne|fetchLazy|fetchMany|execute"
                     + "|where|and|or|having|on|orderBy|groupBy)\\(\\s*\""),
@@ -122,12 +117,8 @@ class PersistencePortabilityTest {
     @ValueSource(strings = {
             "import org.sqlite.SQLiteConfig;",
             "import org.postgresql.util.PGobject;",
-            "import org.hibernate.community.dialect.SQLiteDialect;",
             "import org.jooq.SQLDialect;",
             "DSL.using(connection, SQLDialect.SQLITE);",
-            "@Query(value = \"select 1\", nativeQuery = true)",
-            "entityManager.createNativeQuery(\"select 1\");",
-            "@Column(columnDefinition = \"jsonb\")",
             "dsl.select(DSL.field(\"now()\")).fetch();",
             "dsl.fetch(\"select * from races\");",
             "dsl.selectFrom(RACES).where(\"status = 'RUNNING'\");",
@@ -139,12 +130,11 @@ class PersistencePortabilityTest {
     }
 
     @Test
-    void theJooqDslAndJpqlAreAllowed() {
+    void theJooqDslIsAllowed() {
         String source = """
                 import static dev.monkeypatch.rctiming.jooq.generated.Tables.RACES;
                 class Example {
-                    // a comment may mention nativeQuery = true or field("x")
-                    @Query("SELECT r FROM Race r WHERE r.id = :id")
+                    // a comment may mention field("x")
                     Object find() {
                         return dsl.select(RACES.ID, DSL.coalesce(RACES.NAME, DSL.val("Unknown")).as("name"))
                                 .from(RACES).where(RACES.ID.eq(1L)).fetch();

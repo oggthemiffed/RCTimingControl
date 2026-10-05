@@ -2,7 +2,7 @@ package dev.monkeypatch.rctiming.domain.raceclass;
 
 import dev.monkeypatch.rctiming.api.admin.dto.CreateRacingClassRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.RacingClassDto;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

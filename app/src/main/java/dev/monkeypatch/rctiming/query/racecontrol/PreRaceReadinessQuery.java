@@ -3,7 +3,7 @@ package dev.monkeypatch.rctiming.query.racecontrol;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.GridCallSlotDto;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalDutyRowDto;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.PreRaceReadinessDto;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
@@ -28,7 +28,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
  *   checked in (L11) and RaceHub's arrival mark
  * - marshalDuty: drivers from the immediately preceding race with per-event absence counts
  *
- * No Hibernate or JPA is used — all reads go through DSLContext.
+ * All reads go through DSLContext.
  */
 @Component
 @Transactional(readOnly = true)

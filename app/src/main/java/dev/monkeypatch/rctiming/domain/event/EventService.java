@@ -3,7 +3,7 @@ package dev.monkeypatch.rctiming.domain.event;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateEventRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.EventDto;
 import dev.monkeypatch.rctiming.api.admin.dto.UpdateEventRequest;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

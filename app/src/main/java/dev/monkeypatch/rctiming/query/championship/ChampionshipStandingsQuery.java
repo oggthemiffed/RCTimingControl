@@ -3,7 +3,7 @@ package dev.monkeypatch.rctiming.query.championship;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
-import jakarta.persistence.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,7 +37,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACIN
  *
  * Implements full championship standings computation: best-X-from-Y drop logic,
  * TQ bonus, A-final winner bonus, DNS semantics.
- * Pure jOOQ — no JPA repository dependency.
+ * Reads only through the jOOQ DSL, with no repositories.
  *
  * Drivers are competitors (L5, #13): entries map to {@code entries.competitor_id}, so a driver
  * with no login still scores, and exclusions are keyed by competitor id.
@@ -55,7 +55,7 @@ public class ChampionshipStandingsQuery {
     }
 
     public List<StandingsRowDto> computeStandings(Long championshipId) {
-        // Step 1: Existence check — jOOQ only, no Hibernate
+        // Step 1: Existence check
         if (!dsl.fetchExists(CHAMPIONSHIPS, CHAMPIONSHIPS.ID.eq(championshipId))) {
             throw new EntityNotFoundException("Championship not found: " + championshipId);
         }
