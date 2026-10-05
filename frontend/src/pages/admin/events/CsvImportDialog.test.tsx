@@ -17,6 +17,23 @@ vi.mock('@/lib/adminApi', () => ({
   },
 }));
 
+// Radix Select renders in a portal that jsdom cannot drive; use a native <select> instead
+vi.mock('@/components/ui/select', () => ({
+  Select: ({ children, value, onValueChange }: {
+    children: React.ReactNode; value?: string; onValueChange?: (v: string) => void;
+  }) => (
+    <select value={value ?? ''} onChange={e => onValueChange?.(e.target.value)}>
+      {children}
+    </select>
+  ),
+  SelectTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SelectValue: ({ placeholder }: { placeholder?: string }) => <option value="">{placeholder}</option>,
+  SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => (
+    <option value={value}>{children}</option>
+  ),
+}));
+
 const api = vi.mocked(adminApi);
 
 const classes = [{ id: 11, eventId: 5, racingClassId: 101 }] as EventClassDto[];
@@ -142,5 +159,41 @@ describe('CsvImportDialog', () => {
     expect(await screen.findByText('Line 3: the name has a comma')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Import entries' })).toBeDisabled();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
+  it('shows the second transponder and the preview-only columns', async () => {
+    api.importCsvEntries.mockResolvedValue(result({
+      rows: [row('NEW', 'Ada Lovelace', { secondaryTransponder: '7223456', info: { Grade: '80', 'Car Make': 'Associated' } })],
+    }));
+    renderDialog();
+    await chooseFile();
+
+    expect(screen.getByTestId('group-NEW')).toHaveTextContent('second 7223456');
+    expect(screen.getByTestId('csv-row-info')).toHaveTextContent('Grade 80 · Car Make Associated');
+  });
+
+  it('does not preview again when the dialog is closed while the class mappings save', async () => {
+    api.importCsvEntries.mockResolvedValue(result({
+      blocked: true,
+      unmappedClasses: [{ key: 'CSV:2wd buggy', className: '2WD Buggy', classNumber: 1, entryCount: 1 }],
+    }));
+    let finishSave: () => void = () => {};
+    api.replaceRaceHubClassMappings.mockReturnValue(new Promise<never[]>(resolve => { finishSave = () => resolve([]); }));
+    renderDialog();
+    await chooseFile();
+
+    await waitFor(() => expect(screen.getByRole('option', { name: '2WD Buggy' })).toBeInTheDocument());
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '11' } });
+    const save = screen.getByRole('button', { name: 'Save mappings and check again' });
+    await waitFor(() => expect(save).toBeEnabled());
+    fireEvent.click(save);
+    await waitFor(() => expect(api.replaceRaceHubClassMappings).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    finishSave();
+
+    await waitFor(() => expect(screen.queryByTestId('csv-preview')).not.toBeInTheDocument());
+    await new Promise(r => setTimeout(r, 50));
+    expect(api.importCsvEntries).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('csv-preview')).not.toBeInTheDocument();
   });
 });

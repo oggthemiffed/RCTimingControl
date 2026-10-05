@@ -119,13 +119,17 @@ export default function CsvImportDialog({ eventId, classes, open, onOpenChange }
     Object.entries(classChoices)
       .filter(([, eventClassId]) => eventClassId)
       .forEach(([key, eventClassId]) => byKey.set(key, Number(eventClassId)));
+    const requestGeneration = generation.current;
     try {
       await replaceMappings.mutateAsync(
         [...byKey].map(([racehubEventClassId, eventClassId]) => ({ racehubEventClassId, eventClassId })),
       );
+      // The dialog was closed or another file chosen while the mappings saved
+      if (requestGeneration !== generation.current) return;
       setClassChoices({});
       await runPreview(file);
     } catch {
+      if (requestGeneration !== generation.current) return;
       toast.error('Could not save the class mappings. Try again.');
     }
   }
@@ -155,14 +159,21 @@ export default function CsvImportDialog({ eventId, classes, open, onOpenChange }
   const busy = importMutation.isPending || replaceMappings.isPending;
 
   function rowLabel(row: CsvImportRow) {
+    const info = Object.entries(row.info ?? {});
     return (
       <>
         <span className="font-medium">{row.name ?? 'Unnamed'}</span>
         <span className="text-muted-foreground">
           {' '}· {row.eventClassId != null ? classLabel(row.eventClassId) : row.className ?? `Class ${row.classNumber}`}
           {row.primaryTransponder && <> · {row.primaryTransponder}</>}
+          {row.secondaryTransponder && <> · second {row.secondaryTransponder}</>}
           {row.line != null && <> · line {row.line}</>}
         </span>
+        {info.length > 0 && (
+          <span className="block text-xs text-muted-foreground" data-testid="csv-row-info">
+            {info.map(([column, value]) => `${column} ${value}`).join(' · ')}
+          </span>
+        )}
       </>
     );
   }
