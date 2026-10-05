@@ -367,9 +367,11 @@ export interface ResultsExportRowDto {
 }
 
 export interface ResultsExportsDto {
-  /** Whether a RaceHub address is set; without one, exports wait in the queue */
+  /** Whether the RaceHub address and key are both set; without them, exports wait in the queue */
   sendingEnabled: boolean;
   resultsUrl: string | null;
+  /** The settings still needed before anything is sent */
+  missingSettings: string[];
   /** Newest first */
   exports: ResultsExportRowDto[];
 }

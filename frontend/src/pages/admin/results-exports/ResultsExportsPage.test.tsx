@@ -43,6 +43,7 @@ describe('ResultsExportsPage', () => {
     api.resultsExports.list.mockResolvedValue({
       sendingEnabled: true,
       resultsUrl: 'https://racehub.example/api/results',
+      missingSettings: [],
       exports: [
         row({ id: 3, revision: 3, reason: 'CORRECTION', status: 'FAILED', attempts: 2, lastError: 'RaceHub answered 503', sentAt: null }),
         row({ id: 2, revision: 2, status: 'SUPERSEDED', attempts: 0, sentAt: null }),
@@ -63,6 +64,7 @@ describe('ResultsExportsPage', () => {
     api.resultsExports.list.mockResolvedValue({
       sendingEnabled: true,
       resultsUrl: 'https://racehub.example/api/results',
+      missingSettings: [],
       exports: [row({ id: 7, revision: 4, status: 'FAILED', lastError: 'Connection refused', sentAt: null })],
     });
     api.resultsExports.retry.mockResolvedValue(undefined);
@@ -78,17 +80,36 @@ describe('ResultsExportsPage', () => {
     api.resultsExports.list.mockResolvedValue({
       sendingEnabled: false,
       resultsUrl: null,
+      missingSettings: ['rctiming.racehub.results-url', 'rctiming.racehub.token'],
       exports: [row({ status: 'QUEUED', attempts: 0, sentAt: null })],
     });
     renderPage();
 
     expect(await screen.findByText('No RaceHub address is set, so results wait here.')).toBeInTheDocument();
+    expect(screen.getByText('rctiming.racehub.results-url')).toBeInTheDocument();
+    expect(screen.getByText('rctiming.racehub.token')).toBeInTheDocument();
     expect(screen.getByText('Waiting to send')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /now$/ })).not.toBeInTheDocument();
   });
 
+  it('names the missing key when only the address is set', async () => {
+    api.resultsExports.list.mockResolvedValue({
+      sendingEnabled: false,
+      resultsUrl: 'https://racehub.example/api/results',
+      missingSettings: ['rctiming.racehub.token'],
+      exports: [],
+    });
+    renderPage();
+
+    expect(await screen.findByText('No RaceHub key is set, so results wait here.')).toBeInTheDocument();
+    expect(screen.getByText('rctiming.racehub.token')).toBeInTheDocument();
+    expect(screen.queryByText('rctiming.racehub.results-url')).not.toBeInTheDocument();
+  });
+
   it('shows an empty state before anything is sent', async () => {
-    api.resultsExports.list.mockResolvedValue({ sendingEnabled: true, resultsUrl: 'https://racehub.example/r', exports: [] });
+    api.resultsExports.list.mockResolvedValue({
+      sendingEnabled: true, resultsUrl: 'https://racehub.example/r', missingSettings: [], exports: [],
+    });
     renderPage();
 
     expect(await screen.findByText('Nothing sent yet')).toBeInTheDocument();

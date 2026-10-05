@@ -50,6 +50,24 @@ class ResultsExportV1GoldenTest {
         assertThat(validate(broken)).isNotEmpty();
     }
 
+    @Test
+    void schemaRejectsARaceHubStandingWithoutItsDriverId() throws IOException {
+        JsonNode broken = objectMapper.readTree(read(GOLDEN));
+        ((com.fasterxml.jackson.databind.node.ObjectNode) broken.at("/championships/0/classes/0/standings/0"))
+                .putNull("driver_profile_id");
+
+        assertThat(validate(broken)).isNotEmpty();
+    }
+
+    @Test
+    void schemaRejectsAStandingFromAnUnknownSource() throws IOException {
+        JsonNode broken = objectMapper.readTree(read(GOLDEN));
+        ((com.fasterxml.jackson.databind.node.ObjectNode) broken.at("/championships/0/classes/0/standings/0"))
+                .put("external_source", "SOMEWHERE");
+
+        assertThat(validate(broken)).isNotEmpty();
+    }
+
     static Set<ValidationMessage> validate(JsonNode document) throws IOException {
         try (InputStream schema = new ClassPathResource("resultsexport/results-export-v1.schema.json").getInputStream()) {
             JsonSchema jsonSchema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V202012).getSchema(schema);
@@ -76,7 +94,7 @@ class ResultsExportV1GoldenTest {
                                 List.of()),
                         new ResultsExportV1.Row(2, "RACEHUB", "0b7e4d12-8a3f-4f0e-a1c2-9e5d6b4c3a02", "drv-grace",
                                 "rh-class-buggy", 1202L, 89L, "Grace Hopper", "2", 21, 300_990L, 13_250L,
-                                List.of(new ResultsExportV1.Penalty("LAP", new BigDecimal("1"), "Short cut at the chicane"))),
+                                List.of(new ResultsExportV1.Penalty("LAP", new BigDecimal("1"), "Short cut at the chicane", true))),
                         new ResultsExportV1.Row(3, null, null, null, null, 1250L, 140L, "Walk-in Wendy", "3", 20,
                                 302_004L, 14_011L, List.of())));
         var abandonedHeat = new ResultsExportV1.Race(

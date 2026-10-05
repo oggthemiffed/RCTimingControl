@@ -129,8 +129,10 @@ class ResultsExportIT extends AbstractIntegrationTest {
         long ada = entryId("a1-" + run);
         long walkIn = walkIn("Walk-in Wendy");
         long raceId = finishedRace(ada, walkIn);
-        jdbc.update("insert into penalties (race_id, entry_id, penalty_type, value, reason, applied_by) "
-                + "values (?, ?, 'TIME', 5.0, 'Jump start', 1)", raceId, walkIn);
+        long finishedAt = jdbc.queryForObject("select finished_at from races where id = ?", Long.class, raceId);
+        penalty(raceId, walkIn, "TIME", "5.0", "Jump start", finishedAt - 60_000_000L);
+        penalty(raceId, ada, "LAP", "1", "Short cut", finishedAt - 60_000_000L);
+        penalty(raceId, ada, "LAP", "1", "Missed marshalling", finishedAt + 60_000_000L);
 
         ResultsOutboxItem item = exportService.enqueue(eventId, ExportReason.RACE_FINISHED).orElseThrow();
 
@@ -144,12 +146,18 @@ class ResultsExportIT extends AbstractIntegrationTest {
         assertThat(first.at("/entry_id").asText()).isEqualTo("a1-" + run);
         assertThat(first.at("/driver_profile_id").asText()).isEqualTo("drv-ada-" + run);
         assertThat(first.at("/laps").asInt()).isEqualTo(12);
+        // A lap penalty during the race is already in the laps; one after the finish isn't yet (#63)
+        assertThat(first.at("/penalties/0/reason").asText()).isEqualTo("Short cut");
+        assertThat(first.at("/penalties/0/included_in_result").asBoolean()).isTrue();
+        assertThat(first.at("/penalties/1/reason").asText()).isEqualTo("Missed marshalling");
+        assertThat(first.at("/penalties/1/included_in_result").asBoolean()).isFalse();
         JsonNode second = race.at("/results/1");
         assertThat(second.at("/external_source").isNull()).isTrue();
         assertThat(second.at("/entry_id").isNull()).isTrue();
         assertThat(second.at("/display_name").asText()).isEqualTo("Walk-in Wendy");
         assertThat(second.at("/penalties/0/type").asText()).isEqualTo("TIME");
         assertThat(second.at("/penalties/0/value").decimalValue()).isEqualByComparingTo("5");
+        assertThat(second.at("/penalties/0/included_in_result").asBoolean()).isFalse();
         // Nothing personal goes out: the import file carried an email and date of birth
         assertThat(item.getPayload()).doesNotContain("ada@example.com").doesNotContain("1815-12-10");
     }
@@ -272,6 +280,8 @@ class ResultsExportIT extends AbstractIntegrationTest {
                 new HttpEntity<>(headers()), JsonNode.class);
         assertThat(list.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(list.getBody().get("sendingEnabled").asBoolean()).isFalse();
+        assertThat(list.getBody().get("missingSettings").toString())
+                .contains("rctiming.racehub.results-url").contains("rctiming.racehub.token");
         assertThat(list.getBody().get("exports").findValuesAsText("eventName")).contains("Results export " + run);
 
         ResponseEntity<Void> retry = restTemplate.exchange("/api/v1/admin/results-exports/" + item.getId() + "/retry",
@@ -286,7 +296,72 @@ class ResultsExportIT extends AbstractIntegrationTest {
         assertThat(json(download.getBody()).at("/races/0/results/0/entry_id").asText()).isEqualTo("a1-" + run);
     }
 
+    @Test
+    void anAbandonedRaceNamesTheRaceHubClassesOfItsGrid() {
+        importEntries();
+        long raceId = race("RUNNING");
+        onGrid(raceId, entryId("a1-" + run));
+
+        restTemplate.exchange("/api/v1/race-control/race/" + raceId + "/abandon",
+                HttpMethod.POST, new HttpEntity<>(headers()), Void.class);
+
+        JsonNode race = json(awaitOutbox(1).get(0).getPayload()).at("/races/0");
+        assertThat(race.at("/results")).isEmpty();
+        assertThat(race.at("/racehub_event_class_ids/0").asText()).isEqualTo("rh-class-buggy-" + run);
+    }
+
+    @Test
+    void aRequestedExportIsQueuedEvenIfTheAppStoppedBeforeBuildingIt() {
+        importEntries();
+        // As left by a day close whose transaction committed just before the app stopped
+        jdbc.update("update events set results_export_pending = 'DAY_CLOSE' where id = ?", eventId);
+
+        assertThat(awaitOutbox(1).get(0).getReason()).isEqualTo(ExportReason.DAY_CLOSE);
+        assertThat(jdbc.queryForObject("select results_export_pending from events where id = ?", String.class, eventId))
+                .isNull();
+    }
+
+    @Test
+    void aFailedSendDoesNotBringBackAnExportThatWasReplacedMeanwhile() throws IOException {
+        importEntries();
+        ResultsOutboxItem older = exportService.enqueue(eventId, ExportReason.RACE_FINISHED).orElseThrow();
+        ResultsOutboxItem inFlight = reload(older);
+        ResultsOutboxItem newer = exportService.enqueue(eventId, ExportReason.CORRECTION).orElseThrow();
+        int port = freePort();
+        startRaceHub(port, 503);
+
+        // The sender still holds the older export it picked up before the newer one was queued
+        assertThat(sender(port).send(inFlight)).isFalse();
+
+        assertThat(reload(older).getStatus()).isEqualTo(OutboxStatus.SUPERSEDED);
+        assertThat(reload(newer).getStatus()).isEqualTo(OutboxStatus.QUEUED);
+    }
+
+    @Test
+    void anImportWithoutARaceHubEventIdIsRefused() throws IOException {
+        String file = new ClassPathResource("racehub/entries-v1-initial.json").getContentAsString(StandardCharsets.UTF_8)
+                .replace("{{run}}", run)
+                .replace("\"evt-" + run + "\"", "\"\"");
+        assertThat(file).doesNotContain("evt-" + run);
+
+        ResponseEntity<JsonNode> resp = restTemplate.exchange(
+                "/api/v1/admin/events/" + eventId + "/racehub-import?dryRun=false",
+                HttpMethod.POST, new HttpEntity<>(file, headers()), JsonNode.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(resp.getBody().get("applied").asBoolean()).isFalse();
+        assertThat(resp.getBody().toString()).contains("no RaceHub event id");
+        assertThat(jdbc.queryForObject("select count(*) from entries where event_id = ?", Integer.class, eventId))
+                .isZero();
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────────
+
+    private void penalty(long raceId, long entryId, String type, String value, String reason, long appliedAtMicros) {
+        jdbc.update("insert into penalties (race_id, entry_id, penalty_type, value, reason, applied_by, applied_at) "
+                + "values (?, ?, ?, ?, ?, 1, ?)", raceId, entryId, type, new java.math.BigDecimal(value), reason,
+                appliedAtMicros);
+    }
 
     private record Received(String authorization, String idempotencyKey, String body) {
     }
@@ -410,7 +485,13 @@ class ResultsExportIT extends AbstractIntegrationTest {
                 .formatted(importedEntry, walkInEntry);
         jdbc.update("insert into result_snapshots (race_id, finished_at, positions_json, lap_history_json, created_at) "
                 + "values (?, ?, ?, '[]', ?)", raceId, now, positions, now);
+        onGrid(raceId, importedEntry);
+        onGrid(raceId, walkInEntry);
         return raceId;
+    }
+
+    private void onGrid(long raceId, long entryId) {
+        jdbc.update("insert into race_entries (race_id, entry_id) values (?, ?)", raceId, entryId);
     }
 
     private long createEventClass(String racingClassName) {

@@ -36,17 +36,20 @@ public class ResultsExportController {
     }
 
     /**
-     * @param sendingEnabled whether a RaceHub address is set; without one, exports wait in the queue
-     * @param resultsUrl     that address, or null
-     * @param exports        the newest exports first
+     * @param sendingEnabled  whether the RaceHub address and key are both set; without them, exports wait
+     * @param resultsUrl      the address, or null
+     * @param missingSettings the settings still needed before anything is sent
+     * @param exports         the newest exports first
      */
-    public record ResultsExportsDto(boolean sendingEnabled, String resultsUrl, List<ResultsOutboxQuery.OutboxRow> exports) {
+    public record ResultsExportsDto(boolean sendingEnabled, String resultsUrl, List<String> missingSettings,
+                                    List<ResultsOutboxQuery.OutboxRow> exports) {
     }
 
     @GetMapping("/results-exports")
     public ResultsExportsDto list() {
         return new ResultsExportsDto(properties.sendingEnabled(),
                 properties.resultsUrl() == null ? null : properties.resultsUrl().toString(),
+                properties.missingSettings(),
                 outboxQuery.latest(OUTBOX_ROWS));
     }
 

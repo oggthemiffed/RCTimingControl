@@ -74,9 +74,7 @@ public class ResultsSender {
                     .uri(properties.resultsUrl())
                     .contentType(MediaType.APPLICATION_JSON)
                     .headers(h -> {
-                        if (properties.token() != null) {
-                            h.setBearerAuth(properties.token());
-                        }
+                        h.setBearerAuth(properties.token());
                         h.set("Idempotency-Key", key);
                     })
                     .body(item.getPayload())
@@ -87,24 +85,17 @@ public class ResultsSender {
         } catch (RuntimeException e) {
             return failed(item, e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
         }
-        item.setStatus(OutboxStatus.SENT);
-        item.setSentAt(Instant.now());
-        item.setAttempts(item.getAttempts() + 1);
-        item.setLastError(null);
-        outboxRepository.save(item);
+        outboxRepository.recordSent(item.getId(), Instant.now());
         log.info("Sent results export revision {} of event {} to RaceHub", item.getRevision(), item.getEventId());
         return true;
     }
 
     private boolean failed(ResultsOutboxItem item, String error) {
         int attempts = item.getAttempts() + 1;
-        item.setAttempts(attempts);
-        item.setStatus(OutboxStatus.FAILED);
-        item.setLastError(error.length() > MAX_ERROR_LENGTH ? error.substring(0, MAX_ERROR_LENGTH) : error);
-        item.setNextAttemptAt(Instant.now().plus(backoff(attempts)));
-        outboxRepository.save(item);
+        String lastError = error.length() > MAX_ERROR_LENGTH ? error.substring(0, MAX_ERROR_LENGTH) : error;
+        outboxRepository.recordFailure(item.getId(), lastError, Instant.now().plus(backoff(attempts)));
         log.warn("Results export revision {} of event {} not sent (attempt {}): {}",
-                item.getRevision(), item.getEventId(), attempts, item.getLastError());
+                item.getRevision(), item.getEventId(), attempts, lastError);
         return false;
     }
 

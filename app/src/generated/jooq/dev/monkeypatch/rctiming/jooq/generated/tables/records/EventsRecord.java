@@ -203,6 +203,20 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
         return (Long) get(12);
     }
 
+    /**
+     * Setter for <code>events.results_export_pending</code>.
+     */
+    public void setResultsExportPending(String value) {
+        set(13, value);
+    }
+
+    /**
+     * Getter for <code>events.results_export_pending</code>.
+     */
+    public String getResultsExportPending() {
+        return (String) get(13);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -226,7 +240,7 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
     /**
      * Create a detached, initialised EventsRecord
      */
-    public EventsRecord(Long id, String name, LocalDate eventDate, String status, Instant createdAt, Instant updatedAt, Instant entryOpensAt, Instant entryClosesAt, Long trackId, Instant racehubLastImportAt, Long racehubLastRevision, String racehubEventId, Long resultsExportRevision) {
+    public EventsRecord(Long id, String name, LocalDate eventDate, String status, Instant createdAt, Instant updatedAt, Instant entryOpensAt, Instant entryClosesAt, Long trackId, Instant racehubLastImportAt, Long racehubLastRevision, String racehubEventId, Long resultsExportRevision, String resultsExportPending) {
         super(Events.EVENTS);
 
         setId(id);
@@ -242,6 +256,7 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
         setRacehubLastRevision(racehubLastRevision);
         setRacehubEventId(racehubEventId);
         setResultsExportRevision(resultsExportRevision);
+        setResultsExportPending(resultsExportPending);
         resetChangedOnNotNull();
     }
 }

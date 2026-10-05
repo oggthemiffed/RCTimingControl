@@ -61,6 +61,13 @@ public class Event {
     @Column(name = "results_export_revision", nullable = false)
     private long resultsExportRevision;
 
+    /**
+     * Why the event's results need exporting, set alongside the change that calls for it and cleared when the
+     * export is queued (#27): RACE_FINISHED, CORRECTION or DAY_CLOSE, or null when nothing is waiting.
+     */
+    @Column(name = "results_export_pending", length = 30)
+    private String resultsExportPending;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -101,4 +108,7 @@ public class Event {
 
     /** Takes the next results export revision. Load the event with {@code findByIdForUpdate} first. */
     public long nextResultsExportRevision() { return ++resultsExportRevision; }
+
+    public String getResultsExportPending() { return resultsExportPending; }
+    public void setResultsExportPending(String resultsExportPending) { this.resultsExportPending = resultsExportPending; }
 }

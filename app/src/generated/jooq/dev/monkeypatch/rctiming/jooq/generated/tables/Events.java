@@ -137,6 +137,11 @@ public class Events extends TableImpl<EventsRecord> {
      */
     public final TableField<EventsRecord, Long> RESULTS_EXPORT_REVISION = createField(DSL.name("results_export_revision"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.BIGINT)), this, "");
 
+    /**
+     * The column <code>events.results_export_pending</code>.
+     */
+    public final TableField<EventsRecord, String> RESULTS_EXPORT_PENDING = createField(DSL.name("results_export_pending"), SQLDataType.VARCHAR(30), this, "");
+
     private Events(Name alias, Table<EventsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

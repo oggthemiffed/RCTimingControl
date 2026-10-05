@@ -58,7 +58,7 @@ Officials add walk-ins by hand in the admin entry list. A file works with no int
 
 ### Results go back to RaceHub
 
-For an event imported from RaceHub, the app queues a **Results Export v1** document (`resultsexport/`) when a race finishes, when a finished race is corrected and when the race day is closed. Each one is the whole event with the next revision number, and replaces any older one that hasn't gone yet. A scheduled sender posts them to RaceHub with the club's key and an idempotency key, and retries with a growing wait while RaceHub can't be reached. Queuing runs after race control's own transaction commits, on another thread, so a slow or missing network never holds a race up. See [results-export-v1.md](results-export-v1.md).
+For an event imported from RaceHub, the app queues a **Results Export v1** document (`resultsexport/`) when a race finishes, when a finished race is corrected and when the race day is closed. Each one is the whole event with the next revision number, and replaces any older one that hasn't gone yet. A scheduled sender posts them to RaceHub with the club's key and an idempotency key, and retries with a growing wait while RaceHub can't be reached. The request is a mark on the event, saved in race control's own transaction so it survives a crash; a background job builds the export from it, and a slow or missing network never holds a race up. See [results-export-v1.md](results-export-v1.md).
 
 ### Competitors and transponders
 

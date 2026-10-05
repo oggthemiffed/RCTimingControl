@@ -88,7 +88,11 @@ public class RaceHubImportService {
         String racehubEventId = export.event() == null ? null : blankToNull(export.event().id());
 
         List<String> errors = new ArrayList<>();
-        if (event.getRacehubEventId() != null && racehubEventId != null
+        if (racehubEventId == null) {
+            // Results go back to RaceHub under this id (#27), so an import without it would never be sent
+            errors.add("This file has no RaceHub event id, so the results couldn't be sent back to RaceHub. "
+                    + "Download the entry export from RaceHub again.");
+        } else if (event.getRacehubEventId() != null
                 && !event.getRacehubEventId().equals(racehubEventId)) {
             // Results go back to the RaceHub event recorded here (#27), so one event takes one RaceHub event's entries
             errors.add("This file is for RaceHub event " + racehubEventId + ", but this event's entries came from "
@@ -171,9 +175,7 @@ public class RaceHubImportService {
                     .forEach(p -> savedIds.put(p, applyRow(eventId, p, competitors)));
             event.setRacehubLastImportAt(Instant.now());
             event.setRacehubLastRevision(export.revision());
-            if (racehubEventId != null) {
-                event.setRacehubEventId(racehubEventId);
-            }
+            event.setRacehubEventId(racehubEventId);
             eventRepository.save(event);
         }
 

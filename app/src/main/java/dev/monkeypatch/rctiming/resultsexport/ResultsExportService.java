@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -45,18 +46,47 @@ public class ResultsExportService {
         this.objectMapper = objectMapper;
     }
 
-    /** Queues an export of the event a race belongs to. */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public Optional<ResultsOutboxItem> enqueueForRace(long raceId, ExportReason reason) {
-        Long eventId = raceRepository.findById(raceId)
+    /**
+     * Marks the event a race belongs to as needing an export, in the caller's transaction, so the request is
+     * saved with the finish or correction that made it. {@link #queuePending} builds the export afterwards.
+     * A failure here never rolls back race control's change.
+     */
+    @Transactional(noRollbackFor = RuntimeException.class)
+    public void requestForRace(long raceId, ExportReason reason) {
+        raceRepository.findById(raceId)
                 .flatMap(race -> roundRepository.findById(race.getRoundId()))
-                .map(round -> round.getEventId())
-                .orElse(null);
-        if (eventId == null) {
-            log.warn("No event found for race {}; no results export queued", raceId);
+                .ifPresentOrElse(round -> request(round.getEventId(), reason),
+                        () -> log.warn("No event found for race {}; no results export requested", raceId));
+    }
+
+    /** Marks an event as needing an export, in the caller's transaction. Events not from RaceHub are skipped. */
+    @Transactional(noRollbackFor = RuntimeException.class)
+    public void request(long eventId, ExportReason reason) {
+        eventRepository.findById(eventId)
+                .filter(event -> event.getRacehubEventId() != null)
+                .ifPresent(event -> event.setResultsExportPending(reason.name()));
+    }
+
+    /** Events with an export requested but not queued yet. */
+    @Transactional(readOnly = true)
+    public List<Long> pendingEventIds() {
+        return eventRepository.findIdsWithResultsExportPending();
+    }
+
+    /**
+     * Queues the export an event is waiting for, and clears its request in the same transaction. If building
+     * the export fails, the request stays and is tried again.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Optional<ResultsOutboxItem> queuePending(long eventId) {
+        Event event = eventRepository.findByIdForUpdate(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + eventId));
+        String pending = event.getResultsExportPending();
+        if (pending == null) {
             return Optional.empty();
         }
-        return enqueue(eventId, reason);
+        event.setResultsExportPending(null);
+        return queue(event, ExportReason.valueOf(pending));
     }
 
     /**
@@ -67,6 +97,11 @@ public class ResultsExportService {
     public Optional<ResultsOutboxItem> enqueue(long eventId, ExportReason reason) {
         Event event = eventRepository.findByIdForUpdate(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found: " + eventId));
+        return queue(event, reason);
+    }
+
+    private Optional<ResultsOutboxItem> queue(Event event, ExportReason reason) {
+        long eventId = event.getId();
         if (event.getRacehubEventId() == null) {
             log.debug("Event {} has no RaceHub event; results export not queued", eventId);
             return Optional.empty();

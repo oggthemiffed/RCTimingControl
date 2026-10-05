@@ -75,7 +75,8 @@
             {
               "type": "LAP",
               "value": 1,
-              "reason": "Short cut at the chicane"
+              "reason": "Short cut at the chicane",
+              "included_in_result": true
             }
           ]
         },

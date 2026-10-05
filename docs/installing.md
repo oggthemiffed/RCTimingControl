@@ -79,7 +79,7 @@ rctiming.racehub.results-url=https://racehub.example/api/results
 rctiming.racehub.token=the-key-from-racehub
 ```
 
-Without an address the results wait in the app, and are sent once one is set and the service restarted. The laptop doesn't need to be online while racing: results queue while the network is down and go when it is back. **Results to RaceHub** in the admin panel shows what has been sent, and each event's page has a **Download results** button for taking the file across by hand.
+The address must start with `https://`, since the key goes with every request. Without both settings the results wait in the app, and are sent once they are set and the service restarted. The laptop doesn't need to be online while racing: results queue while the network is down and go when it is back. **Results to RaceHub** in the admin panel shows what has been sent, and each event's page has a **Download results** button for taking the file across by hand.
 
 ## Starting and stopping the service
 

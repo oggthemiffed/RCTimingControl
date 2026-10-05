@@ -31,6 +31,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Entries.ENTRIES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Events.EVENTS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Penalties.PENALTIES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries.RACE_ENTRIES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Races.RACES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACING_CLASSES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots.RESULT_SNAPSHOTS;
@@ -75,14 +76,14 @@ public class ResultsExportQuery {
                 new ResultsExportV1.EventRef(event.get(EVENTS.RACEHUB_EVENT_ID), eventId, event.get(EVENTS.NAME),
                         String.valueOf(event.get(EVENTS.EVENT_DATE)), event.get(EVENTS.STATUS)),
                 races(eventId, entries),
-                championships(eventId, entries));
+                championships(eventId));
     }
 
     // ── Races ──────────────────────────────────────────────────────────────────────
 
     private List<ResultsExportV1.Race> races(long eventId, Map<Long, EntryRef> entries) {
         var rows = dsl.select(RACES.ID, RACES.EVENT_CLASS_ID, RACES.HEAT_NUMBER, RACES.FINAL_LETTER, RACES.FINISHED_AT,
-                        RACES.ABANDONED_AT, ROUNDS.TYPE, ROUNDS.ROUND_NUMBER, RACING_CLASSES.NAME,
+                        RACES.STARTED_AT, RACES.ABANDONED_AT, ROUNDS.TYPE, ROUNDS.ROUND_NUMBER, RACING_CLASSES.NAME,
                         RESULT_SNAPSHOTS.POSITIONS_JSON, RESULT_SNAPSHOTS.FINISHED_AT)
                 .from(RACES)
                 .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
@@ -94,18 +95,18 @@ public class ResultsExportQuery {
                 .orderBy(ROUNDS.SEQUENCE_IN_EVENT, RACES.SEQUENCE_IN_ROUND, RACES.ID)
                 .fetch();
 
-        Map<Long, Map<Long, List<ResultsExportV1.Penalty>>> penalties = penalties(eventId);
+        Map<Long, List<PenaltyRow>> penalties = penalties(eventId);
+        Map<Long, TreeSet<String>> racehubClassIds = racehubClassIds(eventId);
         List<ResultsExportV1.Race> races = new ArrayList<>();
         for (Record r : rows) {
             long raceId = r.get(RACES.ID);
-            Map<Long, List<ResultsExportV1.Penalty>> racePenalties = penalties.getOrDefault(raceId, Map.of());
+            Instant finishedAt = r.get(RACES.FINISHED_AT) != null ? r.get(RACES.FINISHED_AT)
+                    : r.get(RESULT_SNAPSHOTS.FINISHED_AT);
+            Map<Long, List<ResultsExportV1.Penalty>> racePenalties =
+                    penaltiesByEntry(penalties.getOrDefault(raceId, List.of()), r.get(RACES.STARTED_AT), finishedAt);
             List<ResultsExportV1.Row> results = new ArrayList<>();
-            TreeSet<String> racehubClassIds = new TreeSet<>();
             for (ResultSnapshotDto.ResultRow p : positions(raceId, r.get(RESULT_SNAPSHOTS.POSITIONS_JSON))) {
                 EntryRef entry = entries.get(p.entryId());
-                if (entry != null && entry.racehubEventClassId() != null) {
-                    racehubClassIds.add(entry.racehubEventClassId());
-                }
                 results.add(new ResultsExportV1.Row(
                         p.position(),
                         entry == null ? null : entry.externalSource(),
@@ -121,12 +122,10 @@ public class ResultsExportQuery {
                         p.bestLapMs(),
                         racePenalties.getOrDefault(p.entryId(), List.of())));
             }
-            Instant finishedAt = r.get(RACES.FINISHED_AT) != null ? r.get(RACES.FINISHED_AT)
-                    : r.get(RESULT_SNAPSHOTS.FINISHED_AT);
             races.add(new ResultsExportV1.Race(
                     raceId,
                     r.get(RACES.EVENT_CLASS_ID),
-                    List.copyOf(racehubClassIds),
+                    List.copyOf(racehubClassIds.getOrDefault(raceId, new TreeSet<>())),
                     r.get(RACING_CLASSES.NAME),
                     r.get(ROUNDS.TYPE),
                     r.get(ROUNDS.ROUND_NUMBER),
@@ -150,20 +149,52 @@ public class ResultsExportQuery {
         }
     }
 
-    /** Penalties per race, then per entry, in the order they were given. */
-    private Map<Long, Map<Long, List<ResultsExportV1.Penalty>>> penalties(long eventId) {
-        Map<Long, Map<Long, List<ResultsExportV1.Penalty>>> byRace = new LinkedHashMap<>();
-        dsl.select(PENALTIES.RACE_ID, PENALTIES.ENTRY_ID, PENALTIES.PENALTY_TYPE, PENALTIES.VALUE, PENALTIES.REASON)
+    /** Penalties per race, in the order they were given. */
+    private Map<Long, List<PenaltyRow>> penalties(long eventId) {
+        Map<Long, List<PenaltyRow>> byRace = new LinkedHashMap<>();
+        dsl.select(PENALTIES.RACE_ID, PENALTIES.ENTRY_ID, PENALTIES.PENALTY_TYPE, PENALTIES.VALUE, PENALTIES.REASON,
+                        PENALTIES.APPLIED_AT)
                 .from(PENALTIES)
                 .join(RACES).on(RACES.ID.eq(PENALTIES.RACE_ID))
                 .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
                 .where(ROUNDS.EVENT_ID.eq(eventId))
                 .orderBy(PENALTIES.APPLIED_AT, PENALTIES.ID)
-                .forEach(p -> byRace
-                        .computeIfAbsent(p.get(PENALTIES.RACE_ID), k -> new LinkedHashMap<>())
-                        .computeIfAbsent(p.get(PENALTIES.ENTRY_ID), k -> new ArrayList<>())
-                        .add(new ResultsExportV1.Penalty(p.get(PENALTIES.PENALTY_TYPE),
-                                plain(p.get(PENALTIES.VALUE)), p.get(PENALTIES.REASON))));
+                .forEach(p -> byRace.computeIfAbsent(p.get(PENALTIES.RACE_ID), k -> new ArrayList<>())
+                        .add(new PenaltyRow(p.get(PENALTIES.ENTRY_ID), p.get(PENALTIES.PENALTY_TYPE),
+                                p.get(PENALTIES.VALUE), p.get(PENALTIES.REASON), p.get(PENALTIES.APPLIED_AT))));
+        return byRace;
+    }
+
+    /**
+     * One race's penalties per entry. A LAP penalty given while the race ran came off the live lap count, so
+     * the stored result already allows for it. A TIME penalty, or any given after the finish, is not in the
+     * stored result yet (#63).
+     */
+    private static Map<Long, List<ResultsExportV1.Penalty>> penaltiesByEntry(List<PenaltyRow> rows,
+                                                                            Instant startedAt, Instant finishedAt) {
+        Map<Long, List<ResultsExportV1.Penalty>> byEntry = new LinkedHashMap<>();
+        for (PenaltyRow p : rows) {
+            boolean included = "LAP".equals(p.type()) && startedAt != null && p.appliedAt() != null
+                    && !p.appliedAt().isBefore(startedAt)
+                    && (finishedAt == null || !p.appliedAt().isAfter(finishedAt));
+            byEntry.computeIfAbsent(p.entryId(), k -> new ArrayList<>())
+                    .add(new ResultsExportV1.Penalty(p.type(), plain(p.value()), p.reason(), included));
+        }
+        return byEntry;
+    }
+
+    /** The RaceHub classes of everyone on each race's grid, finishers or not. */
+    private Map<Long, TreeSet<String>> racehubClassIds(long eventId) {
+        Map<Long, TreeSet<String>> byRace = new LinkedHashMap<>();
+        dsl.selectDistinct(RACE_ENTRIES.RACE_ID, ENTRIES.RACEHUB_EVENT_CLASS_ID)
+                .from(RACE_ENTRIES)
+                .join(ENTRIES).on(ENTRIES.ID.eq(RACE_ENTRIES.ENTRY_ID))
+                .join(RACES).on(RACES.ID.eq(RACE_ENTRIES.RACE_ID))
+                .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
+                .where(ROUNDS.EVENT_ID.eq(eventId))
+                .and(ENTRIES.RACEHUB_EVENT_CLASS_ID.isNotNull())
+                .forEach(r -> byRace.computeIfAbsent(r.get(RACE_ENTRIES.RACE_ID), k -> new TreeSet<>())
+                        .add(r.get(ENTRIES.RACEHUB_EVENT_CLASS_ID)));
         return byRace;
     }
 
@@ -175,11 +206,7 @@ public class ResultsExportQuery {
 
     // ── Championships ──────────────────────────────────────────────────────────────
 
-    private List<ResultsExportV1.Championship> championships(long eventId, Map<Long, EntryRef> entries) {
-        Map<Long, CompetitorRef> competitors = new LinkedHashMap<>();
-        entries.values().forEach(e -> competitors.putIfAbsent(e.competitorId(),
-                new CompetitorRef(e.competitorSource(), e.driverProfileId())));
-
+    private List<ResultsExportV1.Championship> championships(long eventId) {
         var links = dsl.select(CHAMPIONSHIPS.ID, CHAMPIONSHIPS.NAME, CHAMPIONSHIP_EVENT_LINKS.ROUND_NUMBER)
                 .from(CHAMPIONSHIP_EVENT_LINKS)
                 .join(CHAMPIONSHIPS).on(CHAMPIONSHIPS.ID.eq(CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID))
@@ -190,8 +217,10 @@ public class ResultsExportQuery {
         List<ResultsExportV1.Championship> championships = new ArrayList<>();
         for (var link : links) {
             long championshipId = link.get(CHAMPIONSHIPS.ID);
+            List<StandingsRowDto> standingsRows = standingsQuery.computeStandings(championshipId);
+            Map<Long, CompetitorRef> competitors = competitors(standingsRows);
             Map<Long, List<StandingsRowDto>> byClass = new LinkedHashMap<>();
-            for (StandingsRowDto row : standingsQuery.computeStandings(championshipId)) {
+            for (StandingsRowDto row : standingsRows) {
                 byClass.computeIfAbsent(row.racingClassId(), k -> new ArrayList<>()).add(row);
             }
             Map<Long, String> classNames = new LinkedHashMap<>();
@@ -229,7 +258,7 @@ public class ResultsExportQuery {
             RoundResultDto here = row.rounds().stream()
                     .filter(rr -> Objects.equals(rr.eventId(), eventId))
                     .findFirst().orElse(null);
-            CompetitorRef competitor = competitors.computeIfAbsent(row.driverId(), this::competitor);
+            CompetitorRef competitor = competitors.getOrDefault(row.driverId(), CompetitorRef.NONE);
             standings.add(new ResultsExportV1.Standing(
                     position,
                     competitor.externalSource(),
@@ -245,13 +274,22 @@ public class ResultsExportQuery {
         return standings;
     }
 
-    private CompetitorRef competitor(long competitorId) {
-        var c = dsl.select(COMPETITORS.EXTERNAL_SOURCE, COMPETITORS.EXTERNAL_ID)
+    /**
+     * Each driver's identity, from their competitor record rather than any one entry, so a RaceHub driver who
+     * also ran as a walk-in is still named by their RaceHub id.
+     */
+    private Map<Long, CompetitorRef> competitors(List<StandingsRowDto> rows) {
+        Map<Long, CompetitorRef> competitors = new LinkedHashMap<>();
+        List<Long> ids = rows.stream().map(StandingsRowDto::driverId).filter(Objects::nonNull).distinct().toList();
+        if (ids.isEmpty()) {
+            return competitors;
+        }
+        dsl.select(COMPETITORS.ID, COMPETITORS.EXTERNAL_SOURCE, COMPETITORS.EXTERNAL_ID)
                 .from(COMPETITORS)
-                .where(COMPETITORS.ID.eq(competitorId))
-                .fetchOne();
-        return c == null ? new CompetitorRef(null, null)
-                : new CompetitorRef(c.get(COMPETITORS.EXTERNAL_SOURCE), c.get(COMPETITORS.EXTERNAL_ID));
+                .where(COMPETITORS.ID.in(ids))
+                .forEach(c -> competitors.put(c.get(COMPETITORS.ID),
+                        CompetitorRef.of(c.get(COMPETITORS.EXTERNAL_SOURCE), c.get(COMPETITORS.EXTERNAL_ID))));
+        return competitors;
     }
 
     // ── Entries ────────────────────────────────────────────────────────────────────
@@ -259,7 +297,7 @@ public class ResultsExportQuery {
     private Map<Long, EntryRef> entries(long eventId) {
         Map<Long, EntryRef> entries = new LinkedHashMap<>();
         dsl.select(ENTRIES.ID, ENTRIES.EXTERNAL_SOURCE, ENTRIES.EXTERNAL_ENTRY_ID, ENTRIES.RACEHUB_EVENT_CLASS_ID,
-                        COMPETITORS.ID, COMPETITORS.DISPLAY_NAME, COMPETITORS.EXTERNAL_SOURCE, COMPETITORS.EXTERNAL_ID)
+                        COMPETITORS.ID, COMPETITORS.DISPLAY_NAME, COMPETITORS.EXTERNAL_ID)
                 .from(ENTRIES)
                 .join(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                 .where(ENTRIES.EVENT_ID.eq(eventId))
@@ -269,16 +307,24 @@ public class ResultsExportQuery {
                         e.get(ENTRIES.RACEHUB_EVENT_CLASS_ID),
                         e.get(COMPETITORS.ID),
                         e.get(COMPETITORS.DISPLAY_NAME),
-                        e.get(COMPETITORS.EXTERNAL_SOURCE),
                         // A driver profile id only means something alongside an imported entry
                         e.get(ENTRIES.EXTERNAL_SOURCE) == null ? null : e.get(COMPETITORS.EXTERNAL_ID))));
         return entries;
     }
 
     private record EntryRef(String externalSource, String externalEntryId, String racehubEventClassId,
-                            long competitorId, String displayName, String competitorSource, String driverProfileId) {
+                            long competitorId, String displayName, String driverProfileId) {
     }
 
     private record CompetitorRef(String externalSource, String externalId) {
+        static final CompetitorRef NONE = new CompetitorRef(null, null);
+
+        /** A source only counts with its id, so a row never claims RaceHub without saying which driver. */
+        static CompetitorRef of(String externalSource, String externalId) {
+            return externalSource == null || externalId == null ? NONE : new CompetitorRef(externalSource, externalId);
+        }
+    }
+
+    private record PenaltyRow(long entryId, String type, BigDecimal value, String reason, Instant appliedAt) {
     }
 }

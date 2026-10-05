@@ -70,11 +70,19 @@ export default function ResultsExportsPage() {
           </p>
         ) : (
           <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm dark:border-amber-800 dark:bg-amber-950/30">
-            <p className="font-medium">No RaceHub address is set, so results wait here.</p>
+            <p className="font-medium">
+              {data.resultsUrl ? 'No RaceHub key is set' : 'No RaceHub address is set'}, so results wait here.
+            </p>
             <p className="text-muted-foreground mt-1">
-              Set <code className="rounded bg-muted px-1 py-0.5 text-xs">rctiming.racehub.results-url</code> and{' '}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs">rctiming.racehub.token</code> in <code className="rounded bg-muted px-1 py-0.5 text-xs">application.properties</code>
-              in the data folder, then restart the app. You can still download an event's results from its page.
+              Set{' '}
+              {data.missingSettings.map((setting, i) => (
+                <span key={setting}>
+                  {i > 0 && ' and '}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs">{setting}</code>
+                </span>
+              ))}{' '}
+              in <code className="rounded bg-muted px-1 py-0.5 text-xs">application.properties</code> in the data
+              folder, then restart the app. You can still download an event's results from its page.
             </p>
           </div>
         )
