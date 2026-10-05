@@ -163,6 +163,31 @@ class ResultsExportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void anEntryFromAnotherSourceIsSentLikeAWalkIn() throws IOException {
+        importEntries();
+        long ada = entryId("a1-" + run);
+        // From a CSV import or another booking system (#41): RaceHub doesn't know its ids
+        long competitorId = jdbc.queryForObject("""
+                insert into competitors (display_name, external_source, external_id)
+                values ('Other Olive', 'OTHER', ?) returning id""", Long.class, "drv-olive-" + run);
+        long other = jdbc.queryForObject("""
+                insert into entries (event_id, event_class_id, competitor_id, transponder_number, status,
+                                     external_source, external_entry_id)
+                values (?, ?, ?, ?, 'CONFIRMED', 'OTHER', ?) returning id""",
+                Long.class, eventId, buggyClassId, competitorId, "8" + run, "o1-" + run);
+        finishedRace(ada, other);
+
+        JsonNode export = json(exportService.enqueue(eventId, ExportReason.RACE_FINISHED).orElseThrow().getPayload());
+
+        assertThat(ResultsExportV1GoldenTest.validate(export)).isEmpty();
+        JsonNode second = export.at("/races/0/results/1");
+        assertThat(second.at("/rctc_entry_id").asLong()).isEqualTo(other);
+        assertThat(second.at("/external_source").isNull()).isTrue();
+        assertThat(second.at("/entry_id").isNull()).isTrue();
+        assertThat(second.at("/driver_profile_id").isNull()).isTrue();
+    }
+
+    @Test
     void aCorrectionToAFinishedRaceSendsAHigherRevision() {
         importEntries();
         long ada = entryId("a1-" + run);

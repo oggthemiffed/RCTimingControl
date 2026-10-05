@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 
+import static dev.monkeypatch.rctiming.domain.racehub.RaceHubImportService.RACEHUB_SOURCE;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Championships.CHAMPIONSHIPS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles.CLUB_PROFILES;
@@ -309,14 +310,19 @@ public class ResultsExportQuery {
                 .from(ENTRIES)
                 .join(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                 .where(ENTRIES.EVENT_ID.eq(eventId))
-                .forEach(e -> entries.put(e.get(ENTRIES.ID), new EntryRef(
-                        e.get(ENTRIES.EXTERNAL_SOURCE),
-                        e.get(ENTRIES.EXTERNAL_ENTRY_ID),
-                        e.get(ENTRIES.RACEHUB_EVENT_CLASS_ID),
-                        e.get(COMPETITORS.ID),
-                        e.get(COMPETITORS.DISPLAY_NAME),
-                        // A driver profile id only means something alongside an imported entry
-                        e.get(ENTRIES.EXTERNAL_SOURCE) == null ? null : e.get(COMPETITORS.EXTERNAL_ID))));
+                .forEach(e -> {
+                    // RaceHub only knows its own ids, so an entry from anywhere else (a CSV import, another
+                    // booking system) is sent like a walk-in, by its RCTC ids
+                    boolean fromRaceHub = RACEHUB_SOURCE.equals(e.get(ENTRIES.EXTERNAL_SOURCE));
+                    entries.put(e.get(ENTRIES.ID), new EntryRef(
+                            fromRaceHub ? RACEHUB_SOURCE : null,
+                            fromRaceHub ? e.get(ENTRIES.EXTERNAL_ENTRY_ID) : null,
+                            e.get(ENTRIES.RACEHUB_EVENT_CLASS_ID),
+                            e.get(COMPETITORS.ID),
+                            e.get(COMPETITORS.DISPLAY_NAME),
+                            // A driver profile id only means something alongside a RaceHub entry
+                            fromRaceHub ? e.get(COMPETITORS.EXTERNAL_ID) : null));
+                });
         return entries;
     }
 
@@ -327,9 +333,13 @@ public class ResultsExportQuery {
     private record CompetitorRef(String externalSource, String externalId) {
         static final CompetitorRef NONE = new CompetitorRef(null, null);
 
-        /** A source only counts with its id, so a row never claims RaceHub without saying which driver. */
+        /**
+         * Only a RaceHub driver is named by their source and id, and only with that id, so a row never claims
+         * RaceHub without saying which driver. Any other source is sent like a walk-in.
+         */
         static CompetitorRef of(String externalSource, String externalId) {
-            return externalSource == null || externalId == null ? NONE : new CompetitorRef(externalSource, externalId);
+            return !RACEHUB_SOURCE.equals(externalSource) || externalId == null
+                    ? NONE : new CompetitorRef(externalSource, externalId);
         }
     }
 

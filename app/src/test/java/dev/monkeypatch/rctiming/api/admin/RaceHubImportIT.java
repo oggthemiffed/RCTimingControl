@@ -294,7 +294,93 @@ class RaceHubImportIT extends AbstractIntegrationTest {
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    void anotherSource_keepsItsEntriesAndCompetitorsApartFromRaceHubs() {
+        assertThat(importFixture("entries-v1-initial.json", false).getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // The same ids from another booking system are different entries and drivers (#41)
+        ResponseEntity<JsonNode> resp = importFixture("entries-v1-initial.json", "OTHER", false);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertSummary(resp.getBody(), 2, 0, 0, 0, 0, 1);
+        Entry racehubAda = entry("a1");
+        Entry otherAda = entryRepository.findByExternalSourceAndExternalEntryId("OTHER", "a1-" + run).orElseThrow();
+        assertThat(otherAda.getId()).isNotEqualTo(racehubAda.getId());
+        assertThat(otherAda.getCompetitorId()).isNotEqualTo(racehubAda.getCompetitorId());
+        assertThat(otherAda.getEventClassId()).isEqualTo(buggyClassId);
+        // Results go back to RaceHub by its class ids, which another system's are not
+        assertThat(otherAda.getRacehubEventClassId()).isNull();
+        assertThat(racehubAda.getRacehubEventClassId()).isEqualTo("rh-class-buggy-" + run);
+
+        Competitor otherDriver = competitorRepository.findById(otherAda.getCompetitorId()).orElseThrow();
+        assertThat(otherDriver.getExternalSource()).isEqualTo("OTHER");
+        assertThat(otherDriver.getExternalId()).isEqualTo("drv-ada-" + run);
+        assertThat(competitorRepository.findByExternalSourceAndExternalId("RACEHUB", "drv-ada-" + run)).isPresent();
+        assertThat(entryRepository.findByEventId(eventId)).hasSize(4);
+
+        // Replaying the other system's file matches its own entries, not RaceHub's
+        assertSummary(importFixture("entries-v1-initial.json", "OTHER", true).getBody(), 0, 0, 0, 2, 0, 1);
+    }
+
+    @Test
+    void anotherSource_doesNotLinkTheEventToRaceHub() {
+        ResponseEntity<JsonNode> resp = importFixture("entries-v1-initial.json", "OTHER", false);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        var event = jdbc.queryForMap(
+                "select racehub_event_id, racehub_last_revision from events where id = ?", eventId);
+        assertThat(event.get("racehub_event_id")).isNull();
+        assertThat(event.get("racehub_last_revision")).isNull();
+
+        // So a RaceHub file for any RaceHub event can still be imported alongside it
+        assertThat(importFixture("entries-v1-initial.json", false).getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void anotherSource_hasItsOwnClassMappings() {
+        ResponseEntity<JsonNode> preview = importFixture("entries-v1-unmapped-class.json", "OTHER", true);
+        assertThat(preview.getBody().get("unmappedClasses").get(0).get("racehubEventClassId").asText())
+                .isEqualTo("OTHER:rh-class-electric-" + run);
+
+        // A RaceHub mapping for the same class id does not apply to the other system's file
+        restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-class-mappings",
+                HttpMethod.PUT, new HttpEntity<>(List.of(Map.of(
+                        "racehubEventClassId", "rh-class-electric-" + run, "eventClassId", buggyClassId)), adminHeaders()),
+                JsonNode.class);
+        assertThat(importFixture("entries-v1-unmapped-class.json", "OTHER", true).getBody().get("blocked").asBoolean())
+                .isTrue();
+
+        restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-class-mappings",
+                HttpMethod.PUT, new HttpEntity<>(List.of(Map.of(
+                        "racehubEventClassId", "OTHER:rh-class-electric-" + run, "eventClassId", truckClassId)),
+                        adminHeaders()),
+                JsonNode.class);
+        ResponseEntity<JsonNode> resp = importFixture("entries-v1-unmapped-class.json", "OTHER", false);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(entryRepository.findByExternalSourceAndExternalEntryId("OTHER", "u1-" + run).orElseThrow()
+                .getEventClassId()).isEqualTo(truckClassId);
+    }
+
+    @Test
+    void sourceThatCannotBeKeptApart_isRejected() {
+        for (String source : List.of("CSV", "other", "")) {
+            var resp = restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-import?dryRun=true",
+                    HttpMethod.POST, new HttpEntity<>(withSource(fixture("entries-v1-initial.json"), source),
+                            adminHeaders()), String.class);
+            assertThat(resp.getStatusCode()).as(source).isEqualTo(HttpStatus.BAD_REQUEST);
+        }
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────────
+
+    private ResponseEntity<JsonNode> importFixture(String name, String source, boolean dryRun) {
+        return restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-import?dryRun=" + dryRun,
+                HttpMethod.POST, new HttpEntity<>(withSource(fixture(name), source), adminHeaders()), JsonNode.class);
+    }
+
+    private static String withSource(String json, String source) {
+        return json.replace("\"schema_version\": 1,", "\"schema_version\": 1, \"source\": \"" + source + "\",");
+    }
 
     private ResponseEntity<JsonNode> importFixture(String name, boolean dryRun) {
         return restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-import?dryRun=" + dryRun,
