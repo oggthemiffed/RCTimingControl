@@ -21,6 +21,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
+import dev.monkeypatch.rctiming.jooq.generated.tables.OfficialAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions;
@@ -147,6 +148,11 @@ public class DefaultSchema extends SchemaImpl {
     public final MarshalPenalties MARSHAL_PENALTIES = MarshalPenalties.MARSHAL_PENALTIES;
 
     /**
+     * The table <code>official_audit_log</code>.
+     */
+    public final OfficialAuditLog OFFICIAL_AUDIT_LOG = OfficialAuditLog.OFFICIAL_AUDIT_LOG;
+
+    /**
      * The table <code>penalties</code>.
      */
     public final Penalties PENALTIES = Penalties.PENALTIES;
@@ -269,6 +275,7 @@ public class DefaultSchema extends SchemaImpl {
             MarshalAbsences.MARSHAL_ABSENCES,
             MarshalAdjustments.MARSHAL_ADJUSTMENTS,
             MarshalPenalties.MARSHAL_PENALTIES,
+            OfficialAuditLog.OFFICIAL_AUDIT_LOG,
             Penalties.PENALTIES,
             PracticeLaps.PRACTICE_LAPS,
             PracticeSessions.PRACTICE_SESSIONS,

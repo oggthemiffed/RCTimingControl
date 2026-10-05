@@ -272,6 +272,22 @@ export default function AdminGuidePage() {
             </ul>
           </li>
           <li>
+            <span className="font-semibold">Managing officials:</span> In the Admin sidebar
+            under <span className="font-semibold">Operations</span>, click
+            <span className="font-semibold"> Officials</span> to add an official, change their
+            roles, set a new password (tell them it in person; there is no emailed reset) or
+            disable someone who no longer helps. Disabled officials can&apos;t sign in but are never
+            deleted, so their name stays on everything they did. The club always keeps at least one
+            admin who can sign in, and every change is listed under
+            <span className="font-semibold"> Recent changes</span> with who made it.
+          </li>
+          <li>
+            <span className="font-semibold">Locked out:</span> If no admin can sign in, run
+            <code className="mx-1 text-xs">RCTimingControl reset-admin-password &lt;email&gt;</code>
+            on the timing laptop as an administrator, with the service stopped. The installing guide
+            gives the exact command for each system.
+          </li>
+          <li>
             <span className="font-semibold">Competitors:</span> In the Admin sidebar
             under <span className="font-semibold">Operations</span>, click
             <span className="font-semibold"> Competitors</span> to see every driver imported

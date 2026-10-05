@@ -1,5 +1,9 @@
 package dev.monkeypatch.rctiming.security;
 
+import dev.monkeypatch.rctiming.domain.user.OfficialSignedOutEvent;
+import dev.monkeypatch.rctiming.domain.user.Role;
+import dev.monkeypatch.rctiming.domain.user.User;
+import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,7 +16,11 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.security.Principal;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -23,12 +31,42 @@ import static org.mockito.Mockito.when;
 class WebSocketJwtChannelInterceptorTest {
 
     private JwtTokenService jwtTokenService;
+    private UserRepository userRepository;
+    private StompSessionRegistry sessionRegistry;
     private WebSocketJwtChannelInterceptor interceptor;
+    private User official;
 
     @BeforeEach
     void setUp() {
         jwtTokenService = mock(JwtTokenService.class);
-        interceptor = new WebSocketJwtChannelInterceptor(jwtTokenService);
+        userRepository = mock(UserRepository.class);
+        sessionRegistry = new StompSessionRegistry();
+        interceptor = new WebSocketJwtChannelInterceptor(jwtTokenService, userRepository, sessionRegistry);
+        official = new User();
+        official.setRoles(Set.of(Role.RACE_DIRECTOR));
+        when(userRepository.findById(42L)).thenReturn(Optional.of(official));
+    }
+
+    @Test
+    void connectForADisabledOfficial_isRejected() {
+        official.setDisabledAt(Instant.now());
+        when(jwtTokenService.parseToken("good"))
+                .thenReturn(Jwts.claims().subject("42").add("roles", List.of("RACE_DIRECTOR")).build());
+
+        assertThat(interceptor.preSend(connect("Bearer good"), null)).isNull();
+    }
+
+    @Test
+    void connectWithATokenIssuedBeforeASignOut_isRejected() {
+        Instant signedOut = Instant.parse("2026-10-05T12:00:00Z");
+        sessionRegistry.onSignedOut(new OfficialSignedOutEvent(42L, signedOut));
+        when(jwtTokenService.parseToken("old")).thenReturn(Jwts.claims().subject("42")
+                .issuedAt(Date.from(signedOut.minusSeconds(60))).build());
+        when(jwtTokenService.parseToken("new")).thenReturn(Jwts.claims().subject("42")
+                .issuedAt(Date.from(signedOut.plusSeconds(1))).build());
+
+        assertThat(interceptor.preSend(connect("Bearer old"), null)).isNull();
+        assertThat(interceptor.preSend(connect("Bearer new"), null)).isNotNull();
     }
 
     @Test

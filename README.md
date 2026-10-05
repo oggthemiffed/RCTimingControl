@@ -101,7 +101,7 @@ See [docs/testing.md](docs/testing.md) for the full test matrix, including `deco
 | Race day | Check-in desk with barcode input and transponder swaps, round generator, race control (grid, start/stop, marshal laps), referee tools, unknown-transponder linking, open practice |
 | Live timing | Direct AMB RC-4 decoder listener, WebSocket live display, voice announcements (Piper TTS or the browser's voice), spectator boards, a streaming overlay for OBS, a live feed to a relay for remote viewers |
 | Results | Result snapshots, best-X-from-Y championship standings, public results pages, printable results, results sent back to RaceHub through a queue that waits for the network |
-| Running it | One installer per system that runs as a background service, scheduled backups and a restore command, in-app help and printable guides |
+| Running it | One installer per system that runs as a background service, scheduled backups and a restore command, a command-line admin password reset, in-app help and printable guides |
 
 
 ---

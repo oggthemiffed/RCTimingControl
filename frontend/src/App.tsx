@@ -16,6 +16,7 @@ import ChampionshipListPage from '@/pages/admin/championships/ChampionshipListPa
 import ChampionshipDetailPage from '@/pages/admin/championships/ChampionshipDetailPage';
 import ClubProfilePage from '@/pages/admin/club/ClubProfilePage';
 import AdminAudioSettingsPage from '@/pages/admin/club/AdminAudioSettingsPage';
+import OfficialsPage from '@/pages/admin/officials/OfficialsPage';
 import TracksPage from '@/pages/admin/tracks/TracksPage';
 import FormatsPage from '@/pages/admin/formats/FormatsPage';
 import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
@@ -80,6 +81,7 @@ const router = createBrowserRouter([
           { path: 'decoder', element: <ProtectedRoute roles={['ADMIN']}><DecoderSettingsPage /></ProtectedRoute> },
           { path: 'backups', element: <ProtectedRoute roles={['ADMIN']}><BackupsPage /></ProtectedRoute> },
           { path: 'results-exports', element: <ProtectedRoute roles={['ADMIN']}><ResultsExportsPage /></ProtectedRoute> },
+          { path: 'officials', element: <ProtectedRoute roles={['ADMIN']}><OfficialsPage /></ProtectedRoute> },
           { path: 'audio', element: <AdminAudioSettingsPage /> },
           { path: 'competitors', element: <CompetitorsPage /> },
         ],

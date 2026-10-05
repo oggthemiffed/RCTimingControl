@@ -348,6 +348,42 @@ export interface BackupsDto {
   backups: BackupFileDto[];
 }
 
+// Officials (#61)
+export type OfficialRole = 'ADMIN' | 'RACE_DIRECTOR' | 'REFEREE';
+
+export interface OfficialDto {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  roles: OfficialRole[];
+  enabled: boolean;
+  disabledAt: string | null;
+  createdAt: string;
+}
+
+export type OfficialAction = 'ADDED' | 'ROLES_CHANGED' | 'PASSWORD_SET' | 'DISABLED' | 'ENABLED';
+
+export interface OfficialChangeDto {
+  id: number;
+  at: string;
+  officialId: number;
+  officialName: string;
+  action: OfficialAction;
+  detail: string | null;
+  actorId: number | null;
+  /** Null when the change came from the laptop's command line */
+  actorName: string | null;
+}
+
+export interface AddOfficialRequest {
+  email: string;
+  firstName: string;
+  lastName: string;
+  password: string;
+  roles: OfficialRole[];
+}
+
 // Results sent to RaceHub (#27)
 export type ResultsExportStatus = 'QUEUED' | 'FAILED' | 'SENT' | 'SUPERSEDED';
 export type ResultsExportReason = 'RACE_FINISHED' | 'CORRECTION' | 'DAY_CLOSE';
@@ -564,6 +600,24 @@ export const adminApi = {
       api.get<BackupsDto>('/api/v1/admin/backups').then(r => r.data),
     create: () =>
       api.post<BackupFileDto>('/api/v1/admin/backups').then(r => r.data),
+  },
+
+  // Officials (#61)
+  officials: {
+    list: () =>
+      api.get<OfficialDto[]>('/api/v1/admin/officials').then(r => r.data),
+    changes: () =>
+      api.get<OfficialChangeDto[]>('/api/v1/admin/officials/changes').then(r => r.data),
+    add: (body: AddOfficialRequest) =>
+      api.post<OfficialDto>('/api/v1/admin/officials', body).then(r => r.data),
+    changeRoles: (id: number, roles: OfficialRole[]) =>
+      api.put<OfficialDto>(`/api/v1/admin/officials/${id}/roles`, { roles }).then(r => r.data),
+    setPassword: (id: number, password: string) =>
+      api.put(`/api/v1/admin/officials/${id}/password`, { password }).then(() => undefined),
+    disable: (id: number) =>
+      api.post<OfficialDto>(`/api/v1/admin/officials/${id}/disable`).then(r => r.data),
+    enable: (id: number) =>
+      api.post<OfficialDto>(`/api/v1/admin/officials/${id}/enable`).then(r => r.data),
   },
 
   // Results sent to RaceHub (#27)

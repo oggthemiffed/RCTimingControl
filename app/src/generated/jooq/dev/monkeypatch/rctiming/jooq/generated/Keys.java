@@ -21,6 +21,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
+import dev.monkeypatch.rctiming.jooq.generated.tables.OfficialAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions;
@@ -56,6 +57,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.records.IncidentReportsRec
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.MarshalAbsencesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.MarshalAdjustmentsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.MarshalPenaltiesRecord;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.OfficialAuditLogRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PenaltiesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PracticeLapsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PracticeSessionsRecord;
@@ -112,6 +114,7 @@ public class Keys {
     public static final UniqueKey<MarshalAbsencesRecord> MARSHAL_ABSENCES__PK_MARSHAL_ABSENCES = Internal.createUniqueKey(MarshalAbsences.MARSHAL_ABSENCES, DSL.name("pk_marshal_absences"), new TableField[] { MarshalAbsences.MARSHAL_ABSENCES.ID }, true);
     public static final UniqueKey<MarshalAdjustmentsRecord> MARSHAL_ADJUSTMENTS__PK_MARSHAL_ADJUSTMENTS = Internal.createUniqueKey(MarshalAdjustments.MARSHAL_ADJUSTMENTS, DSL.name("pk_marshal_adjustments"), new TableField[] { MarshalAdjustments.MARSHAL_ADJUSTMENTS.ID }, true);
     public static final UniqueKey<MarshalPenaltiesRecord> MARSHAL_PENALTIES__PK_MARSHAL_PENALTIES = Internal.createUniqueKey(MarshalPenalties.MARSHAL_PENALTIES, DSL.name("pk_marshal_penalties"), new TableField[] { MarshalPenalties.MARSHAL_PENALTIES.ID }, true);
+    public static final UniqueKey<OfficialAuditLogRecord> OFFICIAL_AUDIT_LOG__PK_OFFICIAL_AUDIT_LOG = Internal.createUniqueKey(OfficialAuditLog.OFFICIAL_AUDIT_LOG, DSL.name("pk_official_audit_log"), new TableField[] { OfficialAuditLog.OFFICIAL_AUDIT_LOG.ID }, true);
     public static final UniqueKey<PenaltiesRecord> PENALTIES__PK_PENALTIES = Internal.createUniqueKey(Penalties.PENALTIES, DSL.name("pk_penalties"), new TableField[] { Penalties.PENALTIES.ID }, true);
     public static final UniqueKey<PracticeLapsRecord> PRACTICE_LAPS__PK_PRACTICE_LAPS = Internal.createUniqueKey(PracticeLaps.PRACTICE_LAPS, DSL.name("pk_practice_laps"), new TableField[] { PracticeLaps.PRACTICE_LAPS.ID }, true);
     public static final UniqueKey<PracticeSessionsRecord> PRACTICE_SESSIONS__PK_PRACTICE_SESSIONS = Internal.createUniqueKey(PracticeSessions.PRACTICE_SESSIONS, DSL.name("pk_practice_sessions"), new TableField[] { PracticeSessions.PRACTICE_SESSIONS.ID }, true);
@@ -168,6 +171,8 @@ public class Keys {
     public static final ForeignKey<MarshalPenaltiesRecord, MarshalAbsencesRecord> MARSHAL_PENALTIES__MARSHAL_PENALTIES_ABSENCE_ID_FKEY = Internal.createForeignKey(MarshalPenalties.MARSHAL_PENALTIES, DSL.name("marshal_penalties_absence_id_fkey"), new TableField[] { MarshalPenalties.MARSHAL_PENALTIES.ABSENCE_ID }, Keys.MARSHAL_ABSENCES__PK_MARSHAL_ABSENCES, new TableField[] { MarshalAbsences.MARSHAL_ABSENCES.ID }, true);
     public static final ForeignKey<MarshalPenaltiesRecord, EntriesRecord> MARSHAL_PENALTIES__MARSHAL_PENALTIES_ENTRY_ID_FKEY = Internal.createForeignKey(MarshalPenalties.MARSHAL_PENALTIES, DSL.name("marshal_penalties_entry_id_fkey"), new TableField[] { MarshalPenalties.MARSHAL_PENALTIES.ENTRY_ID }, Keys.ENTRIES__PK_ENTRIES, new TableField[] { Entries.ENTRIES.ID }, true);
     public static final ForeignKey<MarshalPenaltiesRecord, EventsRecord> MARSHAL_PENALTIES__MARSHAL_PENALTIES_EVENT_ID_FKEY = Internal.createForeignKey(MarshalPenalties.MARSHAL_PENALTIES, DSL.name("marshal_penalties_event_id_fkey"), new TableField[] { MarshalPenalties.MARSHAL_PENALTIES.EVENT_ID }, Keys.EVENTS__PK_EVENTS, new TableField[] { Events.EVENTS.ID }, true);
+    public static final ForeignKey<OfficialAuditLogRecord, UsersRecord> OFFICIAL_AUDIT_LOG__OFFICIAL_AUDIT_LOG_ACTOR_USER_ID_FKEY = Internal.createForeignKey(OfficialAuditLog.OFFICIAL_AUDIT_LOG, DSL.name("official_audit_log_actor_user_id_fkey"), new TableField[] { OfficialAuditLog.OFFICIAL_AUDIT_LOG.ACTOR_USER_ID }, Keys.USERS__PK_USERS, new TableField[] { Users.USERS.ID }, true);
+    public static final ForeignKey<OfficialAuditLogRecord, UsersRecord> OFFICIAL_AUDIT_LOG__OFFICIAL_AUDIT_LOG_OFFICIAL_USER_ID_FKEY = Internal.createForeignKey(OfficialAuditLog.OFFICIAL_AUDIT_LOG, DSL.name("official_audit_log_official_user_id_fkey"), new TableField[] { OfficialAuditLog.OFFICIAL_AUDIT_LOG.OFFICIAL_USER_ID }, Keys.USERS__PK_USERS, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<PenaltiesRecord, EntriesRecord> PENALTIES__PENALTIES_ENTRY_ID_FKEY = Internal.createForeignKey(Penalties.PENALTIES, DSL.name("penalties_entry_id_fkey"), new TableField[] { Penalties.PENALTIES.ENTRY_ID }, Keys.ENTRIES__PK_ENTRIES, new TableField[] { Entries.ENTRIES.ID }, true);
     public static final ForeignKey<PenaltiesRecord, RacesRecord> PENALTIES__PENALTIES_RACE_ID_FKEY = Internal.createForeignKey(Penalties.PENALTIES, DSL.name("penalties_race_id_fkey"), new TableField[] { Penalties.PENALTIES.RACE_ID }, Keys.RACES__PK_RACES, new TableField[] { Races.RACES.ID }, true);
     public static final ForeignKey<PracticeLapsRecord, PracticeSessionsRecord> PRACTICE_LAPS__PRACTICE_LAPS_PRACTICE_SESSION_ID_FKEY = Internal.createForeignKey(PracticeLaps.PRACTICE_LAPS, DSL.name("practice_laps_practice_session_id_fkey"), new TableField[] { PracticeLaps.PRACTICE_LAPS.PRACTICE_SESSION_ID }, Keys.PRACTICE_SESSIONS__PK_PRACTICE_SESSIONS, new TableField[] { PracticeSessions.PRACTICE_SESSIONS.ID }, true);

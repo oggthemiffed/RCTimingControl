@@ -78,6 +78,19 @@ describe('LoginPage', () => {
     expect(await screen.findByText('This sign-in is for race officials only.')).toBeInTheDocument();
   });
 
+  it('tells a disabled official to ask an admin', async () => {
+    vi.mocked(api.post).mockRejectedValue(
+      new AxiosError('Forbidden', 'ERR_BAD_REQUEST', undefined, null, {
+        status: 403, statusText: 'Forbidden', data: { reason: 'disabled' }, headers: {}, config: { headers: new AxiosHeaders() },
+      }),
+    );
+    renderLogin();
+
+    await signIn();
+
+    expect(await screen.findByText('This account has been disabled. Ask a club admin to enable it.')).toBeInTheDocument();
+  });
+
   it('offers no self-registration or password reset links', async () => {
     renderLogin();
 

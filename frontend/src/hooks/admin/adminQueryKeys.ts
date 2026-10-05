@@ -36,4 +36,8 @@ export const adminQueryKeys = {
   resultsExports: {
     all: () => ['admin', 'results-exports'] as const,
   },
+  officials: {
+    all: () => ['admin', 'officials'] as const,
+    changes: () => ['admin', 'officials', 'changes'] as const,
+  },
 };

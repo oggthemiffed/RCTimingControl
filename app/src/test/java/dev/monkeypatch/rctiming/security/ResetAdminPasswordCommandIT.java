@@ -1,0 +1,139 @@
+package dev.monkeypatch.rctiming.security;
+
+import dev.monkeypatch.rctiming.AbstractIntegrationTest;
+import dev.monkeypatch.rctiming.api.auth.AuthResponse;
+import dev.monkeypatch.rctiming.api.auth.LoginRequest;
+import dev.monkeypatch.rctiming.domain.user.OfficialAuditLog;
+import dev.monkeypatch.rctiming.domain.user.OfficialAuditLogRepository;
+import dev.monkeypatch.rctiming.domain.user.Role;
+import dev.monkeypatch.rctiming.domain.user.User;
+import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/** {@code RCTimingControl reset-admin-password} (#61), run against the test database while the app is up. */
+class ResetAdminPasswordCommandIT extends AbstractIntegrationTest {
+
+    @Autowired
+    TestRestTemplate rest;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    OfficialAuditLogRepository auditLogRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    @Value("${rctiming.database.data-directory}")
+    String dataDirectory;
+
+    @Test
+    void aLockedOutOfficialGetsANewPasswordAndBecomesAnEnabledAdmin() {
+        String email = createUser(Set.of(Role.REFEREE), "forgotten1");
+        User user = userRepository.findByEmail(email).orElseThrow();
+        user.setDisabledAt(Instant.now());
+        userRepository.save(user);
+
+        int exit = ResetAdminPasswordCommand.run(new String[] {email, dataDirectoryArgument()},
+                passwords("rescued123", "rescued123"));
+
+        assertThat(exit).isZero();
+        User reset = userRepository.findByEmail(email).orElseThrow();
+        assertThat(reset.isEnabled()).isTrue();
+        assertThat(reset.getRoles()).containsExactlyInAnyOrder(Role.REFEREE, Role.ADMIN);
+        assertThat(login(email, "forgotten1").getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(login(email, "rescued123").getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<OfficialAuditLog> log = auditLogRepository.findByOfficialUserIdOrderByCreatedAtAsc(reset.getId());
+        assertThat(log).extracting(OfficialAuditLog::getAction)
+                .containsExactlyInAnyOrder("PASSWORD_SET", "ROLES_CHANGED", "ENABLED");
+        assertThat(log).allSatisfy(entry -> assertThat(entry.getActorUserId()).isNull());
+    }
+
+    @Test
+    void anAdminKeepsTheirRolesAndOnlyThePasswordIsLogged() {
+        String email = createUser(Set.of(Role.ADMIN), "forgotten1");
+
+        int exit = ResetAdminPasswordCommand.run(new String[] {email, dataDirectoryArgument()},
+                passwords("rescued123", "rescued123"));
+
+        assertThat(exit).isZero();
+        User reset = userRepository.findByEmail(email).orElseThrow();
+        assertThat(reset.getRoles()).containsExactly(Role.ADMIN);
+        assertThat(auditLogRepository.findByOfficialUserIdOrderByCreatedAtAsc(reset.getId()))
+                .extracting(OfficialAuditLog::getAction).containsExactly("PASSWORD_SET");
+    }
+
+    @Test
+    void mismatchedOrShortPasswordsChangeNothing() {
+        String email = createUser(Set.of(Role.ADMIN), "keepThis1");
+
+        assertThat(ResetAdminPasswordCommand.run(new String[] {email, dataDirectoryArgument()},
+                passwords("rescued123", "different1"))).isEqualTo(1);
+        assertThat(ResetAdminPasswordCommand.run(new String[] {email, dataDirectoryArgument()},
+                passwords("short", "short"))).isEqualTo(1);
+
+        assertThat(login(email, "keepThis1").getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void anUnknownEmailOrNoEmailIsRefused() {
+        assertThat(ResetAdminPasswordCommand.run(new String[] {"nobody-" + UUID.randomUUID() + "@example.com",
+                dataDirectoryArgument()}, passwords())).isEqualTo(1);
+        assertThat(ResetAdminPasswordCommand.run(new String[] {dataDirectoryArgument()}, passwords())).isEqualTo(2);
+    }
+
+    @Test
+    void aFolderWithNoDatabaseIsRefusedWithoutCreatingOne(@TempDir Path empty) {
+        int exit = ResetAdminPasswordCommand.run(new String[] {"admin@example.com",
+                "--rctiming.database.data-directory=" + empty}, passwords());
+
+        assertThat(exit).isEqualTo(1);
+        assertThat(empty.toFile().list()).isEmpty();
+    }
+
+    private String dataDirectoryArgument() {
+        return "--rctiming.database.data-directory=" + dataDirectory;
+    }
+
+    private static ResetAdminPasswordCommand.PasswordSource passwords(String... typed) {
+        Deque<String> lines = new ArrayDeque<>(List.of(typed));
+        return prompt -> lines.isEmpty() ? null : lines.pop().toCharArray();
+    }
+
+    private String createUser(Set<Role> roles, String password) {
+        String email = "reset-" + UUID.randomUUID() + "@example.com";
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setFirstName("Locked");
+        user.setLastName("Out");
+        user.setRoles(roles);
+        Instant now = Instant.now();
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
+        userRepository.save(user);
+        return email;
+    }
+
+    private ResponseEntity<AuthResponse> login(String email, String password) {
+        return rest.postForEntity("/api/v1/auth/login", new LoginRequest(email, password), AuthResponse.class);
+    }
+}

@@ -49,6 +49,9 @@ public class User {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    /** When an admin stopped this official signing in (#61); null while they can. */
+    private Instant disabledAt;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -75,5 +78,14 @@ public class User {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public Instant getDisabledAt() { return disabledAt; }
+    public void setDisabledAt(Instant disabledAt) { this.disabledAt = disabledAt; }
+
+    /** True unless an admin has disabled this official. */
+    public boolean isEnabled() { return disabledAt == null; }
+
+    /** May sign in and refresh: an official who has not been disabled. */
+    public boolean canSignIn() { return isOfficial() && isEnabled(); }
 
 }

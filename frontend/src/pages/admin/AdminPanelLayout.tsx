@@ -16,6 +16,7 @@ import {
   HelpCircle,
   DatabaseBackup,
   CloudUpload,
+  UserCog,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ const adminOnlyOperations = [
   { to: '/admin/decoder', label: 'Decoder', Icon: Radio },
   { to: '/admin/backups', label: 'Backups', Icon: DatabaseBackup },
   { to: '/admin/results-exports', label: 'Results to RaceHub', Icon: CloudUpload },
+  { to: '/admin/officials', label: 'Officials', Icon: UserCog },
 ] as const;
 
 const configGroup = [

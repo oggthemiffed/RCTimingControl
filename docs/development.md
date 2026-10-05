@@ -121,6 +121,16 @@ java -jar app.jar restore /media/usb/rctiming/rctiming-20261004-220000-day-close
 
 It finds the data directory the way the app does (`RCTIMING_DATA_DIR`, `--rctiming.database.data-directory=...`, or the default folder), checks the backup is sound, and moves the current database aside as `rctiming.db.before-restore-<time>`. Then it puts the backup in its place. It refuses while the app has the database open. When the app next starts, it migrates the restored database if it came from an older version. For the installed app, see [installing.md](installing.md#restoring-a-backup).
 
+### Locked out of the admin account
+
+Admins manage officials under **Admin → Officials**. If no admin can sign in, stop the app and run:
+
+```bash
+java -jar app.jar reset-admin-password admin@club.example
+```
+
+It finds the data directory the same way, asks for the new password twice, enables the account, gives it `ADMIN` if it had lost it, and signs it out everywhere. With no email it lists the admins. The change is logged as made from the command line. It never creates a database: with none in the data directory it stops. For the installed app, see [installing.md](installing.md#locked-out).
+
 ### Running it for real
 
 The app runs on the venue laptop from the installer, which serves the UI, keeps its data in the per-machine folder and starts with the laptop; see [installing.md](installing.md). It is meant for the venue network only and is not deployed to the internet.
@@ -172,7 +182,7 @@ app/src/main/java/dev/monkeypatch/rctiming/
 ├── backup/              # Scheduled and on-demand backups, the restore command
 ├── infrastructure/      # Announcer (audio, tts), file storage, LAN addresses
 ├── persistence/         # Database choice, connection pools, converters; vendor code in vendor/
-├── security/            # JWT sign-in, STOMP CONNECT check, security rules
+├── security/            # JWT sign-in, STOMP CONNECT check, security rules, reset-admin-password
 └── config/              # Async, SPA serving, storage, TTS, WebSocket (STOMP on /ws/timing)
 ```
 

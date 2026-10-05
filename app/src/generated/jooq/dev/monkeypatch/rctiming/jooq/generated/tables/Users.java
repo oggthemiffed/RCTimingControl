@@ -9,6 +9,7 @@ import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.EntryAuditLogPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.OfficialAuditLog.OfficialAuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps.PracticeLapsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions.PracticeSessionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens.RefreshTokensPath;
@@ -100,6 +101,11 @@ public class Users extends TableImpl<UsersRecord> {
      * The column <code>users.updated_at</code>.
      */
     public final TableField<UsersRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
+
+    /**
+     * The column <code>users.disabled_at</code>.
+     */
+    public final TableField<UsersRecord, Instant> DISABLED_AT = createField(DSL.name("disabled_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
     private Users(Name alias, Table<UsersRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -233,6 +239,32 @@ public class Users extends TableImpl<UsersRecord> {
             _entryAuditLog = new EntryAuditLogPath(this, null, Keys.ENTRY_AUDIT_LOG__ENTRY_AUDIT_LOG_ADMIN_USER_ID_FKEY.getInverseKey());
 
         return _entryAuditLog;
+    }
+
+    private transient OfficialAuditLogPath _officialAuditLogActorUserIdFkey;
+
+    /**
+     * Get the implicit to-many join path to the <code>official_audit_log</code>
+     * table, via the <code>official_audit_log_actor_user_id_fkey</code> key
+     */
+    public OfficialAuditLogPath officialAuditLogActorUserIdFkey() {
+        if (_officialAuditLogActorUserIdFkey == null)
+            _officialAuditLogActorUserIdFkey = new OfficialAuditLogPath(this, null, Keys.OFFICIAL_AUDIT_LOG__OFFICIAL_AUDIT_LOG_ACTOR_USER_ID_FKEY.getInverseKey());
+
+        return _officialAuditLogActorUserIdFkey;
+    }
+
+    private transient OfficialAuditLogPath _officialAuditLogOfficialUserIdFkey;
+
+    /**
+     * Get the implicit to-many join path to the <code>official_audit_log</code>
+     * table, via the <code>official_audit_log_official_user_id_fkey</code> key
+     */
+    public OfficialAuditLogPath officialAuditLogOfficialUserIdFkey() {
+        if (_officialAuditLogOfficialUserIdFkey == null)
+            _officialAuditLogOfficialUserIdFkey = new OfficialAuditLogPath(this, null, Keys.OFFICIAL_AUDIT_LOG__OFFICIAL_AUDIT_LOG_OFFICIAL_USER_ID_FKEY.getInverseKey());
+
+        return _officialAuditLogOfficialUserIdFkey;
     }
 
     private transient PracticeLapsPath _practiceLaps;
