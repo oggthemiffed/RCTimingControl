@@ -46,6 +46,11 @@ public enum DatabaseVendor {
         }
 
         @Override
+        public boolean hasDatabase(Path dataDirectory) {
+            return Files.isRegularFile(dataDirectory.resolve(DATABASE_FILE));
+        }
+
+        @Override
         public String readOnlySessionSql() {
             return "PRAGMA query_only = 1";
         }
@@ -163,6 +168,9 @@ public enum DatabaseVendor {
 
     /** Settings applied to every connection. */
     public abstract Properties connectionProperties();
+
+    /** True when the data directory already holds a database, so connecting won't create an empty one. */
+    public abstract boolean hasDatabase(Path dataDirectory);
 
     /** Statement that makes a connection refuse writes; run on each read-pool connection. */
     public abstract String readOnlySessionSql();

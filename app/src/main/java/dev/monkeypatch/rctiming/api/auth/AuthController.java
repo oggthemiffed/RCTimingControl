@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -45,7 +46,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest request,
+    public ResponseEntity<?> login(@RequestBody @Valid LoginRequest request,
                                                HttpServletResponse response) {
         Optional<User> userOpt = userService.findByEmail(request.email());
         if (userOpt.isEmpty() || !passwordEncoder.matches(request.password(), userOpt.get().getPasswordHash())) {
@@ -57,6 +58,13 @@ public class AuthController {
         if (!user.isOfficial()) {
             // Only race officials sign in (L10, #18); the password was right, so say why
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (!user.isEnabled()) {
+            // An admin has disabled this official (#61); the password was right, so say why
+            ProblemDetail disabled = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN,
+                    "This account has been disabled. Ask a club admin to enable it.");
+            disabled.setProperty("reason", "disabled");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(disabled);
         }
         String accessToken = jwtTokenService.generateAccessToken(user);
         setRefreshCookie(user, response);
@@ -90,6 +98,10 @@ public class AuthController {
         User user = oldToken.getUser();
         if (!user.isOfficial()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (!user.isEnabled()) {
+            // Disabling revokes the tokens too (#61); this covers one issued in between
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         String newAccessToken = jwtTokenService.generateAccessToken(user);
         setRefreshCookie(user, response);

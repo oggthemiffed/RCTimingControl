@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api;
 
+import dev.monkeypatch.rctiming.domain.user.OfficialChangeRefusedException;
 import dev.monkeypatch.rctiming.backup.BackupFailedException;
 import dev.monkeypatch.rctiming.domain.event.IllegalStateTransitionException;
 import jakarta.persistence.EntityNotFoundException;
@@ -48,6 +49,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateTransitionException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ProblemDetail handleStateTransition(IllegalStateTransitionException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(OfficialChangeRefusedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handleOfficialChangeRefused(OfficialChangeRefusedException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 

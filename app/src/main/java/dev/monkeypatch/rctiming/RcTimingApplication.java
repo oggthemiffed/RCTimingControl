@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming;
 
 import dev.monkeypatch.rctiming.backup.RestoreCommand;
 import dev.monkeypatch.rctiming.persistence.DataDirectories;
+import dev.monkeypatch.rctiming.security.ResetAdminPasswordCommand;
 import dev.monkeypatch.rctiming.simulator.SimulatorMain;
 import dev.monkeypatch.rctiming.simulator.relay.LiveFeedRelayMain;
 import org.springframework.boot.SpringApplication;
@@ -22,6 +23,10 @@ public class RcTimingApplication {
         }
         if (args.length > 0 && args[0].equals("restore")) {
             System.exit(RestoreCommand.run(Arrays.copyOfRange(args, 1, args.length)));
+        }
+        if (args.length > 0 && args[0].equals("reset-admin-password")) {
+            // The way back in for a club whose only admin is locked out (#61)
+            System.exit(ResetAdminPasswordCommand.run(Arrays.copyOfRange(args, 1, args.length)));
         }
         if (args.length > 0 && args[0].equals("relay")) {
             // A stand-in relay and viewer page for trying the live feed (#28)
