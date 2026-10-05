@@ -95,7 +95,10 @@ public class AuthController {
         oldToken.setRevoked(true);
         refreshTokenRepository.save(oldToken);
 
-        User user = oldToken.getUser();
+        User user = userService.findById(oldToken.getUserId()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         if (!user.isOfficial()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -116,7 +119,7 @@ public class AuthController {
         String tokenHash = sha256Hex(rawToken);
 
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUser(user);
+        refreshToken.setUserId(user.getId());
         refreshToken.setTokenHash(tokenHash);
         refreshToken.setExpiresAt(Instant.now().plusMillis(jwtTokenService.getRefreshTokenTtlMs()));
         refreshToken.setCreatedAt(Instant.now());

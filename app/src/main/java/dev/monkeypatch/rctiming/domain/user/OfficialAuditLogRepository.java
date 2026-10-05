@@ -1,10 +1,54 @@
 package dev.monkeypatch.rctiming.domain.user;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.OfficialAuditLogRecord;
+import dev.monkeypatch.rctiming.persistence.JooqRepository;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-public interface OfficialAuditLogRepository extends JpaRepository<OfficialAuditLog, Long> {
+import static dev.monkeypatch.rctiming.jooq.generated.tables.OfficialAuditLog.OFFICIAL_AUDIT_LOG;
 
-    List<OfficialAuditLog> findByOfficialUserIdOrderByCreatedAtAsc(Long officialUserId);
+@Repository
+public class OfficialAuditLogRepository extends JooqRepository<OfficialAuditLog, OfficialAuditLogRecord> {
+
+    public OfficialAuditLogRepository(DSLContext dsl) {
+        super(dsl, OFFICIAL_AUDIT_LOG, OFFICIAL_AUDIT_LOG.ID);
+    }
+
+    public List<OfficialAuditLog> findByOfficialUserIdOrderByCreatedAtAsc(Long officialUserId) {
+        return findWhere(OFFICIAL_AUDIT_LOG.OFFICIAL_USER_ID.eq(officialUserId),
+                OFFICIAL_AUDIT_LOG.CREATED_AT.asc(), OFFICIAL_AUDIT_LOG.ID.asc());
+    }
+
+    @Override
+    protected List<Field<?>> insertOnly() {
+        return List.of(OFFICIAL_AUDIT_LOG.CREATED_AT);
+    }
+
+    @Override
+    protected OfficialAuditLog toEntity(OfficialAuditLogRecord r) {
+        return new OfficialAuditLog(r.getId(), r.getOfficialUserId(), r.getActorUserId(), r.getAction(),
+                r.getDetail(), r.getCreatedAt());
+    }
+
+    @Override
+    protected void toRecord(OfficialAuditLog a, OfficialAuditLogRecord r) {
+        r.setOfficialUserId(a.getOfficialUserId());
+        r.setActorUserId(a.getActorUserId());
+        r.setAction(a.getAction());
+        r.setDetail(a.getDetail());
+        r.setCreatedAt(a.getCreatedAt());
+    }
+
+    @Override
+    protected Long idOf(OfficialAuditLog a) {
+        return a.getId();
+    }
+
+    @Override
+    protected void setId(OfficialAuditLog a, Long id) {
+        a.setId(id);
+    }
 }

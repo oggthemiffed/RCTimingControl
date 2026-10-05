@@ -100,6 +100,7 @@ public class OfficialService {
         Instant now = clock.instant();
         user.setRoles(new HashSet<>(granted));
         user.setUpdatedAt(now);
+        userRepository.save(user);
         log(user, actorId, OfficialAuditLog.Action.ROLES_CHANGED,
                 describe(before) + " → " + describe(granted), now);
         return user;
@@ -111,6 +112,7 @@ public class OfficialService {
         Instant now = clock.instant();
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setUpdatedAt(now);
+        userRepository.save(user);
         revokeSessions(user);
         log(user, actorId, OfficialAuditLog.Action.PASSWORD_SET, null, now);
         return user;
@@ -131,6 +133,7 @@ public class OfficialService {
         Instant now = clock.instant();
         user.setDisabledAt(now);
         user.setUpdatedAt(now);
+        userRepository.save(user);
         revokeSessions(user);
         log(user, actorId, OfficialAuditLog.Action.DISABLED, null, now);
         return user;
@@ -144,6 +147,7 @@ public class OfficialService {
         Instant now = clock.instant();
         user.setDisabledAt(null);
         user.setUpdatedAt(now);
+        userRepository.save(user);
         log(user, actorId, OfficialAuditLog.Action.ENABLED, null, now);
         return user;
     }
@@ -153,7 +157,7 @@ public class OfficialService {
     }
 
     private void revokeSessions(User user) {
-        refreshTokenRepository.findByUserAndRevokedFalse(user).forEach(token -> token.setRevoked(true));
+        refreshTokenRepository.revokeAllForUser(user.getId());
         events.publishEvent(new OfficialSignedOutEvent(user.getId(), clock.instant()));
     }
 

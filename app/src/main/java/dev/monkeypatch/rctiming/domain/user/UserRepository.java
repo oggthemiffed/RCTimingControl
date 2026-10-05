@@ -1,16 +1,97 @@
 package dev.monkeypatch.rctiming.domain.user;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.UsersRecord;
+import dev.monkeypatch.rctiming.persistence.JooqRepository;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+import static dev.monkeypatch.rctiming.jooq.generated.tables.UserRoles.USER_ROLES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Users.USERS;
 
-    Optional<User> findByEmail(String email);
+/** Officials, with their roles from {@code user_roles}. */
+@Repository
+public class UserRepository extends JooqRepository<User, UsersRecord> {
+
+    public UserRepository(DSLContext dsl) {
+        super(dsl, USERS, USERS.ID);
+    }
+
+    public Optional<User> findByEmail(String email) {
+        return findOne(USERS.EMAIL.eq(email));
+    }
 
     /** Officials holding a role who can still sign in, such as the enabled admins (#61). */
-    @Query("select count(u) from User u where :role member of u.roles and u.disabledAt is null")
-    long countEnabledWithRole(@Param("role") Role role);
+    public long countEnabledWithRole(Role role) {
+        return dsl.fetchCount(dsl.selectFrom(USERS)
+                .where(USERS.DISABLED_AT.isNull())
+                .andExists(dsl.selectOne().from(USER_ROLES)
+                        .where(USER_ROLES.USER_ID.eq(USERS.ID).and(USER_ROLES.ROLE.eq(role.name())))));
+    }
+
+    /** Saves the official and replaces their roles with the ones they hold now. */
+    @Override
+    @Transactional
+    public User save(User user) {
+        super.save(user);
+        dsl.deleteFrom(USER_ROLES).where(USER_ROLES.USER_ID.eq(user.getId())).execute();
+        for (Role role : user.getRoles()) {
+            dsl.insertInto(USER_ROLES, USER_ROLES.USER_ID, USER_ROLES.ROLE).values(user.getId(), role.name()).execute();
+        }
+        return user;
+    }
+
+    @Override
+    protected List<Field<?>> insertOnly() {
+        return List.of(USERS.CREATED_AT);
+    }
+
+    @Override
+    protected User toEntity(UsersRecord r) {
+        User u = new User();
+        u.setId(r.getId());
+        u.setEmail(r.getEmail());
+        u.setPasswordHash(r.getPasswordHash());
+        u.setFirstName(r.getFirstName());
+        u.setLastName(r.getLastName());
+        u.setRoles(rolesOf(r.getId()));
+        u.setCreatedAt(r.getCreatedAt());
+        u.setUpdatedAt(r.getUpdatedAt());
+        u.setDisabledAt(r.getDisabledAt());
+        return u;
+    }
+
+    private Set<Role> rolesOf(Long userId) {
+        Set<Role> roles = EnumSet.noneOf(Role.class);
+        dsl.select(USER_ROLES.ROLE).from(USER_ROLES).where(USER_ROLES.USER_ID.eq(userId))
+                .fetch(USER_ROLES.ROLE).forEach(role -> roles.add(Role.valueOf(role)));
+        return roles;
+    }
+
+    @Override
+    protected void toRecord(User u, UsersRecord r) {
+        r.setEmail(u.getEmail());
+        r.setPasswordHash(u.getPasswordHash());
+        r.setFirstName(u.getFirstName());
+        r.setLastName(u.getLastName());
+        r.setCreatedAt(u.getCreatedAt());
+        r.setUpdatedAt(u.getUpdatedAt());
+        r.setDisabledAt(u.getDisabledAt());
+    }
+
+    @Override
+    protected Long idOf(User u) {
+        return u.getId();
+    }
+
+    @Override
+    protected void setId(User u, Long id) {
+        u.setId(id);
+    }
 }
