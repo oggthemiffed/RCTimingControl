@@ -157,7 +157,7 @@
 ### Results
 
 - [x] **RESULT-01**: Final race results are published after each race
-- [x] **RESULT-02**: Results correctly reflect any marshal lap adjustments and penalties applied **Gap**: a lap adjustment or penalty given during the race counts, but one given after the race finishes doesn't change its stored result yet, and time penalties are not applied (#63)
+- [x] **RESULT-02**: Results correctly reflect any marshal lap adjustments and penalties applied, including time penalties and corrections made after the race finishes (#63)
 - [x] **RESULT-03**: Per-racer result history is viewable on the racer's portal page **Changed**: results group by competitor on the public pages, since there is no racer portal (#12, #13).
 - [x] **RESULT-04**: Printed/PDF results optionally display a racer's car tag values beneath their name; controlled by an admin display setting **Changed**: car tags show only on result snapshots saved before #18; new results have none.
 - [x] **RESULT-05**: Result records include full individual lap time data (every lap, not just totals and best lap)

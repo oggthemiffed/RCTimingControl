@@ -103,7 +103,7 @@ public class ResultsExportQuery {
             Instant finishedAt = r.get(RACES.FINISHED_AT) != null ? r.get(RACES.FINISHED_AT)
                     : r.get(RESULT_SNAPSHOTS.FINISHED_AT);
             Map<Long, List<ResultsExportV1.Penalty>> racePenalties =
-                    penaltiesByEntry(penalties.getOrDefault(raceId, List.of()), r.get(RACES.STARTED_AT), finishedAt);
+                    penaltiesByEntry(penalties.getOrDefault(raceId, List.of()), r.get(RACES.STARTED_AT));
             List<ResultsExportV1.Row> results = new ArrayList<>();
             for (ResultSnapshotDto.ResultRow p : positions(raceId, r.get(RESULT_SNAPSHOTS.POSITIONS_JSON))) {
                 EntryRef entry = entries.get(p.entryId());
@@ -166,17 +166,15 @@ public class ResultsExportQuery {
     }
 
     /**
-     * One race's penalties per entry. A LAP penalty given while the race ran came off the live lap count, so
-     * the stored result already allows for it. A TIME penalty, or any given after the finish, is not in the
-     * stored result yet (#63).
+     * One race's penalties per entry. The stored result allows for every penalty given since the race last
+     * started (#63): a LAP penalty during the race came off the live lap count, and the rest are applied when
+     * the result is stored or corrected. One from before a restart belongs to the earlier run.
      */
     private static Map<Long, List<ResultsExportV1.Penalty>> penaltiesByEntry(List<PenaltyRow> rows,
-                                                                            Instant startedAt, Instant finishedAt) {
+                                                                            Instant startedAt) {
         Map<Long, List<ResultsExportV1.Penalty>> byEntry = new LinkedHashMap<>();
         for (PenaltyRow p : rows) {
-            boolean included = "LAP".equals(p.type()) && startedAt != null && p.appliedAt() != null
-                    && !p.appliedAt().isBefore(startedAt)
-                    && (finishedAt == null || !p.appliedAt().isAfter(finishedAt));
+            boolean included = p.appliedAt() != null && (startedAt == null || !p.appliedAt().isBefore(startedAt));
             byEntry.computeIfAbsent(p.entryId(), k -> new ArrayList<>())
                     .add(new ResultsExportV1.Penalty(p.type(), plain(p.value()), p.reason(), included));
         }

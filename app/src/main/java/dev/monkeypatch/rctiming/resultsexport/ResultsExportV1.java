@@ -112,9 +112,9 @@ public record ResultsExportV1(
     /**
      * @param type             LAP (laps taken off) or TIME (seconds added)
      * @param value            laps or seconds
-     * @param includedInResult whether the row's laps, time and position already allow for it: true for a LAP
-     *                         penalty given while the race ran, false for a TIME penalty or one given after
-     *                         the finish (#63)
+     * @param includedInResult whether the row's laps, time and position already allow for it: true for any
+     *                         penalty given since the race last started (#63), false for one left over from
+     *                         a run that was restarted
      */
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     @JsonPropertyOrder({"type", "value", "reason", "includedInResult"})
