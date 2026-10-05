@@ -84,7 +84,8 @@ public class ResultsExportQuery {
     private List<ResultsExportV1.Race> races(long eventId, Map<Long, EntryRef> entries) {
         var rows = dsl.select(RACES.ID, RACES.EVENT_CLASS_ID, RACES.HEAT_NUMBER, RACES.FINAL_LETTER, RACES.FINISHED_AT,
                         RACES.STARTED_AT, RACES.ABANDONED_AT, ROUNDS.TYPE, ROUNDS.ROUND_NUMBER, RACING_CLASSES.NAME,
-                        RESULT_SNAPSHOTS.POSITIONS_JSON, RESULT_SNAPSHOTS.FINISHED_AT)
+                        RESULT_SNAPSHOTS.POSITIONS_JSON, RESULT_SNAPSHOTS.TIMED_POSITIONS_JSON,
+                        RESULT_SNAPSHOTS.FINISHED_AT)
                 .from(RACES)
                 .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
                 .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
@@ -103,7 +104,8 @@ public class ResultsExportQuery {
             Instant finishedAt = r.get(RACES.FINISHED_AT) != null ? r.get(RACES.FINISHED_AT)
                     : r.get(RESULT_SNAPSHOTS.FINISHED_AT);
             Map<Long, List<ResultsExportV1.Penalty>> racePenalties =
-                    penaltiesByEntry(penalties.getOrDefault(raceId, List.of()), r.get(RACES.STARTED_AT));
+                    penaltiesByEntry(penalties.getOrDefault(raceId, List.of()), r.get(RACES.STARTED_AT), finishedAt,
+                            r.get(RESULT_SNAPSHOTS.TIMED_POSITIONS_JSON) != null);
             List<ResultsExportV1.Row> results = new ArrayList<>();
             for (ResultSnapshotDto.ResultRow p : positions(raceId, r.get(RESULT_SNAPSHOTS.POSITIONS_JSON))) {
                 EntryRef entry = entries.get(p.entryId());
@@ -166,15 +168,23 @@ public class ResultsExportQuery {
     }
 
     /**
-     * One race's penalties per entry. The stored result allows for every penalty given since the race last
-     * started (#63): a LAP penalty during the race came off the live lap count, and the rest are applied when
-     * the result is stored or corrected. One from before a restart belongs to the earlier run.
+     * One race's penalties per entry, and whether the stored result allows for each.
+     *
+     * <p>A result stored with corrections (#63) allows for every penalty given since the race last started:
+     * a LAP penalty during the race came off the live lap count, and the rest are applied when the result is
+     * stored or corrected. One from before a restart belongs to the earlier run. A result stored before
+     * corrections existed, and not corrected since, allows only for LAP penalties given while the race ran.
      */
     private static Map<Long, List<ResultsExportV1.Penalty>> penaltiesByEntry(List<PenaltyRow> rows,
-                                                                            Instant startedAt) {
+                                                                            Instant startedAt, Instant finishedAt,
+                                                                            boolean storedWithCorrections) {
         Map<Long, List<ResultsExportV1.Penalty>> byEntry = new LinkedHashMap<>();
         for (PenaltyRow p : rows) {
-            boolean included = p.appliedAt() != null && (startedAt == null || !p.appliedAt().isBefore(startedAt));
+            boolean sinceStart = p.appliedAt() != null && (startedAt == null || !p.appliedAt().isBefore(startedAt));
+            boolean included = storedWithCorrections
+                    ? sinceStart
+                    : "LAP".equals(p.type()) && startedAt != null && sinceStart
+                            && (finishedAt == null || !p.appliedAt().isAfter(finishedAt));
             byEntry.computeIfAbsent(p.entryId(), k -> new ArrayList<>())
                     .add(new ResultsExportV1.Penalty(p.type(), plain(p.value()), p.reason(), included));
         }

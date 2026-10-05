@@ -22,7 +22,7 @@ public final class ResultCorrections {
     /**
      * @param timed        the result as timed when the race finished, in finishing order
      * @param lapDeltas    laps to add (or, when negative, take off) per entry id
-     * @param addedTimeMs  milliseconds to add to the total time per entry id
+     * @param addedTimeMs  milliseconds to add to the total time per entry id; a car with no recorded time keeps none
      * @return the corrected result in its new order, or {@code timed} unchanged when there is nothing to apply
      */
     public static List<ResultRow> apply(List<ResultRow> timed, Map<Long, Integer> lapDeltas,
@@ -36,7 +36,9 @@ public final class ResultCorrections {
         List<ResultRow> corrected = new ArrayList<>(timed.size());
         for (ResultRow row : timed) {
             int laps = Math.max(0, row.lapsCompleted() + lapDeltas.getOrDefault(row.entryId(), 0));
-            long totalTimeMs = row.totalTimeMs() + addedTimeMs.getOrDefault(row.entryId(), 0L);
+            // A car with no recorded time keeps none, so it still ranks behind cars with a time on its laps
+            long totalTimeMs = row.totalTimeMs() > 0
+                    ? row.totalTimeMs() + addedTimeMs.getOrDefault(row.entryId(), 0L) : row.totalTimeMs();
             corrected.add(new ResultRow(row.position(), row.entryId(), row.competitorId(), row.driverName(),
                     row.carNumber(), laps, totalTimeMs, row.bestLapMs(), null));
         }

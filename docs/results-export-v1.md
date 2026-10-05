@@ -36,6 +36,8 @@ No contact details, date of birth, guardian or payment data: RCTC doesn't hold a
 
 Each penalty has `included_in_result`, which says whether the row's `laps`, `total_time_ms` and `position` already allow for it. Every penalty given since the race last started is included: a `LAP` penalty given while the race ran came straight off the live lap count, and the rest are applied when the result is stored or corrected (#63). A penalty left over from a run that was restarted has `included_in_result: false`.
 
+A race whose result was stored by a version before #63, and not corrected since, keeps its result as timed: only a `LAP` penalty given while it ran is included, and a reader that re-ranks it should apply the penalties with `included_in_result: false`.
+
 A lap adjustment by the race director after the finish isn't listed, but the row's `laps` and `position` allow for it.
 
 ### Abandoned races

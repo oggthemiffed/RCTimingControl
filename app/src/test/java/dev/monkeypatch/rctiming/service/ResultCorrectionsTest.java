@@ -61,6 +61,16 @@ class ResultCorrectionsTest {
         assertThat(corrected.get(1).gapToLeaderMs()).isNull();
     }
 
+    @Test
+    void aTimePenaltyDoesNotGiveATimeToADriverWithNone() {
+        List<ResultRow> timed = List.of(row(1, 101L, 1, 30_000L, null), row(2, 104L, 0, 0L, null));
+
+        List<ResultRow> corrected = ResultCorrections.apply(timed, Map.of(104L, 1), Map.of(104L, 5_000L));
+
+        assertThat(corrected).extracting(ResultRow::entryId).containsExactly(101L, 104L);
+        assertThat(corrected.get(1).totalTimeMs()).isZero();
+    }
+
     private static ResultRow row(int position, long entryId, int laps, long totalTimeMs, Long gap) {
         return new ResultRow(position, entryId, null, "Driver " + entryId, String.valueOf(position), laps,
                 totalTimeMs, 24_000L, gap);

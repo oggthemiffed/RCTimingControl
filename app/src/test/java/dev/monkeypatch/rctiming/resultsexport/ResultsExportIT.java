@@ -198,6 +198,34 @@ class ResultsExportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void aResultStoredBeforeCorrectionsKeepsItsPenaltiesOutstanding() {
+        importEntries();
+        long ada = entryId("a1-" + run);
+        long raceId = finishedRace(ada, walkIn("Walk-in Wendy"));
+        jdbc.update("update result_snapshots set timed_positions_json = null where race_id = ?", raceId);
+        long finishedAt = jdbc.queryForObject("select finished_at from races where id = ?", Long.class, raceId);
+        penalty(raceId, ada, "TIME", "5.0", "Jump start", finishedAt - 60_000_000L);
+
+        JsonNode first = json(exportService.enqueue(eventId, ExportReason.RACE_FINISHED).orElseThrow().getPayload())
+                .at("/races/0/results/0");
+        assertThat(first.at("/penalties/0/type").asText()).isEqualTo("TIME");
+        assertThat(first.at("/penalties/0/included_in_result").asBoolean()).isFalse();
+    }
+
+    @Test
+    void aLapPenaltyMustBeAWholeNumberOfLaps() {
+        importEntries();
+        long ada = entryId("a1-" + run);
+        long raceId = finishedRace(ada, walkIn("Walk-in Wendy"));
+
+        ResponseEntity<String> resp = restTemplate.exchange("/api/v1/race-control/referee/race/" + raceId + "/penalty",
+                HttpMethod.POST, new HttpEntity<>(Map.of("entryId", ada, "penaltyType", "LAP", "value", 1.5,
+                        "reason", "Half a lap"), headers()), String.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void correctionsAfterTheFinishChangeTheStoredAndExportedResult() {
         importEntries();
         long ada = entryId("a1-" + run);
@@ -532,8 +560,8 @@ class ResultsExportIT extends AbstractIntegrationTest {
                  {"position":2,"entryId":%d,"competitorId":null,"driverName":"Walk-in Wendy","carNumber":"2",
                   "lapsCompleted":11,"totalTimeMs":301900,"bestLapMs":25500,"gapToLeaderMs":null}]"""
                 .formatted(importedEntry, walkInEntry);
-        jdbc.update("insert into result_snapshots (race_id, finished_at, positions_json, lap_history_json, created_at) "
-                + "values (?, ?, ?, '[]', ?)", raceId, now, positions, now);
+        jdbc.update("insert into result_snapshots (race_id, finished_at, positions_json, timed_positions_json, "
+                + "lap_history_json, created_at) values (?, ?, ?, ?, '[]', ?)", raceId, now, positions, positions, now);
         onGrid(raceId, importedEntry);
         onGrid(raceId, walkInEntry);
         return raceId;
