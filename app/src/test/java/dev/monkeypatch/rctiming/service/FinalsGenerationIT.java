@@ -8,6 +8,7 @@ import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest.ClassFinalsConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,8 @@ class FinalsGenerationIT extends AbstractIntegrationTest {
 
     private String run;
     private long eventId;
+    private final List<Long> competitorIds = new ArrayList<>();
+    private final List<Long> racingClassIds = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
@@ -44,6 +47,17 @@ class FinalsGenerationIT extends AbstractIntegrationTest {
                 insert into events (name, event_date, status)
                 values (?, date('now'), 'IN_PROGRESS') returning id""",
                 Long.class, "Finals event " + run);
+    }
+
+    /** The test database is shared, so leave no in-progress event behind for the boards to pick up. */
+    @AfterEach
+    void tearDown() {
+        jdbc.update("delete from rounds where event_id = ?", eventId); // races and race_entries cascade
+        jdbc.update("delete from entries where event_id = ?", eventId);
+        jdbc.update("delete from event_classes where event_id = ?", eventId);
+        jdbc.update("delete from events where id = ?", eventId);
+        competitorIds.forEach(id -> jdbc.update("delete from competitors where id = ?", id));
+        racingClassIds.forEach(id -> jdbc.update("delete from racing_classes where id = ?", id));
     }
 
     @Test
@@ -110,6 +124,7 @@ class FinalsGenerationIT extends AbstractIntegrationTest {
     private long addClass(String name) {
         long racingClassId = jdbc.queryForObject(
                 "insert into racing_classes (name) values (?) returning id", Long.class, name + " " + run);
+        racingClassIds.add(racingClassId);
         return jdbc.queryForObject("""
                 insert into event_classes (event_id, racing_class_id, config_snapshot)
                 values (?, ?, '{"type":"TIMED"}') returning id""", Long.class, eventId, racingClassId);
@@ -121,6 +136,7 @@ class FinalsGenerationIT extends AbstractIntegrationTest {
             long competitorId = jdbc.queryForObject(
                     "insert into competitors (display_name) values (?) returning id", Long.class,
                     "Driver " + eventClassId + "-" + i + " " + run);
+            competitorIds.add(competitorId);
             ids.add(jdbc.queryForObject("""
                     insert into entries (event_id, event_class_id, competitor_id, transponder_number, status)
                     values (?, ?, ?, ?, 'CONFIRMED') returning id""", Long.class,
