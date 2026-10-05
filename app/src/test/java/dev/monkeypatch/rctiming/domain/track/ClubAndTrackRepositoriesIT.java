@@ -183,6 +183,45 @@ class ClubAndTrackRepositoriesIT extends AbstractIntegrationTest {
         assertThat(thresholds.existsById(threshold.getId())).isFalse();
     }
 
+    @Test
+    void savingATrackSavesItsLoopsAndThresholdsAndRemovesDroppedOnes() {
+        Track t = new Track();
+        t.setName("Aggregate track");
+        t.setCreatedAt(T1);
+        t.setUpdatedAt(T1);
+        DecoderLoop finish = new DecoderLoop();
+        finish.setLoopId("1");
+        finish.setDisplayName("Finish");
+        finish.setCreatedAt(T1);
+        DecoderLoop split = new DecoderLoop();
+        split.setLoopId("2");
+        split.setDisplayName("Split");
+        split.setCreatedAt(T1);
+        TrackLapThreshold threshold = new TrackLapThreshold();
+        threshold.setMinLapMs(10000);
+        threshold.setCreatedAt(T1);
+        t.getDecoderLoops().addAll(List.of(finish, split));
+        t.getLapThresholds().add(threshold);
+
+        Track saved = tracks.save(t);
+        cleanup.add(() -> tracks.deleteById(saved.getId()));
+        Track loaded = tracks.findById(saved.getId()).orElseThrow();
+        assertThat(loaded.getDecoderLoops()).extracting(DecoderLoop::getDisplayName).containsExactly("Finish", "Split");
+        assertThat(loaded.getDecoderLoops()).extracting(DecoderLoop::getTrackId).containsOnly(saved.getId());
+        assertThat(loaded.getLapThresholds()).extracting(TrackLapThreshold::getMinLapMs).containsExactly(10000);
+
+        loaded.getDecoderLoops().get(0).setDisplayName("Start/finish");
+        loaded.getDecoderLoops().remove(1);
+        loaded.getLapThresholds().clear();
+        tracks.save(loaded);
+
+        Track reloaded = tracks.findById(saved.getId()).orElseThrow();
+        assertThat(reloaded.getDecoderLoops()).extracting(DecoderLoop::getDisplayName).containsExactly("Start/finish");
+        assertThat(reloaded.getLapThresholds()).isEmpty();
+        assertThat(loops.findByTrackId(saved.getId())).hasSize(1);
+        assertThat(thresholds.findByTrackId(saved.getId())).isEmpty();
+    }
+
     private static GoverningBodyAffiliation affiliation(String code) {
         GoverningBodyAffiliation a = new GoverningBodyAffiliation();
         a.setCode(code);
