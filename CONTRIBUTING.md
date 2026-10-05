@@ -60,37 +60,19 @@ test: add E2E test for race control login
 
 ## Release workflow
 
-Releases are **tag-driven**. Pushing a `v*` tag triggers CI to build Docker images, push them to GHCR, and create a GitHub Release automatically.
-
-```mermaid
-flowchart TD
-    A([main is green]) --> B[Bump VERSION file\necho '0.2.0' > VERSION]
-    B --> C[Update .env.example\nRCTIMING_VERSION=v0.2.0]
-    C --> D[Commit & push\ngit push origin main]
-    D --> E[Tag the release\ngit tag v0.2.0]
-    E --> F[Push the tag\ngit push origin v0.2.0]
-    F --> G[/GitHub Actions: publish-trial-images.yml\]
-
-    G --> H[Build 5 Docker images]
-    G --> I[Push to GHCR\nghcr.io/oggthemiffed/rctimingcontrol/...]
-    G --> J[Create GitHub Release\nwith assets attached]
-
-    H & I & J --> K([Release live at\ngithub.com/.../releases])
-```
-
-**Full checklist:** see [RELEASES.md](RELEASES.md)
+Releases are **tag-driven**. Bump `VERSION`, merge to `main`, then push a `v*` tag. The Installers workflow builds and tests the Windows, macOS and Linux installers and attaches them to a GitHub Release for that tag. Upgrade notes for each release go in [RELEASES.md](RELEASES.md).
 
 ---
 
 ## CI pipeline
 
-Three jobs run on every push and pull request:
+Three jobs run on every push and pull request. Changes to packaging also run the Installers workflow, which installs and upgrades the package on all three systems.
 
 ```mermaid
 flowchart LR
     Push([Push / PR]) --> B[test-backend\nGradle · Java 21\napp + decoder-simulator + decoder-protocol]
     Push --> C[test-frontend\nNode 20\nVitest]
-    Push --> D[test-e2e\nDocker trial stack\nPlaywright · Chromium]
+    Push --> D[test-e2e\napp jar + demo club + simulator\nPlaywright · Chromium]
 
     B --> E{All green?}
     C --> E
@@ -104,25 +86,11 @@ flowchart LR
 |-----|--------------|-------------|
 | `test-backend` | JUnit 5 on temporary SQLite databases (no Docker) — API/domain/timing, plus `decoder-simulator` and `decoder-protocol` | 3–6 min |
 | `test-frontend` | Vitest — cloud React components, hooks, utilities | < 1 min |
-| `test-e2e` | Playwright — full Docker trial stack, 13 smoke tests | 8–12 min |
+| `test-e2e` | Playwright smoke tests against the app jar with the UI inside, the demo club and the simulator | 5–8 min |
 
 Playwright reports are uploaded as a GitHub Actions artifact on every run (retained 14 days) as `playwright-report`.
 
 ---
-
-## Optional: branch protection
-
-To enforce this workflow automatically, enable branch protection on `main`:
-
-1. Go to `https://github.com/oggthemiffed/RCTimingControl/settings/branches`
-2. Click **Add rule** → Branch name pattern: `main`
-3. Enable:
-   - **Require a pull request before merging**
-   - **Require status checks to pass** → select `test-backend`, `test-frontend`, `test-e2e`
-   - **Require branches to be up to date before merging**
-4. Save
-
-This blocks any direct push to `main` and prevents merging a PR with failing CI. It is optional for solo work but strongly recommended once a second person contributes.
 
 ---
 
@@ -138,10 +106,9 @@ This blocks any direct push to `main` and prevents merging a PR with failing CI.
 # Frontend unit tests
 cd frontend && npm test
 
-# E2E tests (requires the trial stack to be running on localhost)
-cp .env.example .env
-docker compose -f docker-compose.trial.yml up -d
-cd frontend && npm run test:e2e
+# E2E tests: start the app with the demo club and the simulator (see docs/development.md,
+# "Trying it out with the demo club"), then
+cd frontend && BASE_URL=http://localhost:8080 npm run test:e2e
 
 # Interactive Playwright UI (great for writing new tests)
 cd frontend && npm run test:e2e:ui
@@ -153,5 +120,4 @@ cd frontend && npm run test:e2e:ui
 
 - [Development guide](docs/development.md) — local environment setup, Makefile reference
 - [Architecture](docs/architecture.md) — module structure and design decisions
-- [RELEASES.md](RELEASES.md) — release and hotfix process
-- `docs/local-github-setup.md` — one-time GHCR configuration (local file, not in repo — see your local copy)
+- [RELEASES.md](RELEASES.md) — upgrade notes for each release

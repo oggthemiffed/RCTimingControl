@@ -145,7 +145,7 @@ All ten originally-planned phases below are complete (see `README.md` for the cu
 9. User manual & in-app documentation
 10. Docker trial environment
 
-A later initiative extracted the shared decoder-protocol parser (`decoder-protocol/`). It also built a separate offline race-day app, which was retired in #21 when timing moved to running locally in the main app; its plans are archived under `docs/plans/archive/`.
+A later initiative extracted the shared decoder-protocol parser (`decoder-protocol/`). It also built a separate offline race-day app, which was retired in #21 when timing moved to running locally in the main app; its plans are archived under `docs/plans/archive/`. The local-only plan (#8) then replaced the Docker trial and production stacks with native installers for the venue laptop (#23, #24); the app is not deployed to the internet.
 
 ## General Good Developer Rules
 

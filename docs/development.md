@@ -5,7 +5,7 @@
 | Tool | Version |
 |------|---------|
 | Java | 21 (LTS) |
-| Docker | 24+ (optional: only for Piper announcer voices and the trial stack) |
+| Docker | 24+ (optional: only for Piper announcer voices) |
 | Node.js | 20+ |
 | Gradle | via wrapper (`./gradlew`) |
 
@@ -119,14 +119,26 @@ To restore, stop the app, then run:
 java -jar app.jar restore /media/usb/rctiming/rctiming-20261004-220000-day-close.db
 ```
 
-It finds the data directory the way the app does (`RCTIMING_DATA_DIR`, `--rctiming.database.data-directory=...`, or the default folder), checks the backup is sound, and moves the current database aside as `rctiming.db.before-restore-<time>`. Then it puts the backup in its place. It refuses while the app has the database open. When the app next starts, it migrates the restored database if it came from an older version. With the Docker trial or production stack, stop the app and run the command in a one-off container from the same compose file, for example `docker compose -f docker-compose.production.yml run --rm app restore /app/data/db/backups/<file>`.
+It finds the data directory the way the app does (`RCTIMING_DATA_DIR`, `--rctiming.database.data-directory=...`, or the default folder), checks the backup is sound, and moves the current database aside as `rctiming.db.before-restore-<time>`. Then it puts the backup in its place. It refuses while the app has the database open. When the app next starts, it migrates the restored database if it came from an older version. For the installed app, see [installing.md](installing.md#restoring-a-backup).
 
-### Production checklist
+### Running it for real
 
-- Set `JWT_SECRET` to a cryptographically random 256-bit base64 value, or leave it unset and keep the generated `jwt-secret` file private
-- Set `secure=true` on the refresh cookie (requires HTTPS): override `ResponseCookie.from(...).secure(true)` in `AuthController`
-- Set `spring.profiles.active=prod` and configure datasource via env vars
-- Do **not** use `ddl-auto=update` or `create-drop` — Flyway manages the schema
+The app runs on the venue laptop from the installer, which serves the UI, keeps its data in the per-machine folder and starts with the laptop; see [installing.md](installing.md). It is meant for the venue network only and is not deployed to the internet.
+
+- Leave `JWT_SECRET` unset and keep the generated `jwt-secret` file private, or set it to a random 256-bit base64 value.
+- Do **not** use `ddl-auto=update` or `create-drop`: Flyway manages the schema.
+
+### Trying it out with the demo club
+
+The `demo` profile loads the Wyvern RC Club (`db/demo/{vendor}`), and `simulate` runs the fake decoder its decoder settings point at:
+
+```bash
+./gradlew -PbundleFrontend :app:bootJar
+java -jar app/build/libs/app.jar --spring.profiles.active=demo --rctiming.database.data-directory=/tmp/rctiming-demo
+java -jar app/build/libs/app.jar simulate   # in a second terminal; no arguments plays the demo transponders
+```
+
+Open http://localhost:8080 and sign in as `admin@example.com` / `trial123`. The e2e suite runs against this setup. For an installed copy, see [trial-quickstart.md](trial-quickstart.md).
 
 ---
 
@@ -284,7 +296,7 @@ Any new `V*__.sql` migration file requires jOOQ codegen to be re-run before the 
 
 Flyway applies migrations automatically on backend startup — you do not need to run them manually.
 
-Migrations live in one folder per database: `app/src/main/resources/db/migration/{vendor}/` (dev seeds in `db/seed/{vendor}/`, the trial demo club in `db/demo/{vendor}/`, test data in `app/src/test/resources/db/testdata/{vendor}/`). Until the first release on SQLite, the baseline may still be edited in place; after that, every change is a new migration.
+Migrations live in one folder per database: `app/src/main/resources/db/migration/{vendor}/` (dev seeds in `db/seed/{vendor}/`, the demo club in `db/demo/{vendor}/`, test data in `app/src/test/resources/db/testdata/{vendor}/`). Until the first release on SQLite, the baseline may still be edited in place; after that, every change is a new migration.
 
 ### Keeping the database swappable
 
