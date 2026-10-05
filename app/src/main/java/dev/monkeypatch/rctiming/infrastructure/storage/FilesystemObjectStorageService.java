@@ -11,10 +11,8 @@ import java.nio.file.Path;
 
 /**
  * Stores uploads on local disk under {@link StorageFolder}, served back over HTTP by
- * {@link dev.monkeypatch.rctiming.config.StaticStorageConfig}'s resource handler. Replaces the
- * former MinIO/S3-backed implementation — a single-instance venue deployment has no need for a
- * separate object-storage server, and it removes a dependency on an external image registry
- * entirely (the prior MinIO image became unpullable from Docker Hub).
+ * {@link dev.monkeypatch.rctiming.config.StaticStorageConfig}'s resource handler. One app on the
+ * venue laptop needs no separate object-storage server.
  */
 @Service
 public class FilesystemObjectStorageService implements ObjectStorageService {

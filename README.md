@@ -62,7 +62,7 @@ RCTC reads the AMB decoder directly over TCP. There is no separate process to ru
 make simulator   # Terminal 2 — fake decoder on :5100
 ```
 
-Then set the decoder host to `localhost` and click **Test Connection**. See the [decoder setup guide](docs/forwarder.md) for the full walkthrough and hardware setup.
+Then set the decoder host to `localhost` and click **Test Connection**. See the [decoder setup guide](docs/decoder.md) for the full walkthrough and hardware setup.
 
 ### Spectator boards
 
@@ -110,7 +110,7 @@ See [docs/testing.md](docs/testing.md) for the full test matrix, including `deco
 
 - [Installing](docs/installing.md) — install on a venue laptop, data folder, backups, upgrades
 - [Trying it out](docs/trial-quickstart.md) — a demo club and a simulated decoder, no developer setup needed
-- [Decoder setup guide](docs/forwarder.md) — connecting the AMB decoder, simulator, status
+- [Decoder setup guide](docs/decoder.md) — connecting the AMB decoder, simulator, status
 - [API reference](docs/api.md) — all endpoints with example requests
 - [Development guide](docs/development.md) — environment setup, config, env vars
 - [Architecture](docs/architecture.md) — module structure, design decisions

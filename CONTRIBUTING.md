@@ -5,7 +5,7 @@
 Work happens on **feature branches**. `main` is always green and releasable, and changes reach it through pull requests.
 
 ```
-main  ─────────────────────────────────────────────────────► always deployable
+main  ─────────────────────────────────────────────────────► always releasable
               ↑           ↑              ↑
          PR merged    PR merged      PR merged
               │           │              │
@@ -95,8 +95,6 @@ flowchart LR
 | `test-e2e` | Playwright smoke tests against the app jar with the UI inside, the demo club and the simulator | 5–8 min |
 
 Playwright reports are uploaded as a GitHub Actions artifact on every run (retained 14 days) as `playwright-report`.
-
----
 
 ---
 

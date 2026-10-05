@@ -24,7 +24,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions;
-import dev.monkeypatch.rctiming.jooq.generated.tables.ProfanityBlocklist;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceFormatTemplates;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacehubClassMappings;
@@ -147,11 +146,6 @@ public class Tables {
      * The table <code>practice_sessions</code>.
      */
     public static final PracticeSessions PRACTICE_SESSIONS = PracticeSessions.PRACTICE_SESSIONS;
-
-    /**
-     * The table <code>profanity_blocklist</code>.
-     */
-    public static final ProfanityBlocklist PROFANITY_BLOCKLIST = ProfanityBlocklist.PROFANITY_BLOCKLIST;
 
     /**
      * The table <code>race_entries</code>.

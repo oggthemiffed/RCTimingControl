@@ -11,7 +11,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.EntryAuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps.PracticeLapsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions.PracticeSessionsPath;
-import dev.monkeypatch.rctiming.jooq.generated.tables.ProfanityBlocklist.ProfanityBlocklistPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens.RefreshTokensPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink.UnknownTransponderLinkPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UserRoles.UserRolesPath;
@@ -260,19 +259,6 @@ public class Users extends TableImpl<UsersRecord> {
             _practiceSessions = new PracticeSessionsPath(this, null, Keys.PRACTICE_SESSIONS__PRACTICE_SESSIONS_CREATED_BY_USER_ID_FKEY.getInverseKey());
 
         return _practiceSessions;
-    }
-
-    private transient ProfanityBlocklistPath _profanityBlocklist;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>profanity_blocklist</code> table
-     */
-    public ProfanityBlocklistPath profanityBlocklist() {
-        if (_profanityBlocklist == null)
-            _profanityBlocklist = new ProfanityBlocklistPath(this, null, Keys.PROFANITY_BLOCKLIST__PROFANITY_BLOCKLIST_ADDED_BY_USER_ID_FKEY.getInverseKey());
-
-        return _profanityBlocklist;
     }
 
     private transient RefreshTokensPath _refreshTokens;

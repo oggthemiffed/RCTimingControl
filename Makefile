@@ -5,8 +5,11 @@ BOLD  := \033[1m
 RESET := \033[0m
 
 # ── compose shim: prefer docker compose (v2 plugin), fall back to docker-compose (v1) ──
+# Empty when Docker isn't installed or its daemon isn't running, so Piper is skipped.
 COMPOSE := $(shell \
-  if docker compose version >/dev/null 2>&1; then \
+  if ! docker info >/dev/null 2>&1; then \
+    echo ''; \
+  elif docker compose version >/dev/null 2>&1; then \
     echo 'docker compose'; \
   elif command -v docker-compose >/dev/null 2>&1; then \
     echo 'docker-compose'; \
@@ -27,6 +30,7 @@ help:
 	@printf '\n'
 	@printf '  $(BOLD)Backend$(RESET)\n'
 	@printf '    make dev         Start backend in dev mode (no Docker needed)\n'
+	@printf '    make dev-setup-test  Start backend without seed data, to try the setup wizard\n'
 	@printf '    make generate-db Regenerate jOOQ sources from the SQLite migrations\n'
 	@printf '    make build       Compile the backend (regenerates jOOQ if sources missing)\n'
 	@printf '    make test        Run all backend + simulator integration tests\n'
@@ -54,7 +58,7 @@ help:
 .PHONY: up
 up:
 	@if [ -z "$(COMPOSE)" ]; then \
-		printf 'No Docker Compose found — skipping Piper, so announcer voices are off.\n'; \
+		printf 'Docker is not running — skipping Piper, so announcer voices are off.\n'; \
 	else \
 		$(COMPOSE) up -d; \
 	fi

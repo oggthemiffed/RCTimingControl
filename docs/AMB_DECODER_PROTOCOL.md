@@ -501,7 +501,7 @@ Implement a `FakeDecoder` that listens on a configurable port and emits:
 - STATUS records every 5 seconds (text) or WATCHDOG every 10 seconds (P3)
 - Scripted PASSING records from a CSV file of `(transponder, timeSecs)` tuples
 
-The simulator enables full end-to-end testing of the forwarder without physical hardware.
+The simulator enables full end-to-end testing of the app without physical hardware.
 
 ---
 

@@ -3,7 +3,7 @@
 build/
 **/build/
 
-# jOOQ generated sources are committed at app/src/generated/jooq (Docker builds skip codegen)
+# jOOQ generated sources are committed at app/src/generated/jooq, so builds can skip codegen
 
 # IDE files
 .idea/
@@ -23,8 +23,13 @@ Thumbs.db
 .env
 .env.local
 
-# app: local filesystem object storage (club logos, TTS clips) — see FilesystemObjectStorageService
+# Dev data: the SQLite database (app/data/db), club logos and TTS clips
 app/data/
+
+# SQLite databases and their WAL and shared-memory files, wherever a run puts them
+*.db
+*.db-wal
+*.db-shm
 
 # Node / frontend
 node_modules/

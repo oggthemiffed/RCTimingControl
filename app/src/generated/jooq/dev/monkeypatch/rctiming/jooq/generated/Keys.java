@@ -24,7 +24,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions;
-import dev.monkeypatch.rctiming.jooq.generated.tables.ProfanityBlocklist;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RaceFormatTemplates;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacehubClassMappings;
@@ -60,7 +59,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.records.MarshalPenaltiesRe
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PenaltiesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PracticeLapsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.PracticeSessionsRecord;
-import dev.monkeypatch.rctiming.jooq.generated.tables.records.ProfanityBlocklistRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RaceEntriesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RaceFormatTemplatesRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.RacehubClassMappingsRecord;
@@ -117,7 +115,6 @@ public class Keys {
     public static final UniqueKey<PenaltiesRecord> PENALTIES__PK_PENALTIES = Internal.createUniqueKey(Penalties.PENALTIES, DSL.name("pk_penalties"), new TableField[] { Penalties.PENALTIES.ID }, true);
     public static final UniqueKey<PracticeLapsRecord> PRACTICE_LAPS__PK_PRACTICE_LAPS = Internal.createUniqueKey(PracticeLaps.PRACTICE_LAPS, DSL.name("pk_practice_laps"), new TableField[] { PracticeLaps.PRACTICE_LAPS.ID }, true);
     public static final UniqueKey<PracticeSessionsRecord> PRACTICE_SESSIONS__PK_PRACTICE_SESSIONS = Internal.createUniqueKey(PracticeSessions.PRACTICE_SESSIONS, DSL.name("pk_practice_sessions"), new TableField[] { PracticeSessions.PRACTICE_SESSIONS.ID }, true);
-    public static final UniqueKey<ProfanityBlocklistRecord> PROFANITY_BLOCKLIST__PK_PROFANITY_BLOCKLIST = Internal.createUniqueKey(ProfanityBlocklist.PROFANITY_BLOCKLIST, DSL.name("pk_profanity_blocklist"), new TableField[] { ProfanityBlocklist.PROFANITY_BLOCKLIST.ID }, true);
     public static final UniqueKey<RaceEntriesRecord> RACE_ENTRIES__PK_RACE_ENTRIES = Internal.createUniqueKey(RaceEntries.RACE_ENTRIES, DSL.name("pk_race_entries"), new TableField[] { RaceEntries.RACE_ENTRIES.ID }, true);
     public static final UniqueKey<RaceFormatTemplatesRecord> RACE_FORMAT_TEMPLATES__PK_RACE_FORMAT_TEMPLATES = Internal.createUniqueKey(RaceFormatTemplates.RACE_FORMAT_TEMPLATES, DSL.name("pk_race_format_templates"), new TableField[] { RaceFormatTemplates.RACE_FORMAT_TEMPLATES.ID }, true);
     public static final UniqueKey<RacehubClassMappingsRecord> RACEHUB_CLASS_MAPPINGS__PK_RACEHUB_CLASS_MAPPINGS = Internal.createUniqueKey(RacehubClassMappings.RACEHUB_CLASS_MAPPINGS, DSL.name("pk_racehub_class_mappings"), new TableField[] { RacehubClassMappings.RACEHUB_CLASS_MAPPINGS.ID }, true);
@@ -177,7 +174,6 @@ public class Keys {
     public static final ForeignKey<PracticeLapsRecord, UsersRecord> PRACTICE_LAPS__PRACTICE_LAPS_USER_ID_FKEY = Internal.createForeignKey(PracticeLaps.PRACTICE_LAPS, DSL.name("practice_laps_user_id_fkey"), new TableField[] { PracticeLaps.PRACTICE_LAPS.USER_ID }, Keys.USERS__PK_USERS, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<PracticeSessionsRecord, UsersRecord> PRACTICE_SESSIONS__PRACTICE_SESSIONS_CREATED_BY_USER_ID_FKEY = Internal.createForeignKey(PracticeSessions.PRACTICE_SESSIONS, DSL.name("practice_sessions_created_by_user_id_fkey"), new TableField[] { PracticeSessions.PRACTICE_SESSIONS.CREATED_BY_USER_ID }, Keys.USERS__PK_USERS, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<PracticeSessionsRecord, EventsRecord> PRACTICE_SESSIONS__PRACTICE_SESSIONS_EVENT_ID_FKEY = Internal.createForeignKey(PracticeSessions.PRACTICE_SESSIONS, DSL.name("practice_sessions_event_id_fkey"), new TableField[] { PracticeSessions.PRACTICE_SESSIONS.EVENT_ID }, Keys.EVENTS__PK_EVENTS, new TableField[] { Events.EVENTS.ID }, true);
-    public static final ForeignKey<ProfanityBlocklistRecord, UsersRecord> PROFANITY_BLOCKLIST__PROFANITY_BLOCKLIST_ADDED_BY_USER_ID_FKEY = Internal.createForeignKey(ProfanityBlocklist.PROFANITY_BLOCKLIST, DSL.name("profanity_blocklist_added_by_user_id_fkey"), new TableField[] { ProfanityBlocklist.PROFANITY_BLOCKLIST.ADDED_BY_USER_ID }, Keys.USERS__PK_USERS, new TableField[] { Users.USERS.ID }, true);
     public static final ForeignKey<RaceEntriesRecord, EntriesRecord> RACE_ENTRIES__RACE_ENTRIES_ENTRY_ID_FKEY = Internal.createForeignKey(RaceEntries.RACE_ENTRIES, DSL.name("race_entries_entry_id_fkey"), new TableField[] { RaceEntries.RACE_ENTRIES.ENTRY_ID }, Keys.ENTRIES__PK_ENTRIES, new TableField[] { Entries.ENTRIES.ID }, true);
     public static final ForeignKey<RaceEntriesRecord, RacesRecord> RACE_ENTRIES__RACE_ENTRIES_RACE_ID_FKEY = Internal.createForeignKey(RaceEntries.RACE_ENTRIES, DSL.name("race_entries_race_id_fkey"), new TableField[] { RaceEntries.RACE_ENTRIES.RACE_ID }, Keys.RACES__PK_RACES, new TableField[] { Races.RACES.ID }, true);
     public static final ForeignKey<RacehubClassMappingsRecord, EventClassesRecord> RACEHUB_CLASS_MAPPINGS__RACEHUB_CLASS_MAPPINGS_EVENT_CLASS_ID_FKEY = Internal.createForeignKey(RacehubClassMappings.RACEHUB_CLASS_MAPPINGS, DSL.name("racehub_class_mappings_event_class_id_fkey"), new TableField[] { RacehubClassMappings.RACEHUB_CLASS_MAPPINGS.EVENT_CLASS_ID }, Keys.EVENT_CLASSES__PK_EVENT_CLASSES, new TableField[] { EventClasses.EVENT_CLASSES.ID }, true);
