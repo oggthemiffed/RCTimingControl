@@ -1,0 +1,7 @@
+Name,BRCA Number,Club Number,Class Number,Class,Formula Number,Member Type Number,Grade,PT No,PT No 2,Junior,Paid Status,Car Make,Entry Desc
+Ada Lovelace,1{{run}},0,1,CSV Buggy {{run}},0,1,80,71{{run}},72{{run}},0,1,Associated,entry
+Grace Hopper {{run}},0,0,2,CSV Truck {{run}},0,2,50,73{{run}},0,0,0,Team Losi,entry
+Alan Turing,2{{run}},0,1,CSV Buggy {{run}},0,1,95,74{{run}},0,0,1,Schumacher,entry
+Alan Turing,2{{run}},0,3,CSV 4WD {{run}},0,1,95,75{{run}},0,0,1,Xray,entry
+Katherine Johnson {{run}},0,0,1,CSV Buggy {{run}},0,3,20,76{{run}},0,13,1,Associated,entry
+Tim Berners-Lee,3{{run}},0,2,CSV Truck {{run}},0,1,60,71{{run}},0,0,0,Associated,update
