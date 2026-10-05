@@ -9,6 +9,7 @@ import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
+import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.practice.dto.PracticeTimingRowDto;
 import dev.monkeypatch.rctiming.timing.LapPassingEvent;
 import org.slf4j.Logger;
@@ -47,6 +48,7 @@ public class PracticeTimingService {
     private final PracticeLapRepository lapRepository;
     private final EntryRepository entryRepository;
     private final CompetitorRepository competitorRepository;
+    private final UserRepository userRepository;
     private final PracticeTimingHub timingHub;
 
     /** Active practice session states keyed by sessionId. */
@@ -63,11 +65,13 @@ public class PracticeTimingService {
                                  PracticeLapRepository lapRepository,
                                  EntryRepository entryRepository,
                                  CompetitorRepository competitorRepository,
+                                 UserRepository userRepository,
                                  PracticeTimingHub timingHub) {
         this.sessionRepository = sessionRepository;
         this.lapRepository = lapRepository;
         this.entryRepository = entryRepository;
         this.competitorRepository = competitorRepository;
+        this.userRepository = userRepository;
         this.timingHub = timingHub;
     }
 
@@ -150,7 +154,7 @@ public class PracticeTimingService {
                     .size() + 1;
 
             PracticeLap lap = new PracticeLap();
-            lap.setPracticeSession(session);
+            lap.setPracticeSessionId(session.getId());
             lap.setTransponderNumber(transponderNumber);
             lap.setLapNumber(lapNumber);
             lap.setLapTimeMs(lapTimeMs);
@@ -213,10 +217,12 @@ public class PracticeTimingService {
 
         // Laps recorded before L10 carry a user; later ones are named through the event's entries
         Map<String, Optional<String>> competitorNames = new HashMap<>();
+        Map<Long, Optional<String>> userNames = new HashMap<>();
         for (PracticeLap lap : laps) {
-            Long userId = lap.getUser() != null ? lap.getUser().getId() : null;
-            String racerName = lap.getUser() != null
-                    ? lap.getUser().getFirstName() + " " + lap.getUser().getLastName()
+            Long userId = lap.getUserId();
+            String racerName = userId != null
+                    ? userNames.computeIfAbsent(userId, id -> userRepository.findById(id)
+                            .map(u -> u.getFirstName() + " " + u.getLastName())).orElse(null)
                     : competitorNames.computeIfAbsent(lap.getTransponderNumber(),
                             t -> Optional.ofNullable(resolveCompetitorName(session, t))).orElse(null);
             state.recordLap(

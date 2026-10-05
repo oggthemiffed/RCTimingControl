@@ -1,14 +1,73 @@
 package dev.monkeypatch.rctiming.domain.practice;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.PracticeSessionsRecord;
+import dev.monkeypatch.rctiming.persistence.JooqRepository;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 import java.util.Optional;
 
-public interface PracticeSessionRepository extends JpaRepository<PracticeSession, Long> {
+import static dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions.PRACTICE_SESSIONS;
 
-    @Query("SELECT ps FROM PracticeSession ps WHERE ps.status = dev.monkeypatch.rctiming.domain.practice.PracticeStatus.RUNNING")
-    Optional<PracticeSession> findRunningSession();
+@Repository
+public class PracticeSessionRepository extends JooqRepository<PracticeSession, PracticeSessionsRecord> {
 
-    List<PracticeSession> findByEventId(Long eventId);
+    public PracticeSessionRepository(DSLContext dsl) {
+        super(dsl, PRACTICE_SESSIONS, PRACTICE_SESSIONS.ID);
+    }
+
+    public Optional<PracticeSession> findRunningSession() {
+        return findOne(PRACTICE_SESSIONS.STATUS.eq(PracticeStatus.RUNNING.name()));
+    }
+
+    public List<PracticeSession> findByEventId(Long eventId) {
+        return findWhere(PRACTICE_SESSIONS.EVENT_ID.eq(eventId));
+    }
+
+    @Override
+    protected List<Field<?>> insertOnly() {
+        return List.of(PRACTICE_SESSIONS.CREATED_AT);
+    }
+
+    @Override
+    protected PracticeSession toEntity(PracticeSessionsRecord r) {
+        PracticeSession s = new PracticeSession();
+        s.setId(r.getId());
+        s.setName(r.getName());
+        s.setEventId(r.getEventId());
+        s.setStatus(r.getStatus() == null ? null : PracticeStatus.valueOf(r.getStatus()));
+        s.setBestLapN(r.getBestLapN());
+        s.setCreatedByUserId(r.getCreatedByUserId());
+        s.setStartedAt(r.getStartedAt());
+        s.setStoppedAt(r.getStoppedAt());
+        s.setCreatedAt(r.getCreatedAt());
+        // Last: the setters above stamp the update time
+        s.setUpdatedAt(r.getUpdatedAt());
+        return s;
+    }
+
+    @Override
+    protected void toRecord(PracticeSession s, PracticeSessionsRecord r) {
+        r.setName(s.getName());
+        r.setEventId(s.getEventId());
+        r.setStatus(s.getStatus() == null ? null : s.getStatus().name());
+        r.setBestLapN(s.getBestLapN());
+        r.setCreatedByUserId(s.getCreatedByUserId());
+        r.setStartedAt(s.getStartedAt());
+        r.setStoppedAt(s.getStoppedAt());
+        r.setCreatedAt(s.getCreatedAt());
+        r.setUpdatedAt(s.getUpdatedAt());
+    }
+
+    @Override
+    protected Long idOf(PracticeSession s) {
+        return s.getId();
+    }
+
+    @Override
+    protected void setId(PracticeSession s, Long id) {
+        s.setId(id);
+    }
 }

@@ -1,16 +1,9 @@
 package dev.monkeypatch.rctiming.timing;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
 import java.time.Instant;
 
 /**
- * Phase 5 / TIMING-08: Hibernate audit entity for retroactive transponder links.
+ * Phase 5 / TIMING-08: audit record for retroactive transponder links.
  * Maps to unknown_transponder_link (singular) created by V22 migration.
  * Stores actor, race, transponder, and linked entry for full audit trail (T-05-16).
  *
@@ -18,27 +11,18 @@ import java.time.Instant;
  * which is the CTRL-06 in-race registration record. This entity is for retroactive
  * lap-credit operations performed by RACE_DIRECTOR or ADMIN role.
  */
-@Entity
-@Table(name = "unknown_transponder_link")
 public class UnknownTransponderLinkAudit {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "race_id", nullable = false)
     private Long raceId;
 
-    @Column(name = "transponder_number", nullable = false, length = 50)
     private String transponderNumber;
 
-    @Column(name = "entry_id", nullable = false)
     private Long entryId;
 
-    @Column(name = "linked_by_user_id")
     private Long linkedByUserId;
 
-    @Column(name = "linked_at", nullable = false)
     private Instant linkedAt;
 
     public UnknownTransponderLinkAudit() {}
@@ -52,7 +36,16 @@ public class UnknownTransponderLinkAudit {
         this.linkedAt = Instant.now();
     }
 
+    /** For the repository: an audit row as stored. */
+    UnknownTransponderLinkAudit(Long id, Long raceId, String transponderNumber, Long entryId,
+                                Long linkedByUserId, Instant linkedAt) {
+        this(raceId, transponderNumber, entryId, linkedByUserId);
+        this.id = id;
+        this.linkedAt = linkedAt;
+    }
+
     public Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
     public Long getRaceId() { return raceId; }
     public String getTransponderNumber() { return transponderNumber; }
     public Long getEntryId() { return entryId; }

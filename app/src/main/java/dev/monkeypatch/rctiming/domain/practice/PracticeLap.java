@@ -1,51 +1,37 @@
 package dev.monkeypatch.rctiming.domain.practice;
 
-import dev.monkeypatch.rctiming.domain.user.User;
-import jakarta.persistence.*;
 import java.time.Instant;
 
-@Entity
-@Table(name = "practice_laps")
 public class PracticeLap {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "practice_session_id", nullable = false)
-    private PracticeSession practiceSession;
+    private Long practiceSessionId;
 
-    @Column(name = "transponder_number", nullable = false, length = 50)
     private String transponderNumber;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;  // nullable until linked
+    private Long userId;  // nullable until linked
 
-    @Column(name = "lap_number", nullable = false)
     private Integer lapNumber;
 
-    @Column(name = "lap_time_ms", nullable = false)
     private Long lapTimeMs;
 
-    @Column(name = "crossing_time", nullable = false)
     private Instant crossingTime;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
     // Getters and setters
     public Long getId() { return id; }
+    void setId(Long id) { this.id = id; }
 
-    public PracticeSession getPracticeSession() { return practiceSession; }
-    public void setPracticeSession(PracticeSession practiceSession) { this.practiceSession = practiceSession; }
+    public Long getPracticeSessionId() { return practiceSessionId; }
+    public void setPracticeSessionId(Long practiceSessionId) { this.practiceSessionId = practiceSessionId; }
 
     public String getTransponderNumber() { return transponderNumber; }
     public void setTransponderNumber(String transponderNumber) { this.transponderNumber = transponderNumber; }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
     public Integer getLapNumber() { return lapNumber; }
     public void setLapNumber(Integer lapNumber) { this.lapNumber = lapNumber; }
@@ -57,4 +43,5 @@ public class PracticeLap {
     public void setCrossingTime(Instant crossingTime) { this.crossingTime = crossingTime; }
 
     public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 }
