@@ -1,6 +1,6 @@
 # Connecting the decoder
 
-RCTC reads live laps straight from the AMB/MyLaps decoder over TCP. There is no separate forwarder process and no token to set up. You point RCTC at the decoder once, and it reconnects on its own if the link drops.
+RCTC reads live laps straight from the AMB/MyLaps decoder over TCP, with nothing else to install or set up. You point RCTC at the decoder once, and it reconnects on its own if the link drops.
 
 In development you use the built-in **fake decoder simulator** in place of hardware.
 
