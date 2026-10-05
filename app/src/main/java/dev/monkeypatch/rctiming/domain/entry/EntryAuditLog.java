@@ -1,40 +1,17 @@
 package dev.monkeypatch.rctiming.domain.entry;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
 import java.time.Instant;
 
-@Entity
-@Table(name = "entry_audit_log")
 public class EntryAuditLog {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "entry_id", nullable = false)
     private Long entryId;
-
-    @Column(name = "admin_user_id", nullable = false)
     private Long adminUserId;
-
-    @Column(nullable = false, length = 40)
     private String action;   // "TRANSPONDER_SWAP" | "MEMBERSHIP_OVERRIDE"
 
     private String reason;
-
-    @Column(name = "before_snapshot")
     private String beforeSnapshot;
-
-    @Column(name = "after_snapshot")
     private String afterSnapshot;
-
-    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     public Long getId() { return id; }

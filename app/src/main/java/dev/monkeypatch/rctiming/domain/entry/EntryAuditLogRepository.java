@@ -1,10 +1,57 @@
 package dev.monkeypatch.rctiming.domain.entry;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.EntryAuditLogRecord;
+import dev.monkeypatch.rctiming.persistence.JooqRepository;
+import org.jooq.DSLContext;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-public interface EntryAuditLogRepository extends JpaRepository<EntryAuditLog, Long> {
+import static dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.ENTRY_AUDIT_LOG;
 
-    List<EntryAuditLog> findByEntryIdOrderByCreatedAtAsc(Long entryId);
+@Repository
+public class EntryAuditLogRepository extends JooqRepository<EntryAuditLog, EntryAuditLogRecord> {
+
+    public EntryAuditLogRepository(DSLContext dsl) {
+        super(dsl, ENTRY_AUDIT_LOG, ENTRY_AUDIT_LOG.ID);
+    }
+
+    public List<EntryAuditLog> findByEntryIdOrderByCreatedAtAsc(Long entryId) {
+        return findWhere(ENTRY_AUDIT_LOG.ENTRY_ID.eq(entryId), ENTRY_AUDIT_LOG.CREATED_AT.asc(), ENTRY_AUDIT_LOG.ID.asc());
+    }
+
+    @Override
+    protected EntryAuditLog toEntity(EntryAuditLogRecord r) {
+        EntryAuditLog log = new EntryAuditLog();
+        log.setId(r.getId());
+        log.setEntryId(r.getEntryId());
+        log.setAdminUserId(r.getAdminUserId());
+        log.setAction(r.getAction());
+        log.setReason(r.getReason());
+        log.setBeforeSnapshot(r.getBeforeSnapshot());
+        log.setAfterSnapshot(r.getAfterSnapshot());
+        log.setCreatedAt(r.getCreatedAt());
+        return log;
+    }
+
+    @Override
+    protected void toRecord(EntryAuditLog log, EntryAuditLogRecord r) {
+        r.setEntryId(log.getEntryId());
+        r.setAdminUserId(log.getAdminUserId());
+        r.setAction(log.getAction());
+        r.setReason(log.getReason());
+        r.setBeforeSnapshot(log.getBeforeSnapshot());
+        r.setAfterSnapshot(log.getAfterSnapshot());
+        r.setCreatedAt(log.getCreatedAt());
+    }
+
+    @Override
+    protected Long idOf(EntryAuditLog log) {
+        return log.getId();
+    }
+
+    @Override
+    protected void setId(EntryAuditLog log, Long id) {
+        log.setId(id);
+    }
 }
