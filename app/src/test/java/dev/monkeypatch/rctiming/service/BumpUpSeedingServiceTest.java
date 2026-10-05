@@ -14,8 +14,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,7 +67,7 @@ class BumpUpSeedingServiceTest {
         service().seedFinals(eventClassId, standings, 2, 10, 2);
 
         ArgumentCaptor<RaceEntry> captor = ArgumentCaptor.forClass(RaceEntry.class);
-        verify(raceEntryRepository, times(20)).save(captor.capture());
+        verify(raceEntryRepository, times(18)).save(captor.capture());
         List<RaceEntry> saved = captor.getAllValues();
 
         List<RaceEntry> bEntries = saved.stream().filter(e -> e.getRaceId().equals(bFinal.getId()))
@@ -78,15 +81,15 @@ class BumpUpSeedingServiceTest {
                 .containsExactly(11L, 12L, 13L, 14L, 15L, 16L, 17L, 18L, 19L, 20L);
         assertThat(bEntries).allMatch(e -> !e.isBumped());
 
-        // A-Final: 8 regular slots (the TOP qualifiers, ranks 1..8 — this is the fix) plus
-        // 2 bumped=true placeholder slots with entryId=0 (unfilled until applyBumpUpResults).
-        assertThat(aEntries).hasSize(10);
-        List<RaceEntry> aRegular = aEntries.stream().filter(e -> !e.isBumped()).toList();
-        List<RaceEntry> aBump = aEntries.stream().filter(RaceEntry::isBumped).toList();
-        assertThat(aRegular).extracting(RaceEntry::getEntryId)
+        // A-Final: 8 regular slots (the TOP qualifiers, ranks 1..8) and 2 bump slots kept as a
+        // count on the race, not as placeholder rows (#45).
+        assertThat(aEntries).extracting(RaceEntry::getEntryId)
                 .containsExactly(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L);
-        assertThat(aBump).hasSize(2);
-        assertThat(aBump).allMatch(e -> e.getEntryId() == 0L);
+        assertThat(aEntries).allMatch(e -> !e.isBumped());
+        assertThat(aFinal.getBumpSlots()).isEqualTo(2);
+        assertThat(bFinal.getBumpSlots()).isZero();
+        verify(raceRepository).save(aFinal);
+        verify(raceRepository).save(bFinal);
     }
 
     @Test
@@ -138,17 +141,13 @@ class BumpUpSeedingServiceTest {
         service().seedFinals(eventClassId, standings, 2, 10, 2);
 
         ArgumentCaptor<RaceEntry> captor = ArgumentCaptor.forClass(RaceEntry.class);
-        // 5 B-final regular slots + 0 A-final regular slots + 2 A-final bump-slot
-        // placeholders (bump slots are created for non-lowest finals regardless of whether
-        // any regular slots remain) = 7 total saves.
-        verify(raceEntryRepository, times(7)).save(captor.capture());
+        // 5 B-final regular slots + 0 A-final regular slots = 5 saves.
+        verify(raceEntryRepository, times(5)).save(captor.capture());
         List<RaceEntry> saved = captor.getAllValues();
 
         List<RaceEntry> bEntries = saved.stream().filter(e -> e.getRaceId().equals(bFinal.getId())).toList();
         List<RaceEntry> aRegular = saved.stream()
                 .filter(e -> e.getRaceId().equals(aFinal.getId()) && !e.isBumped()).toList();
-        List<RaceEntry> aBump = saved.stream()
-                .filter(e -> e.getRaceId().equals(aFinal.getId()) && e.isBumped()).toList();
 
         // Lowest final (B) draws from the bottom: with only 5 standings and 10 lowest-final
         // slots, all 5 land in B.
@@ -158,9 +157,86 @@ class BumpUpSeedingServiceTest {
         // Top-down pass for A starts after the bottom pass has already consumed everything
         // (both pointers walk the same list), so no regular slots remain for A here.
         assertThat(aRegular).isEmpty();
-        // Bump-slot placeholders are still created for the A-final even though no regular
-        // qualifiers were seated there.
-        assertThat(aBump).hasSize(2);
-        assertThat(aBump).allMatch(e -> e.getEntryId() == 0L);
+        // The A-final still keeps its bump slots even though no regular qualifiers were seated there.
+        assertThat(aFinal.getBumpSlots()).isEqualTo(2);
+    }
+
+    @Test
+    void applyBumpUpResults_addsTopFinishersToTheBackOfTheNextFinal() {
+        Race bFinal = finalRace(200L, "B");
+        Race aFinal = finalRace(201L, "A");
+        aFinal.setBumpSlots(2);
+        when(raceRepository.findById(bFinal.getId())).thenReturn(Optional.of(bFinal));
+        when(raceRepository.findByEventClassIdAndFinalLetter(10L, "A")).thenReturn(List.of(aFinal));
+        when(raceEntryRepository.findByRaceIdOrderByGridPosition(aFinal.getId())).thenReturn(seededGrid(aFinal, 8));
+
+        List<Long> promoted = service().applyBumpUpResults(bFinal.getId(), List.of(501L, 502L, 503L));
+
+        assertThat(promoted).containsExactly(501L, 502L);
+        ArgumentCaptor<RaceEntry> captor = ArgumentCaptor.forClass(RaceEntry.class);
+        verify(raceEntryRepository, times(2)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(RaceEntry::getEntryId).containsExactly(501L, 502L);
+        assertThat(captor.getAllValues()).extracting(RaceEntry::getGridPosition).containsExactly(9, 10);
+        assertThat(captor.getAllValues()).extracting(RaceEntry::getCarNumber).containsExactly(9, 10);
+        assertThat(captor.getAllValues()).allMatch(RaceEntry::isBumped);
+        assertThat(captor.getAllValues()).allMatch(e -> e.getRaceId().equals(aFinal.getId()));
+    }
+
+    @Test
+    void applyBumpUpResults_repeatCallPromotesNobodyOnceSlotsAreFull() {
+        Race bFinal = finalRace(200L, "B");
+        Race aFinal = finalRace(201L, "A");
+        aFinal.setBumpSlots(2);
+        List<RaceEntry> grid = seededGrid(aFinal, 8);
+        grid.add(raceEntry(aFinal, 501L, 9, true));
+        grid.add(raceEntry(aFinal, 502L, 10, true));
+        when(raceRepository.findById(bFinal.getId())).thenReturn(Optional.of(bFinal));
+        when(raceRepository.findByEventClassIdAndFinalLetter(10L, "A")).thenReturn(List.of(aFinal));
+        when(raceEntryRepository.findByRaceIdOrderByGridPosition(aFinal.getId())).thenReturn(grid);
+
+        assertThat(service().applyBumpUpResults(bFinal.getId(), List.of(501L, 502L, 503L))).isEmpty();
+        verify(raceEntryRepository, never()).save(any());
+    }
+
+    @Test
+    void applyBumpUpResults_skipsDriversAlreadyInTheNextFinal() {
+        Race bFinal = finalRace(200L, "B");
+        Race aFinal = finalRace(201L, "A");
+        aFinal.setBumpSlots(2);
+        List<RaceEntry> grid = seededGrid(aFinal, 8);
+        grid.add(raceEntry(aFinal, 501L, 9, true));
+        when(raceRepository.findById(bFinal.getId())).thenReturn(Optional.of(bFinal));
+        when(raceRepository.findByEventClassIdAndFinalLetter(10L, "A")).thenReturn(List.of(aFinal));
+        when(raceEntryRepository.findByRaceIdOrderByGridPosition(aFinal.getId())).thenReturn(grid);
+
+        assertThat(service().applyBumpUpResults(bFinal.getId(), List.of(501L, 502L, 503L)))
+                .containsExactly(502L);
+    }
+
+    private static Race finalRace(long id, String letter) {
+        Race race = new Race();
+        race.setId(id);
+        race.setEventClassId(10L);
+        race.setFinalLetter(letter);
+        return race;
+    }
+
+    /** A final's grid as seeded: entries 101.. at positions and car numbers 1..count. */
+    private static List<RaceEntry> seededGrid(Race race, int count) {
+        List<RaceEntry> grid = new ArrayList<>();
+        for (int pos = 1; pos <= count; pos++) {
+            grid.add(raceEntry(race, 100L + pos, pos, false));
+        }
+        return grid;
+    }
+
+    private static RaceEntry raceEntry(Race race, long entryId, int position, boolean bumped) {
+        RaceEntry e = new RaceEntry();
+        e.setRaceId(race.getId());
+        e.setEntryId(entryId);
+        e.setGridPosition(position);
+        e.setCarNumber(position);
+        e.setBumped(bumped);
+        return e;
     }
 }

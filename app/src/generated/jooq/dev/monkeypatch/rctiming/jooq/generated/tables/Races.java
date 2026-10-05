@@ -146,6 +146,11 @@ public class Races extends TableImpl<RacesRecord> {
      */
     public final TableField<RacesRecord, Instant> ABANDONED_AT = createField(DSL.name("abandoned_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
 
+    /**
+     * The column <code>races.bump_slots</code>.
+     */
+    public final TableField<RacesRecord, Integer> BUMP_SLOTS = createField(DSL.name("bump_slots"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.INTEGER)), this, "");
+
     private Races(Name alias, Table<RacesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

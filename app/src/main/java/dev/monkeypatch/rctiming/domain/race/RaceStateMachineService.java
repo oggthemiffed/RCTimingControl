@@ -251,10 +251,10 @@ public class RaceStateMachineService {
                 .toList();
 
         try {
-            bumpUpSeedingService.applyBumpUpResults(finishedFinalRace.getId(), finishers);
-            log.info("Bump-up: applied promotion from {}-final race {}", letter, finishedFinalRace.getId());
-            if (liveTimingHub != null) {
-                liveTimingHub.broadcastBumpUpAlert(finishedFinalRace.getId(), finishers);
+            List<Long> promoted = bumpUpSeedingService.applyBumpUpResults(finishedFinalRace.getId(), finishers);
+            log.info("Bump-up: promoted {} from {}-final race {}", promoted, letter, finishedFinalRace.getId());
+            if (liveTimingHub != null && !promoted.isEmpty()) {
+                liveTimingHub.broadcastBumpUpAlert(finishedFinalRace.getId(), promoted);
             }
         } catch (Exception e) {
             log.warn("Bump-up promotion failed for final race {}: {}", finishedFinalRace.getId(), e.getMessage());

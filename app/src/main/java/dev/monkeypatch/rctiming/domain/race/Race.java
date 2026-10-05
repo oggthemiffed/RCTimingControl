@@ -32,6 +32,12 @@ public class Race {
     /** Set when race control abandons the race (CTRL-08); an abandoned race is otherwise FINISHED. */
     private Instant abandonedAt;
 
+    /**
+     * Places at the back of a final kept for drivers bumped up from the final below (#45). Set when
+     * finals are seeded and filled when that final finishes; zero for heats and the lowest final.
+     */
+    private int bumpSlots;
+
     private Instant createdAt;
 
     private Instant updatedAt;
@@ -74,6 +80,9 @@ public class Race {
 
     public Instant getAbandonedAt() { return abandonedAt; }
     public void setAbandonedAt(Instant abandonedAt) { this.abandonedAt = abandonedAt; }
+
+    public int getBumpSlots() { return bumpSlots; }
+    public void setBumpSlots(int bumpSlots) { this.bumpSlots = bumpSlots; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

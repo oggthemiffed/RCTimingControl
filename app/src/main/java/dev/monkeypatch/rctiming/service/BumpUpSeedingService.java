@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -42,9 +44,12 @@ public class BumpUpSeedingService {
      * <pre>
      *   B-Final positions 1–10: drivers ranked 11–20 (lowest qualifiers)
      *   A-Final positions 1–8:  drivers ranked 1–8  (top qualifiers)
-     *   A-Final positions 9–10: bump slots (bumped=true, gridPosition set, entryId=0)
-     *                           filled by applyBumpUpResults after B-Final finishes
+     *   A-Final positions 9–10: bump slots, kept as bumpSlots=2 on the A-Final race and
+     *                           filled by applyBumpUpResults after the B-Final finishes
      * </pre>
+     *
+     * <p>Every race_entries row points at a real entry, so a bump slot is a count on the race,
+     * not a placeholder row (#45). Re-seeding replaces the final's grid.
      *
      * @param eventClassId        the EventClass to seed
      * @param qualifyingStandings entryIds in standings order (best first = index 0)
@@ -65,7 +70,7 @@ public class BumpUpSeedingService {
         // Build assignment list for each final (from lowest to highest letter)
         // Lowest final: positions 1..carsPerFinal = ranks (qualifyingStandings.size()-carsPerFinal+1)..last
         // Higher finals: positions 1..(carsPerFinal-bumpCount) = next block of regular qualifiers
-        //                positions (carsPerFinal-bumpCount+1)..carsPerFinal = bump slots (empty)
+        //                positions (carsPerFinal-bumpCount+1)..carsPerFinal = bump slots (Race.bumpSlots)
 
         // Work out regular slot counts per final
         int[] regularSlots = new int[finals.size()];
@@ -112,7 +117,7 @@ public class BumpUpSeedingService {
             boolean isLowestFinal = (fi == 0);
             List<Long> slotEntries = slotEntriesByFinal.get(fi);
 
-            // Remove placeholder entries for this final race
+            // Replace any earlier seeding of this final
             List<RaceEntry> existing = raceEntryRepository.findByRaceIdOrderByGridPosition(finalRace.getId());
             raceEntryRepository.deleteAll(existing);
 
@@ -129,32 +134,25 @@ public class BumpUpSeedingService {
                 raceEntryRepository.save(entry);
             }
 
-            // Create bump slots for non-lowest finals
-            if (!isLowestFinal) {
-                for (int bump = 0; bump < bumpCount; bump++) {
-                    RaceEntry bumpEntry = new RaceEntry();
-                    bumpEntry.setRaceId(finalRace.getId());
-                    bumpEntry.setEntryId(0L); // placeholder until applyBumpUpResults fills it
-                    bumpEntry.setGridPosition(regularSlots[fi] + 1 + bump);
-                    bumpEntry.setCarNumber(null);  // bump-up drivers receive car_number after applyBumpUpResults
-                    bumpEntry.setBumped(true);
-                    raceEntryRepository.save(bumpEntry);
-                }
-            }
+            // Reserve bump slots on non-lowest finals; applyBumpUpResults fills them
+            finalRace.setBumpSlots(isLowestFinal ? 0 : bumpCount);
+            raceRepository.save(finalRace);
         }
     }
 
     /**
      * Fills bump slots in the next-higher final after a lower final finishes.
      *
-     * <p>Finds the next-higher final for the same EventClass (C→B→A) and fills
-     * the bump slots (bumped=true) with the top N entryIds in order.
-     * First bump-up finisher → first bump slot (lowest gridPosition among bump slots).
+     * <p>Finds the next-higher final for the same EventClass (C→B→A) and adds the best finishers
+     * not already in it, up to its unfilled bump slots, at the back of its grid with
+     * {@code bumped=true}. Grid positions and car numbers carry on from the highest already in
+     * that final. A repeat call adds nobody once the slots are full.
      *
      * @param finishedFinalRaceId the Race ID of the final that just finished
-     * @param topNEntryIds        entry IDs of the top N finishers (first = best)
+     * @param finishingOrder      entry IDs of the finished final's drivers, best first
+     * @return the entry IDs promoted by this call, best first
      */
-    public void applyBumpUpResults(Long finishedFinalRaceId, List<Long> topNEntryIds) {
+    public List<Long> applyBumpUpResults(Long finishedFinalRaceId, List<Long> finishingOrder) {
         Race finishedRace = raceRepository.findById(finishedFinalRaceId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Race not found: " + finishedFinalRaceId));
@@ -184,19 +182,28 @@ public class BumpUpSeedingService {
         }
         Race nextFinal = nextFinals.get(0);
 
-        // Find bump slots in the next final, ordered by gridPosition asc
-        List<RaceEntry> bumpSlots = raceEntryRepository.findByRaceIdOrderByGridPosition(nextFinal.getId())
-                .stream()
-                .filter(RaceEntry::isBumped)
-                .sorted(Comparator.comparingInt(e ->
-                        e.getGridPosition() == null ? Integer.MAX_VALUE : e.getGridPosition()))
-                .collect(Collectors.toList());
+        List<RaceEntry> grid = raceEntryRepository.findByRaceIdOrderByGridPosition(nextFinal.getId());
+        long alreadyBumped = grid.stream().filter(RaceEntry::isBumped).count();
+        int openSlots = (int) Math.max(0, nextFinal.getBumpSlots() - alreadyBumped);
+        Set<Long> alreadyInFinal = grid.stream().map(RaceEntry::getEntryId).collect(Collectors.toSet());
+        int nextGridPosition = grid.stream().map(RaceEntry::getGridPosition).filter(Objects::nonNull)
+                .mapToInt(Integer::intValue).max().orElse(0) + 1;
+        int nextCarNumber = grid.stream().map(RaceEntry::getCarNumber).filter(Objects::nonNull)
+                .mapToInt(Integer::intValue).max().orElse(0) + 1;
 
-        // Fill bump slots with topNEntryIds
-        for (int i = 0; i < topNEntryIds.size() && i < bumpSlots.size(); i++) {
-            RaceEntry slot = bumpSlots.get(i);
-            slot.setEntryId(topNEntryIds.get(i));
-            raceEntryRepository.save(slot);
+        List<Long> promoted = new ArrayList<>(openSlots);
+        for (Long entryId : finishingOrder) {
+            if (promoted.size() >= openSlots) break;
+            if (entryId == null || alreadyInFinal.contains(entryId) || promoted.contains(entryId)) continue;
+            RaceEntry bumpedEntry = new RaceEntry();
+            bumpedEntry.setRaceId(nextFinal.getId());
+            bumpedEntry.setEntryId(entryId);
+            bumpedEntry.setGridPosition(nextGridPosition++);
+            bumpedEntry.setCarNumber(nextCarNumber++);
+            bumpedEntry.setBumped(true);
+            raceEntryRepository.save(bumpedEntry);
+            promoted.add(entryId);
         }
+        return promoted;
     }
 }
