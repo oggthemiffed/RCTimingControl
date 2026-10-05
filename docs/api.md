@@ -375,6 +375,60 @@ PUT /admin/events/{eventId}/racehub-class-mappings
 
 Requires `ADMIN`. Each RaceHub class is matched to the event class whose racing class name equals its `rc_class_name`, ignoring case. These mappings set the match for classes whose names differ. `PUT` replaces the event's mappings.
 
+The RC-Timing CSV import uses the same mappings, keyed `CSV:` and the file's class name in lower case (or `CSV:#` and a Class Number), as its `unmappedClasses` list shows.
+
+---
+
+## Admin — RC-Timing CSV import
+
+For clubs moving off RC-Timing. The file is an RC-Timing 2025 style driver CSV: a header row naming the columns, in any order and any subset of `Name,BRCA Number,Club Number,Class Number,Class,Formula Number,Member Type Number,Grade,PT No,PT No 2,Junior,Paid Status,Car Make,Entry Desc`. It needs `Name` and `Class` or `Class Number`. RC-Timing files have no quoting, so a name or car make with a comma or double quote is rejected with the line number. The file may be UTF-8 or the Windows code page that RC-Timing and Excel save in.
+
+```http
+POST /admin/events/{eventId}/csv-import?dryRun=true
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+file=<the .csv>
+```
+
+Requires `ADMIN`. The file has no entry ids, versions or withdrawals, so nothing is applied on trust:
+
+- Each booked row is keyed by its BRCA number and class, or its name and class when the BRCA number is 0. Its driver becomes a competitor matched by BRCA number, or by name.
+- `Entry Desc` = `entry` (or no `Entry Desc` column) books the driver in. `update` rows are skipped, since they only change RC-Timing's member archive.
+- `PT No` and `PT No 2` are the primary and secondary transponders (`0` = none). `Grade`, `Junior`, `Member Type Number`, `Formula Number` and `Car Make` are shown in the preview only. `Club Number` and `Paid Status` are ignored, and no payment data is stored.
+- A class is placed by the event's class mappings, then by racing class name ignoring case, then, for a row with only a `Class Number`, by the event's classes in the order they were added. A class name that matches nothing is never placed by its number; it is listed for mapping.
+
+The preview sorts every row into a `group`: `NEW`, `CHANGED` (with each field's old and new value), `UNCHANGED` or `SKIPPED`. It also lists, as `MISSING`, the active entries an earlier CSV import made for this event that this file leaves out. Walk-ins and RaceHub entries are never missing.
+
+To apply, post the same file without `dryRun`, with the picks as extra form fields:
+
+```
+file=<the .csv>
+update=<key of a CHANGED row>      (repeat for each row to update)
+withdraw=<entryId of a MISSING row> (repeat for each entry to withdraw)
+```
+
+New rows are always created; only the picked changed rows are updated and only the picked missing entries are withdrawn (never deleted). A pick that no longer matches the file or the event blocks the import, so preview again.
+
+**200 OK** (or **422** for a real import blocked by bad rows, unmapped classes or a stale pick, with nothing saved):
+```json
+{
+  "dryRun": true, "blocked": false, "applied": false,
+  "summary": { "newEntries": 5, "changed": 1, "unchanged": 0, "missing": 1, "skipped": 1, "created": 0, "updated": 0, "withdrawn": 0 },
+  "unmappedClasses": [ { "key": "CSV:nitro truggy", "className": "Nitro Truggy", "classNumber": null, "entryCount": 2 } ],
+  "errors": [], "warnings": [ "Transponder 7123456 is used by more than one entry: Ada Lovelace, Grace Hopper" ],
+  "rows": [ {
+    "group": "CHANGED", "key": "21/brca:12345/class:2wd buggy", "line": 2, "name": "Ada Lovelace",
+    "brcaNumber": 12345, "className": "2WD Buggy", "classNumber": 1, "eventClassId": 11, "entryId": 301,
+    "primaryTransponder": "7723456", "secondaryTransponder": "7223456",
+    "changes": [ { "field": "Transponder", "before": "7123456", "after": "7723456" } ],
+    "info": { "Grade": "80", "Car Make": "Associated" }, "applied": false, "reason": null
+  } ]
+}
+```
+
+A `MISSING` row has no `key` or `line`; pick it by `entryId`. A `SKIPPED` row gives its `reason`. A changed field is `Status`, `Name`, `Class`, `Transponder` or `Second transponder`.
+
 ---
 
 ## Admin — Competitors

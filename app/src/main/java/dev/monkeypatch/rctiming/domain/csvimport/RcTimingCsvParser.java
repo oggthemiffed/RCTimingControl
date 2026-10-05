@@ -1,5 +1,10 @@
 package dev.monkeypatch.rctiming.domain.csvimport;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -68,6 +73,21 @@ public final class RcTimingCsvParser {
 
     /** The rows that could be read, and every problem found. Any error blocks the import. */
     public record ParsedCsv(List<Row> rows, List<String> errors, List<String> warnings) {
+    }
+
+    /**
+     * The file's text. RC-Timing and Excel on Windows save in the Windows code page rather than
+     * UTF-8, so bytes that aren't valid UTF-8 are read as Windows-1252 and accented names survive.
+     */
+    public static String decode(byte[] bytes) {
+        try {
+            return StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT)
+                    .decode(ByteBuffer.wrap(bytes)).toString();
+        } catch (CharacterCodingException e) {
+            return new String(bytes, Charset.forName("windows-1252"));
+        }
     }
 
     public static ParsedCsv parse(String content) {

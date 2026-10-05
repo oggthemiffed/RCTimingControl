@@ -169,6 +169,7 @@
 - [x] **IMPORT-03**: An entry withdrawn in RaceHub is marked withdrawn, never deleted (#15)
 - [x] **IMPORT-04**: RaceHub classes map to the event's classes by name, with a per-event override (#16)
 - [x] **IMPORT-05**: A dry run previews every change; an import with unmapped classes or invalid rows saves nothing (#15, #16)
+- [x] **IMPORT-06**: An admin imports an RC-Timing style driver CSV into an event. The preview shows new, changed (old and new values), unchanged and missing entries; only the changed entries and missing entries the official picks are updated or withdrawn, and walk-ins and entries from other sources are never withdrawn (#39)
 - [x] **WALKIN-01**: An admin or race director adds a walk-in entry by hand, with a competitor, class and transponders, until the event is completed (#17)
 - [x] **COMPETITOR-01**: A competitor is the person an entry belongs to (display name, RaceHub driver ID, BRCA number, home club) and has no login (#12)
 - [x] **COMPETITOR-02**: Results, live timing and championship standings group by competitor across meetings (#13)
@@ -345,6 +346,7 @@
 | IMPORT-03 | #15 | Complete |
 | IMPORT-04 | #16 | Complete |
 | IMPORT-05 | #15, #16 | Complete |
+| IMPORT-06 | #39 | Complete |
 | WALKIN-01 | #17 | Complete |
 | COMPETITOR-01 | #12 | Complete |
 | COMPETITOR-02 | #13 | Complete |
@@ -362,12 +364,13 @@
 | OVERLAY-01 | #29 | Complete |
 
 **Coverage:**
-- Requirements: 128 total (106 from the original v1 plan, 22 added for local-only timing)
-- Complete: 88, changed and complete: 16, removed: 24, planned: 0
+- Requirements: 129 total (106 from the original v1 plan, 22 added for local-only timing, 1 for entry import from other systems)
+- Complete: 89, changed and complete: 16, removed: 24, planned: 0
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-10-05 — AUTH-06 and AUTH-07 added for managing officials and the command-line admin password reset (#61)*
+*Last updated: 2026-10-05 — IMPORT-06 added for the RC-Timing CSV entry import (#39)*
+*Previously updated: 2026-10-05 — AUTH-06 and AUTH-07 added for managing officials and the command-line admin password reset (#61)*
 *Previously updated: 2026-10-05 — AUDIO-14 removed with the profanity blocklist (#30)*
 *Previously updated: 2026-10-05 — local-only timing (#8, #25): racer, forwarder and P3-forwarder requirements removed, changed requirements annotated, Local-only timing section added, traceability brought up to date*
 *Previously updated: 2026-10-04 — removed the offline race-day app's requirements (retired in #21; race day moves to RCTC run locally at the venue, #8)*

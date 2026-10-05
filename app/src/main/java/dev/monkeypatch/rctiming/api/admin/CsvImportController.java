@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.api.admin;
 
 import dev.monkeypatch.rctiming.domain.csvimport.CsvImportResult;
 import dev.monkeypatch.rctiming.domain.csvimport.CsvImportService;
+import dev.monkeypatch.rctiming.domain.csvimport.RcTimingCsvParser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
@@ -42,7 +42,7 @@ public class CsvImportController {
                                                      @RequestParam(name = "update", required = false) List<String> update,
                                                      @RequestParam(name = "withdraw", required = false) List<Long> withdraw)
             throws IOException {
-        String content = new String(file.getBytes(), StandardCharsets.UTF_8);
+        String content = RcTimingCsvParser.decode(file.getBytes());
         var selection = new CsvImportService.Selection(
                 update == null ? Set.of() : Set.copyOf(update), withdraw == null ? Set.of() : Set.copyOf(withdraw));
         CsvImportResult result = importService.importCsv(eventId, content, dryRun, selection);

@@ -5,6 +5,8 @@ import dev.monkeypatch.rctiming.domain.csvimport.RcTimingCsvParser.ParsedCsv;
 import dev.monkeypatch.rctiming.domain.csvimport.RcTimingCsvParser.Row;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,6 +89,14 @@ class RcTimingCsvParserTest {
                 "Line 4 (Frank McDough) has no class",
                 "Line 5: PT No should be a whole number, not \"-3\"",
                 "Line 6: Entry Desc should be entry or update, not \"remove\"");
+    }
+
+    @Test
+    void readsUtf8_andFallsBackToTheWindowsCodePage() {
+        String text = "Name,Class\nRené Müller,Mod\n";
+
+        assertThat(RcTimingCsvParser.decode(text.getBytes(StandardCharsets.UTF_8))).isEqualTo(text);
+        assertThat(RcTimingCsvParser.decode(text.getBytes(Charset.forName("windows-1252")))).isEqualTo(text);
     }
 
     @Test
