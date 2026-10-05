@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.records.RacesRecord;
 import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +37,13 @@ public class RaceRepository extends JooqRepository<Race, RacesRecord> {
         return findWhere(RACES.EVENT_CLASS_ID.eq(eventClassId).and(RACES.FINAL_LETTER.eq(finalLetter)));
     }
 
-    /** For the decoder listener: the race currently in the given status, such as the running one. */
+    /**
+     * For the decoder listener: the race currently in the given status, such as the running one.
+     * Runs in a transaction so it reads through the write connection: it waits for a race being
+     * started or finished to commit, rather than reading the old status from the read pool and
+     * sending passings to the wrong race.
+     */
+    @Transactional(readOnly = true)
     public Optional<Race> findFirstByStatus(RaceStatus status) {
         return dsl.selectFrom(RACES).where(RACES.STATUS.eq(status.name())).orderBy(RACES.ID).limit(1)
                 .fetchOptional().map(this::toEntity);

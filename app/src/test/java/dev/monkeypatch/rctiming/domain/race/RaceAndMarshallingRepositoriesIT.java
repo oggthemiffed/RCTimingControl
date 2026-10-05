@@ -28,7 +28,10 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static dev.monkeypatch.rctiming.persistence.RoundTrip.assertSavedAndReloaded;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -307,6 +310,37 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
         assertThat(races.findById(race.getId()).orElseThrow().getStatus()).isEqualTo(RaceStatus.FINISHED);
         assertThat(snapshots.findByRaceId(race.getId())).get()
                 .extracting(ResultSnapshot::getFinishedAt).isEqualTo(T2);
+    }
+
+    @Test
+    void theRunningRaceLookupWaitsForARaceBeingStartedToCommit() throws Exception {
+        assertThat(races.findFirstByStatus(RaceStatus.RUNNING)).as("no other race is running").isEmpty();
+        Round round = rounds.save(round(RoundType.QUALIFIER, 1));
+        cleanup.add(() -> rounds.deleteById(round.getId()));
+        Race r = race(round.getId(), 1);
+        r.setStatus(RaceStatus.GRID);
+        Race race = races.save(r);
+
+        CountDownLatch saved = new CountDownLatch(1);
+        Thread starter = new Thread(() -> new TransactionTemplate(transactionManager).executeWithoutResult(tx -> {
+            Race loaded = races.findById(race.getId()).orElseThrow();
+            loaded.setStatus(RaceStatus.RUNNING);
+            races.save(loaded);
+            saved.countDown();
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }));
+        starter.start();
+        assertThat(saved.await(5, TimeUnit.SECONDS)).isTrue();
+
+        // As the decoder listener does, outside any transaction, while the start is still uncommitted
+        Optional<Race> running = races.findFirstByStatus(RaceStatus.RUNNING);
+        starter.join();
+
+        assertThat(running).get().extracting(Race::getId).isEqualTo(race.getId());
     }
 
     private Round round(RoundType type, int sequence) {
