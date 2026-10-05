@@ -21,6 +21,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Races;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots;
+import dev.monkeypatch.rctiming.jooq.generated.tables.ResultsOutbox;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink;
 import dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLinks;
@@ -69,6 +70,7 @@ public class Indexes {
     public static final Index IDX_RACES_ROUND_ID = Internal.createIndex(DSL.name("idx_races_round_id"), Races.RACES, new OrderField[] { Races.RACES.ROUND_ID }, false);
     public static final Index IDX_REFRESH_TOKENS_USER_ID = Internal.createIndex(DSL.name("idx_refresh_tokens_user_id"), RefreshTokens.REFRESH_TOKENS, new OrderField[] { RefreshTokens.REFRESH_TOKENS.USER_ID }, false);
     public static final Index IDX_RESULT_SNAPSHOTS_RACE_ID = Internal.createIndex(DSL.name("idx_result_snapshots_race_id"), ResultSnapshots.RESULT_SNAPSHOTS, new OrderField[] { ResultSnapshots.RESULT_SNAPSHOTS.RACE_ID }, false);
+    public static final Index IDX_RESULTS_OUTBOX_DUE = Internal.createIndex(DSL.name("idx_results_outbox_due"), ResultsOutbox.RESULTS_OUTBOX, new OrderField[] { ResultsOutbox.RESULTS_OUTBOX.STATUS, ResultsOutbox.RESULTS_OUTBOX.NEXT_ATTEMPT_AT }, false);
     public static final Index IDX_ROUNDS_EVENT_ID = Internal.createIndex(DSL.name("idx_rounds_event_id"), Rounds.ROUNDS, new OrderField[] { Rounds.ROUNDS.EVENT_ID }, false);
     public static final Index IDX_UNKNOWN_TRANSPONDER_LINK_RACE = Internal.createIndex(DSL.name("idx_unknown_transponder_link_race"), UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK, new OrderField[] { UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK.RACE_ID }, false);
     public static final Index IDX_UNKNOWN_TRANSPONDER_LINKS_RACE_ID = Internal.createIndex(DSL.name("idx_unknown_transponder_links_race_id"), UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS, new OrderField[] { UnknownTransponderLinks.UNKNOWN_TRANSPONDER_LINKS.RACE_ID }, false);
