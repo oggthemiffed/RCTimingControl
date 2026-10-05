@@ -5,20 +5,15 @@ import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
-import dev.monkeypatch.rctiming.domain.format.BumpUpConfig;
 import dev.monkeypatch.rctiming.domain.format.EventClass;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
-import dev.monkeypatch.rctiming.domain.format.PointsFinalsConfig;
-import dev.monkeypatch.rctiming.domain.format.RaceFormatConfig;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatService;
-import dev.monkeypatch.rctiming.domain.format.TimedRaceConfig;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
-import dev.monkeypatch.rctiming.domain.race.RoundType;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -112,22 +107,7 @@ public class LiveFeedRaceLookup {
                 round.getRoundNumber(),
                 race.getHeatNumber(),
                 race.getFinalLetter(),
-                durationMs(eventClass, round.getType()),
+                raceFormatService.raceDurationMs(eventClass, round.getType()),
                 grid));
-    }
-
-    /** The race length its class's format gives, by round type. */
-    private Long durationMs(EventClass eventClass, RoundType roundType) {
-        if (eventClass == null || eventClass.getConfigSnapshot() == null) {
-            return null;
-        }
-        RaceFormatConfig config = raceFormatService.getEffectiveConfig(eventClass);
-        int minutes = switch (config) {
-            case TimedRaceConfig timed -> timed.durationMinutes();
-            case BumpUpConfig bumpUp -> bumpUp.heatDurationMinutes();
-            case PointsFinalsConfig points -> roundType == RoundType.FINAL
-                    ? points.finalDurationMinutes() : points.heatDurationMinutes();
-        };
-        return minutes > 0 ? minutes * 60_000L : null;
     }
 }

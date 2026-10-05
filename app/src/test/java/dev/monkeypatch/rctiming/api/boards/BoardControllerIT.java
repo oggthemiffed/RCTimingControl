@@ -242,6 +242,31 @@ class BoardControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void raceClock_givesTheTimeSoFarAndTheLengthFromTheFormat() {
+        Round q1 = fx.round(RoundType.QUALIFIER, 1, 1);
+        Race heat1 = fx.race(q1, 1, RaceStatus.RUNNING);
+        // Started before the app saw it, so the clock is worked out from the start time
+        heat1.setStartedAt(Instant.now().minusSeconds(90));
+        fx.save(heat1);
+
+        Map body = get("/api/v1/boards/races/" + heat1.getId() + "/clock");
+
+        assertThat(body.get("status")).isEqualTo("RUNNING");
+        assertThat(body.get("running")).isEqualTo(true);
+        assertThat(((Number) body.get("elapsedMs")).longValue()).isBetween(89_000L, 120_000L);
+        assertThat(((Number) body.get("durationMs")).longValue()).isEqualTo(300_000L);
+        assertThat(((Number) body.get("remainingMs")).longValue())
+                .isEqualTo(300_000L - ((Number) body.get("elapsedMs")).longValue());
+    }
+
+    @Test
+    void raceClock_unknownRaceIsNotFound() {
+        ResponseEntity<String> resp = restTemplate.getForEntity("/api/v1/boards/races/999999999/clock", String.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     void boardEndpointsAreReadOnly() {
         ResponseEntity<String> resp = restTemplate.postForEntity("/api/v1/boards/now-next", null, String.class);
 

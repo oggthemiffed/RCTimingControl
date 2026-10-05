@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.domain.format;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.domain.race.RoundType;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,24 @@ public class RaceFormatService {
         } catch (IllegalArgumentException e) {
             throw new IllegalStateException("Failed to merge format config override", e);
         }
+    }
+
+    /**
+     * A race's length from its class's format, by round type: finals of a points-and-finals format have their own
+     * length. Null when the class has no format or the format sets no length.
+     */
+    @Transactional(readOnly = true)
+    public Long raceDurationMs(EventClass eventClass, RoundType roundType) {
+        if (eventClass == null || eventClass.getConfigSnapshot() == null) {
+            return null;
+        }
+        int minutes = switch (getEffectiveConfig(eventClass)) {
+            case TimedRaceConfig timed -> timed.durationMinutes();
+            case BumpUpConfig bumpUp -> bumpUp.heatDurationMinutes();
+            case PointsFinalsConfig points -> roundType == RoundType.FINAL
+                    ? points.finalDurationMinutes() : points.heatDurationMinutes();
+        };
+        return minutes > 0 ? minutes * 60_000L : null;
     }
 
     /**

@@ -8,6 +8,8 @@ import dev.monkeypatch.rctiming.query.boards.BoardQuery;
 import dev.monkeypatch.rctiming.query.racecontrol.ResultSnapshotQuery;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.LiveRaceState;
+import dev.monkeypatch.rctiming.timing.RaceClockService;
+import dev.monkeypatch.rctiming.timing.dto.RaceClockDto;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,13 +32,16 @@ public class BoardController {
     private final BoardQuery boardQuery;
     private final ResultSnapshotQuery resultSnapshotQuery;
     private final LapTimingService lapTimingService;
+    private final RaceClockService raceClockService;
 
     public BoardController(BoardQuery boardQuery,
                            ResultSnapshotQuery resultSnapshotQuery,
-                           LapTimingService lapTimingService) {
+                           LapTimingService lapTimingService,
+                           RaceClockService raceClockService) {
         this.boardQuery = boardQuery;
         this.resultSnapshotQuery = resultSnapshotQuery;
         this.lapTimingService = lapTimingService;
+        this.raceClockService = raceClockService;
     }
 
     /** @param eventId the event to show; defaults to the event racing now, else the latest in progress */
@@ -69,6 +74,13 @@ public class BoardController {
         return lapTimingService.peek(raceId)
                 .map(LiveRaceState::calculatePositions)
                 .orElse(List.of());
+    }
+
+    /** The race clock, for the streaming overlay (#29); a viewer counts on locally while it is running. */
+    @GetMapping("/races/{raceId}/clock")
+    public RaceClockDto clock(@PathVariable long raceId) {
+        return raceClockService.clock(raceId)
+                .orElseThrow(() -> new EntityNotFoundException("Race not found: " + raceId));
     }
 
     private List<ResultSnapshotDto.ResultRow> resultRows(BoardRaceDto race) {
