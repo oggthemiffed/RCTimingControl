@@ -1,25 +1,12 @@
 package dev.monkeypatch.rctiming.domain.championship;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.Table;
 
-@Entity
-@Table(name = "championship_points_scale")
-@IdClass(ChampionshipPointsScaleEntryId.class)
 public class ChampionshipPointsScaleEntry {
 
-    @Id
-    @Column(name = "championship_id")
     private Long championshipId;
 
-    @Id
-    @Column(name = "position")
     private Integer position;
 
-    @Column(nullable = false)
     private int points;
 
     public ChampionshipPointsScaleEntry() {}

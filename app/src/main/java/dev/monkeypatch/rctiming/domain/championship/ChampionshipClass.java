@@ -1,35 +1,20 @@
 package dev.monkeypatch.rctiming.domain.championship;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-@Entity
-@Table(name = "championship_classes")
 public class ChampionshipClass {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "championship_id", nullable = false)
     private Long championshipId;
 
-    @Column(name = "racing_class_id", nullable = false)
     private Long racingClassId;
 
-    @Column(name = "best_x_from_y_x")
     private Integer bestXFromYX;
 
-    @Column(name = "best_x_from_y_y")
     private Integer bestXFromYY;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     public ChampionshipClass() {}
