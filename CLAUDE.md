@@ -74,7 +74,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 | **Entries** | RaceHub import (upsert by `entry_id`, higher `entry_version` wins, withdraw never delete, class mapping), walk-ins, competitors |
 | **Check-in** | Check-in desk (barcode or keyboard-wedge input) and on-the-day transponder swap, audit-logged |
 | **Race Control API** | Race lifecycle commands, marshal laps, grid calls, referee tools |
-| **Boards** | Spectator "now and next" and results boards (`/api/v1/boards`) |
+| **Boards** | Spectator "now and next" and results boards, and the streaming overlay for OBS (`/boards/overlay`), all anonymous (`/api/v1/boards`); the race clock comes from `timing/RaceClockService` |
 | **Backups** | Scheduled and on-demand SQLite backups, and the `restore` command |
 | **Live feed** | Live Feed v1 to a relay for remote viewers (`livefeed/`): one outbound WebSocket, on its own thread, per-event switch, display names only; see `docs/live-feed-v1.md` |
 | **Results export** | Results Export v1 to RaceHub (`resultsexport/`): an outbox queued on finish, correction and day close, sent in the background with retries; see `docs/results-export-v1.md` |
@@ -167,7 +167,7 @@ The ten original phases are complete. Some of what they built has since been rem
 9. User manual & in-app documentation
 10. Docker trial environment (replaced by the installers in #23 and #24)
 
-A later initiative extracted the shared decoder-protocol parser (`decoder-protocol/`) and built a separate offline race-day app, which was retired in #21; its plans are archived under `docs/plans/archive/`. The local-only plan then added competitors, per-event transponders, the RaceHub import and walk-ins, officials-only login, the check-in desk, spectator boards, the SQLite database, backups and the installers. It also sends results back to RaceHub (#27) and a live feed to a relay for remote viewers (#28). Still to come: a streaming overlay (#29).
+A later initiative extracted the shared decoder-protocol parser (`decoder-protocol/`) and built a separate offline race-day app, which was retired in #21; its plans are archived under `docs/plans/archive/`. The local-only plan then added competitors, per-event transponders, the RaceHub import and walk-ins, officials-only login, the check-in desk, spectator boards, the SQLite database, backups and the installers. It also sends results back to RaceHub (#27) and a live feed to a relay for remote viewers (#28), and has a streaming overlay page for OBS (#29).
 
 ## General Good Developer Rules
 

@@ -124,4 +124,4 @@ The SQLite file lives in a per-machine data folder outside the install folder, s
 
 ## What's built
 
-See the [README](../README.md#whats-implemented) for the current feature areas. Still to come: a streaming overlay (#29).
+See the [README](../README.md#whats-implemented) for the current feature areas.

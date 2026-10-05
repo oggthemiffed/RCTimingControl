@@ -181,7 +181,7 @@
 - [x] **INSTALL-02**: A demo club and a simulated decoder can be turned on from the installed app for trying it out (#24)
 - [x] **RESULTS-EXPORT-01**: Results Export v1 is pushed to RaceHub through an outbound queue that waits for a connection (#27)
 - [x] **LIVE-FEED-01**: A live feed relay lets remote viewers follow timing (#28)
-- [ ] **OVERLAY-01**: A streaming overlay page shows live timing in OBS (#29)
+- [x] **OVERLAY-01**: A streaming overlay page shows live timing in OBS (#29)
 
 
 ## v2 Requirements
@@ -355,11 +355,11 @@
 | INSTALL-02 | #24 | Complete |
 | RESULTS-EXPORT-01 | #27 | Complete |
 | LIVE-FEED-01 | #28 | Complete |
-| OVERLAY-01 | #29 | Planned |
+| OVERLAY-01 | #29 | Complete |
 
 **Coverage:**
 - Requirements: 126 total (106 from the original v1 plan, 20 added for local-only timing)
-- Complete: 85, changed and complete: 17, removed: 23, planned: 1
+- Complete: 86, changed and complete: 17, removed: 23, planned: 0
 
 ---
 *Requirements defined: 2026-04-15*
