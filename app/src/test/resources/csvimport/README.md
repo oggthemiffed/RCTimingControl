@@ -13,4 +13,5 @@ match by name against racing classes named `CSV Buggy {{run}}`, `CSV Truck {{run
 | `duplicate-transponder.csv` | Two booked drivers with the same transponder. |
 | `unmapped-class.csv` | A class the event doesn't have. |
 | `class-numbers.csv` | Classes given only by Class Number (the event's first and second class). |
+| `class-names.csv` | The same drivers as `class-numbers.csv`, with their classes given by name instead. |
 | `bad-names.csv` | A quoted name with a comma, and an unquoted name with a comma. |

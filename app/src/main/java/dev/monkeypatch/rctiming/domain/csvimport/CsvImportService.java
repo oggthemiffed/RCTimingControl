@@ -42,8 +42,11 @@ import java.util.stream.Collectors;
  * Imports an RC-Timing style driver CSV into an event (#39), as a lossy adapter beside the RaceHub
  * import. The file has no entry ids, versions or withdrawals, so nothing is applied on trust:
  * <ul>
- *   <li>Each booked row gets a stable key from its BRCA number and class, or its name and class when
- *       the BRCA number is 0. Competitors are matched by the BRCA number, or the name.</li>
+ *   <li>Each booked row gets a stable key from its BRCA number, or its name when the BRCA number is
+ *       0, and the event class it is placed in, so a class given by name in one file and by number
+ *       in the next is the same entry. A driver is matched to an existing competitor from any
+ *       source (RaceHub, a walk-in or an earlier CSV) by BRCA number, or by name when neither has
+ *       one, so their history stays together; a competitor from another source is never renamed.</li>
  *   <li>The preview sorts rows into new, changed (with old and new values), unchanged and skipped
  *       ({@code update} rows), and lists the entries an earlier CSV import made that this file
  *       leaves out as missing.</li>
@@ -116,23 +119,23 @@ public class CsvImportService {
                         "Entry Desc is update, which only changes RC-Timing's member archive, so this row is not booked in"));
                 continue;
             }
-            String key = entryKey(eventId, row);
+            Optional<Long> eventClassId = classes.resolve(row);
+            if (eventClassId.isEmpty()) {
+                unmapped.computeIfAbsent(classes.mappingKey(row), k -> new UnmappedAccumulator(row)).count++;
+            }
+            String key = entryKey(eventId, row, eventClassId.orElse(null), classes.mappingKey(row));
             Integer firstLine = lineByKey.putIfAbsent(key, row.line());
             if (firstLine != null) {
                 errors.add("Line " + row.line() + " books " + row.name() + " into " + classLabel(row)
                         + " again (line " + firstLine + ")");
                 continue;
             }
-            Optional<Long> eventClassId = classes.resolve(row);
-            if (eventClassId.isEmpty()) {
-                unmapped.computeIfAbsent(classes.mappingKey(row), k -> new UnmappedAccumulator(row)).count++;
-            }
             String competitorKey = competitorKey(row);
-            Competitor competitor = competitors.computeIfAbsent(competitorKey, k ->
-                    competitorRepository.findByExternalSourceAndExternalId(CSV_SOURCE, k).orElse(null));
-            Entry existing = entryRepository.findByExternalSourceAndExternalEntryId(CSV_SOURCE, key).orElse(null);
+            competitors.computeIfAbsent(competitorKey, k -> findCompetitor(k, row));
+            Entry existing = eventClassId.isEmpty() ? null
+                    : entryRepository.findByExternalSourceAndExternalEntryId(CSV_SOURCE, key).orElse(null);
             plan.add(new Planned(key, row, competitorKey, eventClassId.orElse(null), existing,
-                    existing == null ? List.of() : changes(existing, row, eventClassId.orElse(null), classes)));
+                    existing == null ? List.of() : changes(existing, row, classes)));
         }
 
         List<Entry> missing = entryRepository.findByEventId(eventId).stream()
@@ -204,10 +207,11 @@ public class CsvImportService {
 
     /**
      * The entry's key, unique across events because the entries index is: the event, then the BRCA
-     * number (or the name when it is 0), then the class as the file names it.
+     * number (or the name when it is 0), then the event class the row is placed in. A row that
+     * can't be placed blocks the import, and its key, from the file's class, is never stored.
      */
-    static String entryKey(Long eventId, RcTimingCsvParser.Row row) {
-        String classPart = row.className() != null ? "class:" + normalise(row.className()) : "class#" + row.classNumber();
+    static String entryKey(Long eventId, RcTimingCsvParser.Row row, Long eventClassId, String mappingKey) {
+        String classPart = eventClassId != null ? "class:" + eventClassId : "unplaced:" + mappingKey;
         return eventId + "/" + competitorKey(row) + "/" + classPart;
     }
 
@@ -215,18 +219,32 @@ public class CsvImportService {
         return row.brcaNumber() != null ? "brca:" + row.brcaNumber() : "name:" + normalise(row.name());
     }
 
-    private static List<Change> changes(Entry existing, RcTimingCsvParser.Row row, Long eventClassId, Classes classes) {
+    /**
+     * Finds the driver's competitor: one an earlier CSV import made, or else the one competitor from
+     * any source with the same BRCA number, or, without one, the same name and no BRCA number.
+     */
+    private Competitor findCompetitor(String competitorKey, RcTimingCsvParser.Row row) {
+        Optional<Competitor> fromCsv = competitorRepository.findByExternalSourceAndExternalId(CSV_SOURCE, competitorKey);
+        if (fromCsv.isPresent()) {
+            return fromCsv.get();
+        }
+        List<Competitor> others = row.brcaNumber() != null
+                ? competitorRepository.findByBrcaNumber(row.brcaNumber().toString())
+                : competitorRepository.findWithoutBrcaNumberByName(row.name());
+        return others.size() == 1 ? others.get(0) : null;
+    }
+
+    private static List<Change> changes(Entry existing, RcTimingCsvParser.Row row, Classes classes) {
         List<Change> changes = new ArrayList<>();
         if (existing.getStatus() == EntryStatus.WITHDRAWN) {
             changes.add(new Change("Status", "Withdrawn", "Entered"));
         }
-        // Only a BRCA-keyed row can rename its driver: a name-keyed row with another name is a new key
-        String name = classes.competitorName(existing.getCompetitorId());
-        if (name != null && !name.equals(row.name())) {
-            changes.add(new Change("Name", name, row.name()));
-        }
-        if (eventClassId != null && !eventClassId.equals(existing.getEventClassId())) {
-            changes.add(new Change("Class", classes.name(existing.getEventClassId()), classes.name(eventClassId)));
+        // A BRCA-keyed row can rename a driver the CSV import made; a name-keyed row with another
+        // name is another key, and a competitor from another source keeps its own name
+        Competitor competitor = classes.competitor(existing.getCompetitorId());
+        if (competitor != null && CSV_SOURCE.equals(competitor.getExternalSource())
+                && !competitor.getDisplayName().equals(row.name())) {
+            changes.add(new Change("Name", competitor.getDisplayName(), row.name()));
         }
         if (!Objects.equals(blankToNull(existing.getTransponderNumberSnapshot()), blankToNull(primaryOf(row)))) {
             changes.add(new Change("Transponder", existing.getTransponderNumberSnapshot(), primaryOf(row)));
@@ -321,8 +339,9 @@ public class CsvImportService {
             competitor.setExternalId(p.competitorKey);
             competitor.setCreatedAt(now);
         }
-        if (!p.row.name().equals(competitor.getDisplayName())
-                || !Objects.equals(text(p.row.brcaNumber()), competitor.getBrcaNumber())) {
+        boolean ours = CSV_SOURCE.equals(competitor.getExternalSource());
+        if (ours && (!p.row.name().equals(competitor.getDisplayName())
+                || !Objects.equals(text(p.row.brcaNumber()), competitor.getBrcaNumber()))) {
             competitor.setDisplayName(p.row.name());
             competitor.setBrcaNumber(text(p.row.brcaNumber()));
             competitor.setUpdatedAt(now);
@@ -416,7 +435,7 @@ public class CsvImportService {
         private final List<Long> inOrder;
         private final Map<String, List<Long>> byName;
         private final Map<Long, String> names = new HashMap<>();
-        private final Map<Long, String> competitorNames = new HashMap<>();
+        private final Map<Long, Optional<Competitor>> competitorsById = new HashMap<>();
 
         Classes(Long eventId) {
             mapped = mappingRepository.findByEventIdOrderByRacehubEventClassId(eventId).stream()
@@ -459,12 +478,11 @@ public class CsvImportService {
             return eventClassId == null ? null : names.getOrDefault(eventClassId, "event class " + eventClassId);
         }
 
-        String competitorName(Long competitorId) {
+        Competitor competitor(Long competitorId) {
             if (competitorId == null) {
                 return null;
             }
-            return competitorNames.computeIfAbsent(competitorId, id ->
-                    competitorRepository.findById(id).map(Competitor::getDisplayName).orElse(null));
+            return competitorsById.computeIfAbsent(competitorId, competitorRepository::findById).orElse(null);
         }
     }
 }

@@ -3,8 +3,11 @@ package dev.monkeypatch.rctiming.domain.competitor;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.CompetitorsRecord;
 import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETITORS;
@@ -18,6 +21,17 @@ public class CompetitorRepository extends JooqRepository<Competitor, Competitors
 
     public Optional<Competitor> findByExternalSourceAndExternalId(String externalSource, String externalId) {
         return findOne(COMPETITORS.EXTERNAL_SOURCE.eq(externalSource).and(COMPETITORS.EXTERNAL_ID.eq(externalId)));
+    }
+
+    /** Competitors from any source with this BRCA number. */
+    public List<Competitor> findByBrcaNumber(String brcaNumber) {
+        return findWhere(COMPETITORS.BRCA_NUMBER.eq(brcaNumber));
+    }
+
+    /** Competitors from any source with no BRCA number and this display name, ignoring case. */
+    public List<Competitor> findWithoutBrcaNumberByName(String displayName) {
+        return findWhere(COMPETITORS.BRCA_NUMBER.isNull()
+                .and(DSL.lower(DSL.trim(COMPETITORS.DISPLAY_NAME)).eq(displayName.trim().toLowerCase(Locale.ROOT))));
     }
 
     @Override

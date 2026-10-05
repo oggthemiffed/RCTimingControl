@@ -393,7 +393,8 @@ file=<the .csv>
 
 Requires `ADMIN`. The file has no entry ids, versions or withdrawals, so nothing is applied on trust:
 
-- Each booked row is keyed by its BRCA number and class, or its name and class when the BRCA number is 0. Its driver becomes a competitor matched by BRCA number, or by name.
+- Each booked row is keyed by its BRCA number, or its name when the BRCA number is 0, and the event class it is placed in. So a class given by name in one file and by `Class Number` in the next is the same entry.
+- The driver is matched to a competitor already in RCTC from any source (an earlier CSV import, RaceHub or a walk-in) by BRCA number, or by name when neither has a BRCA number, so their results stay together. A new competitor is made only when there is no single match. A competitor from RaceHub or a walk-in is never renamed by the file, and a driver already entered in a class from another source blocks the import rather than getting a second entry there.
 - `Entry Desc` = `entry` (or no `Entry Desc` column) books the driver in. `update` rows are skipped, since they only change RC-Timing's member archive.
 - `PT No` and `PT No 2` are the primary and secondary transponders (`0` = none). `Grade`, `Junior`, `Member Type Number`, `Formula Number` and `Car Make` are shown in the preview only. `Club Number` and `Paid Status` are ignored, and no payment data is stored.
 - A class is placed by the event's class mappings, then by racing class name ignoring case, then, for a row with only a `Class Number`, by the event's classes in the order they were added. A class name that matches nothing is never placed by its number; it is listed for mapping.
@@ -418,7 +419,7 @@ New rows are always created; only the picked changed rows are updated and only t
   "unmappedClasses": [ { "key": "CSV:nitro truggy", "className": "Nitro Truggy", "classNumber": null, "entryCount": 2 } ],
   "errors": [], "warnings": [ "Transponder 7123456 is used by more than one entry: Ada Lovelace, Grace Hopper" ],
   "rows": [ {
-    "group": "CHANGED", "key": "21/brca:12345/class:2wd buggy", "line": 2, "name": "Ada Lovelace",
+    "group": "CHANGED", "key": "21/brca:12345/class:11", "line": 2, "name": "Ada Lovelace",
     "brcaNumber": 12345, "className": "2WD Buggy", "classNumber": 1, "eventClassId": 11, "entryId": 301,
     "primaryTransponder": "7723456", "secondaryTransponder": "7223456",
     "changes": [ { "field": "Transponder", "before": "7123456", "after": "7723456" } ],
@@ -427,7 +428,7 @@ New rows are always created; only the picked changed rows are updated and only t
 }
 ```
 
-A `MISSING` row has no `key` or `line`; pick it by `entryId`. A `SKIPPED` row gives its `reason`. A changed field is `Status`, `Name`, `Class`, `Transponder` or `Second transponder`.
+A `MISSING` row has no `key` or `line`; pick it by `entryId`. A `SKIPPED` row gives its `reason`. A changed field is `Status`, `Name` (only for a competitor the CSV import made), `Transponder` or `Second transponder`.
 
 ---
 

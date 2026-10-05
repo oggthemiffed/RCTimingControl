@@ -12,6 +12,7 @@ import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,7 @@ class CsvImportIT extends AbstractIntegrationTest {
     @Autowired JdbcTemplate jdbc;
 
     private String adminToken;
+    private long adminUserId;
     private String run;
     private long eventId;
     private long buggyClassId;
@@ -70,6 +72,26 @@ class CsvImportIT extends AbstractIntegrationTest {
         buggyClassId = createEventClass("CSV Buggy " + run);
         truckClassId = createEventClass("CSV Truck " + run);
         fourWheelDriveClassId = createEventClass("CSV 4WD " + run);
+    }
+
+    /** The tests share one database, so each removes what it made, children first. */
+    @AfterEach
+    void tearDown() {
+        List<Long> competitorIds = jdbc.queryForList(
+                "select distinct competitor_id from entries where event_id = ?", Long.class, eventId);
+        jdbc.update("delete from entries where event_id = ?", eventId);
+        competitorIds.forEach(id -> jdbc.update(
+                "delete from competitors where id = ? and not exists (select 1 from entries where competitor_id = ?)", id, id));
+        jdbc.update("delete from competitors where display_name like ? or external_id like ?", "%" + run + "%", "%" + run + "%");
+        jdbc.update("delete from racehub_class_mappings where event_id = ?", eventId);
+        List<Long> racingClassIds = jdbc.queryForList(
+                "select racing_class_id from event_classes where event_id = ?", Long.class, eventId);
+        jdbc.update("delete from event_classes where event_id = ?", eventId);
+        racingClassIds.forEach(id -> jdbc.update("delete from racing_classes where id = ?", id));
+        jdbc.update("delete from events where id = ?", eventId);
+        jdbc.update("delete from refresh_tokens where user_id = ?", adminUserId);
+        jdbc.update("delete from user_roles where user_id = ?", adminUserId);
+        jdbc.update("delete from users where id = ?", adminUserId);
     }
 
     @Test
@@ -253,6 +275,57 @@ class CsvImportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void aDriverAlreadyInRctc_isReusedAndKeepsTheirName() {
+        long raceHubDriver = jdbc.queryForObject("""
+                insert into competitors (display_name, brca_number, external_source, external_id)
+                values (?, ?, 'RACEHUB', ?) returning id""",
+                Long.class, "Ada King " + run, "1" + run, "drv-" + run);
+
+        JsonNode body = importFile("initial.csv", false).getBody();
+
+        assertThat(body.get("applied").asBoolean()).isTrue();
+        Entry ada = entries().stream().filter(e -> e.getEventClassId() == buggyClassId
+                && e.getCompetitorId() == raceHubDriver).findFirst().orElseThrow();
+        assertThat(ada.getExternalSource()).isEqualTo("CSV");
+        assertThat(competitorName(ada)).isEqualTo("Ada King " + run);
+        assertThat(competitorRepository.findByExternalSourceAndExternalId("CSV", "brca:1" + run)).isEmpty();
+
+        // Read again, the RaceHub name isn't offered as a change
+        assertSummary(importFile("initial.csv", true).getBody(), 0, 0, 5, 0, 1);
+    }
+
+    @Test
+    void aDriverRaceHubAlreadyEnteredInTheClass_blocks() {
+        long raceHubDriver = jdbc.queryForObject("""
+                insert into competitors (display_name, brca_number, external_source, external_id)
+                values (?, ?, 'RACEHUB', ?) returning id""",
+                Long.class, "Ada King " + run, "1" + run, "drv-" + run);
+        jdbc.update("""
+                insert into entries (competitor_id, event_id, event_class_id, transponder_number, status,
+                                     external_source, external_entry_id, external_entry_version)
+                values (?, ?, ?, ?, 'CONFIRMED', 'RACEHUB', ?, 1)""",
+                raceHubDriver, eventId, buggyClassId, "71" + run, "rh-" + run);
+
+        ResponseEntity<JsonNode> resp = importFile("initial.csv", false);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(texts(resp.getBody().get("errors"))).anyMatch(e -> e.contains("would have 2 entries in CSV Buggy " + run));
+        assertThat(entries()).hasSize(1);
+    }
+
+    @Test
+    void aClassGivenByNumberThenByName_isTheSameEntry() {
+        importFile("class-numbers.csv", false);
+        long adaId = entryFor("Ada Lovelace", buggyClassId).getId();
+
+        JsonNode body = importFile("class-names.csv", false).getBody();
+
+        assertSummary(body, 0, 0, 2, 0, 0);
+        assertThat(entries()).hasSize(2);
+        assertThat(entryFor("Ada Lovelace", buggyClassId).getId()).isEqualTo(adaId);
+    }
+
+    @Test
     void namesWithQuotesOrCommasAreRejectedClearly() {
         ResponseEntity<JsonNode> resp = importFile("bad-names.csv", false);
 
@@ -377,7 +450,7 @@ class CsvImportIT extends AbstractIntegrationTest {
         Instant now = Instant.now();
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
-        userRepository.save(user);
+        adminUserId = userRepository.save(user).getId();
         var login = restTemplate.postForEntity("/api/v1/auth/login", new LoginRequest(email, "pass12345"), AuthResponse.class);
         assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
         return login.getBody().accessToken();
