@@ -1,32 +1,18 @@
 package dev.monkeypatch.rctiming.domain.championship;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-@Entity
-@Table(name = "championship_event_links")
 public class ChampionshipEventLink {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "championship_id", nullable = false)
     private Long championshipId;
 
-    @Column(name = "event_id", nullable = false)
     private Long eventId;
 
-    @Column(name = "round_number", nullable = false)
     private int roundNumber;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     public ChampionshipEventLink() {}

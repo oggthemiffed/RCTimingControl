@@ -1,38 +1,22 @@
 package dev.monkeypatch.rctiming.domain.championship;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-@Entity
-@Table(name = "championship_exclusions")
 public class ChampionshipExclusion {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "championship_id", nullable = false)
     private Long championshipId;
 
-    @Column(name = "driver_id", nullable = false)
     private Long driverId;
 
-    @Column(name = "event_id", nullable = false)
     private Long eventId;
 
-    @Column(nullable = false)
     private String reason;
 
-    @Column(name = "created_by", nullable = false)
     private Long createdBy;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     public ChampionshipExclusion() {}
