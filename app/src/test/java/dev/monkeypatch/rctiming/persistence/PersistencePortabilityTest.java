@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@code persistence/vendor/} package may know which database the app runs on. Everywhere else,
  * reads and writes go through the jOOQ DSL, with no vendor classes and no SQL strings.
  *
- * <p>Two checks: the sources are scanned for vendor imports, native queries and SQL literals, and
+ * <p>Two checks: the sources are scanned for vendor imports, dialect names, SQL literals and direct JDBC, and
  * the compiled classes are scanned for any call to a jOOQ method marked {@link PlainSQL}, which
  * also catches SQL passed in a variable.
  */

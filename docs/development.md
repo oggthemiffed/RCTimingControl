@@ -292,7 +292,7 @@ The database is chosen in one place. `rctiming.database.vendor` picks it, and `D
 
 The app opens two pools on the database: a write pool (one connection for SQLite, used by Flyway and Spring transactions) and a read pool of `rctiming.database.read-connections` (default 4) whose connections refuse writes. jOOQ queries outside a transaction go to the read pool; inside a transaction they share the writer.
 
-Column types the databases disagree on are mapped in Java, not by the schema: timestamps are `Instant` stored as UTC microseconds (`InstantMicrosConverter`, applied by the jOOQ codegen), date-only values are ISO text, and JSON columns are text read through `JsonTextConverter` subclasses in `persistence/convert/`.
+Column types the databases disagree on are mapped in Java, not by the schema: timestamps are `Instant` stored as UTC microseconds (`InstantMicrosConverter`, applied by the jOOQ codegen), date-only values are ISO text, and JSON columns are text read through subclasses of `persistence/convert/JsonTextConverter` (such as `domain/format/RaceFormatConfigConverter`).
 
 Everywhere else the code stays database-neutral:
 
@@ -301,6 +301,14 @@ Everywhere else the code stays database-neutral:
 - A vendor-specific statement that can't be avoided goes behind an interface in `persistence/vendor/`, with one implementation per database.
 
 `PersistencePortabilityTest` scans the main sources, and the compiled classes for any jOOQ method marked `@PlainSQL` (so SQL in a variable is caught too), and fails the build if any of this slips in.
+
+### Keeping the code in step with the schema
+
+With Hibernate gone, nothing checks the schema against the entities at startup (there is no `ddl-auto: validate`). Three things catch a mismatch instead:
+
+- **Generated sources.** Compiling `:app` runs Flyway's migrations into a scratch SQLite file and regenerates the jOOQ classes in `app/src/generated/jooq` from it. A renamed or removed column then breaks the build wherever a repository or query uses it. Commit the regenerated sources with the migration; CI builds with `-x generateJooq`, so it compiles against the committed copy.
+- **Save-and-reload tests.** Each repository has an integration test that saves an entity with every field set, reloads it and changes every field (`persistence/RoundTrip.assertSavedAndReloaded`). A column missing from `toRecord` or `toEntity` fails it. A new column needs a line in the repository and in its test.
+- **Real migrations in tests.** The integration tests run against a SQLite file built by the same migrations, so constraints and defaults are the real ones.
 
 Moving to another database means:
 

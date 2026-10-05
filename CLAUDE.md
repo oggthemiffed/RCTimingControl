@@ -58,7 +58,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 - Liquibase (Flyway plain-SQL is simpler)
 - Spring Data JPA or Hibernate (dropped for jOOQ in #69)
 - PostgreSQL or Testcontainers (SQLite in-process; tests run on temporary SQLite files)
-- Vendor-specific SQL in Java code (jOOQ DSL, JPQL and the shared converters only; the vendor lives in `persistence/vendor/`)
+- Vendor-specific SQL in Java code (jOOQ DSL and the shared converters only; the vendor lives in `persistence/vendor/`)
 - gRPC, a separate forwarder process, or cloud sync for timing (the app reads the decoder directly)
 - Racer accounts, self-registration or a `RACER` role (RaceHub owns racer identity)
 - Docker, nginx or TLS for deployment (the app installs natively and stays on the venue network)
