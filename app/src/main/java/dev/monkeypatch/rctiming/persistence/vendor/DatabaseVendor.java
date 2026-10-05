@@ -2,6 +2,8 @@ package dev.monkeypatch.rctiming.persistence.vendor;
 
 import org.jooq.SQLDialect;
 import org.sqlite.SQLiteConfig;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.support.SQLExceptionTranslator;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,6 +50,17 @@ public enum DatabaseVendor {
         @Override
         public String readOnlySessionSql() {
             return "PRAGMA query_only = 1";
+        }
+
+        /**
+         * A failed unique, foreign key, check or not-null constraint becomes Spring's
+         * {@link DataIntegrityViolationException}, as {@code SqliteDialect} does for Hibernate.
+         */
+        @Override
+        public SQLExceptionTranslator exceptionTranslator() {
+            return (task, sql, ex) -> (ex.getErrorCode() & 0xFF) == SQLITE_CONSTRAINT
+                    ? new DataIntegrityViolationException(task + "; " + ex.getMessage(), ex)
+                    : null;
         }
 
         /**
@@ -146,6 +159,9 @@ public enum DatabaseVendor {
 
     private static final String DATABASE_FILE = "rctiming.db";
 
+    /** SQLite's primary result code for any failed constraint. */
+    private static final int SQLITE_CONSTRAINT = 19;
+
     private final String migrationFolder;
     private final SQLDialect jooqDialect;
     private final String hibernateDialect;
@@ -178,6 +194,12 @@ public enum DatabaseVendor {
      * replaces beside it. Refuses while the app has the database open.
      */
     public abstract void restore(Path backup, Path dataDirectory) throws SQLException, IOException;
+
+    /**
+     * Turns this database's errors into Spring's exceptions for jOOQ, or returns null to leave
+     * one to Spring's own translation.
+     */
+    public abstract SQLExceptionTranslator exceptionTranslator();
 
     /** Sub-folder holding this vendor's Flyway scripts under each migration location. */
     public String migrationFolder() {

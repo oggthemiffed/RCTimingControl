@@ -12,8 +12,8 @@ public record TrackLapThresholdDto(
     public static TrackLapThresholdDto from(TrackLapThreshold t) {
         return new TrackLapThresholdDto(
                 t.getId(),
-                t.getRacingClass() != null ? t.getRacingClass().getId() : null,
-                t.getRacingClass() != null ? t.getRacingClass().getName() : null,
+                t.getRacingClassId(),
+                t.getRacingClassName(),
                 t.getMinLapMs(),
                 t.getMaxLastLapMs());
     }

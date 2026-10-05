@@ -76,7 +76,7 @@ public class TrackService {
     public DecoderLoopDto addDecoderLoop(Long trackId, CreateDecoderLoopRequest request) {
         Track track = getTrackOrThrow(trackId);
         DecoderLoop loop = new DecoderLoop();
-        loop.setTrack(track);
+        loop.setTrackId(track.getId());
         loop.setLoopId(request.loopId());
         loop.setDisplayName(request.displayName());
         loop.setLoopType(request.loopType());
@@ -117,16 +117,18 @@ public class TrackService {
         }
 
         boolean isNew = threshold.getId() == null;
-        threshold.setTrack(track);
+        threshold.setTrackId(track.getId());
         threshold.setMinLapMs(request.minLapMs());
         threshold.setMaxLastLapMs(request.maxLastLapMs());
 
         if (request.racingClassId() != null) {
             RacingClass racingClass = racingClassRepository.findById(request.racingClassId())
                     .orElseThrow(() -> new EntityNotFoundException("Racing class not found: " + request.racingClassId()));
-            threshold.setRacingClass(racingClass);
+            threshold.setRacingClassId(racingClass.getId());
+            threshold.setRacingClassName(racingClass.getName());
         } else {
-            threshold.setRacingClass(null);
+            threshold.setRacingClassId(null);
+            threshold.setRacingClassName(null);
         }
 
         if (isNew) {
