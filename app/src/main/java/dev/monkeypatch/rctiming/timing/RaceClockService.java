@@ -24,8 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Keeps each race's clock from its status changes: it resets when the race is called to the grid, counts while it
  * runs and pauses while it is stopped. The live feed (#28) and the streaming overlay (#29) read it.
  *
- * <p>Clocks are kept in memory only. For a race the app hasn't seen change since it started, {@link #clock} works
- * the time out from the race's start and finish times instead, which can't allow for stops.
+ * <p>Clocks are kept in memory only. A race already under way when the app started gets a clock worked out from
+ * its start and finish times the first time it is needed, which counts any stop before then as race time.
  */
 @Component
 public class RaceClockService {
@@ -59,10 +59,17 @@ public class RaceClockService {
         long raceId = event.getRaceId();
         switch (event.getNewStatus()) {
             case GRID -> clocks.put(raceId, new RaceClock());
-            case RUNNING -> clocks.computeIfAbsent(raceId, id -> new RaceClock()).start(now);
-            case STOPPED, FINISHED -> clocks.computeIfAbsent(raceId, id -> new RaceClock()).stop(now);
+            case RUNNING -> clockFor(raceId, now).start(now);
+            case STOPPED, FINISHED -> clockFor(raceId, now).stop(now);
             default -> { }
         }
+    }
+
+    /** The race's kept clock, or one worked out from its times for a race under way before the app started. */
+    private RaceClock clockFor(long raceId, Instant now) {
+        return clocks.computeIfAbsent(raceId, id -> raceRepository.findById(id)
+                .map(race -> RaceClock.fromTimes(race, now))
+                .orElseGet(RaceClock::new));
     }
 
     /** Race time so far, not counting time stopped; 0 for a race whose clock isn't kept. */
@@ -86,21 +93,22 @@ public class RaceClockService {
     private RaceClockDto clockOf(Race race) {
         Instant now = clock.instant();
         RaceStatus status = race.getStatus();
-        RaceClock kept = clocks.get(race.getId());
         long elapsed;
         boolean running;
         if (status == RaceStatus.PENDING) {
             // A restart puts a race back to pending without a status event, so a kept clock may be stale
             elapsed = 0;
             running = false;
-        } else if (kept != null) {
+        } else {
+            RaceClock kept = clocks.computeIfAbsent(race.getId(), id -> {
+                RaceClock fromTimes = RaceClock.fromTimes(race, now);
+                if (status == RaceStatus.RUNNING) {
+                    fromTimes.start(now);
+                }
+                return fromTimes;
+            });
             elapsed = kept.elapsedMs(now);
             running = kept.running();
-        } else {
-            running = status == RaceStatus.RUNNING;
-            Instant until = status == RaceStatus.FINISHED ? race.getFinishedAt() : running ? now : null;
-            elapsed = race.getStartedAt() == null || until == null ? 0
-                    : Math.max(0, Duration.between(race.getStartedAt(), until).toMillis());
         }
         Long duration = durationMs(race);
         Long remaining = duration == null ? null : Math.max(0, duration - elapsed);
@@ -121,6 +129,17 @@ public class RaceClockService {
     private static final class RaceClock {
         private long accumulatedMs;
         private Instant runningSince;
+
+        /** A stopped clock holding the time from the race's start to its finish, or to now if it hasn't finished. */
+        static RaceClock fromTimes(Race race, Instant now) {
+            RaceClock raceClock = new RaceClock();
+            if (race.getStartedAt() != null && race.getStatus() != RaceStatus.GRID) {
+                Instant until = race.getStatus() == RaceStatus.FINISHED && race.getFinishedAt() != null
+                        ? race.getFinishedAt() : now;
+                raceClock.accumulatedMs = Math.max(0, Duration.between(race.getStartedAt(), until).toMillis());
+            }
+            return raceClock;
+        }
 
         synchronized void start(Instant now) {
             if (runningSince == null) {

@@ -169,6 +169,8 @@
 @layer base {
   * { @apply border-border outline-ring/50; }
   body { @apply bg-background text-foreground; }
+  /* The streaming overlay's page (index.html marks it) stays see-through for OBS */
+  html.overlay-page, html.overlay-page body { background: transparent; }
   html { @apply font-sans; }
 
   /* Timing / mono — lap times always tabular */

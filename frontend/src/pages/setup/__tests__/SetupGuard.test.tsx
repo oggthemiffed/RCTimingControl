@@ -50,6 +50,22 @@ describe('SetupGuard (Wave 0 stub — enabled in Plan 04)', () => {
     expect(await screen.findByText('setup content')).toBeTruthy();
   });
 
+  it('shows the streaming overlay straight away, with no spinner or setup redirect', () => {
+    vi.mocked(getSetupStatus).mockReturnValue(new Promise(() => {}));
+    const qc = makeClient();
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter initialEntries={['/boards/overlay?top=6']}>
+          <SetupGuard>
+            <div>overlay</div>
+          </SetupGuard>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText('overlay')).toBeTruthy();
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('renders children when setupComplete is true', async () => {
     vi.mocked(getSetupStatus).mockResolvedValue({ bootstrapped: true, setupComplete: true });
     const qc = makeClient();

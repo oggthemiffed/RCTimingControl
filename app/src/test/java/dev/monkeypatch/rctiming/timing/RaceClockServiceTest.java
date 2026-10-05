@@ -104,12 +104,53 @@ class RaceClockServiceTest {
         race.setStatus(RaceStatus.RUNNING);
         race.setStartedAt(clock.instant().minusSeconds(75));
         assertThat(service.clock(RACE_ID).orElseThrow().elapsedMs()).isEqualTo(75_000);
+        clock.advance(Duration.ofSeconds(5));
+        assertThat(service.clock(RACE_ID).orElseThrow().elapsedMs()).isEqualTo(80_000);
+    }
 
+    @Test
+    void aFinishedRaceNotSeenSinceTheAppStartedRunsFromStartToFinish() {
         race.setStatus(RaceStatus.FINISHED);
+        race.setStartedAt(clock.instant().minusSeconds(75));
         race.setFinishedAt(clock.instant().minusSeconds(5));
+
         RaceClockDto finished = service.clock(RACE_ID).orElseThrow();
         assertThat(finished.elapsedMs()).isEqualTo(70_000);
         assertThat(finished.running()).isFalse();
+    }
+
+    @Test
+    void aStoppedRaceNotSeenSinceTheAppStartedKeepsItsTime() {
+        race.setStatus(RaceStatus.STOPPED);
+        race.setStartedAt(clock.instant().minusSeconds(60));
+
+        RaceClockDto stopped = service.clock(RACE_ID).orElseThrow();
+        assertThat(stopped.elapsedMs()).isEqualTo(60_000);
+        assertThat(stopped.running()).isFalse();
+        clock.advance(Duration.ofSeconds(30));
+        assertThat(service.clock(RACE_ID).orElseThrow().elapsedMs()).isEqualTo(60_000);
+    }
+
+    @Test
+    void resumingARaceStoppedBeforeTheAppStartedCarriesOnFromItsTime() {
+        race.setStartedAt(clock.instant().minusSeconds(60));
+
+        status(RaceStatus.RUNNING);
+        clock.advance(Duration.ofSeconds(10));
+
+        assertThat(service.clock(RACE_ID).orElseThrow().elapsedMs()).isEqualTo(70_000);
+    }
+
+    @Test
+    void stoppingARaceStartedBeforeTheAppStartedKeepsItsTime() {
+        race.setStartedAt(clock.instant().minusSeconds(60));
+
+        status(RaceStatus.STOPPED);
+        clock.advance(Duration.ofSeconds(10));
+
+        RaceClockDto stopped = service.clock(RACE_ID).orElseThrow();
+        assertThat(stopped.elapsedMs()).isEqualTo(60_000);
+        assertThat(stopped.running()).isFalse();
     }
 
     @Test
