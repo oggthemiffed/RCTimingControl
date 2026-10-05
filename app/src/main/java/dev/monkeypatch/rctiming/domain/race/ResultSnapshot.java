@@ -11,7 +11,11 @@ public class ResultSnapshot {
 
     private Instant finishedAt;
 
+    /** The result after corrections: what results pages, championship points and the export read. */
     private String positionsJson;
+
+    /** The result as timed when the race finished, before any corrections (#63). */
+    private String timedPositionsJson;
 
     private String lapHistoryJson;
 
@@ -28,6 +32,9 @@ public class ResultSnapshot {
 
     public String getPositionsJson() { return positionsJson; }
     public void setPositionsJson(String positionsJson) { this.positionsJson = positionsJson; }
+
+    public String getTimedPositionsJson() { return timedPositionsJson; }
+    public void setTimedPositionsJson(String timedPositionsJson) { this.timedPositionsJson = timedPositionsJson; }
 
     public String getLapHistoryJson() { return lapHistoryJson; }
     public void setLapHistoryJson(String lapHistoryJson) { this.lapHistoryJson = lapHistoryJson; }

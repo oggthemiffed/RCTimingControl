@@ -146,18 +146,18 @@ class ResultsExportIT extends AbstractIntegrationTest {
         assertThat(first.at("/entry_id").asText()).isEqualTo("a1-" + run);
         assertThat(first.at("/driver_profile_id").asText()).isEqualTo("drv-ada-" + run);
         assertThat(first.at("/laps").asInt()).isEqualTo(12);
-        // A lap penalty during the race is already in the laps; one after the finish isn't yet (#63)
+        // Every penalty since the race started counts in the stored result (#63)
         assertThat(first.at("/penalties/0/reason").asText()).isEqualTo("Short cut");
         assertThat(first.at("/penalties/0/included_in_result").asBoolean()).isTrue();
         assertThat(first.at("/penalties/1/reason").asText()).isEqualTo("Missed marshalling");
-        assertThat(first.at("/penalties/1/included_in_result").asBoolean()).isFalse();
+        assertThat(first.at("/penalties/1/included_in_result").asBoolean()).isTrue();
         JsonNode second = race.at("/results/1");
         assertThat(second.at("/external_source").isNull()).isTrue();
         assertThat(second.at("/entry_id").isNull()).isTrue();
         assertThat(second.at("/display_name").asText()).isEqualTo("Walk-in Wendy");
         assertThat(second.at("/penalties/0/type").asText()).isEqualTo("TIME");
         assertThat(second.at("/penalties/0/value").decimalValue()).isEqualByComparingTo("5");
-        assertThat(second.at("/penalties/0/included_in_result").asBoolean()).isFalse();
+        assertThat(second.at("/penalties/0/included_in_result").asBoolean()).isTrue();
         // Nothing personal goes out: the import file carried an email and date of birth
         assertThat(item.getPayload()).doesNotContain("ada@example.com").doesNotContain("1815-12-10");
     }
@@ -195,6 +195,76 @@ class ResultsExportIT extends AbstractIntegrationTest {
         assertThat(adjust.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         assertThat(awaitOutbox(1).get(0).getReason()).isEqualTo(ExportReason.CORRECTION);
+    }
+
+    @Test
+    void aResultStoredBeforeCorrectionsKeepsItsPenaltiesOutstanding() {
+        importEntries();
+        long ada = entryId("a1-" + run);
+        long raceId = finishedRace(ada, walkIn("Walk-in Wendy"));
+        jdbc.update("update result_snapshots set timed_positions_json = null where race_id = ?", raceId);
+        long finishedAt = jdbc.queryForObject("select finished_at from races where id = ?", Long.class, raceId);
+        penalty(raceId, ada, "TIME", "5.0", "Jump start", finishedAt - 60_000_000L);
+
+        JsonNode first = json(exportService.enqueue(eventId, ExportReason.RACE_FINISHED).orElseThrow().getPayload())
+                .at("/races/0/results/0");
+        assertThat(first.at("/penalties/0/type").asText()).isEqualTo("TIME");
+        assertThat(first.at("/penalties/0/included_in_result").asBoolean()).isFalse();
+    }
+
+    @Test
+    void aLapPenaltyMustBeAWholeNumberOfLaps() {
+        importEntries();
+        long ada = entryId("a1-" + run);
+        long raceId = finishedRace(ada, walkIn("Walk-in Wendy"));
+
+        ResponseEntity<String> resp = restTemplate.exchange("/api/v1/race-control/referee/race/" + raceId + "/penalty",
+                HttpMethod.POST, new HttpEntity<>(Map.of("entryId", ada, "penaltyType", "LAP", "value", 1.5,
+                        "reason", "Half a lap"), headers()), String.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void correctionsAfterTheFinishChangeTheStoredAndExportedResult() {
+        importEntries();
+        long ada = entryId("a1-" + run);
+        long wendy = walkIn("Walk-in Wendy");
+        long raceId = finishedRace(ada, wendy);
+
+        // A lap off Ada puts both on 11 laps, with Ada still quicker; 5 seconds more puts Wendy ahead (#63)
+        penalty(raceId, ada, "LAP", 1, "Cut the track");
+        penalty(raceId, ada, "TIME", 5, "Jumped the start");
+
+        JsonNode stored = json(jdbc.queryForObject(
+                "select positions_json from result_snapshots where race_id = ?", String.class, raceId));
+        assertThat(stored.at("/0/entryId").asLong()).isEqualTo(wendy);
+        assertThat(stored.at("/1/entryId").asLong()).isEqualTo(ada);
+        assertThat(stored.at("/1/lapsCompleted").asInt()).isEqualTo(11);
+        assertThat(stored.at("/1/totalTimeMs").asLong()).isEqualTo(305_100L);
+        assertThat(stored.at("/1/position").asInt()).isEqualTo(2);
+        // The result as timed is kept, so later corrections start from it again
+        JsonNode timed = json(jdbc.queryForObject(
+                "select timed_positions_json from result_snapshots where race_id = ?", String.class, raceId));
+        assertThat(timed.at("/0/entryId").asLong()).isEqualTo(ada);
+        assertThat(timed.at("/0/lapsCompleted").asInt()).isEqualTo(12);
+
+        JsonNode exported = json(awaitOutbox(1).get(0).getPayload()).at("/races/0/results");
+        assertThat(exported.at("/0/display_name").asText()).isEqualTo("Walk-in Wendy");
+        assertThat(exported.at("/1/laps").asInt()).isEqualTo(11);
+        assertThat(exported.at("/1/penalties/0/included_in_result").asBoolean()).isTrue();
+        assertThat(exported.at("/1/penalties/1/included_in_result").asBoolean()).isTrue();
+
+        // The race director credits Ada a missed lap, which puts her back in front
+        ResponseEntity<String> adjust = restTemplate.exchange("/api/v1/race-control/race/" + raceId + "/marshal-adjustment",
+                HttpMethod.POST, new HttpEntity<>(Map.of("entryId", ada, "transponderNumber", "1234567", "lapDelta", 1),
+                        headers()), String.class);
+        assertThat(adjust.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        stored = json(jdbc.queryForObject(
+                "select positions_json from result_snapshots where race_id = ?", String.class, raceId));
+        assertThat(stored.at("/0/entryId").asLong()).isEqualTo(ada);
+        assertThat(stored.at("/0/lapsCompleted").asInt()).isEqualTo(12);
     }
 
     @Test
@@ -427,6 +497,13 @@ class ResultsExportIT extends AbstractIntegrationTest {
         throw new AssertionError("Timed out waiting for the results export");
     }
 
+    private void penalty(long raceId, long entryId, String type, int value, String reason) {
+        ResponseEntity<String> resp = restTemplate.exchange("/api/v1/race-control/referee/race/" + raceId + "/penalty",
+                HttpMethod.POST, new HttpEntity<>(Map.of("entryId", entryId, "penaltyType", type, "value", value,
+                        "reason", reason), headers()), String.class);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
     private JsonNode json(String body) {
         try {
             return objectMapper.readTree(body);
@@ -483,8 +560,8 @@ class ResultsExportIT extends AbstractIntegrationTest {
                  {"position":2,"entryId":%d,"competitorId":null,"driverName":"Walk-in Wendy","carNumber":"2",
                   "lapsCompleted":11,"totalTimeMs":301900,"bestLapMs":25500,"gapToLeaderMs":null}]"""
                 .formatted(importedEntry, walkInEntry);
-        jdbc.update("insert into result_snapshots (race_id, finished_at, positions_json, lap_history_json, created_at) "
-                + "values (?, ?, ?, '[]', ?)", raceId, now, positions, now);
+        jdbc.update("insert into result_snapshots (race_id, finished_at, positions_json, timed_positions_json, "
+                + "lap_history_json, created_at) values (?, ?, ?, ?, '[]', ?)", raceId, now, positions, positions, now);
         onGrid(raceId, importedEntry);
         onGrid(raceId, walkInEntry);
         return raceId;

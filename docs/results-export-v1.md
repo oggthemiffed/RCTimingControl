@@ -34,12 +34,11 @@ No contact details, date of birth, guardian or payment data: RCTC doesn't hold a
 
 ### Penalties
 
-Each penalty has `included_in_result`, which says whether the row's `laps`, `total_time_ms` and `position` already allow for it:
+Each penalty has `included_in_result`, which says whether the row's `laps`, `total_time_ms` and `position` already allow for it. Every penalty given since the race last started is included: a `LAP` penalty given while the race ran came straight off the live lap count, and the rest are applied when the result is stored or corrected (#63). A penalty left over from a run that was restarted has `included_in_result: false`.
 
-- `true` for a `LAP` penalty given while the race was running, since it came straight off the live lap count;
-- `false` for a `TIME` penalty, or any penalty given after the race finished, since the stored result doesn't take those in yet (#63).
+A race whose result was stored by a version before #63, and not corrected since, keeps its result as timed: only a `LAP` penalty given while it ran is included, and a reader that re-ranks it should apply the penalties with `included_in_result: false`.
 
-A reader that re-ranks a race should apply only the penalties with `included_in_result: false`. A lap adjustment by the race director after the finish isn't in the export at all until #63 is done.
+A lap adjustment by the race director after the finish isn't listed, but the row's `laps` and `position` allow for it.
 
 ### Abandoned races
 
@@ -55,7 +54,7 @@ Only events whose entries were imported from RaceHub are sent, since those are t
 | A finished race is corrected: a referee gives a penalty or the race director adjusts laps | `CORRECTION` |
 | The event is marked `COMPLETED` (the race day is closed) | `DAY_CLOSE` |
 
-> **Known gap.** A race's laps, times and positions come from the result stored when it finished, and a later correction doesn't change that stored result yet (#63). A correction export lists the new penalty with `included_in_result: false`; see [Penalties](#penalties).
+A correction recalculates the race's stored result before the export is built, so the correction export carries the new laps, times and positions.
 
 Every export for an event takes the next `revision`, starting at 1. A higher revision always replaces a lower one, so RaceHub should ignore an export whose revision is not higher than the one it already holds.
 

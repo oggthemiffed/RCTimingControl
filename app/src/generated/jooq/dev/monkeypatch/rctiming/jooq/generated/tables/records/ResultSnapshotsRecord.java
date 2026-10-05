@@ -104,6 +104,20 @@ public class ResultSnapshotsRecord extends UpdatableRecordImpl<ResultSnapshotsRe
         return (Instant) get(5);
     }
 
+    /**
+     * Setter for <code>result_snapshots.timed_positions_json</code>.
+     */
+    public void setTimedPositionsJson(String value) {
+        set(6, value);
+    }
+
+    /**
+     * Getter for <code>result_snapshots.timed_positions_json</code>.
+     */
+    public String getTimedPositionsJson() {
+        return (String) get(6);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -127,7 +141,7 @@ public class ResultSnapshotsRecord extends UpdatableRecordImpl<ResultSnapshotsRe
     /**
      * Create a detached, initialised ResultSnapshotsRecord
      */
-    public ResultSnapshotsRecord(Long id, Long raceId, Instant finishedAt, String positionsJson, String lapHistoryJson, Instant createdAt) {
+    public ResultSnapshotsRecord(Long id, Long raceId, Instant finishedAt, String positionsJson, String lapHistoryJson, Instant createdAt, String timedPositionsJson) {
         super(ResultSnapshots.RESULT_SNAPSHOTS);
 
         setId(id);
@@ -136,6 +150,7 @@ public class ResultSnapshotsRecord extends UpdatableRecordImpl<ResultSnapshotsRe
         setPositionsJson(positionsJson);
         setLapHistoryJson(lapHistoryJson);
         setCreatedAt(createdAt);
+        setTimedPositionsJson(timedPositionsJson);
         resetChangedOnNotNull();
     }
 }

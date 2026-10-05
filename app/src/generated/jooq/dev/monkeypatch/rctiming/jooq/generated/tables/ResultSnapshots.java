@@ -91,6 +91,11 @@ public class ResultSnapshots extends TableImpl<ResultSnapshotsRecord> {
      */
     public final TableField<ResultSnapshotsRecord, Instant> CREATED_AT = createField(DSL.name("created_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
+    /**
+     * The column <code>result_snapshots.timed_positions_json</code>.
+     */
+    public final TableField<ResultSnapshotsRecord, String> TIMED_POSITIONS_JSON = createField(DSL.name("timed_positions_json"), SQLDataType.CLOB, this, "");
+
     private ResultSnapshots(Name alias, Table<ResultSnapshotsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

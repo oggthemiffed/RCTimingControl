@@ -94,6 +94,9 @@ public class RefereeController {
         if (!req.penaltyType().equals("LAP") && !req.penaltyType().equals("TIME")) {
             throw new IllegalArgumentException("penaltyType must be LAP or TIME, got: " + req.penaltyType());
         }
+        if (req.penaltyType().equals("LAP") && req.value().stripTrailingZeros().scale() > 0) {
+            throw new IllegalArgumentException("A LAP penalty must be a whole number of laps, got: " + req.value());
+        }
 
         long userId = resolveUserId();
         Penalty penalty = new Penalty();
