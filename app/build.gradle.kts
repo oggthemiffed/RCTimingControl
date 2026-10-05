@@ -112,6 +112,11 @@ jooq {
                                 .withName("BIGINT")
                                 .withIncludeExpression(".*\\.ID")
                                 .withIncludeTypes("INTEGER"),
+                            // SQLite's REAL is an 8-byte float; read it as Double, not Float
+                            org.jooq.meta.jaxb.ForcedType()
+                                .withName("DOUBLE")
+                                .withIncludeExpression(".*")
+                                .withIncludeTypes("REAL"),
                             // Timestamps are BIGINT UTC microseconds (see V1); read them as Instant
                             org.jooq.meta.jaxb.ForcedType()
                                 .withUserType("java.time.Instant")

@@ -8,11 +8,15 @@ import org.jooq.ConnectionProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.flyway.FlywayConfigurationCustomizer;
 import org.springframework.boot.autoconfigure.jooq.DefaultConfigurationCustomizer;
+import org.springframework.boot.autoconfigure.jooq.ExceptionTranslatorExecuteListener;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.support.SQLExceptionSubclassTranslator;
+import org.springframework.jdbc.support.SQLExceptionTranslator;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -86,6 +90,21 @@ public class DatabaseConfig {
     @Bean
     DefaultConfigurationCustomizer vendorJooqDialect() {
         return configuration -> configuration.set(vendor.jooqDialect());
+    }
+
+    /**
+     * jOOQ reports a failed constraint as Spring's data integrity violation, as JPA did. Other
+     * errors get Spring's usual translation.
+     */
+    @Bean
+    ExceptionTranslatorExecuteListener vendorJooqExceptionTranslator() {
+        SQLExceptionTranslator vendorTranslator = vendor.exceptionTranslator();
+        SQLExceptionTranslator fallback = new SQLExceptionSubclassTranslator();
+        SQLExceptionTranslator translator = (task, sql, ex) -> {
+            DataAccessException translated = vendorTranslator.translate(task, sql, ex);
+            return translated != null ? translated : fallback.translate(task, sql, ex);
+        };
+        return ExceptionTranslatorExecuteListener.of(context -> translator);
     }
 
     private HikariConfig poolConfig(String name, int size) {

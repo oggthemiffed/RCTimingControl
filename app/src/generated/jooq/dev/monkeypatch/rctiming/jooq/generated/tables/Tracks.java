@@ -77,7 +77,7 @@ public class Tracks extends TableImpl<TracksRecord> {
     /**
      * The column <code>tracks.track_length</code>.
      */
-    public final TableField<TracksRecord, Float> TRACK_LENGTH = createField(DSL.name("track_length"), SQLDataType.REAL, this, "");
+    public final TableField<TracksRecord, Double> TRACK_LENGTH = createField(DSL.name("track_length"), SQLDataType.DOUBLE, this, "");
 
     /**
      * The column <code>tracks.created_at</code>.

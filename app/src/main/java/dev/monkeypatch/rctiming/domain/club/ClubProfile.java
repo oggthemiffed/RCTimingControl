@@ -1,68 +1,26 @@
 package dev.monkeypatch.rctiming.domain.club;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
 import java.time.Instant;
 
-@Entity
-@Table(name = "club_profiles")
 public class ClubProfile {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
     private String name;
-
     private String email;
-
     private String phone;
-
-    @Column(name = "website_url")
     private String websiteUrl;
-
     private Double latitude;
-
     private Double longitude;
-
-    @Column(nullable = false)
     private String timezone = "UTC";
-
     private byte[] logo;
-
-    @Column(name = "logo_type", length = 10)
     private String logoType;
-
-    @Column(name = "logo_url", length = 500)
     private String logoUrl;
-
-    @Convert(converter = ClubAudioSettingsConverter.class)
-    @Column(name = "audio_settings")
     private ClubAudioSettings audioSettings = ClubAudioSettings.defaults();
-
-    @Column(name = "default_voice_id", length = 100)
     private String defaultVoiceId = "en_GB-alan-medium";
-
-    @Column(name = "decoder_host", length = 255)
     private String decoderHost;
-
-    @Column(name = "decoder_port")
     private Integer decoderPort;
-
-    @Column(name = "decoder_protocol", length = 10)
     private String decoderProtocol;
-
-    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     public Long getId() { return id; }
@@ -112,7 +70,6 @@ public class ClubProfile {
 
     public String getDefaultVoiceId() { return defaultVoiceId; }
     public void setDefaultVoiceId(String defaultVoiceId) { this.defaultVoiceId = defaultVoiceId; }
-
 
     public String getDecoderHost() { return decoderHost; }
     public void setDecoderHost(String decoderHost) { this.decoderHost = decoderHost; }

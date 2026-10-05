@@ -1,55 +1,30 @@
 package dev.monkeypatch.rctiming.domain.track;
 
-import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-
 import java.time.Instant;
 
-@Entity
-@Table(
-    name = "track_lap_thresholds",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"track_id", "racing_class_id"})
-)
 public class TrackLapThreshold {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "track_id", nullable = false)
-    private Track track;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "racing_class_id")
-    private RacingClass racingClass;
-
-    @Column(name = "min_lap_ms", nullable = false)
+    private Long trackId;
+    /** Null for the track's default threshold, which applies to every class without its own. */
+    private Long racingClassId;
+    /** The class's name, filled in when the threshold is loaded; not saved. */
+    private String racingClassName;
     private int minLapMs;
-
-    @Column(name = "max_last_lap_ms")
     private Integer maxLastLapMs;
-
-    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Track getTrack() { return track; }
-    public void setTrack(Track track) { this.track = track; }
+    public Long getTrackId() { return trackId; }
+    public void setTrackId(Long trackId) { this.trackId = trackId; }
 
-    public RacingClass getRacingClass() { return racingClass; }
-    public void setRacingClass(RacingClass racingClass) { this.racingClass = racingClass; }
+    public Long getRacingClassId() { return racingClassId; }
+    public void setRacingClassId(Long racingClassId) { this.racingClassId = racingClassId; }
+
+    public String getRacingClassName() { return racingClassName; }
+    public void setRacingClassName(String racingClassName) { this.racingClassName = racingClassName; }
 
     public int getMinLapMs() { return minLapMs; }
     public void setMinLapMs(int minLapMs) { this.minLapMs = minLapMs; }

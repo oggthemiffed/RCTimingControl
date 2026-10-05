@@ -65,15 +65,15 @@ public class TracksRecord extends UpdatableRecordImpl<TracksRecord> {
     /**
      * Setter for <code>tracks.track_length</code>.
      */
-    public void setTrackLength(Float value) {
+    public void setTrackLength(Double value) {
         set(3, value);
     }
 
     /**
      * Getter for <code>tracks.track_length</code>.
      */
-    public Float getTrackLength() {
-        return (Float) get(3);
+    public Double getTrackLength() {
+        return (Double) get(3);
     }
 
     /**
@@ -127,7 +127,7 @@ public class TracksRecord extends UpdatableRecordImpl<TracksRecord> {
     /**
      * Create a detached, initialised TracksRecord
      */
-    public TracksRecord(Long id, String name, String venueNotes, Float trackLength, Instant createdAt, Instant updatedAt) {
+    public TracksRecord(Long id, String name, String venueNotes, Double trackLength, Instant createdAt, Instant updatedAt) {
         super(Tracks.TRACKS);
 
         setId(id);
