@@ -142,6 +142,11 @@ public class Events extends TableImpl<EventsRecord> {
      */
     public final TableField<EventsRecord, String> RESULTS_EXPORT_PENDING = createField(DSL.name("results_export_pending"), SQLDataType.VARCHAR(30), this, "");
 
+    /**
+     * The column <code>events.live_feed_enabled</code>.
+     */
+    public final TableField<EventsRecord, Boolean> LIVE_FEED_ENABLED = createField(DSL.name("live_feed_enabled"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.BOOLEAN)), this, "");
+
     private Events(Name alias, Table<EventsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

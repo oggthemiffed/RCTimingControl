@@ -217,6 +217,20 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
         return (String) get(13);
     }
 
+    /**
+     * Setter for <code>events.live_feed_enabled</code>.
+     */
+    public void setLiveFeedEnabled(Boolean value) {
+        set(14, value);
+    }
+
+    /**
+     * Getter for <code>events.live_feed_enabled</code>.
+     */
+    public Boolean getLiveFeedEnabled() {
+        return (Boolean) get(14);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -240,7 +254,7 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
     /**
      * Create a detached, initialised EventsRecord
      */
-    public EventsRecord(Long id, String name, LocalDate eventDate, String status, Instant createdAt, Instant updatedAt, Instant entryOpensAt, Instant entryClosesAt, Long trackId, Instant racehubLastImportAt, Long racehubLastRevision, String racehubEventId, Long resultsExportRevision, String resultsExportPending) {
+    public EventsRecord(Long id, String name, LocalDate eventDate, String status, Instant createdAt, Instant updatedAt, Instant entryOpensAt, Instant entryClosesAt, Long trackId, Instant racehubLastImportAt, Long racehubLastRevision, String racehubEventId, Long resultsExportRevision, String resultsExportPending, Boolean liveFeedEnabled) {
         super(Events.EVENTS);
 
         setId(id);
@@ -257,6 +271,7 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
         setRacehubEventId(racehubEventId);
         setResultsExportRevision(resultsExportRevision);
         setResultsExportPending(resultsExportPending);
+        setLiveFeedEnabled(liveFeedEnabled);
         resetChangedOnNotNull();
     }
 }
