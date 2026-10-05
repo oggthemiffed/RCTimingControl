@@ -34,7 +34,7 @@ Content-Type: application/json
 
 Sets `refresh_token` HttpOnly cookie (7-day TTL, path `/api/v1/auth/refresh`).  
 **401 Unauthorized** — invalid credentials (no detail returned, by design).  
-**403 Forbidden** — the account holds no official role (`ADMIN`, `RACE_DIRECTOR`, `REFEREE`). Only officials sign in; there is no self-registration or password reset.
+**403 Forbidden** — the account holds no official role (`ADMIN`, `RACE_DIRECTOR`, `REFEREE`), or it has been disabled; a disabled account's problem detail carries `"reason": "disabled"`. Only officials sign in; there is no self-registration or emailed password reset. An admin sets passwords on the Officials page, and a locked-out club uses `RCTimingControl reset-admin-password` (see [installing.md](installing.md#locked-out)).
 
 ---
 
@@ -47,7 +47,7 @@ POST /auth/refresh
 ```
 
 **200 OK** — new access token + rotated refresh cookie.  
-**401 Unauthorized** — cookie missing, expired, or revoked.
+**401 Unauthorized** — cookie missing, expired, or revoked, or the account has been disabled.
 
 ---
 
@@ -490,6 +490,36 @@ GET /api/v1/admin/backups
 POST /api/v1/admin/backups
 ```
 **201 Created** — the new `BackupFile`. Safe while a race is running. **500** with a `detail` message when the backup folder can't be written (missing, read-only or full).
+
+---
+
+## Admin — Officials
+
+`ADMIN` only. Officials are never deleted, only disabled, so their name stays on everything they did. Every change is logged with who made it.
+
+```http
+GET /api/v1/admin/officials
+```
+**200 OK** — `[Official]`, the ones who can sign in first, then by name. Each `Official` is `{ "id": 2, "email": "rob@club.example", "firstName": "Rob", "lastName": "Smith", "roles": ["RACE_DIRECTOR", "REFEREE"], "enabled": true, "disabledAt": null, "createdAt": "2026-10-01T18:00:00Z" }`.
+
+```http
+POST /api/v1/admin/officials
+{ "email": "rob@club.example", "firstName": "Rob", "lastName": "Smith", "password": "at-least-8", "roles": ["RACE_DIRECTOR"] }
+```
+**201 Created** — the new `Official`, who can sign in straight away. **400** for a missing field, a password under 8 characters or no roles; **409** when the email is already used.
+
+```http
+PUT /api/v1/admin/officials/{id}/roles      { "roles": ["ADMIN", "REFEREE"] }
+PUT /api/v1/admin/officials/{id}/password   { "password": "at-least-8" }
+POST /api/v1/admin/officials/{id}/disable
+POST /api/v1/admin/officials/{id}/enable
+```
+`roles`, `disable` and `enable` answer **200 OK** with the updated `Official`; `password` answers **204 No Content**. Setting a password or disabling signs the official out of every session: their refresh tokens are revoked, and an access token they already hold lasts at most 15 minutes. **409** with a `detail` when the change would leave no admin who can sign in, or when an admin disables themselves. **404** for an unknown id.
+
+```http
+GET /api/v1/admin/officials/changes
+```
+**200 OK** — the newest 50 changes: `[{ "id": 7, "at": "2026-10-04T19:12:00Z", "officialId": 2, "officialName": "Rob Smith", "action": "ROLES_CHANGED", "detail": "RACE_DIRECTOR → ADMIN, RACE_DIRECTOR", "actorId": 1, "actorName": "Dave Admin" }]`. `action` is `ADDED`, `ROLES_CHANGED`, `PASSWORD_SET`, `DISABLED` or `ENABLED`. `actorId` and `actorName` are null for a change made with `reset-admin-password`.
 
 ---
 

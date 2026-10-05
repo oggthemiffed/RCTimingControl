@@ -33,6 +33,7 @@ Officials run a full race meeting from a laptop at the track, on Windows, macOS 
 - [x] Results Export v1 sent back to RaceHub through an outbound queue — #27
 - [x] Live feed to a relay so remote viewers can follow timing — #28
 - [x] Streaming overlay page for OBS — #29
+- [x] Officials managed after setup (roles, passwords, disable), and a command-line admin password reset — #61
 
 ### Active
 

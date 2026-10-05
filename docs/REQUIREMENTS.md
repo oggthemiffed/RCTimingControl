@@ -12,9 +12,11 @@
 
 - ~~**AUTH-01**: Racer can self-register with email and password~~ **Removed** (#18): only officials have accounts, and admins create them.
 - [x] **AUTH-02**: Racer can log in and remain logged in across browser sessions **Changed**: only officials sign in (#18). An HttpOnly refresh cookie keeps them signed in.
-- ~~**AUTH-03**: Racer can reset password via email link~~ **Removed** (#18): only officials have accounts, which an admin creates; there is no emailed reset.
+- ~~**AUTH-03**: Racer can reset password via email link~~ **Removed** (#18): only officials have accounts, which an admin creates; there is no emailed reset. An admin sets an official's password instead (AUTH-06), and a locked-out club resets an admin's from the command line (AUTH-07).
 - [x] **AUTH-04**: Staff users can log in with elevated privileges; access to admin panel, race control, and referee tools is gated by role
 - [x] **AUTH-05**: Staff accounts can be assigned one or more roles (`ADMIN`, `RACE_DIRECTOR`, `REFEREE`); roles are stackable — a user may hold any combination simultaneously; `ADMIN` covers club config and event setup, `RACE_DIRECTOR` covers race control client, `REFEREE` covers penalties and incident management
+- [x] **AUTH-06**: An admin manages officials after setup: adds one, changes roles, sets a password, and disables or re-enables an account (never deletes it). The last admin who can sign in can't be disabled or lose `ADMIN`, an admin can't disable themselves, a disabled official can't sign in or refresh, and every change is logged with who made it (#61)
+- [x] **AUTH-07**: A club with no admin who can sign in resets an admin's password from the laptop with `RCTimingControl reset-admin-password` (#61)
 
 ### Racer Profile & Equipment
 
@@ -235,6 +237,8 @@
 | AUTH-03 | Phase 1 | Removed (#18) |
 | AUTH-04 | Phase 1 | Complete |
 | AUTH-05 | Phase 1 | Complete |
+| AUTH-06 | #61 | Complete |
+| AUTH-07 | #61 | Complete |
 | RACER-01 | Phase 2 | Removed (#18) |
 | RACER-02 | Phase 2 | Removed (#18) |
 | RACER-03 | Phase 2 | Removed (#18) |
@@ -358,12 +362,13 @@
 | OVERLAY-01 | #29 | Complete |
 
 **Coverage:**
-- Requirements: 126 total (106 from the original v1 plan, 20 added for local-only timing)
-- Complete: 86, changed and complete: 16, removed: 24, planned: 0
+- Requirements: 128 total (106 from the original v1 plan, 22 added for local-only timing)
+- Complete: 88, changed and complete: 16, removed: 24, planned: 0
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-10-05 — AUDIO-14 removed with the profanity blocklist (#30)*
+*Last updated: 2026-10-05 — AUTH-06 and AUTH-07 added for managing officials and the command-line admin password reset (#61)*
+*Previously updated: 2026-10-05 — AUDIO-14 removed with the profanity blocklist (#30)*
 *Previously updated: 2026-10-05 — local-only timing (#8, #25): racer, forwarder and P3-forwarder requirements removed, changed requirements annotated, Local-only timing section added, traceability brought up to date*
 *Previously updated: 2026-10-04 — removed the offline race-day app's requirements (retired in #21; race day moves to RCTC run locally at the venue, #8)*
 *Previously updated: 2026-10-03 — added the offline race-day app's requirements; removed "Offline mode" from Out of Scope (superseded)*

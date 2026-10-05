@@ -114,6 +114,20 @@ Stop the service, then run the restore command as an administrator (Windows) or 
 
 Then start the service again. The restored database is given the data folder's owner, so on Linux the service can still write to it after a restore run with `sudo`.
 
+## Locked out
+
+If no admin can sign in (the only admin forgot their password, or was disabled), reset an admin's password from the laptop itself. Stop the service, then run the command as an administrator (Windows) or with `sudo` (macOS, Linux), giving the admin's email:
+
+| System | Command |
+|--------|---------|
+| Windows | `"C:\Program Files\RCTimingControl\RCTimingControl.exe" reset-admin-password admin@club.example` |
+| macOS | `sudo /Applications/RCTimingControl.app/Contents/MacOS/RCTimingControl reset-admin-password admin@club.example` |
+| Linux | `sudo /opt/rctimingcontrol/bin/RCTimingControl reset-admin-password admin@club.example` |
+
+It asks for the new password twice (at least 8 characters). Run it with no email to list the admins. The command also enables the account if it was disabled, gives it the Admin role if it had lost it, and signs it out everywhere. The change shows in **Admin → Officials** under recent changes, as made from the command line. Then start the service again.
+
+Anyone who can run commands as an administrator on the laptop can do this, so keep the laptop's own login safe.
+
 ## Upgrading
 
 Install the newer package over the old one, the same way as the first install. The service stops, the new version is put in place, and the service starts again. The new version updates the database to its format when it starts.
