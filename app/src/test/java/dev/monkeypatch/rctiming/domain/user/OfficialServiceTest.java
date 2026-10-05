@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.domain.auth.RefreshToken;
 import dev.monkeypatch.rctiming.domain.auth.RefreshTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
 import java.time.Clock;
@@ -31,11 +32,12 @@ class OfficialServiceTest {
     private final UserRepository users = mock(UserRepository.class);
     private final OfficialAuditLogRepository auditLog = mock(OfficialAuditLogRepository.class);
     private final RefreshTokenRepository refreshTokens = mock(RefreshTokenRepository.class);
+    private final ApplicationEventPublisher events = mock(ApplicationEventPublisher.class);
     private OfficialService service;
 
     @BeforeEach
     void setUp() {
-        service = new OfficialService(users, auditLog, refreshTokens, NoOpPasswordEncoder.getInstance(),
+        service = new OfficialService(users, auditLog, refreshTokens, NoOpPasswordEncoder.getInstance(), events,
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
@@ -104,6 +106,7 @@ class OfficialServiceTest {
 
         assertThat(referee.getDisabledAt()).isEqualTo(NOW);
         assertThat(token.isRevoked()).isTrue();
+        verify(events).publishEvent(new OfficialSignedOutEvent(3L, NOW));
         verify(auditLog).save(any(OfficialAuditLog.class));
     }
 
@@ -118,6 +121,7 @@ class OfficialServiceTest {
 
         assertThat(referee.getPasswordHash()).isEqualTo("brandNew99");
         assertThat(token.isRevoked()).isTrue();
+        verify(events).publishEvent(new OfficialSignedOutEvent(3L, NOW));
     }
 
     @Test

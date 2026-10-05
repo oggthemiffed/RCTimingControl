@@ -6,25 +6,35 @@ import dev.monkeypatch.rctiming.api.auth.LoginRequest;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.stomp.StompHeaders;
+import org.springframework.messaging.simp.stomp.StompSession;
+import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.socket.WebSocketHttpHeaders;
+import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.messaging.WebSocketStompClient;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** The Officials page's API (#61), end to end through sign-in and refresh. */
 @SuppressWarnings("unchecked")
@@ -42,6 +52,11 @@ class OfficialControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @LocalServerPort
+    int port;
+
+    private final WebSocketStompClient stompClient = new WebSocketStompClient(new StandardWebSocketClient());
 
     private long adminId;
     private String adminName;
@@ -159,6 +174,36 @@ class OfficialControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void disablingAnOfficialClosesTheirLiveTimingSocket() throws Exception {
+        String email = createUser(Set.of(Role.RACE_DIRECTOR), "password123");
+        String token = login(email, "password123").getBody().accessToken();
+        StompSession socket = connectStomp(token);
+
+        rest.exchange(BASE + "/" + idOf(email) + "/disable", HttpMethod.POST, auth(), MAP);
+
+        awaitClosed(socket);
+        assertThatThrownBy(() -> connectStomp(token)).isInstanceOf(Exception.class);
+    }
+
+    @Test
+    void settingAPasswordClosesTheirLiveTimingSocketAndRefusesTheOldToken() throws Exception {
+        String email = createUser(Set.of(Role.REFEREE), "password123");
+        String oldToken = login(email, "password123").getBody().accessToken();
+        StompSession socket = connectStomp(oldToken);
+
+        rest.exchange(BASE + "/" + idOf(email) + "/password", HttpMethod.PUT,
+                json(Map.of("password", "newPassword456")), Void.class);
+
+        awaitClosed(socket);
+        assertThatThrownBy(() -> connectStomp(oldToken)).isInstanceOf(Exception.class);
+        // A token's issued-at is to the second, and one from the second of the change is refused too
+        Thread.sleep(1_100);
+        StompSession signedInAgain = connectStomp(login(email, "newPassword456").getBody().accessToken());
+        assertThat(signedInAgain.isConnected()).isTrue();
+        signedInAgain.disconnect();
+    }
+
+    @Test
     void anAdminCannotDisableThemselves() {
         ResponseEntity<Map<String, Object>> response = rest.exchange(BASE + "/" + adminId + "/disable", HttpMethod.POST, auth(), MAP);
 
@@ -184,7 +229,27 @@ class OfficialControllerIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
+    @AfterEach
+    void stopStompClient() {
+        stompClient.stop();
+    }
+
     // --- helpers ---
+
+    private StompSession connectStomp(String token) throws Exception {
+        StompHeaders headers = new StompHeaders();
+        headers.add("Authorization", "Bearer " + token);
+        return stompClient.connectAsync("ws://localhost:" + port + "/ws/timing", new WebSocketHttpHeaders(),
+                headers, new StompSessionHandlerAdapter() {}).get(3, TimeUnit.SECONDS);
+    }
+
+    private static void awaitClosed(StompSession socket) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(3);
+        while (socket.isConnected() && System.nanoTime() < deadline) {
+            Thread.sleep(20);
+        }
+        assertThat(socket.isConnected()).as("socket closed").isFalse();
+    }
 
     private String createUser(Set<Role> roles, String password) {
         String email = "official-" + UUID.randomUUID() + "@example.com";

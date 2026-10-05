@@ -514,7 +514,7 @@ PUT /api/v1/admin/officials/{id}/password   { "password": "at-least-8" }
 POST /api/v1/admin/officials/{id}/disable
 POST /api/v1/admin/officials/{id}/enable
 ```
-`roles`, `disable` and `enable` answer **200 OK** with the updated `Official`; `password` answers **204 No Content**. Setting a password or disabling signs the official out of every session: their refresh tokens are revoked, and an access token they already hold lasts at most 15 minutes. **409** with a `detail` when the change would leave no admin who can sign in, or when an admin disables themselves. **404** for an unknown id.
+`roles`, `disable` and `enable` answer **200 OK** with the updated `Official`; `password` answers **204 No Content**. Setting a password or disabling signs the official out of every session: their refresh tokens are revoked, their live timing (STOMP) connections are closed straight away and can't reconnect with a token issued before the change, and an access token they already hold works for REST calls for at most 15 minutes. **409** with a `detail` when the change would leave no admin who can sign in, or when an admin disables themselves. **404** for an unknown id.
 
 ```http
 GET /api/v1/admin/officials/changes

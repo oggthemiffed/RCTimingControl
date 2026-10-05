@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.domain.user;
 import dev.monkeypatch.rctiming.domain.auth.RefreshTokenRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +21,8 @@ import java.util.TreeSet;
  * <p>
  * The club must never lock itself out, so the last enabled admin can't lose {@code ADMIN} or be
  * disabled, and an admin can't disable themselves. Disabling an official or setting their password
- * revokes their refresh tokens, so they are signed out when their access token runs out.
+ * revokes their refresh tokens, so they are signed out when their access token runs out, and
+ * publishes {@link OfficialSignedOutEvent} so their live timing sockets are closed straight away.
  * <p>
  * Every change is written to {@code official_audit_log} with the admin who made it, or no admin
  * for the laptop's {@code reset-admin-password} command.
@@ -36,25 +38,29 @@ public class OfficialService {
     private final OfficialAuditLogRepository auditLogRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
 
     @Autowired
     public OfficialService(UserRepository userRepository,
                            OfficialAuditLogRepository auditLogRepository,
                            RefreshTokenRepository refreshTokenRepository,
-                           PasswordEncoder passwordEncoder) {
-        this(userRepository, auditLogRepository, refreshTokenRepository, passwordEncoder, Clock.systemUTC());
+                           PasswordEncoder passwordEncoder,
+                           ApplicationEventPublisher events) {
+        this(userRepository, auditLogRepository, refreshTokenRepository, passwordEncoder, events, Clock.systemUTC());
     }
 
     OfficialService(UserRepository userRepository,
                     OfficialAuditLogRepository auditLogRepository,
                     RefreshTokenRepository refreshTokenRepository,
                     PasswordEncoder passwordEncoder,
+                    ApplicationEventPublisher events,
                     Clock clock) {
         this.userRepository = userRepository;
         this.auditLogRepository = auditLogRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -148,6 +154,7 @@ public class OfficialService {
 
     private void revokeSessions(User user) {
         refreshTokenRepository.findByUserAndRevokedFalse(user).forEach(token -> token.setRevoked(true));
+        events.publishEvent(new OfficialSignedOutEvent(user.getId(), clock.instant()));
     }
 
     private void log(User user, Long actorId, OfficialAuditLog.Action action, String detail, Instant at) {
