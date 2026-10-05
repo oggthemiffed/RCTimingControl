@@ -145,6 +145,7 @@ public class EntryService {
         entry.setStatus(EntryStatus.WITHDRAWN);
         entry.setWithdrawnAt(now);
         entry.setUpdatedAt(now);
+        entryRepository.save(entry);
         String afterJson = writeJson(java.util.Map.of("status", EntryStatus.WITHDRAWN.name()));
         writeAudit(entry.getId(), adminUserId, "ADMIN_WITHDRAW", reason, beforeJson, afterJson);
         return EntryDto.from(entry);

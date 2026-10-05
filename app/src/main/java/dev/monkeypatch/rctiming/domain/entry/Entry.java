@@ -1,91 +1,49 @@
 package dev.monkeypatch.rctiming.domain.entry;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
 import java.time.Instant;
 
-@Entity
-@Table(name = "entries")
 public class Entry {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     /** The racer's login, when the entry came from the racer portal. Null for competitor-only entries. */
-    @Column(name = "user_id")
     private Long userId;
 
     /** The driver this entry is for. Required on every new entry (L4, #12). */
-    @Column(name = "competitor_id")
     private Long competitorId;
-
-    @Column(name = "event_id", nullable = false)
     private Long eventId;
-
-    @Column(name = "event_class_id")
     private Long eventClassId;
 
     // Snapshot columns — captured at submit time (RACER-07)
     // V13 names these transponder_number and transponder_label (no _snapshot suffix)
-    @Column(name = "transponder_number", nullable = false, length = 20)
     private String transponderNumberSnapshot;
-
-    @Column(name = "transponder_label", length = 100)
     private String transponderLabelSnapshot;
 
     /** Optional second transponder for this entry (L6). Laps from either number count. */
-    @Column(name = "secondary_transponder_number", length = 20)
     private String secondaryTransponderNumber;
-
-    @Column(nullable = false, length = 20)
-    @Enumerated(EnumType.STRING)
     private EntryStatus status = EntryStatus.PENDING;
-
-    @Column(name = "submitted_at", nullable = false)
     private Instant submittedAt;
-
-    @Column(name = "confirmed_at")
     private Instant confirmedAt;
-
-    @Column(name = "withdrawn_at")
     private Instant withdrawnAt;
-
-    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     /** Where the entry was imported from (RACEHUB), or null for entries made here (L7). */
-    @Column(name = "external_source", length = 30)
     private String externalSource;
-
-    @Column(name = "external_entry_id", length = 100)
     private String externalEntryId;
 
     /** The source's entry_version last applied. Only a higher version changes the entry. */
-    @Column(name = "external_entry_version")
     private Long externalEntryVersion;
 
     /** RaceHub's race_day_status (NOT_ARRIVED / ARRIVED). Read-only here; set only by import. */
-    @Column(name = "racehub_arrival", length = 20)
     private String racehubArrival;
 
     /** The RaceHub event_class_id this entry was booked in (#27). Null for walk-ins. */
-    @Column(name = "racehub_event_class_id", length = 100)
     private String racehubEventClassId;
 
     /** When the competitor checked in at the desk (L11). Null until they do. */
-    @Column(name = "checked_in_at")
     private Instant checkedInAt;
 
     /** The official who checked them in. */
-    @Column(name = "checked_in_by_user_id")
     private Long checkedInByUserId;
 
     public Long getId() { return id; }
