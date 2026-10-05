@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.domain.user;
 
-import dev.monkeypatch.rctiming.domain.auth.RefreshToken;
 import dev.monkeypatch.rctiming.domain.auth.RefreshTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,7 +10,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -61,6 +59,7 @@ class OfficialServiceTest {
         service.changeRoles(2L, Set.of(Role.REFEREE), ACTOR);
 
         assertThat(admin.getRoles()).containsExactly(Role.REFEREE);
+        verify(users).save(admin);
         verify(auditLog).save(any(OfficialAuditLog.class));
     }
 
@@ -98,14 +97,12 @@ class OfficialServiceTest {
     @Test
     void disablingRevokesRefreshTokensAndIsLogged() {
         User referee = official(3L, Role.REFEREE);
-        RefreshToken token = new RefreshToken();
-        token.setRevoked(false);
-        when(refreshTokens.findByUserAndRevokedFalse(referee)).thenReturn(List.of(token));
 
         service.disable(3L, ACTOR);
 
         assertThat(referee.getDisabledAt()).isEqualTo(NOW);
-        assertThat(token.isRevoked()).isTrue();
+        verify(refreshTokens).revokeAllForUser(3L);
+        verify(users).save(referee);
         verify(events).publishEvent(new OfficialSignedOutEvent(3L, NOW));
         verify(auditLog).save(any(OfficialAuditLog.class));
     }
@@ -113,14 +110,12 @@ class OfficialServiceTest {
     @Test
     void settingAPasswordRevokesRefreshTokens() {
         User referee = official(3L, Role.REFEREE);
-        RefreshToken token = new RefreshToken();
-        token.setRevoked(false);
-        when(refreshTokens.findByUserAndRevokedFalse(referee)).thenReturn(List.of(token));
 
         service.setPassword(3L, "brandNew99", ACTOR);
 
         assertThat(referee.getPasswordHash()).isEqualTo("brandNew99");
-        assertThat(token.isRevoked()).isTrue();
+        verify(refreshTokens).revokeAllForUser(3L);
+        verify(users).save(referee);
         verify(events).publishEvent(new OfficialSignedOutEvent(3L, NOW));
     }
 

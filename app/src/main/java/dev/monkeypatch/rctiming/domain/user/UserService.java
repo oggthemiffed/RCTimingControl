@@ -25,6 +25,11 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
     @Transactional
     public User createStaff(String email, String password, String firstName, String lastName, Set<Role> roles) {
         if (roles == null || roles.isEmpty()) {
