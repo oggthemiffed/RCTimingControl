@@ -71,6 +71,7 @@ class RaceFormatServiceTest {
     void assignTemplateToEventClass_createsDeepCopy_notReference() throws Exception {
         TimedRaceConfig originalConfig = new TimedRaceConfig(5, StartType.STAGGER, QualifyingType.FTQ, 2, 3);
         RaceFormatTemplate template = new RaceFormatTemplate();
+        template.setId(42L);
         template.setName("5-minute timed");
         template.setConfig(originalConfig);
 
@@ -78,6 +79,6 @@ class RaceFormatServiceTest {
 
         assertThat(eventClass.getConfigSnapshot()).isEqualTo(originalConfig);
         assertThat(eventClass.getConfigSnapshot()).isNotSameAs(originalConfig);
-        assertThat(eventClass.getTemplate()).isSameAs(template);
+        assertThat(eventClass.getTemplateId()).isEqualTo(42L);
     }
 }

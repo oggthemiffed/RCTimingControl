@@ -10,7 +10,6 @@ import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
-import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.practice.dto.PracticeTimingRowDto;
 import dev.monkeypatch.rctiming.timing.LapPassingEvent;
 import org.junit.jupiter.api.BeforeEach;
@@ -121,9 +120,7 @@ class PracticeTimingServiceTest {
 
     @Test
     void onLapPassingEvent_sessionForAnEvent_namesTheCompetitorWhoseEntryUsesTheTransponder() {
-        Event event = new Event();
-        setField(Event.class, event, "id", 7L);
-        runningSession.setEvent(event);
+        runningSession.setEventId(7L);
         Entry withdrawn = entry(1L, 100L, "T9", null, EntryStatus.WITHDRAWN);
         Entry active = entry(2L, 200L, "P1", "T9", EntryStatus.CONFIRMED);
         Competitor ada = new Competitor();
@@ -142,9 +139,7 @@ class PracticeTimingServiceTest {
 
     @Test
     void getSnapshot_afterStop_stillNamesTheCompetitorFromTheEventEntries() {
-        Event event = new Event();
-        setField(Event.class, event, "id", 7L);
-        runningSession.setEvent(event);
+        runningSession.setEventId(7L);
         PracticeLap lap = new PracticeLap();
         lap.setPracticeSession(runningSession);
         lap.setTransponderNumber("T9");

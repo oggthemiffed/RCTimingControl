@@ -66,7 +66,7 @@ public class EventClassService {
         EventClass ec = new EventClass();
         ec.setEventId(eventId);
         ec.setRacingClassId(request.racingClassId());
-        ec.setTemplate(template);
+        ec.setTemplateId(template.getId());
         ec.setConfigSnapshot(snapshot);
         ec.setConfigOverride(null);
         Instant now = Instant.now();

@@ -1,62 +1,22 @@
 package dev.monkeypatch.rctiming.domain.format;
 
-import dev.monkeypatch.rctiming.persistence.convert.JsonMapConverter;
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-
 import java.time.Instant;
 import java.util.Map;
 
-@Entity
-@Table(name = "event_classes")
 public class EventClass {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Convert(converter = RaceFormatConfigConverter.class)
-    @Column(name = "config_snapshot", nullable = false)
     private RaceFormatConfig configSnapshot;
-
-    @Convert(converter = JsonMapConverter.class)
-    @Column(name = "config_override")
     private Map<String, Object> configOverride;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "template_id")
-    private RaceFormatTemplate template;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
+    /** The template the config was copied from; null when the template has been deleted. */
+    private Long templateId;
     private Instant createdAt = Instant.now();
-
-    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
-
-    @Column(name = "event_id")
     private Long eventId;
-
-    @Column(name = "racing_class_id")
     private Long racingClassId;
-
-    @Column(name = "combined_race_group")
     private Long combinedRaceGroup;
-
-    @Column(name = "finals_count")
     private Integer finalsCount;
-
-    @Column(name = "cars_per_final")
     private Integer carsPerFinal;
-
-    @Column(name = "bump_count")
     private Integer bumpCount;
 
     public Long getId() { return id; }
@@ -68,8 +28,8 @@ public class EventClass {
     public Map<String, Object> getConfigOverride() { return configOverride; }
     public void setConfigOverride(Map<String, Object> configOverride) { this.configOverride = configOverride; }
 
-    public RaceFormatTemplate getTemplate() { return template; }
-    public void setTemplate(RaceFormatTemplate template) { this.template = template; }
+    public Long getTemplateId() { return templateId; }
+    public void setTemplateId(Long templateId) { this.templateId = templateId; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
@@ -79,7 +39,6 @@ public class EventClass {
 
     public Long getEventId() { return eventId; }
     public void setEventId(Long eventId) { this.eventId = eventId; }
-
 
     public Long getRacingClassId() { return racingClassId; }
     public void setRacingClassId(Long racingClassId) { this.racingClassId = racingClassId; }

@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.persistence;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.SortField;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -47,12 +48,23 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
 
     protected abstract void setId(E entity, Long id);
 
+    /** Columns written on insert and never changed by an update, such as a creation time. */
+    protected List<Field<?>> insertOnly() {
+        return List.of();
+    }
+
     public Optional<E> findById(Long entityId) {
         return findOne(id.eq(entityId));
     }
 
     public List<E> findAll() {
         return findWhere(null);
+    }
+
+    public List<E> findAllById(Iterable<Long> ids) {
+        List<Long> wanted = new ArrayList<>();
+        ids.forEach(wanted::add);
+        return wanted.isEmpty() ? List.of() : findWhere(id.in(wanted));
     }
 
     public boolean existsById(Long entityId) {
@@ -77,13 +89,25 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
         }
         record.set(id, entityId);
         record.changed(id, false);
+        insertOnly().forEach(field -> record.changed(field, false));
         int updated = dsl.update(table).set(record).where(id.eq(entityId)).execute();
         if (updated == 0) {
             // As JPA's merge does, an entity whose row has gone is inserted again with its id
             record.changed(id, true);
+            insertOnly().forEach(field -> record.changed(field, true));
             dsl.insertInto(table).set(record).execute();
         }
         return entity;
+    }
+
+    /** The same as {@link #save}: jOOQ writes straight away, so there is nothing to flush. */
+    @Transactional
+    public E saveAndFlush(E entity) {
+        return save(entity);
+    }
+
+    /** Does nothing: jOOQ writes straight away. Kept so callers written for JPA still compile. */
+    public void flush() {
     }
 
     @Transactional

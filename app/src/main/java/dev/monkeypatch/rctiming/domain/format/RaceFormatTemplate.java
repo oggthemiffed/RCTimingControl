@@ -1,34 +1,13 @@
 package dev.monkeypatch.rctiming.domain.format;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-
 import java.time.Instant;
 
-@Entity
-@Table(name = "race_format_templates")
 public class RaceFormatTemplate {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
     private String name;
-
-    @Convert(converter = RaceFormatConfigConverter.class)
-    @Column(nullable = false)
     private RaceFormatConfig config;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
-
-    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
     public Long getId() { return id; }

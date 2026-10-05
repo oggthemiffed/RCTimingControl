@@ -10,5 +10,5 @@ public interface PracticeSessionRepository extends JpaRepository<PracticeSession
     @Query("SELECT ps FROM PracticeSession ps WHERE ps.status = dev.monkeypatch.rctiming.domain.practice.PracticeStatus.RUNNING")
     Optional<PracticeSession> findRunningSession();
 
-    List<PracticeSession> findByEvent_Id(Long eventId);
+    List<PracticeSession> findByEventId(Long eventId);
 }

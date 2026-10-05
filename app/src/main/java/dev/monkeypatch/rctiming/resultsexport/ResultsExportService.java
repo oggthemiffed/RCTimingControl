@@ -64,7 +64,10 @@ public class ResultsExportService {
     public void request(long eventId, ExportReason reason) {
         eventRepository.findById(eventId)
                 .filter(event -> event.getRacehubEventId() != null)
-                .ifPresent(event -> event.setResultsExportPending(reason.name()));
+                .ifPresent(event -> {
+                    event.setResultsExportPending(reason.name());
+                    eventRepository.save(event);
+                });
     }
 
     /** Events with an export requested but not queued yet. */
@@ -86,6 +89,7 @@ public class ResultsExportService {
             return Optional.empty();
         }
         event.setResultsExportPending(null);
+        eventRepository.save(event);
         return queue(event, ExportReason.valueOf(pending));
     }
 

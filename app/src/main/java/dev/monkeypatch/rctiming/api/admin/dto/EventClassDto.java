@@ -19,7 +19,7 @@ public record EventClassDto(
                 ec.getId(),
                 ec.getEventId(),
                 ec.getRacingClassId(),
-                ec.getTemplate() != null ? ec.getTemplate().getId() : null,
+                ec.getTemplateId(),
                 ec.getConfigSnapshot(),
                 ec.getConfigOverride(),
                 ec.getCombinedRaceGroup()
