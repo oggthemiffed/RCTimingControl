@@ -84,12 +84,12 @@ public class ClubProfiles extends TableImpl<ClubProfilesRecord> {
     /**
      * The column <code>club_profiles.latitude</code>.
      */
-    public final TableField<ClubProfilesRecord, Float> LATITUDE = createField(DSL.name("latitude"), SQLDataType.REAL, this, "");
+    public final TableField<ClubProfilesRecord, Double> LATITUDE = createField(DSL.name("latitude"), SQLDataType.DOUBLE, this, "");
 
     /**
      * The column <code>club_profiles.longitude</code>.
      */
-    public final TableField<ClubProfilesRecord, Float> LONGITUDE = createField(DSL.name("longitude"), SQLDataType.REAL, this, "");
+    public final TableField<ClubProfilesRecord, Double> LONGITUDE = createField(DSL.name("longitude"), SQLDataType.DOUBLE, this, "");
 
     /**
      * The column <code>club_profiles.timezone</code>.

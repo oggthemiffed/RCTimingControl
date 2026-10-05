@@ -93,29 +93,29 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
     /**
      * Setter for <code>club_profiles.latitude</code>.
      */
-    public void setLatitude(Float value) {
+    public void setLatitude(Double value) {
         set(5, value);
     }
 
     /**
      * Getter for <code>club_profiles.latitude</code>.
      */
-    public Float getLatitude() {
-        return (Float) get(5);
+    public Double getLatitude() {
+        return (Double) get(5);
     }
 
     /**
      * Setter for <code>club_profiles.longitude</code>.
      */
-    public void setLongitude(Float value) {
+    public void setLongitude(Double value) {
         set(6, value);
     }
 
     /**
      * Getter for <code>club_profiles.longitude</code>.
      */
-    public Float getLongitude() {
-        return (Float) get(6);
+    public Double getLongitude() {
+        return (Double) get(6);
     }
 
     /**
@@ -295,7 +295,7 @@ public class ClubProfilesRecord extends UpdatableRecordImpl<ClubProfilesRecord> 
     /**
      * Create a detached, initialised ClubProfilesRecord
      */
-    public ClubProfilesRecord(Long id, String name, String email, String phone, String websiteUrl, Float latitude, Float longitude, String timezone, byte[] logo, String logoType, Instant createdAt, Instant updatedAt, String logoUrl, String audioSettings, String defaultVoiceId, String decoderHost, Integer decoderPort, String decoderProtocol) {
+    public ClubProfilesRecord(Long id, String name, String email, String phone, String websiteUrl, Double latitude, Double longitude, String timezone, byte[] logo, String logoType, Instant createdAt, Instant updatedAt, String logoUrl, String audioSettings, String defaultVoiceId, String decoderHost, Integer decoderPort, String decoderProtocol) {
         super(ClubProfiles.CLUB_PROFILES);
 
         setId(id);
