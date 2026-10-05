@@ -30,10 +30,10 @@ Officials run a full race meeting from a laptop at the track, on Windows, macOS 
 - [x] One SQLite file, behind a seam that lets the database be swapped later — #26
 - [x] Scheduled backups and a restore command — #22
 - [x] One installer per system that runs the app as a background service — #23, #24
+- [x] Results Export v1 sent back to RaceHub through an outbound queue — #27
 
 ### Active
 
-- [ ] Results Export v1 pushed to RaceHub through an outbound queue (#27)
 - [ ] Live feed relay so remote viewers can follow timing (#28)
 - [ ] Streaming overlay page for OBS (#29)
 - [ ] Entry import from other systems: RC-Timing CSV and pull from a URL (#38)
@@ -51,7 +51,7 @@ Officials run a full race meeting from a laptop at the track, on Windows, macOS 
 ## Context
 
 - **Replacing:** RCResults (rc-timing.com / rc-results.com), a Windows-only client.
-- **Suite:** RaceHub handles booking in the cloud. The boundary is RaceHub's Entry Export v1 file, which carries no contact, date of birth, guardian or payment data. Results go back to RaceHub later (#27).
+- **Suite:** RaceHub handles booking in the cloud. The boundary is RaceHub's Entry Export v1 file, which carries no contact, date of birth, guardian or payment data. Results go back in a Results Export v1 file, keyed by the same RaceHub ids (#27).
 - **Timing hardware:** AMB/MyLaps transponder decoders over TCP. RC-4 text (firmware below 4.5, port 5100) is what club hardware uses.
 - **Club workflow:** Events have multiple races across classes. Championship series span multiple events, scored by configurable best-X-from-Y rounds (for example, best 4 of 6).
 - **Users:** officials only (admins, race directors, referees), with stackable roles. Competitors and spectators use the boards and public pages without signing in.
@@ -94,4 +94,4 @@ Keep this document accurate as the project changes.
 4. Update Context to reflect current state
 
 ---
-*Last updated: 2026-10-05 — local-only timing in place through #26; results export, live feed and overlay to come (#27 to #29)*
+*Last updated: 2026-10-05 — local-only timing in place through #27; live feed and overlay to come (#28, #29)*

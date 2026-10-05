@@ -155,7 +155,7 @@
 ### Results
 
 - [x] **RESULT-01**: Final race results are published after each race
-- [x] **RESULT-02**: Results correctly reflect any marshal lap adjustments and penalties applied
+- [x] **RESULT-02**: Results correctly reflect any marshal lap adjustments and penalties applied **Gap**: a lap adjustment or penalty given during the race counts, but one given after the race finishes doesn't change its stored result yet, and time penalties are not applied (#63)
 - [x] **RESULT-03**: Per-racer result history is viewable on the racer's portal page **Changed**: results group by competitor on the public pages, since there is no racer portal (#12, #13).
 - [x] **RESULT-04**: Printed/PDF results optionally display a racer's car tag values beneath their name; controlled by an admin display setting **Changed**: car tags show only on result snapshots saved before #18; new results have none.
 - [x] **RESULT-05**: Result records include full individual lap time data (every lap, not just totals and best lap)
@@ -179,7 +179,7 @@
 - [x] **BACKUP-01**: Backups are taken when a race day closes, every night and on demand, while racing carries on; a restore command puts one back (#22)
 - [x] **INSTALL-01**: One installer per system (Windows, macOS, Linux) installs the app with its own Java runtime as a background service (#23, #24)
 - [x] **INSTALL-02**: A demo club and a simulated decoder can be turned on from the installed app for trying it out (#24)
-- [ ] **RESULTS-EXPORT-01**: Results Export v1 is pushed to RaceHub through an outbound queue that waits for a connection (#27)
+- [x] **RESULTS-EXPORT-01**: Results Export v1 is pushed to RaceHub through an outbound queue that waits for a connection (#27)
 - [ ] **LIVE-FEED-01**: A live feed relay lets remote viewers follow timing (#28)
 - [ ] **OVERLAY-01**: A streaming overlay page shows live timing in OBS (#29)
 
@@ -353,13 +353,13 @@
 | BACKUP-01 | #22 | Complete |
 | INSTALL-01 | #23, #24 | Complete |
 | INSTALL-02 | #24 | Complete |
-| RESULTS-EXPORT-01 | #27 | Planned |
+| RESULTS-EXPORT-01 | #27 | Complete |
 | LIVE-FEED-01 | #28 | Planned |
 | OVERLAY-01 | #29 | Planned |
 
 **Coverage:**
 - Requirements: 126 total (106 from the original v1 plan, 20 added for local-only timing)
-- Complete: 83, changed and complete: 17, removed: 23, planned: 3
+- Complete: 84, changed and complete: 17, removed: 23, planned: 2
 
 ---
 *Requirements defined: 2026-04-15*

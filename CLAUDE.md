@@ -75,6 +75,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 | **Race Control API** | Race lifecycle commands, marshal laps, grid calls, referee tools |
 | **Boards** | Spectator "now and next" and results boards (`/api/v1/boards`) |
 | **Backups** | Scheduled and on-demand SQLite backups, and the `restore` command |
+| **Results export** | Results Export v1 to RaceHub (`resultsexport/`): an outbox queued on finish, correction and day close, sent in the background with retries; see `docs/results-export-v1.md` |
 | **Domain Core** | Business logic, aggregates, domain events |
 | **Race State Machine** | Enforces `PENDING → GRID → RUNNING → STOPPED/FINISHED` transitions |
 | **Decoder Listener** | Netty client reading the decoder (RC-4 text), emits `LapPassingEvent`s and decoder status |
@@ -164,7 +165,7 @@ The ten original phases are complete. Some of what they built has since been rem
 9. User manual & in-app documentation
 10. Docker trial environment (replaced by the installers in #23 and #24)
 
-A later initiative extracted the shared decoder-protocol parser (`decoder-protocol/`) and built a separate offline race-day app, which was retired in #21; its plans are archived under `docs/plans/archive/`. The local-only plan then added competitors, per-event transponders, the RaceHub import and walk-ins, officials-only login, the check-in desk, spectator boards, the SQLite database, backups and the installers. Still to come: results export to RaceHub, a live feed relay and a streaming overlay (#27 to #29).
+A later initiative extracted the shared decoder-protocol parser (`decoder-protocol/`) and built a separate offline race-day app, which was retired in #21; its plans are archived under `docs/plans/archive/`. The local-only plan then added competitors, per-event transponders, the RaceHub import and walk-ins, officials-only login, the check-in desk, spectator boards, the SQLite database, backups and the installers. It also sends results back to RaceHub (#27). Still to come: a live feed relay and a streaming overlay (#28, #29).
 
 ## General Good Developer Rules
 

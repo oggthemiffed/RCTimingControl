@@ -35,6 +35,8 @@ Modular monolith — one Spring Boot process, single SQLite database file, insta
 RaceHub (cloud)                      Venue laptop (RCTC)
   booking, racer accounts   ──file──▶  RaceHub import ─▶ competitors + entries
   Entry Export v1 JSON                walk-ins added by hand ─┘
+  results            ◀──HTTPS POST──  results outbox ◀─ finished races, corrections, day close
+  Results Export v1 JSON              (sent in the background, retried until RaceHub answers)
 ```
 
 ## Key design decisions
@@ -53,6 +55,10 @@ RaceHub owns booking, racer accounts and payment. The boundary between the two i
 - A dry run previews the changes; an import with unmapped classes or invalid rows saves nothing.
 
 Officials add walk-ins by hand in the admin entry list. A file works with no internet at the track, and the same format could become a pull from RaceHub later.
+
+### Results go back to RaceHub
+
+For an event imported from RaceHub, the app queues a **Results Export v1** document (`resultsexport/`) when a race finishes, when a finished race is corrected and when the race day is closed. Each one is the whole event with the next revision number, and replaces any older one that hasn't gone yet. A scheduled sender posts them to RaceHub with the club's key and an idempotency key, and retries with a growing wait while RaceHub can't be reached. Queuing runs after race control's own transaction commits, on another thread, so a slow or missing network never holds a race up. See [results-export-v1.md](results-export-v1.md).
 
 ### Competitors and transponders
 
