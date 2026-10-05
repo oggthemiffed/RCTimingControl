@@ -1,67 +1,39 @@
 package dev.monkeypatch.rctiming.domain.race;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-@Entity
-@Table(name = "races")
 public class Race {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "round_id", nullable = false)
     private Long roundId;
 
-    @Column(name = "event_class_id", nullable = false)
     private Long eventClassId;
 
-    @Column(name = "heat_number", nullable = false)
     private int heatNumber;
 
-    @Column(name = "sequence_in_round", nullable = false)
     private int sequenceInRound;
 
-    @Column(name = "final_letter", length = 5)
     private String finalLetter;
 
-    @Column(name = "start_type", nullable = false, length = 20)
-    @Enumerated(EnumType.STRING)
     private StartType startType;
 
-    @Column(name = "format_id")
     private Long formatId;
 
-    @Column(name = "format_overrides")
     private String formatOverrides;
 
-    @Column(nullable = false, length = 20)
-    @Enumerated(EnumType.STRING)
     private RaceStatus status = RaceStatus.PENDING;
 
-    @Column(name = "started_at")
     private Instant startedAt;
 
-    @Column(name = "finished_at")
     private Instant finishedAt;
 
     /** Set when race control abandons the race (CTRL-08); an abandoned race is otherwise FINISHED. */
-    @Column(name = "abandoned_at")
     private Instant abandonedAt;
 
-    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     public Long getId() { return id; }

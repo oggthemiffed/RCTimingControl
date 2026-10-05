@@ -128,6 +128,11 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
     }
 
     @Transactional
+    public void deleteAll(Iterable<? extends E> entities) {
+        entities.forEach(this::delete);
+    }
+
+    @Transactional
     public void deleteAll() {
         dsl.deleteFrom(table).execute();
     }

@@ -1,45 +1,24 @@
 package dev.monkeypatch.rctiming.domain.race;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-@Entity
-@Table(name = "rounds")
 public class Round {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "event_id", nullable = false)
     private Long eventId;
 
-    @Column(nullable = false, length = 20)
-    @Enumerated(EnumType.STRING)
     private RoundType type;
 
-    @Column(name = "round_number", nullable = false)
     private int roundNumber;
 
-    @Column(name = "sequence_in_event", nullable = false)
     private int sequenceInEvent;
 
-    @Column(nullable = false, length = 20)
-    @Enumerated(EnumType.STRING)
     private RoundStatus status = RoundStatus.PENDING;
 
-    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     public Long getId() { return id; }

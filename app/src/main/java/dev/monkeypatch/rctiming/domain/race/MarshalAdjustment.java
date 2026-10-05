@@ -1,44 +1,26 @@
 package dev.monkeypatch.rctiming.domain.race;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-@Entity
-@Table(name = "marshal_adjustments")
 public class MarshalAdjustment {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "race_id", nullable = false)
     private Long raceId;
 
-    @Column(name = "entry_id", nullable = false)
     private Long entryId;
 
-    @Column(name = "transponder_number", nullable = false, length = 20)
     private String transponderNumber;
 
-    @Column(name = "lap_delta", nullable = false)
     private int lapDelta;
 
-    @Column(name = "race_state_at_time", nullable = false, length = 20)
     private String raceStateAtTime;
 
-    @Column(name = "acting_user_id", nullable = false)
     private Long actingUserId;
 
-    @Column(name = "acting_user_name", nullable = false, length = 200)
     private String actingUserName;
 
-    @Column(name = "adjusted_at", nullable = false)
     private Instant adjustedAt;
 
     public Long getId() { return id; }
