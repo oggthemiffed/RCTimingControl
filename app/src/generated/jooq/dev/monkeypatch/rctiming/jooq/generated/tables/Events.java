@@ -15,6 +15,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences.MarshalAbs
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties.MarshalPenaltiesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeSessions.PracticeSessionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacehubClassMappings.RacehubClassMappingsPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.ResultsOutbox.ResultsOutboxPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.RoundsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks.TracksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.EventsRecord;
@@ -125,6 +126,21 @@ public class Events extends TableImpl<EventsRecord> {
      * The column <code>events.racehub_last_revision</code>.
      */
     public final TableField<EventsRecord, Long> RACEHUB_LAST_REVISION = createField(DSL.name("racehub_last_revision"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>events.racehub_event_id</code>.
+     */
+    public final TableField<EventsRecord, String> RACEHUB_EVENT_ID = createField(DSL.name("racehub_event_id"), SQLDataType.VARCHAR(100), this, "");
+
+    /**
+     * The column <code>events.results_export_revision</code>.
+     */
+    public final TableField<EventsRecord, Long> RESULTS_EXPORT_REVISION = createField(DSL.name("results_export_revision"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.BIGINT)), this, "");
+
+    /**
+     * The column <code>events.results_export_pending</code>.
+     */
+    public final TableField<EventsRecord, String> RESULTS_EXPORT_PENDING = createField(DSL.name("results_export_pending"), SQLDataType.VARCHAR(30), this, "");
 
     private Events(Name alias, Table<EventsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -326,6 +342,19 @@ public class Events extends TableImpl<EventsRecord> {
             _racehubClassMappings = new RacehubClassMappingsPath(this, null, Keys.RACEHUB_CLASS_MAPPINGS__RACEHUB_CLASS_MAPPINGS_EVENT_ID_FKEY.getInverseKey());
 
         return _racehubClassMappings;
+    }
+
+    private transient ResultsOutboxPath _resultsOutbox;
+
+    /**
+     * Get the implicit to-many join path to the <code>results_outbox</code>
+     * table
+     */
+    public ResultsOutboxPath resultsOutbox() {
+        if (_resultsOutbox == null)
+            _resultsOutbox = new ResultsOutboxPath(this, null, Keys.RESULTS_OUTBOX__RESULTS_OUTBOX_EVENT_ID_FKEY.getInverseKey());
+
+        return _resultsOutbox;
     }
 
     private transient RoundsPath _rounds;

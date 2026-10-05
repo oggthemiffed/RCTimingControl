@@ -58,6 +58,8 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    // Checks Results Export v1 documents against their published JSON schema (#27)
+    testImplementation("com.networknt:json-schema-validator:1.5.8")
 
     jooqGenerator("org.xerial:sqlite-jdbc:3.50.3.0")
     jooqGenerator("org.slf4j:slf4j-simple:2.0.13")

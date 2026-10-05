@@ -216,6 +216,20 @@ public class RacesRecord extends UpdatableRecordImpl<RacesRecord> {
         return (Instant) get(13);
     }
 
+    /**
+     * Setter for <code>races.abandoned_at</code>.
+     */
+    public void setAbandonedAt(Instant value) {
+        set(14, value);
+    }
+
+    /**
+     * Getter for <code>races.abandoned_at</code>.
+     */
+    public Instant getAbandonedAt() {
+        return (Instant) get(14);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -239,7 +253,7 @@ public class RacesRecord extends UpdatableRecordImpl<RacesRecord> {
     /**
      * Create a detached, initialised RacesRecord
      */
-    public RacesRecord(Long id, Long roundId, Long eventClassId, Integer heatNumber, Integer sequenceInRound, String finalLetter, String startType, Long formatId, String formatOverrides, String status, Instant startedAt, Instant finishedAt, Instant createdAt, Instant updatedAt) {
+    public RacesRecord(Long id, Long roundId, Long eventClassId, Integer heatNumber, Integer sequenceInRound, String finalLetter, String startType, Long formatId, String formatOverrides, String status, Instant startedAt, Instant finishedAt, Instant createdAt, Instant updatedAt, Instant abandonedAt) {
         super(Races.RACES);
 
         setId(id);
@@ -256,6 +270,7 @@ public class RacesRecord extends UpdatableRecordImpl<RacesRecord> {
         setFinishedAt(finishedAt);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
+        setAbandonedAt(abandonedAt);
         resetChangedOnNotNull();
     }
 }

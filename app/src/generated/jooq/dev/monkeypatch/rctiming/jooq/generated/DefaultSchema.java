@@ -32,6 +32,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Races;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots;
+import dev.monkeypatch.rctiming.jooq.generated.tables.ResultsOutbox;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.TrackLapThresholds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks;
@@ -202,6 +203,11 @@ public class DefaultSchema extends SchemaImpl {
     public final ResultSnapshots RESULT_SNAPSHOTS = ResultSnapshots.RESULT_SNAPSHOTS;
 
     /**
+     * The table <code>results_outbox</code>.
+     */
+    public final ResultsOutbox RESULTS_OUTBOX = ResultsOutbox.RESULTS_OUTBOX;
+
+    /**
      * The table <code>rounds</code>.
      */
     public final Rounds ROUNDS = Rounds.ROUNDS;
@@ -280,6 +286,7 @@ public class DefaultSchema extends SchemaImpl {
             RacingClasses.RACING_CLASSES,
             RefreshTokens.REFRESH_TOKENS,
             ResultSnapshots.RESULT_SNAPSHOTS,
+            ResultsOutbox.RESULTS_OUTBOX,
             Rounds.ROUNDS,
             TrackLapThresholds.TRACK_LAP_THRESHOLDS,
             Tracks.TRACKS,

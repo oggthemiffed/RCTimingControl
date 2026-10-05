@@ -286,6 +286,20 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         return (Long) get(18);
     }
 
+    /**
+     * Setter for <code>entries.racehub_event_class_id</code>.
+     */
+    public void setRacehubEventClassId(String value) {
+        set(19, value);
+    }
+
+    /**
+     * Getter for <code>entries.racehub_event_class_id</code>.
+     */
+    public String getRacehubEventClassId() {
+        return (String) get(19);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -309,7 +323,7 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
     /**
      * Create a detached, initialised EntriesRecord
      */
-    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Instant submittedAt, Instant updatedAt, Instant confirmedAt, Instant withdrawnAt, Long competitorId, String secondaryTransponderNumber, String externalSource, String externalEntryId, Long externalEntryVersion, String racehubArrival, Instant checkedInAt, Long checkedInByUserId) {
+    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Instant submittedAt, Instant updatedAt, Instant confirmedAt, Instant withdrawnAt, Long competitorId, String secondaryTransponderNumber, String externalSource, String externalEntryId, Long externalEntryVersion, String racehubArrival, Instant checkedInAt, Long checkedInByUserId, String racehubEventClassId) {
         super(Entries.ENTRIES);
 
         setId(id);
@@ -331,6 +345,7 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         setRacehubArrival(racehubArrival);
         setCheckedInAt(checkedInAt);
         setCheckedInByUserId(checkedInByUserId);
+        setRacehubEventClassId(racehubEventClassId);
         resetChangedOnNotNull();
     }
 }

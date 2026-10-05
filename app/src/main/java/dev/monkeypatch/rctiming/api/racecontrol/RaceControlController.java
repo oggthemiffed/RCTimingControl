@@ -14,11 +14,13 @@ import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.query.racecontrol.RunOrderQuery;
+import dev.monkeypatch.rctiming.resultsexport.FinishedRaceCorrected;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.LiveTimingHub;
 import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -53,6 +55,7 @@ public class RaceControlController {
     private final LiveTimingHub liveTimingHub;
     private final UserRepository userRepository;
     private final RoundRepository roundRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Process-local active-race override for CTRL-09 skip-to.
@@ -68,7 +71,8 @@ public class RaceControlController {
                                   LapTimingService lapTimingService,
                                   LiveTimingHub liveTimingHub,
                                   UserRepository userRepository,
-                                  RoundRepository roundRepository) {
+                                  RoundRepository roundRepository,
+                                  ApplicationEventPublisher eventPublisher) {
         this.runOrderQuery = runOrderQuery;
         this.raceRepository = raceRepository;
         this.stateMachine = stateMachine;
@@ -77,6 +81,7 @@ public class RaceControlController {
         this.liveTimingHub = liveTimingHub;
         this.userRepository = userRepository;
         this.roundRepository = roundRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     // --- D-04: Run order ---
@@ -135,9 +140,10 @@ public class RaceControlController {
     @Transactional
     public ResponseEntity<Void> abandonRace(@PathVariable long raceId) {
         Race race = loadRace(raceId);
+        Instant now = Instant.now();
+        race.setFinishedAt(now);
+        race.setAbandonedAt(now);
         stateMachine.transition(race, RaceStatus.FINISHED);
-        race.setFinishedAt(Instant.now());
-        // TODO: add abandoned flag in Phase 7 results plan — use finishedAt + empty result snapshot to distinguish
         raceRepository.save(race);
         return ResponseEntity.ok().build();
     }
@@ -172,7 +178,12 @@ public class RaceControlController {
                 actingUserName,
                 adjustment.getAdjustedAt().toEpochMilli()
         );
-        lapTimingService.applyMarshalAdjustment(raceId, req.entryId(), req.lapDelta(), dto);
+        if (race.getStatus() == RaceStatus.FINISHED) {
+            // No live timing is left to adjust once a race finishes; send its results again instead (#27)
+            eventPublisher.publishEvent(new FinishedRaceCorrected(raceId));
+        } else {
+            lapTimingService.applyMarshalAdjustment(raceId, req.entryId(), req.lapDelta(), dto);
+        }
         return ResponseEntity.ok().build();
     }
 

@@ -1,0 +1,157 @@
+package dev.monkeypatch.rctiming.resultsexport;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.domain.event.Event;
+import dev.monkeypatch.rctiming.domain.event.EventRepository;
+import dev.monkeypatch.rctiming.domain.race.RaceRepository;
+import dev.monkeypatch.rctiming.domain.race.RoundRepository;
+import dev.monkeypatch.rctiming.query.resultsexport.ResultsExportQuery;
+import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Builds results exports and queues them for RaceHub (#27). Only events whose entries came from a RaceHub
+ * import are queued, since RaceHub needs its own event id to place them; any event can be downloaded.
+ */
+@Service
+public class ResultsExportService {
+
+    private static final Logger log = LoggerFactory.getLogger(ResultsExportService.class);
+
+    private final EventRepository eventRepository;
+    private final RaceRepository raceRepository;
+    private final RoundRepository roundRepository;
+    private final ResultsOutboxRepository outboxRepository;
+    private final ResultsExportQuery exportQuery;
+    private final ObjectMapper objectMapper;
+
+    public ResultsExportService(EventRepository eventRepository, RaceRepository raceRepository,
+                                RoundRepository roundRepository, ResultsOutboxRepository outboxRepository,
+                                ResultsExportQuery exportQuery, ObjectMapper objectMapper) {
+        this.eventRepository = eventRepository;
+        this.raceRepository = raceRepository;
+        this.roundRepository = roundRepository;
+        this.outboxRepository = outboxRepository;
+        this.exportQuery = exportQuery;
+        this.objectMapper = objectMapper;
+    }
+
+    /**
+     * Marks the event a race belongs to as needing an export, in the caller's transaction, so the request is
+     * saved with the finish or correction that made it. {@link #queuePending} builds the export afterwards.
+     * A failure here never rolls back race control's change.
+     */
+    @Transactional(noRollbackFor = RuntimeException.class)
+    public void requestForRace(long raceId, ExportReason reason) {
+        raceRepository.findById(raceId)
+                .flatMap(race -> roundRepository.findById(race.getRoundId()))
+                .ifPresentOrElse(round -> request(round.getEventId(), reason),
+                        () -> log.warn("No event found for race {}; no results export requested", raceId));
+    }
+
+    /** Marks an event as needing an export, in the caller's transaction. Events not from RaceHub are skipped. */
+    @Transactional(noRollbackFor = RuntimeException.class)
+    public void request(long eventId, ExportReason reason) {
+        eventRepository.findById(eventId)
+                .filter(event -> event.getRacehubEventId() != null)
+                .ifPresent(event -> event.setResultsExportPending(reason.name()));
+    }
+
+    /** Events with an export requested but not queued yet. */
+    @Transactional(readOnly = true)
+    public List<Long> pendingEventIds() {
+        return eventRepository.findIdsWithResultsExportPending();
+    }
+
+    /**
+     * Queues the export an event is waiting for, and clears its request in the same transaction. If building
+     * the export fails, the request stays and is tried again.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Optional<ResultsOutboxItem> queuePending(long eventId) {
+        Event event = eventRepository.findByIdForUpdate(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + eventId));
+        String pending = event.getResultsExportPending();
+        if (pending == null) {
+            return Optional.empty();
+        }
+        event.setResultsExportPending(null);
+        return queue(event, ExportReason.valueOf(pending));
+    }
+
+    /**
+     * Builds the event's next export and queues it, replacing any of its exports that have not been sent yet:
+     * each export carries the whole event, so only the newest needs to go.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Optional<ResultsOutboxItem> enqueue(long eventId, ExportReason reason) {
+        Event event = eventRepository.findByIdForUpdate(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + eventId));
+        return queue(event, reason);
+    }
+
+    private Optional<ResultsOutboxItem> queue(Event event, ExportReason reason) {
+        long eventId = event.getId();
+        if (event.getRacehubEventId() == null) {
+            log.debug("Event {} has no RaceHub event; results export not queued", eventId);
+            return Optional.empty();
+        }
+        Instant now = Instant.now();
+        long revision = event.nextResultsExportRevision();
+        eventRepository.save(event);
+
+        for (ResultsOutboxItem older : outboxRepository.findByEventIdAndStatusIn(eventId,
+                EnumSet.of(OutboxStatus.QUEUED, OutboxStatus.FAILED))) {
+            older.setStatus(OutboxStatus.SUPERSEDED);
+        }
+
+        ResultsOutboxItem item = new ResultsOutboxItem();
+        item.setEventId(eventId);
+        item.setRevision(revision);
+        item.setReason(reason);
+        item.setPayload(toJson(exportQuery.build(eventId, revision, now)));
+        item.setStatus(OutboxStatus.QUEUED);
+        item.setNextAttemptAt(now);
+        item.setCreatedAt(now);
+        ResultsOutboxItem saved = outboxRepository.save(item);
+        log.info("Queued results export revision {} of event {} ({})", revision, eventId, reason);
+        return Optional.of(saved);
+    }
+
+    /** The event's results as they stand now, for download. Carries the last revision handed out; queues nothing. */
+    @Transactional(readOnly = true)
+    public ResultsExportV1 current(long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + eventId));
+        return exportQuery.build(eventId, event.getResultsExportRevision(), Instant.now());
+    }
+
+    /** Sends a queued or failed export on the sender's next pass instead of waiting for its retry time. */
+    @Transactional
+    public ResultsOutboxItem retryNow(long itemId) {
+        ResultsOutboxItem item = outboxRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("Results export not found: " + itemId));
+        if (item.getStatus() == OutboxStatus.QUEUED || item.getStatus() == OutboxStatus.FAILED) {
+            item.setNextAttemptAt(Instant.now());
+        }
+        return item;
+    }
+
+    private String toJson(ResultsExportV1 export) {
+        try {
+            return objectMapper.writeValueAsString(export);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Could not write the results export", e);
+        }
+    }
+}

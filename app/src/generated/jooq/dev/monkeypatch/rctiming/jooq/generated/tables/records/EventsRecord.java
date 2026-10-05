@@ -175,6 +175,48 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
         return (Long) get(10);
     }
 
+    /**
+     * Setter for <code>events.racehub_event_id</code>.
+     */
+    public void setRacehubEventId(String value) {
+        set(11, value);
+    }
+
+    /**
+     * Getter for <code>events.racehub_event_id</code>.
+     */
+    public String getRacehubEventId() {
+        return (String) get(11);
+    }
+
+    /**
+     * Setter for <code>events.results_export_revision</code>.
+     */
+    public void setResultsExportRevision(Long value) {
+        set(12, value);
+    }
+
+    /**
+     * Getter for <code>events.results_export_revision</code>.
+     */
+    public Long getResultsExportRevision() {
+        return (Long) get(12);
+    }
+
+    /**
+     * Setter for <code>events.results_export_pending</code>.
+     */
+    public void setResultsExportPending(String value) {
+        set(13, value);
+    }
+
+    /**
+     * Getter for <code>events.results_export_pending</code>.
+     */
+    public String getResultsExportPending() {
+        return (String) get(13);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -198,7 +240,7 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
     /**
      * Create a detached, initialised EventsRecord
      */
-    public EventsRecord(Long id, String name, LocalDate eventDate, String status, Instant createdAt, Instant updatedAt, Instant entryOpensAt, Instant entryClosesAt, Long trackId, Instant racehubLastImportAt, Long racehubLastRevision) {
+    public EventsRecord(Long id, String name, LocalDate eventDate, String status, Instant createdAt, Instant updatedAt, Instant entryOpensAt, Instant entryClosesAt, Long trackId, Instant racehubLastImportAt, Long racehubLastRevision, String racehubEventId, Long resultsExportRevision, String resultsExportPending) {
         super(Events.EVENTS);
 
         setId(id);
@@ -212,6 +254,9 @@ public class EventsRecord extends UpdatableRecordImpl<EventsRecord> {
         setTrackId(trackId);
         setRacehubLastImportAt(racehubLastImportAt);
         setRacehubLastRevision(racehubLastRevision);
+        setRacehubEventId(racehubEventId);
+        setResultsExportRevision(resultsExportRevision);
+        setResultsExportPending(resultsExportPending);
         resetChangedOnNotNull();
     }
 }

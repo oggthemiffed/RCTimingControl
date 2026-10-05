@@ -72,3 +72,22 @@ describe('AdminPanelLayout Backups entry', () => {
     expect(screen.queryByRole('link', { name: /Backups/i })).not.toBeInTheDocument();
   });
 });
+
+describe('AdminPanelLayout Results to RaceHub entry', () => {
+  beforeEach(() => {
+    auth.roles = ['ADMIN'];
+  });
+
+  it('is shown to ADMIN users', () => {
+    renderLayout();
+
+    expect(screen.getAllByRole('link', { name: /Results to RaceHub/i }).length).toBeGreaterThan(0);
+  });
+
+  it('is hidden from race directors', () => {
+    auth.roles = ['RACE_DIRECTOR'];
+    renderLayout();
+
+    expect(screen.queryByRole('link', { name: /Results to RaceHub/i })).not.toBeInTheDocument();
+  });
+});

@@ -17,4 +17,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM Event e WHERE e.id = :id")
     Optional<Event> findByIdForUpdate(@Param("id") Long id);
+
+    /** Events whose results are waiting to be queued for RaceHub (#27). */
+    @Query("SELECT e.id FROM Event e WHERE e.resultsExportPending IS NOT NULL ORDER BY e.id")
+    List<Long> findIdsWithResultsExportPending();
 }

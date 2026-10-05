@@ -1,0 +1,117 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+import ResultsExportsPage from './ResultsExportsPage';
+import { adminApi, type ResultsExportRowDto } from '@/lib/adminApi';
+
+vi.mock('@/lib/adminApi', () => ({ adminApi: { resultsExports: { list: vi.fn(), retry: vi.fn() } } }));
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
+const api = vi.mocked(adminApi, true);
+
+function row(overrides: Partial<ResultsExportRowDto>): ResultsExportRowDto {
+  return {
+    id: 1,
+    eventId: 5,
+    eventName: 'Club Round 3',
+    revision: 1,
+    reason: 'RACE_FINISHED',
+    status: 'SENT',
+    attempts: 1,
+    nextAttemptAt: '2026-10-04T10:00:00Z',
+    lastError: null,
+    createdAt: '2026-10-04T10:00:00Z',
+    sentAt: '2026-10-04T10:00:05Z',
+    ...overrides,
+  };
+}
+
+function renderPage() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={queryClient}>
+      <ResultsExportsPage />
+    </QueryClientProvider>,
+  );
+}
+
+describe('ResultsExportsPage', () => {
+  beforeEach(() => vi.resetAllMocks());
+
+  it('lists exports with their status and the last error', async () => {
+    api.resultsExports.list.mockResolvedValue({
+      sendingEnabled: true,
+      resultsUrl: 'https://racehub.example/api/results',
+      missingSettings: [],
+      exports: [
+        row({ id: 3, revision: 3, reason: 'CORRECTION', status: 'FAILED', attempts: 2, lastError: 'RaceHub answered 503', sentAt: null }),
+        row({ id: 2, revision: 2, status: 'SUPERSEDED', attempts: 0, sentAt: null }),
+        row({ id: 1 }),
+      ],
+    });
+    renderPage();
+
+    expect(await screen.findByText('https://racehub.example/api/results')).toBeInTheDocument();
+    expect(screen.getByText('Failed, will retry')).toBeInTheDocument();
+    expect(screen.getByText('Replaced by a newer export')).toBeInTheDocument();
+    expect(screen.getByText('Sent')).toBeInTheDocument();
+    expect(screen.getByText('RaceHub answered 503')).toBeInTheDocument();
+    expect(screen.getByText(/^Correction · revision 3 · .* · 2 attempts$/)).toBeInTheDocument();
+  });
+
+  it('sends a failed export again on request', async () => {
+    api.resultsExports.list.mockResolvedValue({
+      sendingEnabled: true,
+      resultsUrl: 'https://racehub.example/api/results',
+      missingSettings: [],
+      exports: [row({ id: 7, revision: 4, status: 'FAILED', lastError: 'Connection refused', sentAt: null })],
+    });
+    api.resultsExports.retry.mockResolvedValue(undefined);
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Send Club Round 3 revision 4 now' }));
+
+    await waitFor(() => expect(api.resultsExports.retry).toHaveBeenCalledWith(7, expect.anything()));
+    await waitFor(() => expect(api.resultsExports.list).toHaveBeenCalledTimes(2));
+  });
+
+  it('says results wait when no RaceHub address is set', async () => {
+    api.resultsExports.list.mockResolvedValue({
+      sendingEnabled: false,
+      resultsUrl: null,
+      missingSettings: ['rctiming.racehub.results-url', 'rctiming.racehub.token'],
+      exports: [row({ status: 'QUEUED', attempts: 0, sentAt: null })],
+    });
+    renderPage();
+
+    expect(await screen.findByText('No RaceHub address is set, so results wait here.')).toBeInTheDocument();
+    expect(screen.getByText('rctiming.racehub.results-url')).toBeInTheDocument();
+    expect(screen.getByText('rctiming.racehub.token')).toBeInTheDocument();
+    expect(screen.getByText('Waiting to send')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /now$/ })).not.toBeInTheDocument();
+  });
+
+  it('names the missing key when only the address is set', async () => {
+    api.resultsExports.list.mockResolvedValue({
+      sendingEnabled: false,
+      resultsUrl: 'https://racehub.example/api/results',
+      missingSettings: ['rctiming.racehub.token'],
+      exports: [],
+    });
+    renderPage();
+
+    expect(await screen.findByText('No RaceHub key is set, so results wait here.')).toBeInTheDocument();
+    expect(screen.getByText('rctiming.racehub.token')).toBeInTheDocument();
+    expect(screen.queryByText('rctiming.racehub.results-url')).not.toBeInTheDocument();
+  });
+
+  it('shows an empty state before anything is sent', async () => {
+    api.resultsExports.list.mockResolvedValue({
+      sendingEnabled: true, resultsUrl: 'https://racehub.example/r', missingSettings: [], exports: [],
+    });
+    renderPage();
+
+    expect(await screen.findByText('Nothing sent yet')).toBeInTheDocument();
+  });
+});

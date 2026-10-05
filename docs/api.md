@@ -488,6 +488,27 @@ POST /api/v1/admin/backups
 
 ---
 
+## Admin — Results to RaceHub
+
+`ADMIN` only. Exports are queued and sent by the app itself; see [results-export-v1.md](results-export-v1.md) for the file and when it is sent.
+
+```http
+GET /api/v1/admin/results-exports
+```
+**200 OK** — `{ "sendingEnabled": true, "resultsUrl": "https://racehub.example/api/results", "missingSettings": [], "exports": [Export] }`, the newest 100 first. `sendingEnabled` is false until both the RaceHub address and key are set, and exports wait until then; `missingSettings` names the settings still needed. Each `Export` is `{ "id": 9, "eventId": 21, "eventName": "Club Round 3", "revision": 3, "reason": "CORRECTION", "status": "FAILED", "attempts": 2, "nextAttemptAt": "2026-10-18T15:50:00Z", "lastError": "RaceHub answered 503: ...", "createdAt": "2026-10-18T15:43:02Z", "sentAt": null }`. `reason` is `RACE_FINISHED`, `CORRECTION` or `DAY_CLOSE`; `status` is `QUEUED`, `FAILED`, `SENT` or `SUPERSEDED`.
+
+```http
+POST /api/v1/admin/results-exports/{id}/retry
+```
+**204 No Content** — a waiting or failed export is sent with the next batch instead of waiting out its backoff. A sent or superseded one is left alone. **404** for an unknown id.
+
+```http
+GET /api/v1/admin/events/{eventId}/results-export
+```
+**200 OK** — the event's results as they stand now, as a Results Export v1 document, with `Content-Disposition: attachment; filename="results-event-{eventId}-r{revision}.json"`. Works for any event, imported from RaceHub or not, and queues nothing. **404** for an unknown event.
+
+---
+
 ## Error responses
 
 All errors use [RFC 9457 Problem Details](https://www.rfc-editor.org/rfc/rfc9457):

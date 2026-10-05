@@ -141,6 +141,11 @@ public class Races extends TableImpl<RacesRecord> {
      */
     public final TableField<RacesRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
+    /**
+     * The column <code>races.abandoned_at</code>.
+     */
+    public final TableField<RacesRecord, Instant> ABANDONED_AT = createField(DSL.name("abandoned_at"), SQLDataType.BIGINT, this, "", new InstantMicrosConverter());
+
     private Races(Name alias, Table<RacesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

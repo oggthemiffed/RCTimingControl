@@ -70,6 +70,17 @@ rctiming.backup.directory=E:/rctiming-backups
 
 On Linux the backup folder must be one the `rctiming` user can write to. For a folder on the laptop's own disk, create it with `sudo install -d -o rctiming -g rctiming /srv/rctiming-backups`. A USB stick or network share has to be mounted so that user can write to it, for example with `uid=rctiming,gid=rctiming` in its mount options. The desktop's automatic mount under `/media/<your name>` is private to you, so the service can't use it.
 
+## Sending results to RaceHub
+
+For events whose entries were imported from RaceHub, the app sends the results back as each race finishes, when a finished race is corrected, and when the race day is closed (see [results-export-v1.md](results-export-v1.md)). Give it RaceHub's address and the club's key in `application.properties`:
+
+```properties
+rctiming.racehub.results-url=https://racehub.example/api/results
+rctiming.racehub.token=the-key-from-racehub
+```
+
+The address must start with `https://`, since the key goes with every request. Without both settings the results wait in the app, and are sent once they are set and the service restarted. The laptop doesn't need to be online while racing: results queue while the network is down and go when it is back. **Results to RaceHub** in the admin panel shows what has been sent, and each event's page has a **Download results** button for taking the file across by hand.
+
 ## Starting and stopping the service
 
 | System | Stop | Start |

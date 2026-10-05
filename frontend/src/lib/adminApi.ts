@@ -348,6 +348,34 @@ export interface BackupsDto {
   backups: BackupFileDto[];
 }
 
+// Results sent to RaceHub (#27)
+export type ResultsExportStatus = 'QUEUED' | 'FAILED' | 'SENT' | 'SUPERSEDED';
+export type ResultsExportReason = 'RACE_FINISHED' | 'CORRECTION' | 'DAY_CLOSE';
+
+export interface ResultsExportRowDto {
+  id: number;
+  eventId: number;
+  eventName: string;
+  revision: number;
+  reason: ResultsExportReason;
+  status: ResultsExportStatus;
+  attempts: number;
+  nextAttemptAt: string;
+  lastError: string | null;
+  createdAt: string;
+  sentAt: string | null;
+}
+
+export interface ResultsExportsDto {
+  /** Whether the RaceHub address and key are both set; without them, exports wait in the queue */
+  sendingEnabled: boolean;
+  resultsUrl: string | null;
+  /** The settings still needed before anything is sent */
+  missingSettings: string[];
+  /** Newest first */
+  exports: ResultsExportRowDto[];
+}
+
 export const adminApi = {
   // RaceHub import. A blocked import answers 422 with the same preview body, so return it.
   importRaceHubEntries: (eventId: number, exportDocument: unknown, dryRun: boolean) =>
@@ -537,4 +565,23 @@ export const adminApi = {
     create: () =>
       api.post<BackupFileDto>('/api/v1/admin/backups').then(r => r.data),
   },
+
+  // Results sent to RaceHub (#27)
+  resultsExports: {
+    list: () =>
+      api.get<ResultsExportsDto>('/api/v1/admin/results-exports').then(r => r.data),
+    retry: (id: number) =>
+      api.post(`/api/v1/admin/results-exports/${id}/retry`).then(() => undefined),
+    /** The event's results as they stand now, as a Results Export v1 file */
+    download: (eventId: number) =>
+      api
+        .get<Blob>(`/api/v1/admin/events/${eventId}/results-export`, { responseType: 'blob' })
+        .then(r => ({ blob: r.data, filename: filenameFrom(r.headers['content-disposition']) ?? `results-event-${eventId}.json` })),
+  },
 };
+
+function filenameFrom(contentDisposition: unknown): string | null {
+  if (typeof contentDisposition !== 'string') return null;
+  const match = /filename="?([^";]+)"?/.exec(contentDisposition);
+  return match ? match[1] : null;
+}

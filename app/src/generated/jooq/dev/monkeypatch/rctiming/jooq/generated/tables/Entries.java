@@ -168,6 +168,11 @@ public class Entries extends TableImpl<EntriesRecord> {
      */
     public final TableField<EntriesRecord, Long> CHECKED_IN_BY_USER_ID = createField(DSL.name("checked_in_by_user_id"), SQLDataType.BIGINT, this, "");
 
+    /**
+     * The column <code>entries.racehub_event_class_id</code>.
+     */
+    public final TableField<EntriesRecord, String> RACEHUB_EVENT_CLASS_ID = createField(DSL.name("racehub_event_class_id"), SQLDataType.VARCHAR(100), this, "");
+
     private Entries(Name alias, Table<EntriesRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

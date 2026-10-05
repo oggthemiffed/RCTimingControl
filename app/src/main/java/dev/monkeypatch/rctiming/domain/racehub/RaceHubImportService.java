@@ -85,8 +85,19 @@ public class RaceHubImportService {
             throw new IllegalArgumentException("RaceHub export has no revision");
         }
         List<ExportEntry> exportEntries = export.entries() == null ? List.of() : export.entries();
+        String racehubEventId = export.event() == null ? null : blankToNull(export.event().id());
 
         List<String> errors = new ArrayList<>();
+        if (racehubEventId == null) {
+            // Results go back to RaceHub under this id (#27), so an import without it would never be sent
+            errors.add("This file has no RaceHub event id, so the results couldn't be sent back to RaceHub. "
+                    + "Download the entry export from RaceHub again.");
+        } else if (event.getRacehubEventId() != null
+                && !event.getRacehubEventId().equals(racehubEventId)) {
+            // Results go back to the RaceHub event recorded here (#27), so one event takes one RaceHub event's entries
+            errors.add("This file is for RaceHub event " + racehubEventId + ", but this event's entries came from "
+                    + "RaceHub event " + event.getRacehubEventId());
+        }
         List<String> warnings = new ArrayList<>();
         ClassResolver classes = new ClassResolver(eventId);
         Map<String, UnmappedAccumulator> unmapped = new TreeMap<>();
@@ -164,6 +175,7 @@ public class RaceHubImportService {
                     .forEach(p -> savedIds.put(p, applyRow(eventId, p, competitors)));
             event.setRacehubLastImportAt(Instant.now());
             event.setRacehubLastRevision(export.revision());
+            event.setRacehubEventId(racehubEventId);
             eventRepository.save(event);
         }
 
@@ -367,6 +379,7 @@ public class RaceHubImportService {
                 }
                 e.setCompetitorId(competitor.getId());
                 e.setEventClassId(p.eventClassId);
+                e.setRacehubEventClassId(row.eventClassId());
                 e.setTransponderNumberSnapshot(primaryOf(row));
                 e.setSecondaryTransponderNumber(secondaryOf(row));
                 if (e.getStatus() != EntryStatus.CONFIRMED) {

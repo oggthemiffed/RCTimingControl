@@ -32,6 +32,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Races;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots;
+import dev.monkeypatch.rctiming.jooq.generated.tables.ResultsOutbox;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Rounds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.TrackLapThresholds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Tracks;
@@ -186,6 +187,11 @@ public class Tables {
      * The table <code>result_snapshots</code>.
      */
     public static final ResultSnapshots RESULT_SNAPSHOTS = ResultSnapshots.RESULT_SNAPSHOTS;
+
+    /**
+     * The table <code>results_outbox</code>.
+     */
+    public static final ResultsOutbox RESULTS_OUTBOX = ResultsOutbox.RESULTS_OUTBOX;
 
     /**
      * The table <code>rounds</code>.

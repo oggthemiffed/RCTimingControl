@@ -76,6 +76,10 @@ public class Entry {
     @Column(name = "racehub_arrival", length = 20)
     private String racehubArrival;
 
+    /** The RaceHub event_class_id this entry was booked in (#27). Null for walk-ins. */
+    @Column(name = "racehub_event_class_id", length = 100)
+    private String racehubEventClassId;
+
     /** When the competitor checked in at the desk (L11). Null until they do. */
     @Column(name = "checked_in_at")
     private Instant checkedInAt;
@@ -134,6 +138,9 @@ public class Entry {
 
     public String getRacehubArrival() { return racehubArrival; }
     public void setRacehubArrival(String racehubArrival) { this.racehubArrival = racehubArrival; }
+
+    public String getRacehubEventClassId() { return racehubEventClassId; }
+    public void setRacehubEventClassId(String racehubEventClassId) { this.racehubEventClassId = racehubEventClassId; }
 
     public Instant getCheckedInAt() { return checkedInAt; }
     public void setCheckedInAt(Instant checkedInAt) { this.checkedInAt = checkedInAt; }
