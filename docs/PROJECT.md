@@ -2,77 +2,79 @@
 
 ## What This Is
 
-A web-based RC club management and race timing system built to replace RCResults. It gives racers a self-service portal to manage their profiles, cars, and transponders, and lets them enter events online. Race officials run events and championships from a browser-based control client that connects to AMB/MyLaps decoders over TCP, with live results visible to anyone on the network.
+RC club race timing and race control, built to replace RCResults. RCTC is the timing side of the RaceHub suite. RaceHub is a separate cloud app that owns booking, racer accounts and event entry. RCTC runs only at the venue (the local-only timing plan, tracking issue #8).
 
-Booking and event entry are moving to RaceHub, and RCTC is becoming timing and race control that runs on a laptop at the venue (the local-only timing plan, tracking issue #8).
+It is one program on a laptop at the track. It installs as a background service, reads the AMB/MyLaps decoder directly over TCP, and serves race control, check-in, the announcer and the spectator boards to browsers on the venue network. It keeps the club's results and championships. Only officials sign in. Entries arrive in a RaceHub export file or are added as walk-ins.
 
 ## Core Value
 
-Racers can enter events online and manage their own car/transponder details, while officials run a full race meeting from any Windows or Linux machine — with live timing fed directly from AMB/MyLaps hardware, and the meeting itself continuing to run even through a full venue connectivity outage.
+Officials run a full race meeting from a laptop at the track, on Windows, macOS or Linux, with live timing fed directly from AMB/MyLaps hardware and no dependence on the internet. Entries come in from RaceHub in one file, and the club's results and championships stay on the laptop, backed up.
 
 ## Requirements
 
 ### Validated
 
-- [x] Racers can register and manage their profile, cars, and transponders via an online portal — Validated in Phase 1–2
-- [x] Racers can enter events and championships online — Validated in Phase 2
-- [x] Admins can create and configure events with multiple races and classes — Validated in Phase 3
-- [x] Admins can set up championships with configurable "best X from Y rounds" scoring — Validated in Phase 3 & 7
-- [x] Race control client (browser-based) runs on Windows and Linux at the track — Validated in Phase 4
-- [x] Race control: start and stop races; marshal laps; call the grid; print results — Validated in Phase 4
-- [x] Live lap timing received from AMB/MyLaps decoder via TCP — Validated in Phase 5
-- [x] Live timing display in the browser during a race — Validated in Phase 5–6
-- [x] Race results published and visible after each race, with individual lap times — Validated in Phase 7
-- [x] Championship standings (points table) visible on the web without login — Validated in Phase 7
-- [x] Per-racer result history viewable on the racer portal — Validated in Phase 7
-- [x] A full event day (check-in, race control, live timing, results, spectator boards) can run with zero cloud/internet connectivity at the venue, picking back up automatically once connectivity returns — first delivered by a separate offline app (retired in #21); now moving into RCTC itself, run locally at the venue (#8)
+- [x] Admins can create and configure events with multiple races and classes — Phase 3
+- [x] Admins can set up championships with configurable "best X from Y rounds" scoring — Phases 3 and 7
+- [x] Race control runs in the browser at the track: start and stop races, marshal laps, call the grid, print results — Phase 4
+- [x] Live lap timing read from the AMB/MyLaps decoder over TCP (RC-4 text), shown live in the browser — Phases 5 and 6, then read directly by the app (#9)
+- [x] Race results published after each race, with individual lap times — Phase 7
+- [x] Championship standings and the event schedule visible without login — Phase 7
+- [x] Entries imported from RaceHub's Entry Export v1, with class mapping — #15, #16
+- [x] Walk-in entries added by hand — #17
+- [x] Competitors with no login; results, live timing and standings group by competitor — #12, #13
+- [x] A primary and a secondary transponder per entry, unique within an event — #14
+- [x] Only officials sign in — #18
+- [x] Check-in desk with barcode input and on-the-day transponder swaps; spectator boards — #19, #20
+- [x] A full meeting runs with no internet connection at the venue — #8, #21
+- [x] One SQLite file, behind a seam that lets the database be swapped later — #26
+- [x] Scheduled backups and a restore command — #22
+- [x] One installer per system that runs the app as a background service — #23, #24
 
 ### Active
 
-- [ ] Racers can register and manage their profile, cars, and transponders via an online portal
-- [ ] Racers can enter events and championships online
-- [ ] Admins can create and configure events with multiple races and classes
-- [ ] Admins can set up championships with configurable "best X from Y rounds" scoring (default 4 from 6)
-- [ ] Race control client (browser-based) runs on Windows and Linux at the track
-- [ ] Race control: start and stop races
-- [ ] Race control: call the grid (show which cars are next on track)
-- [ ] Race control: marshal laps (add/remove laps for on-track incidents)
-- [ ] Race control: print or export race results at the venue
-- [ ] Live lap timing received from AMB/MyLaps decoder via TCP
-- [ ] Live timing display in the browser during a race
-- [ ] Race results published and visible after each race
-- [ ] Event schedule visible on the web
-- [ ] Championship standings (points table) visible on the web
+- [ ] Results Export v1 pushed to RaceHub through an outbound queue (#27)
+- [ ] Live feed relay so remote viewers can follow timing (#28)
+- [ ] Streaming overlay page for OBS (#29)
+- [ ] Entry import from other systems: RC-Timing CSV and pull from a URL (#38)
+- [ ] AMB P3 binary protocol for decoders on firmware 4.5 or later (deferred)
 
 ### Out of Scope
 
-- Native mobile app — web is accessible on mobile devices; a dedicated app adds no value for v1
-- Windows-only installer — must run cross-platform (Windows + Linux)
-- ~~Offline-only mode — system requires network connectivity at the venue~~ — **superseded**: race day runs locally at the venue and needs no internet connection (local-only timing plan, tracking issue #8).
+- Racer self-service portal, racer accounts and online entry — **removed** in #18: RaceHub owns racer identity, garage and entry.
+- Forwarder process and gRPC link to a cloud service — **removed** in #10: the app reads the decoder directly.
+- Separate offline race-day app with cloud sync — **removed** in #21: race day runs locally in RCTC itself.
+- Internet deployment (Docker stacks, nginx, TLS) — **removed** in #24: the app stays on the venue network.
+- Native mobile app — the web UI works on phones.
+- Payment processing — handled by RaceHub, or at the track.
 
 ## Context
 
-- **Replacing:** RCResults (rc-timing.com / rc-results.com) — Windows-only client, no racer self-service, no online entry
-- **Timing hardware:** AMB/MyLaps transponder decoders, connected over TCP. The system must parse the MyLaps protocol from the decoder's TCP stream.
-- **Club workflow:** Events consist of multiple races across classes. Championship series span multiple events, scored by configurable best-X-from-Y-rounds (e.g., best 4 of 6).
-- **Users:** Two distinct roles — racers (self-service web portal) and officials/admins (event setup and race control client)
-- **Deployment:** Java backend, browser-based frontend. Race control client must work on a venue laptop running Windows or Linux with no special client installation.
+- **Replacing:** RCResults (rc-timing.com / rc-results.com), a Windows-only client.
+- **Suite:** RaceHub handles booking in the cloud. The boundary is RaceHub's Entry Export v1 file, which carries no contact, date of birth, guardian or payment data. Results go back to RaceHub later (#27).
+- **Timing hardware:** AMB/MyLaps transponder decoders over TCP. RC-4 text (firmware below 4.5, port 5100) is what club hardware uses.
+- **Club workflow:** Events have multiple races across classes. Championship series span multiple events, scored by configurable best-X-from-Y rounds (for example, best 4 of 6).
+- **Users:** officials only (admins, race directors, referees), with stackable roles. Competitors and spectators use the boards and public pages without signing in.
+- **Deployment:** a native installer on the venue laptop, with its own Java runtime, running as a background service. Every client is a browser on the venue network.
 
 ## Constraints
 
-- **Tech Stack**: Java backend — club already has Java expertise and the directory convention is established
-- **Frontend**: Browser-based for all interfaces (racer portal, admin, race control, results display) — no desktop app or native installer
-- **Compatibility**: AMB/MyLaps TCP protocol — must implement or use existing protocol parsing for MyLaps decoder integration
-- **Cross-platform**: Race control must work on both Windows and Linux without platform-specific setup
+- **Tech stack:** Java backend (club expertise; rewriting was considered and rejected in #8), React frontend in the browser.
+- **Compatibility:** AMB/MyLaps TCP protocol.
+- **Cross-platform:** the laptop can run Windows, macOS or Linux.
+- **No internet dependency:** nothing on race day may need the internet.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Browser-based race control client | Avoids platform-specific desktop app; works on Windows and Linux from any browser | — Pending |
-| AMB/MyLaps TCP integration | Club uses AMB/MyLaps hardware; must read their proprietary TCP protocol | — Pending |
-| "Best X from Y" championship scoring | Club's primary format; configurable so other clubs can adapt | — Pending |
-| Split into two independent products (cloud + Local Race Day Program) rather than one hybrid system | A venue network outage previously took race control down with it, since the cloud-only design ran race control server-side with in-memory-only live positions. RCResults — the system being replaced — already proves a fully local, resilient pattern works in the field. A prior hybrid plan (shared `racecontrol-core` module, dual gRPC channels, per-instance signing-key trust registry) generated far more net-new infrastructure than the split, for the same target behavior. | Shipped, then retired in #21 in favour of local-only timing in RCTC itself (#8). Plan archived at `docs/plans/archive/2026-08-06-001-feat-offline-race-day-resilience-split-plan.md` |
+| Browser-based race control | Works on any laptop, and on officials' phones and tablets, with no client install | Shipped |
+| AMB/MyLaps TCP integration | Club hardware; the RC-4 text protocol is read directly by the app | Shipped (RC-4); P3 deferred |
+| "Best X from Y" championship scoring | Club's primary format; configurable so other clubs can adapt | Shipped |
+| Split into a cloud app and a separate offline race-day app | Kept race day running through venue outages | Shipped, then retired in #21. Plan archived at `docs/plans/archive/2026-08-06-001-feat-offline-race-day-resilience-split-plan.md` |
+| RCTC is local-only timing; RaceHub owns booking (2026-10-03) | Race day never depends on the cloud, removing the duplicated offline app, the forwarder and the racer portal | Done for #9 to #26; see #8 |
+| SQLite, kept swappable (2026-10-03) | One file in the app process, no database server to run at the venue | Shipped in #26 |
+| Two transponders per entry (2026-10-04) | Matches RaceHub's export; more per entry may come later | Shipped in #14 |
 
 ## Evolution
 
@@ -92,4 +94,4 @@ Keep this document accurate as the project changes.
 4. Update Context to reflect current state
 
 ---
-*Last updated: 2026-10-04 — separate offline race-day app retired (#21); race day moves to RCTC run locally at the venue (#8)*
+*Last updated: 2026-10-05 — local-only timing in place through #26; results export, live feed and overlay to come (#27 to #29)*

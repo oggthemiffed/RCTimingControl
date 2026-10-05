@@ -18,10 +18,9 @@ export function EntryManagementHelp() {
       <div className="mt-4 rounded-md bg-muted p-3 text-sm">
         <p className="font-semibold mb-1">Common mistakes</p>
         <p>
-          A newly created event starts in Draft status and is not visible to racers.
-          Remember to progress it through Published and then Open Entries so racers can
-          submit. If the list shows no events, check your connection and click Retry — the
-          page will show an error banner if the data failed to load.
+          A newly created event starts in Draft status and does not appear on the public
+          schedule until you publish it. If the list shows no events, check your connection
+          and click Retry — the page will show an error banner if the data failed to load.
         </p>
       </div>
 

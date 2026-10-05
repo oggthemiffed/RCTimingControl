@@ -337,6 +337,6 @@ Open the project in Claude Code from the repo root. `CLAUDE.md` is loaded automa
 Key docs to reference in a session:
 - `CLAUDE.md` — stack, architecture, module boundaries, rules
 - `docs/PROJECT.md` — what the system is and its requirements
-- `docs/REQUIREMENTS.md` — full requirement list (AUTH, RACER, EVENT, etc.)
+- `docs/REQUIREMENTS.md` — full requirement list: current, planned and removed, with the issue behind each change
 - `docs/architecture.md` — deeper architecture notes
 - `.planning/phases/` — historical decision log per phase (useful if you hit an unexpected behaviour)
