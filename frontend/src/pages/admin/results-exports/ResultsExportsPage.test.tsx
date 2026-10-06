@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import ResultsExportsPage from './ResultsExportsPage';
 import { adminApi, type ResultsExportRowDto } from '@/lib/adminApi';
+import { HelpProvider } from '@/context/HelpContext';
 
 vi.mock('@/lib/adminApi', () => ({ adminApi: { resultsExports: { list: vi.fn(), retry: vi.fn() } } }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -31,7 +32,9 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <ResultsExportsPage />
+      <HelpProvider>
+        <ResultsExportsPage />
+      </HelpProvider>
     </QueryClientProvider>,
   );
 }

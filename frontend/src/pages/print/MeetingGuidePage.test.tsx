@@ -13,4 +13,11 @@ describe('MeetingGuidePage', () => {
     render(<MemoryRouter><MeetingGuidePage /></MemoryRouter>);
     expect(screen.getByText(/Print \/ Save as PDF/i)).toBeTruthy();
   });
+
+  it('covers corrections after the finish and the boards', () => {
+    render(<MemoryRouter><MeetingGuidePage /></MemoryRouter>);
+    expect(screen.getByText('Corrections after the finish:')).toBeTruthy();
+    expect(screen.getByText(/10\. Spectator Boards and the Streaming Overlay/)).toBeTruthy();
+    expect(screen.getByText('Streaming overlay:')).toBeTruthy();
+  });
 });

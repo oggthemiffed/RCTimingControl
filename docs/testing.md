@@ -92,7 +92,7 @@ cd frontend && npm run dev                                          # Terminal 3
 | `director@example.com` | `Racer1Pass!` | RACE_DIRECTOR + REFEREE |
 | `admin1@example.com` | `Admin1Pass!` | ADMIN |
 
-Only officials have accounts. The six drivers in the seed event are competitors, not users.
+Both accounts are officials. The race director's password still says "Racer" because the seed data was written when racers had accounts; racer accounts have since been removed, so the name means nothing now. It is kept so existing development databases and `http/dev-race-control.http` keep working. Only officials have accounts, and the six drivers in the seed event are competitors, not users.
 
 **Seed event** (`db/seed/sqlite/V1002`): "Club Championship Round 1" (IN_PROGRESS) with 6 Mod Buggy competitors (transponders 101–106), run order: P1 → P2 → Q1 → Q2 → Q3 → Final A. Navigate to Race Control via **Admin → Race Control** in the sidebar, or directly: `/race-control/event/1`.
 

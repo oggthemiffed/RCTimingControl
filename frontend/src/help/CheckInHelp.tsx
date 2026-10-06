@@ -1,3 +1,5 @@
+import { GuideLinks } from './GuideLinks';
+
 export function CheckInHelp() {
   return (
     <div className="space-y-4">
@@ -13,6 +15,7 @@ export function CheckInHelp() {
         <li><span className="font-semibold">Search:</span> Type at least two letters of the competitor&apos;s name. An unmatched scan fills the search for you.</li>
         <li><span className="font-semibold">Confirm:</span> Click Confirm check-in. A competitor racing two classes on one transponder shows one card per class.</li>
         <li><span className="font-semibold">Swap a transponder:</span> Find the entry, choose Primary or Secondary, and enter the new number. Leave the secondary blank to remove it. Laps count on the new number from the next passing.</li>
+        <li><span className="font-semibold">After a re-import:</span> Importing a newer RaceHub file later does not undo a swap made here. The swapped number stays, and the entry shows &quot;Booking has transponder &hellip;. Keeping the number swapped on the day.&quot; so you can see the booking differs. Swap to the booking&apos;s number to clear the note.</li>
       </ul>
 
       <div className="mt-4 rounded-md bg-muted p-3 text-sm">
@@ -23,6 +26,8 @@ export function CheckInHelp() {
           number first, then set both.
         </p>
       </div>
+
+      <GuideLinks meeting />
     </div>
   );
 }

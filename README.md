@@ -12,7 +12,7 @@ Download the installer for the laptop from the [latest release](https://github.c
 2. Open **http://localhost:8080** on the laptop and follow the setup wizard to create the first official and the club.
 3. Open the About page to see the addresses phones, tablets and boards on the venue network should use.
 
-See [docs/installing.md](docs/installing.md) for each system, the data folder, backups and upgrades.
+See [docs/installing.md](docs/installing.md) for each system, the data folder, backups and upgrades, and the [user manual](docs/user-manual.md) for everything from the setup wizard to race day.
 
 The club's server can also run in Docker on a laptop or a small server on the club network: see [docs/docker.md](docs/docker.md#running-the-clubs-server-with-docker).
 
@@ -26,7 +26,7 @@ cd RCTimingControl
 docker compose -f docker-compose.demo.yml up --build
 ```
 
-Then open **http://localhost:8080** and sign in as `admin@example.com` / `trial123`. See [docs/docker.md](docs/docker.md), and [docs/trial-quickstart.md](docs/trial-quickstart.md#things-to-try) for what to try. The trial guide also covers the demo on an installed copy.
+Then open **http://localhost:8080** and sign in as `admin@example.com` / `trial123`. See [docs/docker.md](docs/docker.md), and [docs/trial-quickstart.md](docs/trial-quickstart.md#things-to-try) for what to try. The trial guide also covers the demo on an installed copy. When you are ready to set up your own club, the [user manual](docs/user-manual.md) takes you from install to race day.
 
 ---
 
@@ -119,6 +119,7 @@ See [docs/testing.md](docs/testing.md) for the full test matrix, including `deco
 
 ## Docs
 
+- [User manual](docs/user-manual.md) — from install to race day, with a pointer to the detail for each step
 - [Installing](docs/installing.md) — install on a venue laptop, data folder, backups, upgrades
 - [Trying it out](docs/trial-quickstart.md) — a demo club and a simulated decoder, no developer setup needed
 - [Running with Docker](docs/docker.md) — the demo on any system with Docker, and the club's own server on a laptop or small server

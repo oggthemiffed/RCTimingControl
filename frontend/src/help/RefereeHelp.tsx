@@ -1,40 +1,34 @@
+import { GuideLinks } from './GuideLinks';
+
 export function RefereeHelp() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        The Referee View provides a live timing display focused on race oversight. It shows
-        the same live timing table as the Cockpit but adds controls for raising incident
-        reports and applying time or lap penalties. Proximity alerts highlight drivers
-        whose gaps are closing rapidly.
+        The Referee View shows the live timing table for one race, with controls for raising incident
+        reports and applying penalties. It opens on the race that is running or stopped; if none is, on the first race not yet finished (or the first in the list when all are finished), so check the selected race before you act. Rows that tint are cars
+        closing quickly on the car ahead.
       </p>
 
       <ul className="mt-3 space-y-1.5 text-sm">
-        <li><span className="font-semibold">Select a race:</span> Click any race in the Run Order sidebar — the live timing table updates to show that race.</li>
-        <li><span className="font-semibold">Raise Incident:</span> Click "Raise Incident" to open the incident report dialog. Select the driver involved, describe the incident, and submit. The report is logged with a timestamp.</li>
-        <li><span className="font-semibold">Apply Penalty:</span> Click "Apply Penalty" to open the penalty dialog. Choose the affected driver and the penalty type (lap deduction or time addition).</li>
-        <li><span className="font-semibold">Proximity alerts:</span> Rows highlighted in the live timing table indicate drivers closing on each other — useful for spotting incidents in real time.</li>
+        <li><span className="font-semibold">Select a race:</span> Click any race in the Run Order sidebar and the table shows that race.</li>
+        <li><span className="font-semibold">Raise Incident:</span> Click &quot;Raise Incident&quot;, choose the Driver, the Type (Jump start, Collision, Shortcut, Dangerous driving or Other) and a short Description. The report is logged with who raised it and when.</li>
+        <li><span className="font-semibold">Apply Penalty:</span> Click &quot;Apply Penalty&quot;, choose the Driver, then &quot;Lap deduction&quot; (whole laps) or &quot;Time penalty (s)&quot; (seconds), the amount and a Reason. A lap deduction takes the laps off the live count straight away. A time penalty is added to the driver&apos;s total time in the result when the race finishes.</li>
+        <li><span className="font-semibold">Proximity alerts:</span> A tinted row means that car has closed on the one ahead by more than half a second since the last update and is within three seconds of it. Use it to spot contact in the making.</li>
+        <li><span className="font-semibold">Unknown transponders:</span> A number that matches no entry in the running race, or matches more than one entry, is not credited to anyone. It appears as an &quot;Unknown Transponders&quot; alert in the race director&apos;s Cockpit with a &quot;Link to entry&quot; button; a race director or admin picks the right entry and its laps are credited back to the start. The Referee View does not show that alert.</li>
       </ul>
 
       <div className="mt-4 rounded-md bg-muted p-3 text-sm">
         <p className="font-semibold mb-1">Common mistakes</p>
         <p>
-          The "Raise Incident" and "Apply Penalty" buttons are disabled when no race is
-          selected. Select the race from the Run Order sidebar first. Penalties are applied
-          immediately and affect the live position calculation — double-check the driver
-          and penalty type before submitting.
+          The Raise Incident and Apply Penalty buttons are disabled until a race is selected, and the
+          Driver list is built from live timing, so it holds only cars that have been timed in that
+          race and is empty once the race has finished. Give a penalty before the race is
+          finished where you can. Penalties cannot be undone from this page, so check the driver,
+          type and amount before you submit. These tools need the Referee role (or admin).
         </p>
       </div>
 
-      <div className="mt-4 pt-4 border-t">
-        <a
-          href="/print/meeting-guide"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline"
-        >
-          Open Race Meeting Guide (printable)
-        </a>
-      </div>
+      <GuideLinks meeting />
     </div>
   );
 }
