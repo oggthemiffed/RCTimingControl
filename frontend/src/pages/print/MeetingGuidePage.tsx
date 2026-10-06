@@ -53,8 +53,9 @@ export default function MeetingGuidePage() {
           <li>
             <span className="font-semibold">Verify the run order loads:</span> The left
             sidebar labelled <span className="font-semibold">Run Order</span> should list
-            all races for the event. If it is empty, the round generator has not been run
-            — go to the event's Classes tab in Admin and generate rounds for each class.
+            all races for the event. If it is empty, the rounds have not been generated yet:
+            click <span className="font-semibold">Generate Rounds</span>, set the practice,
+            qualifying and finals counts, and confirm.
           </li>
         </ol>
       </section>

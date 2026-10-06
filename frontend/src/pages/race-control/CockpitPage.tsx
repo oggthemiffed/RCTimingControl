@@ -18,6 +18,8 @@ import { LiveTimingPanel } from './panels/LiveTimingPanel';
 import { FinishedPanel } from './panels/FinishedPanel';
 import { AudioSettingsPanel } from './panels/AudioSettingsPanel';
 import { UnknownTransponderLinkDialog } from './dialogs/UnknownTransponderLinkDialog';
+import { RoundGeneratorWizard } from './RoundGeneratorWizard';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { RunOrderItemDto } from '@/lib/raceControlApi';
@@ -46,6 +48,11 @@ export default function CockpitPage() {
 
   const { data: runOrder = [], isLoading } = useRunOrder(eventId || null);
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);
+
+  // An event has no races until its rounds are generated; only these roles may generate them
+  const { user } = useAuth();
+  const canGenerateRounds = !!user?.roles.some((r) => r === 'ADMIN' || r === 'RACE_DIRECTOR');
+  const [generatorOpen, setGeneratorOpen] = useState(false);
 
   // Unknown transponder link dialog state
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
@@ -209,6 +216,24 @@ export default function CockpitPage() {
   }
 
   function renderMainPanel() {
+    if (!isLoading && runOrder.length === 0) {
+      return (
+        <div className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold">No races yet</h2>
+          <p className="text-sm text-muted-foreground">
+            {canGenerateRounds
+              ? 'Generate the practice, qualifying and finals rounds for this event to build its run order.'
+              : 'A race director or admin needs to generate the rounds for this event first.'}
+          </p>
+          {canGenerateRounds && (
+            <Button onClick={() => setGeneratorOpen(true)} className="w-fit">
+              Generate Rounds
+            </Button>
+          )}
+        </div>
+      );
+    }
+
     if (!selectedRace || isLoading) {
       return (
         <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
@@ -373,6 +398,8 @@ export default function CockpitPage() {
       <main className="flex-1 overflow-y-auto p-6">
         {renderMainPanel()}
       </main>
+
+      <RoundGeneratorWizard open={generatorOpen} onOpenChange={setGeneratorOpen} eventId={eventId} />
 
       {/* Unknown transponder link dialog */}
       <UnknownTransponderLinkDialog

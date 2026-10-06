@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { adminApi, type EventClassDto, type BumpUpConfig } from '@/lib/adminApi';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 import {
   Dialog,
   DialogContent,
@@ -89,7 +90,7 @@ export function RoundGeneratorWizard({ open, onOpenChange, eventId }: Props) {
       }),
     onSuccess: () => {
       toast.success('Rounds generated successfully');
-      queryClient.invalidateQueries({ queryKey: ['runOrder'] });
+      queryClient.invalidateQueries({ queryKey: raceControlQueryKeys.runOrder(eventId) });
       onOpenChange(false);
       setInitialised(false);
     },

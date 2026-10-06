@@ -9,6 +9,7 @@ export function RaceControlHelp() {
       </p>
 
       <ul className="mt-3 space-y-1.5 text-sm">
+        <li><span className="font-semibold">Generate rounds:</span> A new event has no races. Click "Generate Rounds" to build its practice, qualifying and finals run order.</li>
         <li><span className="font-semibold">Select a race:</span> Click any race in the Run Order sidebar to make it the active race.</li>
         <li><span className="font-semibold">Call Grid:</span> When the race is in Pending state, click "Call Grid" to move it to Grid state and open the grid editor.</li>
         <li><span className="font-semibold">Start / Stop:</span> Use the "Start" button from the Grid editor to begin timing, and the "Stop" button during a running race to pause it.</li>
