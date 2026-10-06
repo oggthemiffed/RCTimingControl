@@ -1,3 +1,5 @@
+import { GuideLinks } from './GuideLinks';
+
 export function OfficialsHelp() {
   return (
     <div className="space-y-4">
@@ -23,6 +25,8 @@ export function OfficialsHelp() {
           on the timing laptop, as described in the installation guide.
         </p>
       </div>
+
+      <GuideLinks admin />
     </div>
   );
 }

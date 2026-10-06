@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import BackupsPage from './BackupsPage';
 import { adminApi } from '@/lib/adminApi';
+import { HelpProvider } from '@/context/HelpContext';
 
 vi.mock('@/lib/adminApi', () => ({ adminApi: { backups: { list: vi.fn(), create: vi.fn() } } }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -14,7 +15,9 @@ function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <BackupsPage />
+      <HelpProvider>
+        <BackupsPage />
+      </HelpProvider>
     </QueryClientProvider>,
   );
 }
