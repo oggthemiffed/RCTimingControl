@@ -219,9 +219,9 @@ export default function MeetingGuidePage() {
             pages, championship points and downloads all show the corrected result. For an event
             imported from RaceHub, a corrected result is also queued to be sent again (see
             <span className="font-semibold"> Results to RaceHub</span> in Admin). Corrections made
-            before the race was last restarted belong to the earlier run and are left out. At
-            present the Referee View lists drivers from live timing, which is empty once a race has
-            finished, so give a penalty before you click Finish Race where you can.
+            before the race was last restarted belong to the earlier run and are left out. To give a
+            penalty after the finish, open the Referee View, choose the finished race in the run
+            order and click Apply Penalty: the driver list holds everyone entered in that race.
           </li>
           <li>
             <span className="font-semibold">Restart if needed:</span> If timing data is

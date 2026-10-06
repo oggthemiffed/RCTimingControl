@@ -20,10 +20,10 @@ export function RefereeHelp() {
       <div className="mt-4 rounded-md bg-muted p-3 text-sm">
         <p className="font-semibold mb-1">Common mistakes</p>
         <p>
-          The Raise Incident and Apply Penalty buttons are disabled until a race is selected, and the
-          Driver list is built from live timing, so it holds only cars that have been timed in that
-          race and is empty once the race has finished. Give a penalty before the race is
-          finished where you can. Penalties cannot be undone from this page, so check the driver,
+          The Raise Incident and Apply Penalty buttons are disabled until a race is selected. The
+          Driver list holds everyone entered in the selected race, so you can still choose a driver
+          after the race has finished; a penalty given then changes the result, which is worked out
+          again. Penalties cannot be undone from this page, so check the driver,
           type and amount before you submit. These tools need the Referee role (or admin).
         </p>
       </div>
