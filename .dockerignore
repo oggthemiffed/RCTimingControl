@@ -1,0 +1,10 @@
+.git
+**/build
+**/.gradle
+frontend/node_modules
+frontend/dist
+app/data
+*.db
+*.db-wal
+*.db-shm
+docs

@@ -1,0 +1,33 @@
+# Try RC Timing Control with the Wyvern RC Club demo data and a simulated decoder sending live laps.
+#
+#   docker compose -f docker-compose.demo.yml up --build
+#
+# Then open http://localhost:8080 and sign in as admin@example.com / trial123. See docs/docker.md.
+# `docker compose -f docker-compose.demo.yml down -v` removes the demo and its data.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: rctimingcontrol:local
+    environment:
+      # Loads the demo club into a fresh database
+      SPRING_PROFILES_ACTIVE: demo
+      # No voice server in the demo; race control falls back to the browser's voice
+      TTS_ENABLED: "false"
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    volumes:
+      - demo_data:/data
+
+  # The fake decoder shares the app's network, so it is on localhost:5100 where the demo club's
+  # decoder settings point
+  simulator:
+    image: rctimingcontrol:local
+    command: ["simulate"]
+    network_mode: "service:app"
+    depends_on:
+      - app
+
+volumes:
+  demo_data:
