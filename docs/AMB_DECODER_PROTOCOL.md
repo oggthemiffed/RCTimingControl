@@ -529,7 +529,7 @@ The simulator enables full end-to-end testing of the app without physical hardwa
 | `oggthemiffed/RCTimingForwarder` `samples/dump_amb_serial.dump` | RC-4 text protocol serial capture — identical format, higher sequence numbers |
 | `oggthemiffed/RCTimingForwarder` `amb_rc4_decoder_client.go` | TCP port 5100 confirmed, line-reading loop |
 | `oggthemiffed/RCTimingForwarder` `amb_rc4_processor.go` | Field annotations (decoder_id, seq_num, transponder_code, time_since_start, hit_counts, signal_strength, passing_status, CRC) |
-| `oggthemiffed/RCTimingForwarder` `main.go` | Port 5100, decoder IP 172.20.0.217 |
+| `oggthemiffed/RCTimingForwarder` `main.go` | Port 5100; the decoder's address came from its configuration (a club address, not recorded here) |
 | `skoky/ammc-android` `P98Parser.kt` | P98/RC-4 text parser — field count per record type (STATUS 5 fields, PASSING 9 fields), tab separator, CRC format, time_since_start × 1000 = milliseconds |
 | `skoky/ammc-android` `Tools.kt` | `P3_DEF_PORT = 5403` confirmed |
 | `datagutten/amb-p3-parser` `src/parser.php` | Authoritative P3 frame structure, record types, TLV field IDs, byte stuffing |
