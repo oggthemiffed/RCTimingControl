@@ -344,8 +344,9 @@ export default function AdminGuidePage() {
             <span className="font-semibold"> Say as…</span> on that driver, type how it should
             sound (for example <em>Shiv-awn Keen</em>), click <span className="font-semibold">Play</span>
             to hear it in the announcer voice, then <span className="font-semibold">Save</span>.
-            It stays with the driver for later meetings, imports never change it, and it takes
-            effect from the next race to reach the grid. Clear it to go back to the name as
+            It stays with the driver for later meetings and imports never change it. It is used for
+            the grid call of the next race to reach the grid, and for the running order from its
+            next announcement. Only admins can change it. Clear it to go back to the name as
             written.
           </li>
         </ol>

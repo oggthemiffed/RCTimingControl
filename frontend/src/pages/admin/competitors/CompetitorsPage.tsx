@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAdminCompetitorsList, useSetSpokenName } from '@/hooks/admin/useAdminCompetitors';
 import { useHelp } from '@/context/HelpContext';
+import { useAuth } from '@/hooks/useAuth';
 import { CompetitorsHelp } from '@/help/CompetitorsHelp';
 import { adminApi, type CompetitorSummaryDto } from '@/lib/adminApi';
 
@@ -28,7 +29,7 @@ async function speak(text: string): Promise<'piper' | 'browser'> {
 }
 
 /** One competitor, with an editor for how their name is said aloud (#119). */
-function CompetitorRow({ competitor }: { competitor: CompetitorSummaryDto }) {
+function CompetitorRow({ competitor, canEdit }: { competitor: CompetitorSummaryDto; canEdit: boolean }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
   const [note, setNote] = useState<string | null>(null);
@@ -90,10 +91,12 @@ function CompetitorRow({ competitor }: { competitor: CompetitorSummaryDto }) {
           <span className="text-muted-foreground">
             {competitor.spokenName ? <>Say as: <span className="text-foreground">{competitor.spokenName}</span></> : 'Said as written'}
           </span>
-          <Button type="button" variant="ghost" size="sm" onClick={startEditing}
-            aria-label={`Edit how ${competitor.displayName} is said`}>
-            Say as…
-          </Button>
+          {canEdit && (
+            <Button type="button" variant="ghost" size="sm" onClick={startEditing}
+              aria-label={`Edit how ${competitor.displayName} is said`}>
+              Say as…
+            </Button>
+          )}
         </div>
       )}
     </li>
@@ -107,6 +110,8 @@ function CompetitorRow({ competitor }: { competitor: CompetitorSummaryDto }) {
 export default function CompetitorsPage() {
   const [search, setSearch] = useState('');
   const { setHelpContent } = useHelp();
+  // Race directors and referees can see the list, but only admins change how a name is said
+  const canEdit = useAuth().user?.roles.includes('ADMIN') ?? false;
   useEffect(() => {
     setHelpContent(<CompetitorsHelp />);
     return () => setHelpContent(null);
@@ -125,7 +130,7 @@ export default function CompetitorsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Competitors</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Drivers imported from RaceHub or added as walk-ins. If the announcer says a name wrongly, use Say as… to type how it should sound.
+          Drivers imported from RaceHub or added as walk-ins. If the announcer says a name wrongly, an admin can use Say as… to type how it should sound.
         </p>
       </div>
 
@@ -160,7 +165,7 @@ export default function CompetitorsPage() {
             <p className="text-sm text-muted-foreground">No competitors match “{search.trim()}”.</p>
           ) : (
             <ul className="divide-y rounded-lg border" aria-label="Competitors">
-              {shown.map(c => <CompetitorRow key={c.id} competitor={c} />)}
+              {shown.map(c => <CompetitorRow key={c.id} competitor={c} canEdit={canEdit} />)}
             </ul>
           )}
         </>

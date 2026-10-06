@@ -512,7 +512,7 @@ Content-Type: application/json
 { "spokenName": "Shiv-awn Keen" }
 ```
 
-Admin only. Send an empty string to clear it. The text is trimmed and can be at most 100 characters (400 otherwise); an unknown competitor is 404. Returns the competitor. The name is used from the next race to reach the grid, and a RaceHub or CSV re-import never changes it.
+Admin only. Send an empty string to clear it. The text is trimmed and can be at most 100 characters (400 otherwise); an unknown competitor is 404. Returns the competitor. The grid-call audio uses it from the next race to reach the grid (the clips are made then), the running order from its next announcement, and a RaceHub or CSV re-import never changes it.
 
 ### Hear it in the announcer voice
 

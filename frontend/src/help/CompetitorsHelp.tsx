@@ -14,7 +14,7 @@ export function CompetitorsHelp() {
         <li><span className="font-semibold">Play:</span> Click Play to hear it in the announcer voice (the voice set under Audio) before you save. If that voice is not running, Play uses the browser&apos;s voice, which may sound different.</li>
         <li><span className="font-semibold">Clear:</span> Click Clear, or save it empty, to go back to saying the name as written.</li>
         <li><span className="font-semibold">Stays with the driver:</span> It belongs to the competitor, so it carries over to later meetings. A RaceHub or CSV import never changes it.</li>
-        <li><span className="font-semibold">When it takes effect:</span> From the next race to reach the grid. The audio for a race is made when it gets there, so a race already on the grid keeps its old voice clips.</li>
+        <li><span className="font-semibold">When it takes effect:</span> The grid-call audio for a race is made when the race reaches the grid, so a change shows from the next race to get there; a race already on the grid keeps its old clips. The running order is read out from the current spelling, so a correction is heard at its next announcement.</li>
       </ul>
 
       <GuideLinks admin />

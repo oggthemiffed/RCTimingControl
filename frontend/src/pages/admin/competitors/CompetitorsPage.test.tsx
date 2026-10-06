@@ -8,6 +8,8 @@ import { adminApi } from '@/lib/adminApi';
 vi.mock('@/lib/adminApi', () => ({
   adminApi: { competitors: { list: vi.fn(), setSpokenName: vi.fn(), previewSpeech: vi.fn() } },
 }));
+const mockUser = vi.fn();
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: mockUser() }) }));
 vi.mock('@/context/HelpContext', () => ({ useHelp: () => ({ setHelpContent: vi.fn() }) }));
 
 const api = vi.mocked(adminApi, true);
@@ -22,7 +24,10 @@ function renderPage() {
 }
 
 describe('CompetitorsPage', () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockUser.mockReturnValue({ roles: ['ADMIN'] });
+  });
 
   it('lists competitors and filters them by name, BRCA number or club', async () => {
     api.competitors.list.mockResolvedValue([
@@ -66,6 +71,15 @@ describe('CompetitorsPage', () => {
 
       expect(await screen.findByText('Said as written')).toBeInTheDocument();
       expect(screen.getByText('Sam Ee-toe')).toBeInTheDocument();
+    });
+
+    it('does not offer Say as… to a race director or referee', async () => {
+      mockUser.mockReturnValue({ roles: ['RACE_DIRECTOR', 'REFEREE'] });
+      api.competitors.list.mockResolvedValue([{ ...siobhan, spokenName: 'Shiv-awn Keen' }]);
+      renderPage();
+
+      expect(await screen.findByText('Shiv-awn Keen')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Edit how Siobhan Keane is said')).not.toBeInTheDocument();
     });
 
     it('saves what the admin types', async () => {
