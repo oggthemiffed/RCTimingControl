@@ -31,13 +31,17 @@ export default function MeetingGuidePage() {
             Entries tab, click <span className="font-semibold">Import entries from RaceHub</span> and
             choose the latest Entry Export file. A newer file updates the same entries. Add
             anyone who did not book through RaceHub with <span className="font-semibold">Add
-            entry</span> as a walk-in.
+            entry</span> as a walk-in. If the club uses an Entry feed or an RC-Timing CSV, use
+            <span className="font-semibold"> Fetch now</span> or <span className="font-semibold">Import
+            from a CSV file</span> on the same tab; each shows what will change before it saves
+            (see the Admin Configuration Guide, section 5).
           </li>
           <li>
             <span className="font-semibold">Run the check-in desk:</span> In race control, open
             <span className="font-semibold"> Check-in</span>. Scan or type each driver's transponder
             as they arrive and confirm. Swap a transponder there if a driver has changed it on the
-            day; the swap is logged.
+            day; the swap is logged, and a later import of the booking file keeps the swapped
+            number (the entry list notes the number the booking has).
           </li>
           <li>
             <span className="font-semibold">Check the decoder connection:</span> RCTC connects
@@ -175,10 +179,10 @@ export default function MeetingGuidePage() {
             number to open the Link Transponder dialog and assign it to the correct driver.
           </li>
           <li>
-            <span className="font-semibold">Marshal lap adjustments:</span> If a driver's
-            car is retrieved from the track by a marshal, the Referee View (accessible via
-            the Referee tab in the race control navigation) allows a +1 or &minus;1 lap
-            adjustment. All adjustments are recorded with a full audit trail.
+            <span className="font-semibold">Taking laps off:</span> To take whole laps off a
+            driver, use <span className="font-semibold">Apply Penalty</span> in the Referee View
+            and choose Lap deduction (see section 7). There is no on-screen +1 or &minus;1 marshal
+            lap button at present.
           </li>
           <li>
             <span className="font-semibold">Stop the race temporarily:</span> Click
@@ -208,9 +212,22 @@ export default function MeetingGuidePage() {
             positions and lap counts for accuracy before moving on.
           </li>
           <li>
+            <span className="font-semibold">Corrections after the finish:</span> A finished
+            race&apos;s result is not fixed for good. When a correction is recorded for it (a time
+            penalty, a lap penalty, or a lap adjustment), the result is worked out again from the
+            result as timed: laps and time are changed, the drivers are ranked again, and results
+            pages, championship points and downloads all show the corrected result. For an event
+            imported from RaceHub, a corrected result is also queued to be sent again (see
+            <span className="font-semibold"> Results to RaceHub</span> in Admin). Corrections made
+            before the race was last restarted belong to the earlier run and are left out. At
+            present the Referee View lists drivers from live timing, which is empty once a race has
+            finished, so give a penalty before you click Finish Race where you can.
+          </li>
+          <li>
             <span className="font-semibold">Restart if needed:</span> If timing data is
             incorrect and the race must be re-run, click
-            <span className="font-semibold"> Restart</span>. This clears all timing data
+            <span className="font-semibold"> Restart</span> (or <span className="font-semibold">Restart
+            Race</span> on the Finished panel). This clears all timing data
             and returns the race to PENDING state. This action requires confirmation.
           </li>
           <li>
@@ -246,8 +263,9 @@ export default function MeetingGuidePage() {
             <span className="font-semibold">Apply a penalty:</span> Click
             <span className="font-semibold"> Apply Penalty</span> to open the penalty
             dialog. Select the driver and specify whether the penalty is a time addition
-            or a lap deduction. Penalties are applied immediately and positions
-            recalculate.
+            or a lap deduction. A lap deduction takes laps off straight away and positions
+            recalculate. A time penalty is recorded when you apply it and added to the driver&apos;s
+            total time when the race finishes.
           </li>
           <li>
             <span className="font-semibold">Link an unknown transponder:</span> If a
@@ -316,6 +334,53 @@ export default function MeetingGuidePage() {
             <span className="font-semibold">End of meeting:</span> Once all races in
             the Run Order are marked Finished, complete the event in Admin. Championship
             standings update automatically from the final result snapshots.
+          </li>
+        </ol>
+      </section>
+
+      {/* Section 10: Boards */}
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold mb-3">10. Spectator Boards and the Streaming Overlay</h2>
+        <p className="text-sm mb-3">
+          Boards are read-only pages for screens at the track and for streaming. Nobody signs in to
+          see them. Open them in a browser on any device on the venue network, using the laptop&apos;s
+          address (shown on the About page), for example
+          <span className="font-mono text-xs"> http://timing-laptop:8080/boards/now-next</span>.
+        </p>
+        <ol className="list-decimal list-inside space-y-2 text-sm">
+          <li>
+            <span className="font-semibold">Now and next:</span> Open
+            <span className="font-mono text-xs"> /boards/now-next</span> on a TV. While a race is on
+            track it shows the race name, Racing or Stopped, live timing, and the next race. Between
+            races it shows the next race, and the results of the last race that finished.
+          </li>
+          <li>
+            <span className="font-semibold">Results:</span> Open
+            <span className="font-mono text-xs"> /boards/results</span> to show the results of the last
+            finished race.
+          </li>
+          <li>
+            <span className="font-semibold">One event only:</span> Add
+            <span className="font-mono text-xs"> ?event=ID</span> to a board&apos;s address, using the
+            number at the end of the event&apos;s address in Admin (for example
+            <span className="font-mono text-xs"> /admin/events/7</span>). Without it a board follows
+            the event that is racing, or the most recent one in progress.
+          </li>
+          <li>
+            <span className="font-semibold">Streaming overlay:</span> In OBS, add a
+            <span className="font-semibold"> Browser</span> source pointing at
+            <span className="font-mono text-xs"> http://&lt;laptop&gt;:8080/boards/overlay</span>, about
+            450 &times; 520 pixels. It shows the race on track over your video on a transparent
+            background: the running order, laps, last lap and the race clock (time to go, or time so
+            far when the format sets no length). It shows nothing between races.
+          </li>
+          <li>
+            <span className="font-semibold">Overlay options</span> go on the end of the address:
+            <span className="font-mono text-xs"> top=N</span> shows the first N cars (default 10, up to
+            40), <span className="font-mono text-xs">class=hide</span> leaves out the race and class
+            name, <span className="font-mono text-xs">theme=light</span> gives dark text on a light
+            panel, and <span className="font-mono text-xs">event=ID</span> follows one event. For
+            example <span className="font-mono text-xs">/boards/overlay?top=6&amp;theme=light</span>.
           </li>
         </ol>
       </section>

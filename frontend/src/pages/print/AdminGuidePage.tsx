@@ -184,6 +184,54 @@ export default function AdminGuidePage() {
             Entry Export file. You see the changes before anything is saved.
           </li>
           <li>
+            <span className="font-semibold">Import from a CSV file:</span> For clubs moving from
+            RC-Timing, click <span className="font-semibold">Import from a CSV file</span> and
+            choose the RC-Timing driver CSV (a header row naming the columns, with at least{' '}
+            <span className="font-mono text-xs">Name</span> and{' '}
+            <span className="font-mono text-xs">Class</span> or{' '}
+            <span className="font-mono text-xs">Class Number</span>). Nothing is saved until you
+            have seen a preview and clicked <span className="font-semibold">Import entries</span>.
+            The preview sorts the rows into groups:
+            <ul className="list-disc list-inside ml-4 mt-1 space-y-1">
+              <li><span className="font-semibold">New</span> — drivers not yet entered; they are added when you confirm.</li>
+              <li><span className="font-semibold">Changed</span> — drivers already entered whose details differ, with each old and new value. Tick the rows to update; only ticked rows change.</li>
+              <li><span className="font-semibold">Missing from this file</span> — entries an earlier CSV import made that this file leaves out. Tick the ones to withdraw, or switch on <span className="font-semibold">Don&apos;t withdraw racers missing from this file</span>. Walk-ins and RaceHub entries are never listed here, and a withdrawn entry is kept, not deleted.</li>
+              <li><span className="font-semibold">Unchanged</span> and <span className="font-semibold">Skipped</span> — listed for information, with the reason for any skipped row.</li>
+            </ul>
+            A class in the file that matches none of the event&apos;s classes appears under
+            <span className="font-semibold"> Classes to map</span>: choose one for each and click
+            <span className="font-semibold"> Save mappings and check again</span>. Problems that
+            block the import are listed at the top and must be fixed in the file first.
+          </li>
+          <li>
+            <span className="font-semibold">Pull entries from a web address:</span> If your
+            booking system publishes the Entry Export file at an address, fill in the
+            <span className="font-semibold"> Entry feed</span> box on the Entries tab with the
+            address (https, or http on the laptop itself) and, if it needs one, the access token, then click
+            <span className="font-semibold"> Save</span>. Click
+            <span className="font-semibold"> Fetch now</span> to get the latest file. A new file
+            waits for you: click <span className="font-semibold">Review and import</span> to see the
+            changes before anything is saved. Switch on the automatic option to fetch every few
+            minutes and import changes that apply cleanly; a file that something would block, such as
+            an unmapped class, is held for you to review. The saved token is never shown again;
+            leave the field empty to keep it, or click <span className="font-semibold">Remove token</span>.
+            <span className="font-semibold"> Remove feed</span> stops fetching.
+          </li>
+          <li>
+            <span className="font-semibold">Other booking systems:</span> The import reads the Entry
+            Export v1 file format, so any booking system can produce a file for it. A file can carry an
+            optional <span className="font-mono text-xs">source</span> naming the system its ids come
+            from (it defaults to RaceHub), so one system&apos;s ids never mix with another&apos;s. The
+            JSON Schema and the field list are in the API reference, docs/api.md.
+          </li>
+          <li>
+            <span className="font-semibold">Swaps survive a re-import:</span> If an official swapped
+            a driver&apos;s transponder at the check-in desk, importing a newer file later keeps the
+            swapped number. The entry list then shows &quot;Booking has transponder &hellip;. Keeping
+            the number swapped on the day.&quot; under the entry so you can see the booking differs.
+            Nothing is blocked, and swapping to the booking&apos;s number clears the note.
+          </li>
+          <li>
             <span className="font-semibold">Add a walk-in:</span> Click
             <span className="font-semibold"> Add entry</span>, pick an existing driver or type a
             new name, and enter their transponder.
@@ -344,6 +392,63 @@ export default function AdminGuidePage() {
             configure sections individually, use the standard Admin sidebar pages at any
             time. The wizard is advisory — all its steps are also accessible via the
             individual Configuration pages.
+          </li>
+        </ol>
+      </section>
+
+      {/* Section 9: Backups, results export, live feed, decoder */}
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold mb-3">9. Backups, Results to RaceHub, Live Feed and Decoder</h2>
+        <p className="text-sm mb-3">
+          These screens are for administrators only. The installation guide (docs/installing.md)
+          and the decoder guide (docs/decoder.md) have the full steps; this is a summary.
+        </p>
+        <ol className="list-decimal list-inside space-y-2 text-sm">
+          <li>
+            <span className="font-semibold">Backups:</span> In the Admin sidebar under
+            <span className="font-semibold"> Operations</span>, click
+            <span className="font-semibold"> Backups</span>. RCTC backs up its database when a race
+            day is closed and every night, keeping the newest copies, and backing up is safe while
+            racing carries on. Click <span className="font-semibold">Back up now</span> to take one
+            by hand. The page shows the backup folder and why each copy was taken. Copy the folder to
+            a USB stick now and then. To restore, stop the service and run the restore command on the
+            timing laptop (the installation guide, &quot;Restoring a backup&quot;); the database it
+            replaces is kept beside it.
+          </li>
+          <li>
+            <span className="font-semibold">Results to RaceHub:</span> Click
+            <span className="font-semibold"> Results to RaceHub</span> to see what has been sent back.
+            For events whose entries were imported from RaceHub, results are queued when a race
+            finishes, when a finished race is corrected, and when the race day is closed, and sent in
+            the background. Each row shows its state (<span className="font-semibold">Waiting to
+            send</span>, <span className="font-semibold">Failed, will retry</span>,
+            <span className="font-semibold"> Sent</span>, or <span className="font-semibold">Replaced
+            by a newer export</span>) and the last error; click
+            <span className="font-semibold"> Send now</span> to retry at once. Sending needs
+            RaceHub&apos;s address and the club&apos;s key in the settings file in the data folder
+            (the installation guide, &quot;Sending results to RaceHub&quot;); until they are set the
+            page says so and results wait. Each event&apos;s page also has a
+            <span className="font-semibold"> Download results</span> button for taking the file across
+            by hand.
+          </li>
+          <li>
+            <span className="font-semibold">Live feed:</span> The app can send each race as it runs
+            to a relay, so people away from the track can follow it. The relay&apos;s address and
+            the club&apos;s key go in the same settings file (the installation guide, &quot;Sending a
+            live feed&quot;); there is no admin page for them. Once set, race control&apos;s status bar
+            shows LIVE FEED and a <span className="font-semibold">Send this event</span> switch, which
+            a race director or admin turns on for each event to be sent. Only display names are sent,
+            and racing carries on as normal if the feed drops out.
+          </li>
+          <li>
+            <span className="font-semibold">Decoder:</span> Click
+            <span className="font-semibold"> Decoder</span> to set where the AMB decoder is. Enter the
+            <span className="font-semibold"> Decoder Host</span> (its address on the venue network),
+            leave <span className="font-semibold">Protocol</span> as RC4 for firmware below 4.5, and
+            check the <span className="font-semibold">Port</span> (5100 for RC4). Click
+            <span className="font-semibold"> Test Connection</span> to try what you have typed, then
+            <span className="font-semibold"> Save</span>. Never connect RCTC and another timing
+            program to the same decoder at once.
           </li>
         </ol>
       </section>
