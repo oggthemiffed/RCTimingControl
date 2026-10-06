@@ -1,0 +1,53 @@
+name: Docker
+
+# Builds the Docker image (#99) and starts the demo compose file, checking the app comes up healthy
+# with the demo club and connects to the simulator.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  # Every pull request: app, UI, simulator and build changes can all break the image
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    name: Docker demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the club compose file
+        run: docker compose -f docker-compose.club.yml config -q
+
+      - name: Build and start the demo
+        run: docker compose -f docker-compose.demo.yml up --build -d
+
+      - name: Wait for the app and the simulator
+        run: |
+          app=$(docker compose -f docker-compose.demo.yml ps -q app)
+          for i in $(seq 1 60); do
+            if [ "$(docker inspect -f '{{.State.Health.Status}}' "$app")" = healthy ] \
+                && docker compose -f docker-compose.demo.yml logs app | grep -q 'Connected to RC-4 decoder'; then
+              echo "Demo is up after ${i} checks"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "The demo did not come up"
+          exit 1
+
+      - name: Check the demo club can sign in
+        run: |
+          curl -sf http://localhost:8080/api/v1/auth/login -H 'Content-Type: application/json' \
+            -d '{"email":"admin@example.com","password":"trial123"}' | grep -q accessToken
+
+      - name: Show the logs
+        if: failure()
+        run: docker compose -f docker-compose.demo.yml logs --tail 200
+
+      - name: Stop the demo
+        if: always()
+        run: docker compose -f docker-compose.demo.yml down -v

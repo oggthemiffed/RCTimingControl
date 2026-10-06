@@ -14,6 +14,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,6 +26,10 @@ import java.util.Set;
  * The addresses phones, tablets and boards on the venue network should open (#23): one
  * {@code http://<ip>:<port>/} per network the laptop is on, plus one by its hostname. Logged at
  * start-up and shown on the About page.
+ *
+ * <p>Inside a container the app only sees the container's own network, so
+ * {@code rctiming.network.addresses} can name the addresses instead (#99): hosts such as
+ * {@code 192.168.1.50} or {@code club-timing}, or full URLs when the published port differs.
  */
 @Component
 public class LanAddresses {
@@ -36,10 +41,15 @@ public class LanAddresses {
             List.of("docker", "veth", "br-", "virbr", "vmnet", "vboxnet", "cni", "flannel");
 
     private final String bindAddress;
+    private final List<String> configuredAddresses;
     private volatile int port;
 
-    public LanAddresses(@Value("${server.address:}") String bindAddress) {
+    public LanAddresses(@Value("${server.address:}") String bindAddress,
+                        @Value("${rctiming.network.addresses:}") String configuredAddresses) {
         this.bindAddress = bindAddress == null ? "" : bindAddress.trim();
+        this.configuredAddresses = configuredAddresses == null ? List.of()
+                : Arrays.stream(configuredAddresses.split(","))
+                        .map(String::trim).filter(a -> !a.isEmpty()).toList();
     }
 
     @EventListener
@@ -64,6 +74,11 @@ public class LanAddresses {
     public List<String> urls() {
         if (port <= 0) {
             return List.of();
+        }
+        if (!configuredAddresses.isEmpty()) {
+            return configuredAddresses.stream()
+                    .map(a -> a.startsWith("http://") || a.startsWith("https://") ? a : url(a, port))
+                    .toList();
         }
         Set<String> hosts = new LinkedHashSet<>();
         if (!bindAddress.isEmpty() && !isWildcard(bindAddress)) {

@@ -16,6 +16,8 @@ Use a computer you are not using for real race meetings, or uninstall afterwards
 
 ---
 
+With Docker on your computer, you can skip the install: follow [docker.md](docker.md) to start the demo, then go straight to [Things to try](#things-to-try).
+
 ## Step 1: Install the app
 
 Download the installer for your computer from the [latest release](https://github.com/oggthemiffed/RCTimingControl/releases/latest) and install it as described in [installing.md](installing.md). Don't set the club up yet.
