@@ -162,6 +162,32 @@ export interface CsvImportResult {
   rows: CsvImportRow[];
 }
 
+// Entry feed: an event's entries pulled from a URL (#42)
+export type EntryFeedStatus = 'APPLIED' | 'UNCHANGED' | 'WAITING' | 'AUTH_FAILED' | 'FAILED';
+
+export interface EntryFeedDto {
+  url: string;
+  /** The token itself is never sent back */
+  tokenSaved: boolean;
+  /** The saved token's last four characters, when it is long enough to show them */
+  tokenHint: string | null;
+  autoFetch: boolean;
+  lastFetchAt: string | null;
+  lastStatus: EntryFeedStatus | null;
+  lastMessage: string | null;
+  appliedRevision: number | null;
+  /** A fetched file waits for an official to preview and confirm it */
+  waiting: boolean;
+  waitingRevision: number | null;
+}
+
+export interface SaveEntryFeedRequest {
+  url: string;
+  /** Leave out to keep the saved token; an empty string removes it */
+  token?: string;
+  autoFetch: boolean;
+}
+
 export interface RaceHubClassMappingDto {
   racehubEventClassId: string;
   eventClassId: number;
@@ -483,6 +509,33 @@ export const adminApi = {
       })
       .then(r => r.data);
   },
+
+  // Entry feed (#42). No feed answers 204, returned as null.
+  getEntryFeed: (eventId: number) =>
+    api
+      .get<EntryFeedDto | ''>(`/api/v1/admin/events/${eventId}/entry-feed`)
+      .then(r => (r.status === 204 || !r.data ? null : r.data)),
+
+  saveEntryFeed: (eventId: number, request: SaveEntryFeedRequest) =>
+    api.put<EntryFeedDto>(`/api/v1/admin/events/${eventId}/entry-feed`, request).then(r => r.data),
+
+  deleteEntryFeed: (eventId: number) =>
+    api.delete(`/api/v1/admin/events/${eventId}/entry-feed`).then(() => undefined),
+
+  /** Fetches now. Failures come back in the feed's status rather than as an error. */
+  fetchEntryFeed: (eventId: number) =>
+    api.post<EntryFeedDto>(`/api/v1/admin/events/${eventId}/entry-feed/fetch`).then(r => r.data),
+
+  previewEntryFeed: (eventId: number) =>
+    api.post<RaceHubImportResult>(`/api/v1/admin/events/${eventId}/entry-feed/preview`).then(r => r.data),
+
+  // A blocked import answers 422 with the same preview body, so return it.
+  applyEntryFeed: (eventId: number) =>
+    api
+      .post<RaceHubImportResult>(`/api/v1/admin/events/${eventId}/entry-feed/apply`, undefined, {
+        validateStatus: s => (s >= 200 && s < 300) || s === 422,
+      })
+      .then(r => r.data),
 
   listRaceHubClassMappings: (eventId: number) =>
     api

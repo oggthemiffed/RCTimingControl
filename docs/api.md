@@ -394,6 +394,48 @@ Requires `ADMIN`. Each RaceHub class is matched to the event class whose racing 
 
 The RC-Timing CSV import uses the same mappings, keyed `CSV:` and the file's class name in lower case (or `CSV:#` and a Class Number), as its `unmappedClasses` list shows. A file from another source is keyed by that source, a colon and its `event_class_id`, such as `OTHER:c1a2…`.
 
+
+### Pull from a URL (entry feed)
+
+RCTC runs on a venue laptop that other systems usually can't reach, so instead of being sent entries it can fetch an Entry Export v1 file from a URL. Each event has at most one feed.
+
+```http
+GET    /admin/events/{eventId}/entry-feed
+PUT    /admin/events/{eventId}/entry-feed
+DELETE /admin/events/{eventId}/entry-feed
+POST   /admin/events/{eventId}/entry-feed/fetch
+POST   /admin/events/{eventId}/entry-feed/preview
+POST   /admin/events/{eventId}/entry-feed/apply
+```
+
+All require `ADMIN`. `GET` answers **204** when the event has no feed. `PUT` saves it:
+
+```json
+{ "url": "https://booking.example.org/events/123/entries", "token": "…", "autoFetch": true }
+```
+
+- `url` must be `https`, or `http` only to the laptop itself (`localhost` or a loopback address).
+- `token` is sent as `Authorization: Bearer`. Leave it out to keep the saved token; an empty string removes it. It is stored encrypted with a key kept in the data folder (`entry-feed-key`), so a copy of the database alone, such as a backup, doesn't give it away. A token saved on another laptop can't be read and has to be entered again.
+- Changing the URL drops any file fetched from the old one, and its last outcome.
+
+The feed comes back as:
+
+```json
+{
+  "url": "https://booking.example.org/events/123/entries",
+  "tokenSaved": true, "tokenHint": "f00d", "autoFetch": true,
+  "lastFetchAt": "2026-10-06T09:30:00Z", "lastStatus": "WAITING",
+  "lastMessage": "Fetched revision 7. Check it and confirm the import.",
+  "appliedRevision": 6, "waiting": true, "waitingRevision": 7
+}
+```
+
+The token itself is never sent back. `tokenHint` is its last four characters, shown only when the token is at least eight long. `lastStatus` is `APPLIED`, `UNCHANGED` (the file's `revision` was already applied), `WAITING` (a fetched file waits for an official), `AUTH_FAILED` (the feed answered 401 or 403) or `FAILED`, with `lastMessage` saying why.
+
+`fetch` fetches now and returns the feed. A failure is recorded in the feed rather than returned as an error. A new revision is checked with a dry run and held for an official (`WAITING`); nothing is imported until `apply`. `preview` and `apply` work like the [RaceHub import](#import-an-export) on the held file, including a **422** when something blocks it, and answer **404** when no file is waiting. Only the fields Entry Export v1 knows are kept in the held file.
+
+With `autoFetch` on, the feed is fetched every five minutes (`rctiming.entry-feed.interval-ms`). A new revision that imports cleanly is applied straight away. The import is all or nothing, so a file that something would block, such as an unmapped class, is held whole for an official to review, with the reason in `lastMessage`.
+
 ---
 
 ## Admin — RC-Timing CSV import

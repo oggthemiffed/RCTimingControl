@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -26,6 +26,7 @@ import {
   useRaceHubImport,
   useReplaceRaceHubClassMappings,
 } from '@/hooks/admin/useRaceHubImport';
+import { useEntryFeedImport } from '@/hooks/admin/useEntryFeed';
 import type { EventClassDto, RaceHubImportResult } from '@/lib/adminApi';
 
 interface RaceHubImportDialogProps {
@@ -33,6 +34,8 @@ interface RaceHubImportDialogProps {
   classes: EventClassDto[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Preview and import the file the event's entry feed fetched (#42) instead of an uploaded one */
+  feed?: boolean;
 }
 
 const SUMMARY_LABELS: { key: keyof RaceHubImportResult['summary']; label: string }[] = [
@@ -45,15 +48,24 @@ const SUMMARY_LABELS: { key: keyof RaceHubImportResult['summary']; label: string
 ];
 
 /**
- * Upload a RaceHub Entry Export, preview the dry run, map any unmapped classes, then confirm (L8, #16).
+ * Upload a RaceHub Entry Export, preview the dry run, map any unmapped classes, then confirm (L8, #16). With
+ * {@code feed}, the file is the one the event's entry feed fetched and is holding (#42).
  */
-export default function RaceHubImportDialog({ eventId, classes, open, onOpenChange }: RaceHubImportDialogProps) {
+export default function RaceHubImportDialog({
+  eventId,
+  classes,
+  open,
+  onOpenChange,
+  feed = false,
+}: RaceHubImportDialogProps) {
   const [exportDocument, setExportDocument] = useState<unknown>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [preview, setPreview] = useState<RaceHubImportResult | null>(null);
   const [classChoices, setClassChoices] = useState<Record<string, string>>({});
 
-  const importMutation = useRaceHubImport(eventId);
+  const fileImport = useRaceHubImport(eventId);
+  const feedImport = useEntryFeedImport(eventId);
+  const importMutation = feed ? feedImport : fileImport;
   const replaceMappings = useReplaceRaceHubClassMappings(eventId);
   const mappingsQuery = useRaceHubClassMappings(eventId, open);
   // Each file choice (and closing the dialog) starts a new request generation. A preview
@@ -78,17 +90,41 @@ export default function RaceHubImportDialog({ eventId, classes, open, onOpenChan
     return racingClass?.name ?? `Class ${cls.id}`;
   }
 
+  function runImport(document: unknown, dryRun: boolean) {
+    return feed
+      ? feedImport.mutateAsync({ dryRun })
+      : fileImport.mutateAsync({ exportDocument: document, dryRun });
+  }
+
   async function runPreview(document: unknown) {
     const requestGeneration = generation.current;
     try {
-      const result = await importMutation.mutateAsync({ exportDocument: document, dryRun: true });
+      const result = await runImport(document, true);
       if (requestGeneration === generation.current) setPreview(result);
     } catch {
       if (requestGeneration !== generation.current) return;
       setPreview(null);
-      setFileError('RaceHub could not check this file. Make sure it is an Entry Export (schema version 1).');
+      setFileError(
+        feed
+          ? 'The fetched file could not be checked. Fetch it again.'
+          : 'RaceHub could not check this file. Make sure it is an Entry Export (schema version 1).',
+      );
     }
   }
+
+  // The feed's file is already on the server, so its preview starts as soon as the dialog opens
+  const { mutateAsync: previewFeed } = feedImport;
+  useEffect(() => {
+    if (!open || !feed) return;
+    const requestGeneration = ++generation.current;
+    previewFeed({ dryRun: true })
+      .then(result => {
+        if (requestGeneration === generation.current) setPreview(result);
+      })
+      .catch(() => {
+        if (requestGeneration === generation.current) setFileError('The fetched file could not be checked. Fetch it again.');
+      });
+  }, [open, feed, previewFeed]);
 
   async function handleFile(file: File | undefined) {
     const fileGeneration = ++generation.current;
@@ -131,7 +167,7 @@ export default function RaceHubImportDialog({ eventId, classes, open, onOpenChan
   async function confirmImport() {
     try {
       const requestGeneration = generation.current;
-      const result = await importMutation.mutateAsync({ exportDocument, dryRun: false });
+      const result = await runImport(exportDocument, false);
       if (requestGeneration !== generation.current) return;
       if (!result.applied) {
         setPreview(result);
@@ -139,7 +175,9 @@ export default function RaceHubImportDialog({ eventId, classes, open, onOpenChan
         return;
       }
       const { created, updated, withdrawn } = result.summary;
-      toast.success(`Imported from RaceHub: ${created} new, ${updated} updated, ${withdrawn} withdrawn.`);
+      toast.success(
+        `Imported from ${feed ? 'the entry feed' : 'RaceHub'}: ${created} new, ${updated} updated, ${withdrawn} withdrawn.`,
+      );
       handleOpenChange(false);
     } catch {
       toast.error('The import failed. Check your connection and try again.');
@@ -155,23 +193,29 @@ export default function RaceHubImportDialog({ eventId, classes, open, onOpenChan
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Import entries from RaceHub</DialogTitle>
+          <DialogTitle>{feed ? 'Import entries from the entry feed' : 'Import entries from RaceHub'}</DialogTitle>
           <DialogDescription>
-            Choose the Entry Export file downloaded from RaceHub. You will see what changes before anything is saved.
+            {feed
+              ? 'This is the file the entry feed fetched. You will see what changes before anything is saved.'
+              : 'Choose the Entry Export file downloaded from RaceHub. You will see what changes before anything is saved.'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="racehub-file">Entry Export file</Label>
-          <input
-            id="racehub-file"
-            type="file"
-            accept=".json,application/json"
-            onChange={e => void handleFile(e.target.files?.[0])}
-            className="block w-full text-sm file:mr-3 file:rounded-md file:border file:bg-background file:px-3 file:py-1.5 file:text-sm"
-          />
-          {fileError && <p className="text-xs text-destructive">{fileError}</p>}
-        </div>
+        {feed ? (
+          fileError && <p className="text-xs text-destructive">{fileError}</p>
+        ) : (
+          <div className="space-y-1.5">
+            <Label htmlFor="racehub-file">Entry Export file</Label>
+            <input
+              id="racehub-file"
+              type="file"
+              accept=".json,application/json"
+              onChange={e => void handleFile(e.target.files?.[0])}
+              className="block w-full text-sm file:mr-3 file:rounded-md file:border file:bg-background file:px-3 file:py-1.5 file:text-sm"
+            />
+            {fileError && <p className="text-xs text-destructive">{fileError}</p>}
+          </div>
+        )}
 
         {importMutation.isPending && !preview && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -10,6 +10,7 @@ import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks.ChampionshipEventLinksPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EntryFeeds.EntryFeedsPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EventClassesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences.MarshalAbsencesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties.MarshalPenaltiesPath;
@@ -282,6 +283,18 @@ public class Events extends TableImpl<EventsRecord> {
             _entries = new EntriesPath(this, null, Keys.ENTRIES__ENTRIES_EVENT_ID_FKEY.getInverseKey());
 
         return _entries;
+    }
+
+    private transient EntryFeedsPath _entryFeeds;
+
+    /**
+     * Get the implicit to-many join path to the <code>entry_feeds</code> table
+     */
+    public EntryFeedsPath entryFeeds() {
+        if (_entryFeeds == null)
+            _entryFeeds = new EntryFeedsPath(this, null, Keys.ENTRY_FEEDS__ENTRY_FEEDS_EVENT_ID_FKEY.getInverseKey());
+
+        return _entryFeeds;
     }
 
     private transient EventClassesPath _eventClasses;

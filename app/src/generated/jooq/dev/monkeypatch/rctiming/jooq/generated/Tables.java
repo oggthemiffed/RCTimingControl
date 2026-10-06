@@ -14,6 +14,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DecoderLoops;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog;
+import dev.monkeypatch.rctiming.jooq.generated.tables.EntryFeeds;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
 import dev.monkeypatch.rctiming.jooq.generated.tables.GoverningBodyAffiliations;
@@ -97,6 +98,11 @@ public class Tables {
      * The table <code>entry_audit_log</code>.
      */
     public static final EntryAuditLog ENTRY_AUDIT_LOG = EntryAuditLog.ENTRY_AUDIT_LOG;
+
+    /**
+     * The table <code>entry_feeds</code>.
+     */
+    public static final EntryFeeds ENTRY_FEEDS = EntryFeeds.ENTRY_FEEDS;
 
     /**
      * The table <code>event_classes</code>.

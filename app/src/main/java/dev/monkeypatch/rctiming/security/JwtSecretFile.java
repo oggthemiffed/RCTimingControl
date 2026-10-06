@@ -36,7 +36,19 @@ final class JwtSecretFile {
 
     /** Returns the base64 key stored in {@code dataDirectory}, creating it on first use. */
     static String loadOrCreate(Path dataDirectory) {
-        Path file = dataDirectory.resolve(FILE_NAME);
+        return loadOrCreate(dataDirectory, FILE_NAME, "sign-in key", "set JWT_SECRET instead of using a key file");
+    }
+
+    /**
+     * Returns the random base64 key in {@code fileName} in {@code dataDirectory}, creating it on first use, and
+     * makes sure only the file's owner can read it. Also used for the key entry feed tokens are encrypted with
+     * (#42).
+     *
+     * @param purpose     what the key is for, for error messages
+     * @param alternative what to do instead when the file system can't limit who reads the file
+     */
+    static String loadOrCreate(Path dataDirectory, String fileName, String purpose, String alternative) {
+        Path file = dataDirectory.resolve(fileName);
         try {
             if (!Files.exists(file)) {
                 Files.createDirectories(dataDirectory);
@@ -49,14 +61,14 @@ final class JwtSecretFile {
                     // Another process wrote it first; use theirs
                 }
             }
-            restrictToOwner(file);
+            restrictToOwner(file, alternative);
             String secret = Files.readString(file, StandardCharsets.US_ASCII).trim();
             if (secret.isEmpty()) {
                 throw new IllegalStateException(file + " is empty; delete it to generate a new key");
             }
             return secret;
         } catch (IOException e) {
-            throw new UncheckedIOException("Could not read or create the sign-in key at " + file, e);
+            throw new UncheckedIOException("Could not read or create the " + purpose + " at " + file, e);
         }
     }
 
@@ -65,7 +77,7 @@ final class JwtSecretFile {
      * who started it by hand. On Windows the ProgramData folder lets every local user read what is
      * in it, so the inherited access list is replaced with one for the owner alone.
      */
-    private static void restrictToOwner(Path file) throws IOException {
+    private static void restrictToOwner(Path file, String alternative) throws IOException {
         PosixFileAttributeView posix = Files.getFileAttributeView(file, PosixFileAttributeView.class);
         if (posix != null) {
             posix.setPermissions(PosixFilePermissions.fromString("rw-------"));
@@ -80,7 +92,6 @@ final class JwtSecretFile {
                     .build()));
             return;
         }
-        throw new IOException("This file system can't limit who reads " + file
-                + "; set JWT_SECRET instead of using a key file");
+        throw new IOException("This file system can't limit who reads " + file + "; " + alternative);
     }
 }
