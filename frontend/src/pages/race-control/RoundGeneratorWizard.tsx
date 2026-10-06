@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { adminApi, type EventClassDto, type BumpUpConfig } from '@/lib/adminApi';
 import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
+import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 import {
   Dialog,
   DialogContent,
@@ -47,11 +48,13 @@ export function RoundGeneratorWizard({ open, onOpenChange, eventId }: Props) {
   const [classRows, setClassRows] = useState<ClassRow[]>([]);
   const [initialised, setInitialised] = useState(false);
 
-  const { data: eventClasses = [] } = useQuery({
-    queryKey: ['adminApi', 'eventClasses', eventId],
-    queryFn: () => adminApi.listEventClasses(eventId),
+  // The event's classes come with its detail; there is no separate list endpoint
+  const { data: eventDetail } = useQuery({
+    queryKey: adminQueryKeys.events.detail(eventId),
+    queryFn: () => adminApi.getEvent(eventId),
     enabled: open && eventId > 0,
   });
+  const eventClasses = eventDetail?.classes ?? [];
 
   const { data: racingClasses = [] } = useQuery({
     queryKey: ['adminApi', 'racingClasses'],
@@ -60,7 +63,7 @@ export function RoundGeneratorWizard({ open, onOpenChange, eventId }: Props) {
   });
 
   // Initialise classRows once we have event classes
-  if (open && eventClasses.length > 0 && !initialised) {
+  if (open && eventClasses.length > 0 && racingClasses.length > 0 && !initialised) {
     setClassRows(
       eventClasses.map((cls) => {
         const racingClass = racingClasses.find((rc) => rc.id === cls.racingClassId);

@@ -23,9 +23,10 @@ vi.mock('./panels/AudioSettingsPanel', () => ({ AudioSettingsPanel: () => null }
 
 vi.mock('@/lib/adminApi', () => ({
   adminApi: {
-    listEventClasses: vi.fn().mockResolvedValue([
-      { id: 11, racingClassId: 3, configSnapshot: { type: 'TIMED' } },
-    ]),
+    getEvent: vi.fn().mockResolvedValue({
+      id: 7,
+      classes: [{ id: 11, racingClassId: 3, configSnapshot: { type: 'TIMED' } }],
+    }),
     listRacingClasses: vi.fn().mockResolvedValue([{ id: 3, name: '13.5 Touring' }]),
     generateRounds: vi.fn().mockResolvedValue(undefined),
   },
