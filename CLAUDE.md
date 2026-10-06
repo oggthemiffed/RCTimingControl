@@ -42,7 +42,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 
 **Entries:** imported from RaceHub's Entry Export v1 JSON (`domain/racehub`) or an RC-Timing style driver CSV (`domain/csvimport`, a preview-and-pick adapter), or added by hand as walk-ins. Each entry points at a **competitor** (`domain/competitor`: display name, RaceHub driver ID, BRCA number, home club) and carries a primary and an optional secondary transponder for that event.
 
-**Packaging:** Spring Boot serves the built React app (`-PbundleFrontend`). `jpackage` wraps the jar with its own Java runtime into a Windows `.msi`, macOS `.pkg` or Linux `.deb` that installs a background service. See `docs/installing.md`. `docker/Dockerfile` builds the same jar into an image, and `docker-compose.demo.yml` runs it with the demo club and the simulator for testers on any system (#99, `docs/docker.md`). There is no internet deployment.
+**Packaging:** Spring Boot serves the built React app (`-PbundleFrontend`). `jpackage` wraps the jar with its own Java runtime into a Windows `.msi`, macOS `.pkg` or Linux `.deb` that installs a background service. See `docs/installing.md`. `docker/Dockerfile` builds the same jar into an image, `docker-compose.demo.yml` runs it with the demo club and the simulator for testers on any system, and `docker-compose.club.yml` runs the club's own server with Piper on a laptop or small server on the club network (#99, `docs/docker.md`). Inside a container the app can't see the host's address, so `rctiming.network.addresses` names it for the About page. There is no internet deployment.
 
 **Testing:** JUnit 5 + Mockito on temporary SQLite databases, no Docker (backend); Vitest + React Testing Library (frontend)
 

@@ -10,6 +10,7 @@ on:
     paths:
       - 'docker/**'
       - 'docker-compose.demo.yml'
+      - 'docker-compose.club.yml'
       - '.dockerignore'
       - 'app/build.gradle.kts'
       - 'settings.gradle.kts'
@@ -25,6 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check the club compose file
+        run: docker compose -f docker-compose.club.yml config -q
 
       - name: Build and start the demo
         run: docker compose -f docker-compose.demo.yml up --build -d

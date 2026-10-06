@@ -52,38 +52,64 @@ On Windows Command Prompt, run `set HOST_PORT=8081` first. Then open `http://loc
 
 The demo has no voice server, so race control uses the browser's own voice for announcements.
 
-## Running a club with Docker
+## Running the club's server with Docker
 
-The same image can run a real club's app. Leave out the demo profile and the simulator, keep the data in a volume, and set the decoder's address in the setup wizard or **Admin → Decoder**. A minimal `docker-compose.yml` for this:
+Docker can run the club's own copy of the app on a laptop or a small server on the club network, in place of the installer. `docker-compose.club.yml` starts the app and the announcer voices (Piper) and restarts them whenever Docker starts.
 
-```yaml
-services:
-  app:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    restart: unless-stopped
-    environment:
-      TTS_ENABLED: "false"
-    ports:
-      - "8080:8080"
-    volumes:
-      - club_data:/data
+### Before you start
 
-volumes:
-  club_data:
+- Give the machine a fixed address on the club network, either a reserved address in the router or a static IP, so phones and boards can find it again next time. For example `192.168.1.50`.
+- **Linux server:** make sure Docker starts at boot (`sudo systemctl enable docker`).
+- **Windows or macOS laptop:** in Docker Desktop's settings, turn on **Start Docker Desktop when you sign in**. The app runs only while Docker Desktop is running.
+- The first start needs the internet, to download the base images and the voices. After that it runs offline.
+
+### Start it
+
+In the repository folder, create a file called `.env` holding the machine's address:
+
+```properties
+CLUB_ADDRESS=192.168.1.50
 ```
 
-Everything the app keeps is in `/data` inside the container: the database `rctiming.db`, `backups/`, `uploads/` and the `jwt-secret` sign-in key. Settings that [installing.md](installing.md#changing-settings) puts in `application.properties` can be given as environment variables instead, for example `RCTIMING_BACKUP_DIRECTORY`.
+`CLUB_ADDRESS` is the address the About page shows other devices. The app can't see the machine's address from inside the container, so without it the About page lists addresses no other device can reach. Several can be given, separated by commas, for example `192.168.1.50,club-timing`. Docker reads `.env` every time, so the setting stays in place for restarts and upgrades.
 
-To restore a backup, stop the app and run the restore command in a one-off container:
+Then start it:
 
 ```bash
-docker compose stop app
-docker compose run --rm app restore /data/backups/<file>
-docker compose start app
+docker compose -f docker-compose.club.yml up -d --build
+```
+
+Open **http://localhost:8080** on that machine and follow the setup wizard to create the first official and the club, and set the decoder's address. Phones, tablets and boards use `http://192.168.1.50:8080/`. If they can't connect, check the machine's firewall allows port 8080 (on Linux with `ufw`, `sudo ufw allow 8080/tcp`; on Windows and macOS, allow Docker Desktop through the firewall).
+
+To use port 80, so devices can open `http://192.168.1.50/` with no port, add `HOST_PORT=80` to `.env` and give the address as a full URL: `CLUB_ADDRESS=http://192.168.1.50/`.
+
+### Where the data is
+
+Everything the app keeps is in the `club_data` volume, mounted at `/data` in the container: the database `rctiming.db`, `backups/`, `uploads/` and the `jwt-secret` sign-in key. It survives stopping, restarting and rebuilding. Only `docker compose -f docker-compose.club.yml down -v` deletes it, so never add `-v` on the club's server.
+
+Settings that [installing.md](installing.md#changing-settings) puts in `application.properties` go in the `environment:` list of `docker-compose.club.yml` instead, in capitals with underscores. For example, to keep the backups on a USB stick mounted at `/media/usb`, add `RCTIMING_BACKUP_DIRECTORY: /backups` to `environment:` and `- /media/usb/rctiming-backups:/backups` to `volumes:`. The folder must be writable by the container's user (uid 10001): `sudo install -d -o 10001 /media/usb/rctiming-backups`.
+
+### Upgrading
+
+Pull the newer version of the repository, then rebuild and restart:
+
+```bash
+git pull
+docker compose -f docker-compose.club.yml up -d --build
+```
+
+The data stays in the volume. Take a backup under **Admin → Backups** first.
+
+### Restoring a backup, or a lost admin password
+
+Stop the app, run the command in a one-off container, then start the app again:
+
+```bash
+docker compose -f docker-compose.club.yml stop app
+docker compose -f docker-compose.club.yml run --rm --no-deps app restore /data/backups/<file>
+docker compose -f docker-compose.club.yml start app
 ```
 
 `reset-admin-password` works the same way (see [installing.md](installing.md#locked-out)).
 
-The app listens on plain HTTP and is meant for the venue network. Don't expose it to the internet as it is.
+The app listens on plain HTTP and is meant for the club network. Don't expose it to the internet as it is.

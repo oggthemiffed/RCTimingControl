@@ -1,0 +1,42 @@
+# The club's own timing server: the app and the announcer voices, on a laptop or a small server
+# on the club network. See docs/docker.md.
+#
+#   docker compose -f docker-compose.club.yml up -d --build
+#
+# with CLUB_ADDRESS (this machine's address on the club network) set in a .env file beside this one.
+# Then open http://localhost:8080 on that machine and follow the setup wizard.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: rctimingcontrol:local
+    restart: unless-stopped
+    environment:
+      # The address phones, tablets and boards use to reach this machine, shown on the About page.
+      # The app can't see it from inside the container. Comma-separate several.
+      RCTIMING_NETWORK_ADDRESSES: ${CLUB_ADDRESS:-}
+      TTS_ENDPOINT: piper:10200
+      TTS_ENABLED: "true"
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    volumes:
+      - club_data:/data
+    depends_on:
+      - piper
+
+  # Announcer voices (Piper text to speech). Remove this service and set TTS_ENABLED to "false"
+  # to use the browser's own voice instead.
+  piper:
+    image: rhasspy/wyoming-piper:latest
+    restart: unless-stopped
+    volumes:
+      - piper_data:/data
+    command: >
+      --voice en_GB-alan-medium
+      --voice en_GB-cori-high
+      --voice en_US-amy-medium
+
+volumes:
+  club_data:
+  piper_data:
