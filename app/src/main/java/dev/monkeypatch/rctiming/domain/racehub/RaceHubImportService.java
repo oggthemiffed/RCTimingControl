@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.domain.racehub;
 
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
+import dev.monkeypatch.rctiming.domain.csvimport.CsvImportService;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -33,6 +34,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -42,12 +44,19 @@ import java.util.stream.Collectors;
  * dry run or something blocks it. Entries are upserted by RaceHub's {@code entry_id}, and a row
  * changes an entry only when its {@code entry_version} is higher than the one already applied,
  * so replaying an export is a no-op. A withdrawn entry is marked WITHDRAWN and never deleted.
+ *
+ * <p>Another booking system can send the same format with its own {@code source} (#41). Its entries,
+ * competitors and class mappings are keyed by that source, so its ids never meet RaceHub's, and it never
+ * links the event to a RaceHub event, so no results are sent to RaceHub for it.
  */
 @Service
 public class RaceHubImportService {
 
     public static final String RACEHUB_SOURCE = "RACEHUB";
     public static final int SUPPORTED_SCHEMA_VERSION = 1;
+
+    /** As in the published schema: it fits {@code external_source} and reads as a code, not free text. */
+    private static final Pattern SOURCE = Pattern.compile("[A-Z][A-Z0-9_]{0,29}");
 
     private static final Set<String> ENTRY_STATUSES = Set.of("CONFIRMED", "WITHDRAWN");
     private static final Set<String> RACE_DAY_STATUSES = Set.of("NOT_ARRIVED", "ARRIVED");
@@ -84,22 +93,25 @@ public class RaceHubImportService {
         if (export.revision() == null) {
             throw new IllegalArgumentException("RaceHub export has no revision");
         }
+        String source = sourceOf(export);
+        boolean fromRaceHub = RACEHUB_SOURCE.equals(source);
         List<ExportEntry> exportEntries = export.entries() == null ? List.of() : export.entries();
-        String racehubEventId = export.event() == null ? null : blankToNull(export.event().id());
+        String racehubEventId = !fromRaceHub || export.event() == null ? null : blankToNull(export.event().id());
 
         List<String> errors = new ArrayList<>();
-        if (racehubEventId == null) {
+        // Another system's event id means nothing to RaceHub, so only a RaceHub file links the event
+        if (fromRaceHub && racehubEventId == null) {
             // Results go back to RaceHub under this id (#27), so an import without it would never be sent
             errors.add("This file has no RaceHub event id, so the results couldn't be sent back to RaceHub. "
                     + "Download the entry export from RaceHub again.");
-        } else if (event.getRacehubEventId() != null
+        } else if (fromRaceHub && event.getRacehubEventId() != null
                 && !event.getRacehubEventId().equals(racehubEventId)) {
             // Results go back to the RaceHub event recorded here (#27), so one event takes one RaceHub event's entries
             errors.add("This file is for RaceHub event " + racehubEventId + ", but this event's entries came from "
                     + "RaceHub event " + event.getRacehubEventId());
         }
         List<String> warnings = new ArrayList<>();
-        ClassResolver classes = new ClassResolver(eventId);
+        ClassResolver classes = new ClassResolver(eventId, source);
         Map<String, UnmappedAccumulator> unmapped = new TreeMap<>();
         List<Planned> plan = new ArrayList<>();
         Set<String> seenEntryIds = new HashSet<>();
@@ -120,7 +132,7 @@ public class RaceHubImportService {
             }
 
             Entry existing = entryRepository
-                    .findByExternalSourceAndExternalEntryId(RACEHUB_SOURCE, row.entryId())
+                    .findByExternalSourceAndExternalEntryId(source, row.entryId())
                     .orElse(null);
             if (existing != null && !existing.getEventId().equals(eventId)) {
                 errors.add(label + " was imported into another event");
@@ -149,13 +161,13 @@ public class RaceHubImportService {
                 if (resolved.isPresent()) {
                     eventClassId = resolved.get();
                 } else {
-                    unmapped.computeIfAbsent(row.eventClassId(), k -> new UnmappedAccumulator(row)).count++;
+                    unmapped.computeIfAbsent(classes.mappingKey(row), k -> new UnmappedAccumulator(row)).count++;
                 }
             }
             plan.add(new Planned(row, action, existing, eventClassId));
         }
 
-        Map<String, Competitor> competitors = loadCompetitors(plan);
+        Map<String, Competitor> competitors = loadCompetitors(plan, source);
         checkFinalState(eventId, plan, competitors, errors, warnings);
 
         List<UnmappedClass> unmappedClasses = unmapped.entrySet().stream()
@@ -169,14 +181,16 @@ public class RaceHubImportService {
             // Withdrawals first, so a driver's replacement entry in the same class does not meet
             // the old one in the one-active-entry index.
             plan.stream().filter(p -> p.action == Action.WITHDRAW)
-                    .forEach(p -> savedIds.put(p, applyRow(eventId, p, competitors)));
+                    .forEach(p -> savedIds.put(p, applyRow(eventId, p, competitors, source)));
             entryRepository.flush();
             plan.stream().filter(p -> p.action != Action.WITHDRAW)
-                    .forEach(p -> savedIds.put(p, applyRow(eventId, p, competitors)));
-            event.setRacehubLastImportAt(Instant.now());
-            event.setRacehubLastRevision(export.revision());
-            event.setRacehubEventId(racehubEventId);
-            eventRepository.save(event);
+                    .forEach(p -> savedIds.put(p, applyRow(eventId, p, competitors, source)));
+            if (fromRaceHub) {
+                event.setRacehubLastImportAt(Instant.now());
+                event.setRacehubLastRevision(export.revision());
+                event.setRacehubEventId(racehubEventId);
+                eventRepository.save(event);
+            }
         }
 
         List<Row> rows = new ArrayList<>();
@@ -241,6 +255,22 @@ public class RaceHubImportService {
 
     // ── Planning ───────────────────────────────────────────────────────────────────
 
+    /** The file's {@code source}, RACEHUB when it has none. */
+    static String sourceOf(RaceHubEntryExport export) {
+        String source = export.source();
+        if (source == null) {
+            return RACEHUB_SOURCE;
+        }
+        if (!SOURCE.matcher(source).matches()) {
+            throw new IllegalArgumentException("source must be up to 30 capital letters, digits or underscores, "
+                    + "starting with a letter, not \"" + source + "\"");
+        }
+        if (CsvImportService.CSV_SOURCE.equals(source)) {
+            throw new IllegalArgumentException("source CSV is used by the RC-Timing CSV import; choose another");
+        }
+        return source;
+    }
+
     private static List<String> validate(ExportEntry row, String label) {
         List<String> problems = new ArrayList<>();
         if (row.entryId() == null || row.entryId().isBlank()) {
@@ -265,11 +295,11 @@ public class RaceHubImportService {
         return problems;
     }
 
-    private Map<String, Competitor> loadCompetitors(List<Planned> plan) {
+    private Map<String, Competitor> loadCompetitors(List<Planned> plan, String source) {
         Map<String, Competitor> byProfile = new HashMap<>();
         for (Planned p : plan) {
             byProfile.computeIfAbsent(p.row.driverProfileId(), id ->
-                    competitorRepository.findByExternalSourceAndExternalId(RACEHUB_SOURCE, id).orElse(null));
+                    competitorRepository.findByExternalSourceAndExternalId(source, id).orElse(null));
         }
         return byProfile;
     }
@@ -348,7 +378,7 @@ public class RaceHubImportService {
 
     // ── Applying ───────────────────────────────────────────────────────────────────
 
-    private Long applyRow(Long eventId, Planned p, Map<String, Competitor> competitors) {
+    private Long applyRow(Long eventId, Planned p, Map<String, Competitor> competitors, String source) {
         ExportEntry row = p.row;
         Instant now = Instant.now();
         switch (p.action) {
@@ -368,18 +398,19 @@ public class RaceHubImportService {
                 return entryRepository.save(e).getId();
             }
             default -> {
-                Competitor competitor = upsertCompetitor(row, competitors, now);
+                Competitor competitor = upsertCompetitor(row, competitors, now, source);
                 Entry e = p.existing;
                 if (e == null) {
                     e = new Entry();
                     e.setEventId(eventId);
-                    e.setExternalSource(RACEHUB_SOURCE);
+                    e.setExternalSource(source);
                     e.setExternalEntryId(row.entryId());
                     e.setSubmittedAt(now);
                 }
                 e.setCompetitorId(competitor.getId());
                 e.setEventClassId(p.eventClassId);
-                e.setRacehubEventClassId(row.eventClassId());
+                // Results go back to RaceHub by its class ids (#27), so another system's are not kept
+                e.setRacehubEventClassId(RACEHUB_SOURCE.equals(source) ? row.eventClassId() : null);
                 e.setTransponderNumberSnapshot(primaryOf(row));
                 e.setSecondaryTransponderNumber(secondaryOf(row));
                 if (e.getStatus() != EntryStatus.CONFIRMED) {
@@ -395,16 +426,18 @@ public class RaceHubImportService {
         }
     }
 
-    private Competitor upsertCompetitor(ExportEntry row, Map<String, Competitor> competitors, Instant now) {
+    private Competitor upsertCompetitor(ExportEntry row, Map<String, Competitor> competitors, Instant now,
+                                        String source) {
         Competitor c = competitors.get(row.driverProfileId());
         if (c == null) {
             c = new Competitor();
-            c.setExternalSource(RACEHUB_SOURCE);
+            c.setExternalSource(source);
             c.setExternalId(row.driverProfileId());
             c.setCreatedAt(now);
         }
         String name = row.driverDisplayName();
-        c.setDisplayName(name == null || name.isBlank() ? "RaceHub driver " + row.driverProfileId() : name.trim());
+        String unnamed = RACEHUB_SOURCE.equals(source) ? "RaceHub driver " : "Driver ";
+        c.setDisplayName(name == null || name.isBlank() ? unnamed + row.driverProfileId() : name.trim());
         c.setBrcaNumber(blankToNull(row.brcaNumber()));
         c.setHomeClub(blankToNull(row.homeClub()));
         c.setUpdatedAt(now);
@@ -446,13 +479,16 @@ public class RaceHubImportService {
 
     /**
      * Finds the event class for a RaceHub class: a stored mapping first, then the one event class
-     * whose racing class name equals {@code rc_class_name}, ignoring case.
+     * whose racing class name equals {@code rc_class_name}, ignoring case. Another source's mappings
+     * are keyed by that source and its class id, so they never meet RaceHub's.
      */
     private final class ClassResolver {
+        private final String source;
         private final Map<String, Long> mapped;
         private final Map<String, List<Long>> byName;
 
-        ClassResolver(Long eventId) {
+        ClassResolver(Long eventId, String source) {
+            this.source = source;
             mapped = mappingRepository.findByEventIdOrderByRacehubEventClassId(eventId).stream()
                     .collect(Collectors.toMap(RaceHubClassMapping::getRacehubEventClassId,
                             RaceHubClassMapping::getEventClassId));
@@ -466,8 +502,12 @@ public class RaceHubImportService {
                             Collectors.mapping(EventClassRef::getId, Collectors.toList())));
         }
 
+        String mappingKey(ExportEntry row) {
+            return RACEHUB_SOURCE.equals(source) ? row.eventClassId() : source + ":" + row.eventClassId();
+        }
+
         Optional<Long> resolve(ExportEntry row) {
-            Long id = mapped.get(row.eventClassId());
+            Long id = mapped.get(mappingKey(row));
             if (id != null) {
                 return Optional.of(id);
             }

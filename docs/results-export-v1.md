@@ -24,7 +24,7 @@ Points belong to championship rounds, not to single races, so they appear only i
 
 A result row for an entry imported from RaceHub has `external_source: "RACEHUB"`, and carries RaceHub's `entry_id`, `driver_profile_id` and `racehub_event_class_id`. The schema requires `entry_id` and `driver_profile_id` on such a row.
 
-A result row for a walk-in added at the track has `external_source: null` and null RaceHub ids. It is identified by `rctc_entry_id` and `rctc_competitor_id` instead. Every row carries the RCTC ids, so RaceHub can match a walk-in across exports.
+A result row for a walk-in added at the track has `external_source: null` and null RaceHub ids. It is identified by `rctc_entry_id` and `rctc_competitor_id` instead. Every row carries the RCTC ids, so RaceHub can match a walk-in across exports. An entry from anywhere other than RaceHub, such as the RC-Timing CSV import or another booking system's entry file, is sent the same way, since RaceHub doesn't know its ids.
 
 A standing belongs to a driver, not an entry, so its `external_source` and `driver_profile_id` come from the driver's competitor record: a RaceHub driver who also ran as a walk-in is still named by their RaceHub id. A standing with `external_source: "RACEHUB"` always has a `driver_profile_id`.
 

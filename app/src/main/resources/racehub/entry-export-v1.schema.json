@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/oggthemiffed/RCTimingControl/entry-export-v1.schema.json",
+  "title": "Entry Export v1",
+  "description": "An event's entries, as imported by RCTimingControl. RaceHub produces it, and any other booking system can produce it too by setting `source`. Fields not named here are ignored. See docs/api.md, Admin — RaceHub import.",
+  "type": "object",
+  "required": ["schema_version", "event", "revision", "entries"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "source": {
+      "description": "The system the ids come from, kept apart from every other source's ids. Defaults to RACEHUB. CSV is taken by RCTimingControl's own CSV import.",
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{0,29}$",
+      "not": { "const": "CSV" }
+    },
+    "event": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "external_reference": { "type": ["string", "null"] },
+        "name": { "type": ["string", "null"] },
+        "event_local_date": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+        "timezone": { "type": ["string", "null"] }
+      }
+    },
+    "revision": {
+      "description": "Increases each time the source exports this event.",
+      "type": "integer"
+    },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "text": { "type": ["string", "null"] },
+    "entry": {
+      "type": "object",
+      "required": ["entry_id", "entry_version", "entry_status", "driver_profile_id", "event_class_id"],
+      "properties": {
+        "entry_id": { "$ref": "#/$defs/id" },
+        "entry_version": {
+          "description": "Increases each time the entry changes. An entry is applied only when its version is higher than the one already imported.",
+          "type": "integer"
+        },
+        "entry_status": { "enum": ["CONFIRMED", "WITHDRAWN"] },
+        "race_day_status": { "enum": ["NOT_ARRIVED", "ARRIVED", null] },
+        "event_class_id": { "$ref": "#/$defs/id" },
+        "rc_class_name": { "$ref": "#/$defs/text" },
+        "rc_class_number": { "$ref": "#/$defs/text" },
+        "class_name": { "$ref": "#/$defs/text" },
+        "driver_profile_id": { "$ref": "#/$defs/id" },
+        "driver_display_name": { "$ref": "#/$defs/text" },
+        "brca_number": { "$ref": "#/$defs/text" },
+        "brca_source": { "$ref": "#/$defs/text" },
+        "home_club": { "$ref": "#/$defs/text" },
+        "age_category": { "$ref": "#/$defs/text" },
+        "grade": { "$ref": "#/$defs/text" },
+        "primary_transponder": { "$ref": "#/$defs/text" },
+        "secondary_transponder": { "$ref": "#/$defs/text" },
+        "club_car_requested": { "type": ["boolean", "null"] },
+        "club_car_name": { "$ref": "#/$defs/text" }
+      }
+    }
+  }
+}

@@ -364,6 +364,23 @@ Requires `ADMIN`. With `dryRun=true` it returns the preview and saves nothing. E
 
 `action` is `CREATE`, `UPDATE`, `WITHDRAW`, `UNCHANGED` (a replay), `STALE` (an older version) or `SKIP` (withdrawn and never imported).
 
+### The file format, for any booking system
+
+Entry Export v1 is the format any booking system can produce to send its entries to RCTC, not only RaceHub. Its JSON Schema (draft 2020-12) is `app/src/main/resources/racehub/entry-export-v1.schema.json`, and a test checks every import test file against it.
+
+| Field | Meaning |
+|-------|---------|
+| `schema_version` | Always `1` |
+| `source` | Optional. The system the ids come from: up to 30 capital letters, digits or underscores, starting with a letter. Defaults to `RACEHUB`. `CSV` is taken by the RC-Timing CSV import. |
+| `event` | `id` (required), and optionally `external_reference`, `name`, `event_local_date` (YYYY-MM-DD) and `timezone` |
+| `revision` | A number that goes up each time the system exports this event |
+| `generated_at` | Optional ISO-8601 time the file was made |
+| `entries` | One object per entry, below |
+
+Each entry needs `entry_id`, `entry_version` (goes up each time the entry changes), `entry_status` (`CONFIRMED` or `WITHDRAWN`), `driver_profile_id` (the system's id for the driver) and `event_class_id` (its id for the class). The rest are optional: `race_day_status` (`NOT_ARRIVED` or `ARRIVED`), `rc_class_name` (matched to a racing class name), `rc_class_number`, `class_name`, `driver_display_name`, `brca_number`, `brca_source`, `home_club`, `age_category`, `grade`, `primary_transponder`, `secondary_transponder`, `club_car_requested` and `club_car_name`. Any other field is ignored, so contact, date of birth or payment data sent by mistake is never stored.
+
+Entries, drivers and class mappings are kept per `source`, so another system's ids never meet RaceHub's: a file with `"source": "OTHER"` and the same ids as a RaceHub file makes its own entries and competitors. Only a RaceHub file links the event to a RaceHub event, so results go back to RaceHub only for RaceHub entries. In Results Export v1, an entry from any other source is sent like a walk-in, by its RCTC ids.
+
 ### Class mappings
 
 ```http
@@ -375,7 +392,7 @@ PUT /admin/events/{eventId}/racehub-class-mappings
 
 Requires `ADMIN`. Each RaceHub class is matched to the event class whose racing class name equals its `rc_class_name`, ignoring case. These mappings set the match for classes whose names differ. `PUT` replaces the event's mappings.
 
-The RC-Timing CSV import uses the same mappings, keyed `CSV:` and the file's class name in lower case (or `CSV:#` and a Class Number), as its `unmappedClasses` list shows.
+The RC-Timing CSV import uses the same mappings, keyed `CSV:` and the file's class name in lower case (or `CSV:#` and a Class Number), as its `unmappedClasses` list shows. A file from another source is keyed by that source, a colon and its `event_class_id`, such as `OTHER:c1a2…`.
 
 ---
 
