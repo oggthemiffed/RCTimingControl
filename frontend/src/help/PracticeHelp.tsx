@@ -4,7 +4,7 @@ export function PracticeHelp() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        The Practice Sessions page lists recent open-practice sessions for the event. Practice timing
+        The Practice Sessions page lists recent open-practice sessions, across all events. A session shows its event name only when it is linked to one. Practice timing
         runs on its own, apart from the event&apos;s run order, and does not count towards
         championship points. Each session shows its status (Idle, Running or Stopped) and how many
         consecutive laps its &quot;best laps&quot; figure uses.

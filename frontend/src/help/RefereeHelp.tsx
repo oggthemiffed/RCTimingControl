@@ -5,7 +5,7 @@ export function RefereeHelp() {
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         The Referee View shows the live timing table for one race, with controls for raising incident
-        reports and applying penalties. It opens on the race in progress. Rows that tint are cars
+        reports and applying penalties. It opens on the race that is running or stopped; if none is, on the first race not yet finished (or the first in the list when all are finished), so check the selected race before you act. Rows that tint are cars
         closing quickly on the car ahead.
       </p>
 
