@@ -55,4 +55,14 @@ describe('useLappedBadge', () => {
     act(() => vi.advanceTimersByTime(0));
     expect(result.current.size).toBe(0);
   });
+
+  it('shows the badge once the debounce passes even if the timing does not change', () => {
+    const rows = laps(6, 5);
+    const { result } = renderHook(() => useLappedBadge(rows, 5000));
+    act(() => vi.advanceTimersByTime(4999));
+    expect(result.current.size).toBe(0);
+
+    act(() => vi.advanceTimersByTime(1));
+    expect([...result.current]).toEqual([2]);
+  });
 });

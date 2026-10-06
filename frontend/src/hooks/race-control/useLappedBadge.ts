@@ -41,17 +41,24 @@ export function useLappedBadge(rows: HasLapInfo[], debounceMs = 5000): Set<numbe
       }
     }
 
-    // The set is updated from a timer rather than in the effect itself, so the render that brought the new rows
-    // isn't followed by a second one straight away
-    const timer = setTimeout(() => {
+    // The set is updated from timers rather than in the effect itself: straight away, then again when the next
+    // lapped car reaches the debounce, so its badge appears even if the timing doesn't change meanwhile
+    let timer: ReturnType<typeof setTimeout>;
+    const evaluate = () => {
+      const at = Date.now();
       const newSet = new Set<number>();
+      let nextDeadline: number | null = null;
       for (const [entryId, since] of map) {
-        if (now - since >= debounceMs) newSet.add(entryId);
+        const deadline = since + debounceMs;
+        if (at >= deadline) newSet.add(entryId);
+        else if (nextDeadline === null || deadline < nextDeadline) nextDeadline = deadline;
       }
       setLappedSet((prev) =>
         prev.size === newSet.size && [...newSet].every((id) => prev.has(id)) ? prev : newSet,
       );
-    }, 0);
+      if (nextDeadline !== null) timer = setTimeout(evaluate, nextDeadline - at);
+    };
+    timer = setTimeout(evaluate, 0);
     return () => clearTimeout(timer);
   }, [rows, debounceMs]);
 
