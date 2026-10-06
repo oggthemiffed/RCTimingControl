@@ -6,16 +6,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+  # Every pull request: app, UI, simulator and build changes can all break the image
   pull_request:
-    paths:
-      - 'docker/**'
-      - 'docker-compose.demo.yml'
-      - 'docker-compose.club.yml'
-      - '.dockerignore'
-      - 'app/build.gradle.kts'
-      - 'settings.gradle.kts'
-      - 'buildSrc/**'
-      - '.github/workflows/docker.yml'
 
 permissions:
   contents: read
