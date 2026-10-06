@@ -65,7 +65,9 @@ public class CheckInQuery {
                         ENTRIES.TRANSPONDER_NUMBER,
                         ENTRIES.SECONDARY_TRANSPONDER_NUMBER,
                         ENTRIES.CHECKED_IN_AT,
-                        ENTRIES.RACEHUB_ARRIVAL)
+                        ENTRIES.RACEHUB_ARRIVAL,
+                        ENTRIES.IMPORTED_TRANSPONDER_NUMBER,
+                        ENTRIES.IMPORTED_SECONDARY_TRANSPONDER_NUMBER)
                 .from(ENTRIES)
                 .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                 .leftJoin(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(ENTRIES.EVENT_CLASS_ID))
@@ -88,7 +90,9 @@ public class CheckInQuery {
                 r.get(ENTRIES.SECONDARY_TRANSPONDER_NUMBER),
                 checkedInAt != null,
                 checkedInAt,
-                r.get(ENTRIES.RACEHUB_ARRIVAL));
+                r.get(ENTRIES.RACEHUB_ARRIVAL),
+                r.get(ENTRIES.IMPORTED_TRANSPONDER_NUMBER),
+                r.get(ENTRIES.IMPORTED_SECONDARY_TRANSPONDER_NUMBER));
     }
 
     private static String escapeLike(String s) {

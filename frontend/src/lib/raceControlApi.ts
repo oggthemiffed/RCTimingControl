@@ -328,6 +328,9 @@ export type CheckInEntry = {
   checkedIn: boolean;
   checkedInAt: string | null;
   racehubArrival: 'ARRIVED' | 'NOT_ARRIVED' | null;
+  /** The imported file's numbers where they differ from a transponder swapped on the day (#50) */
+  importedTransponderNumber: string | null;
+  importedSecondaryTransponderNumber: string | null;
 };
 
 export type CheckInConfirmResponse = {

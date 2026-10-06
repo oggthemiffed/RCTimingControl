@@ -37,6 +37,13 @@ public class Entry {
     /** RaceHub's race_day_status (NOT_ARRIVED / ARRIVED). Read-only here; set only by import. */
     private String racehubArrival;
 
+    /**
+     * The imported file's number for a transponder swapped on the day, when it differs from the number kept (#50).
+     * Null when there is no difference.
+     */
+    private String importedTransponderNumber;
+    private String importedSecondaryTransponderNumber;
+
     /** The RaceHub event_class_id this entry was booked in (#27). Null for walk-ins. */
     private String racehubEventClassId;
 
@@ -96,6 +103,14 @@ public class Entry {
 
     public String getRacehubArrival() { return racehubArrival; }
     public void setRacehubArrival(String racehubArrival) { this.racehubArrival = racehubArrival; }
+
+    public String getImportedTransponderNumber() { return importedTransponderNumber; }
+    public void setImportedTransponderNumber(String importedTransponderNumber) { this.importedTransponderNumber = importedTransponderNumber; }
+
+    public String getImportedSecondaryTransponderNumber() { return importedSecondaryTransponderNumber; }
+    public void setImportedSecondaryTransponderNumber(String importedSecondaryTransponderNumber) {
+        this.importedSecondaryTransponderNumber = importedSecondaryTransponderNumber;
+    }
 
     public String getRacehubEventClassId() { return racehubEventClassId; }
     public void setRacehubEventClassId(String racehubEventClassId) { this.racehubEventClassId = racehubEventClassId; }

@@ -7,6 +7,9 @@ import java.time.Instant;
  *
  * @param racehubArrival RaceHub's arrival mark (NOT_ARRIVED / ARRIVED), read-only; null for
  *                       entries not imported from RaceHub
+ * @param importedTransponderNumber the imported file's primary, when it differs from a number swapped on the
+ *                                  day (#50); null otherwise
+ * @param importedSecondaryTransponderNumber the same for the secondary
  */
 public record CheckInEntryDto(
         long entryId,
@@ -16,5 +19,7 @@ public record CheckInEntryDto(
         String secondaryTransponderNumber,
         boolean checkedIn,
         Instant checkedInAt,
-        String racehubArrival
+        String racehubArrival,
+        String importedTransponderNumber,
+        String importedSecondaryTransponderNumber
 ) {}

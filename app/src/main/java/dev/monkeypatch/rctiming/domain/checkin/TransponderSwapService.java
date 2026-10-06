@@ -11,9 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Swaps an entry's primary or secondary transponder on the day (L11). Every change is written to the entry audit log as
@@ -23,7 +27,7 @@ import java.util.Objects;
 @Service
 public class TransponderSwapService {
 
-    static final String AUDIT_ACTION = "TRANSPONDER_SWAP";
+    public static final String AUDIT_ACTION = "TRANSPONDER_SWAP";
 
     private final EventRepository eventRepository;
     private final EntryRepository entryRepository;
@@ -83,16 +87,50 @@ public class TransponderSwapService {
             }
         }
 
+        // Swapping to the number the imported file has settles a difference an import flagged (#50)
         if (slot == TransponderSlot.PRIMARY) {
             entry.setTransponderNumberSnapshot(normalized);
+            if (Objects.equals(normalized, entry.getImportedTransponderNumber())) {
+                entry.setImportedTransponderNumber(null);
+            }
         } else {
             entry.setSecondaryTransponderNumber(normalized);
+            if (Objects.equals(normalized, entry.getImportedSecondaryTransponderNumber())) {
+                entry.setImportedSecondaryTransponderNumber(null);
+            }
         }
         Instant now = Instant.now();
         entry.setUpdatedAt(now);
         entryRepository.save(entry);
         writeAudit(entry.getId(), actingUserId, slot, oldNumber, normalized, now);
         return new SwapResult.Success(entry, slot, oldNumber, normalized);
+    }
+
+    /**
+     * The slots of each of the event's entries that have been swapped on the day, by entry id. A re-import keeps
+     * these numbers (#50).
+     */
+    @Transactional(readOnly = true)
+    public Map<Long, Set<TransponderSlot>> swappedSlots(long eventId) {
+        Map<Long, Set<TransponderSlot>> slots = new HashMap<>();
+        for (EntryAuditLog log : auditLogRepository.findByEventIdAndAction(eventId, AUDIT_ACTION)) {
+            slotOf(log).ifPresent(slot ->
+                    slots.computeIfAbsent(log.getEntryId(), id -> EnumSet.noneOf(TransponderSlot.class)).add(slot));
+        }
+        return slots;
+    }
+
+    private Optional<TransponderSlot> slotOf(EntryAuditLog log) {
+        String snapshot = log.getAfterSnapshot() != null ? log.getAfterSnapshot() : log.getBeforeSnapshot();
+        if (snapshot == null) {
+            return Optional.empty();
+        }
+        try {
+            String slot = objectMapper.readTree(snapshot).path("slot").asText(null);
+            return slot == null ? Optional.empty() : Optional.of(TransponderSlot.valueOf(slot));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     /**

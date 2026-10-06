@@ -25,6 +25,7 @@ import { useEntriesForClass, useWithdrawEntry } from '@/hooks/admin/useAdminEntr
 import type { AdminEntryDto, EventClassDto } from '@/lib/adminApi';
 import { useAuth } from '@/hooks/useAuth';
 import AddWalkInEntryDialog from './AddWalkInEntryDialog';
+import { ImportedTransponderDifference } from '@/pages/race-control/check-in/CheckInStatus';
 
 // ── Entry status colors ───────────────────────────────────────────────────
 
@@ -176,6 +177,10 @@ function EntriesTable({
                 {entry.secondaryTransponderNumber && (
                   <span className="text-muted-foreground"> / {entry.secondaryTransponderNumber}</span>
                 )}
+                <ImportedTransponderDifference
+                  primary={entry.importedTransponderNumber}
+                  secondary={entry.importedSecondaryTransponderNumber}
+                />
               </TableCell>
               <TableCell>
                 <Badge className={entryStatusColor[entry.status]}>

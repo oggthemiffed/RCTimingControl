@@ -300,6 +300,34 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         return (String) get(19);
     }
 
+    /**
+     * Setter for <code>entries.imported_transponder_number</code>.
+     */
+    public void setImportedTransponderNumber(String value) {
+        set(20, value);
+    }
+
+    /**
+     * Getter for <code>entries.imported_transponder_number</code>.
+     */
+    public String getImportedTransponderNumber() {
+        return (String) get(20);
+    }
+
+    /**
+     * Setter for <code>entries.imported_secondary_transponder_number</code>.
+     */
+    public void setImportedSecondaryTransponderNumber(String value) {
+        set(21, value);
+    }
+
+    /**
+     * Getter for <code>entries.imported_secondary_transponder_number</code>.
+     */
+    public String getImportedSecondaryTransponderNumber() {
+        return (String) get(21);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -323,7 +351,7 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
     /**
      * Create a detached, initialised EntriesRecord
      */
-    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Instant submittedAt, Instant updatedAt, Instant confirmedAt, Instant withdrawnAt, Long competitorId, String secondaryTransponderNumber, String externalSource, String externalEntryId, Long externalEntryVersion, String racehubArrival, Instant checkedInAt, Long checkedInByUserId, String racehubEventClassId) {
+    public EntriesRecord(Long id, Long userId, Long eventId, Long eventClassId, String transponderNumber, String transponderLabel, String status, Instant submittedAt, Instant updatedAt, Instant confirmedAt, Instant withdrawnAt, Long competitorId, String secondaryTransponderNumber, String externalSource, String externalEntryId, Long externalEntryVersion, String racehubArrival, Instant checkedInAt, Long checkedInByUserId, String racehubEventClassId, String importedTransponderNumber, String importedSecondaryTransponderNumber) {
         super(Entries.ENTRIES);
 
         setId(id);
@@ -346,6 +374,8 @@ public class EntriesRecord extends UpdatableRecordImpl<EntriesRecord> {
         setCheckedInAt(checkedInAt);
         setCheckedInByUserId(checkedInByUserId);
         setRacehubEventClassId(racehubEventClassId);
+        setImportedTransponderNumber(importedTransponderNumber);
+        setImportedSecondaryTransponderNumber(importedSecondaryTransponderNumber);
         resetChangedOnNotNull();
     }
 }

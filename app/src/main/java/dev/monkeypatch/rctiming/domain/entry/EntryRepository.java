@@ -51,6 +51,8 @@ public class EntryRepository extends JooqRepository<Entry, EntriesRecord> {
         e.setTransponderNumberSnapshot(r.getTransponderNumber());
         e.setTransponderLabelSnapshot(r.getTransponderLabel());
         e.setSecondaryTransponderNumber(r.getSecondaryTransponderNumber());
+        e.setImportedTransponderNumber(r.getImportedTransponderNumber());
+        e.setImportedSecondaryTransponderNumber(r.getImportedSecondaryTransponderNumber());
         e.setStatus(r.getStatus() == null ? null : EntryStatus.valueOf(r.getStatus()));
         e.setSubmittedAt(r.getSubmittedAt());
         e.setConfirmedAt(r.getConfirmedAt());
@@ -75,6 +77,8 @@ public class EntryRepository extends JooqRepository<Entry, EntriesRecord> {
         r.setTransponderNumber(e.getTransponderNumberSnapshot());
         r.setTransponderLabel(e.getTransponderLabelSnapshot());
         r.setSecondaryTransponderNumber(e.getSecondaryTransponderNumber());
+        r.setImportedTransponderNumber(e.getImportedTransponderNumber());
+        r.setImportedSecondaryTransponderNumber(e.getImportedSecondaryTransponderNumber());
         r.setStatus(e.getStatus() == null ? null : e.getStatus().name());
         r.setSubmittedAt(e.getSubmittedAt());
         r.setConfirmedAt(e.getConfirmedAt());
