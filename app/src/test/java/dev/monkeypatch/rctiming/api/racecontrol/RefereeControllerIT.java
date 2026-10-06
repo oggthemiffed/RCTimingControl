@@ -171,6 +171,20 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void aRefereeOnlyAccountCanLoadTheRunOrderTheRefereeViewStartsFrom() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+
+        ResponseEntity<Object[]> resp = restTemplate.exchange(
+                "/api/v1/race-control/event/" + resolveEventId(re.race()) + "/run-order",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(refereeHeaders()),
+                Object[].class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp.getBody()).hasSize(1);
+    }
+
+    @Test
     void aPenaltyCanStillBeAppliedAfterTheRaceHasFinished() {
         RaceAndEntry re = seedRaceAndEntry(RaceStatus.FINISHED);
 

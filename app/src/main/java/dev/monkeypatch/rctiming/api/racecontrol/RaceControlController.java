@@ -86,7 +86,9 @@ public class RaceControlController {
 
     // --- D-04: Run order ---
 
+    /** The referee also reads the run order: it is how the Referee View picks a race (#107). */
     @GetMapping("/event/{eventId}/run-order")
+    @PreAuthorize("hasAnyRole('RACE_DIRECTOR','REFEREE','ADMIN')")
     public List<RunOrderItemDto> getRunOrder(@PathVariable long eventId) {
         return runOrderQuery.findForEvent(eventId);
     }

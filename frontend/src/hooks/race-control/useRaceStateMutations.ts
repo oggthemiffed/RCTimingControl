@@ -58,8 +58,10 @@ export function useRaceStateMutations(raceId: number, eventId: number) {
     incident: useMutation({
       mutationFn: (req: IncidentReportRequest) => raiseIncident(raceId, req),
     }),
+    // After the finish a penalty changes the stored result, so a cached copy is stale (#107)
     penalty: useMutation({
       mutationFn: (req: PenaltyRequest) => applyPenalty(raceId, req),
+      onSuccess: invalidateSnapshot,
     }),
     marshalAbsent: useMutation({
       mutationFn: (req: MarshalAbsenceRequest) => recordMarshalAbsent(raceId, req),
