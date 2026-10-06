@@ -105,6 +105,11 @@ export function useAnnouncements({
     setClipsRaceId(Object.keys(map).length > 0 ? raceId : null);
   }, [raceId]);
 
+  // A different race has different clips: drop the previous race's URLs straight away
+  useEffect(() => {
+    clipMapRef.current = {};
+  }, [raceId]);
+
   // Handle running-order announcements (AUDIO-06)
   useEffect(() => {
     if (!audioEvent) return;

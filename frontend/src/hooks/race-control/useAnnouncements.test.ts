@@ -112,4 +112,17 @@ describe('useAnnouncements finish', () => {
     rerender({ raceState: 'FINISHED' });
     expect(audioUrls).toEqual(['http://x/finish.wav']);
   });
+
+  it('does not play the previous race\'s clip when the race changes', () => {
+    const { result, rerender } = renderHook(
+      (p: { raceId: number; raceState: string }) =>
+        useAnnouncements({ raceId: p.raceId, settings, raceState: p.raceState }),
+      { initialProps: { raceId: 5, raceState: 'RUNNING' } },
+    );
+    act(() => result.current.setClipMap({ finish: 'http://x/race5-finish.wav' }));
+    rerender({ raceId: 6, raceState: 'RUNNING' });
+    rerender({ raceId: 6, raceState: 'FINISHED' });
+    expect(audioUrls).toEqual([]);
+    expect(speak).toHaveBeenCalledTimes(1);
+  });
 });
