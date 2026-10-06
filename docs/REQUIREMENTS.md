@@ -181,7 +181,7 @@
 - [x] **LOCAL-01**: A full meeting runs with no internet connection at the venue (#21)
 - [x] **DB-01**: The app keeps its data in one SQLite file in a per-machine data folder (#26)
 - [x] **DB-02**: The database vendor is chosen in one place and vendor-specific code is confined to one package, enforced by a test, so the database can be swapped later (#26)
-- [x] **BACKUP-01**: Backups are taken when a race day closes, every night and on demand, while racing carries on; a restore command puts one back (#22)
+- [x] **BACKUP-01**: Backups are taken when a race day closes (an official completes the event), every night and on demand, while racing carries on; a restore command puts one back (#22)
 - [x] **INSTALL-01**: One installer per system (Windows, macOS, Linux) installs the app with its own Java runtime as a background service (#23, #24)
 - [x] **INSTALL-02**: A demo club and a simulated decoder can be turned on from the installed app for trying it out (#24)
 - [x] **RESULTS-EXPORT-01**: Results Export v1 is pushed to RaceHub through an outbound queue that waits for a connection (#27)

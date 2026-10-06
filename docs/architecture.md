@@ -62,7 +62,7 @@ Officials add walk-ins by hand in the admin entry list. A file works with no int
 
 ### Results go back to RaceHub
 
-For an event imported from RaceHub, the app queues a **Results Export v1** document (`resultsexport/`) when a race finishes, when a finished race is corrected and when the race day is closed. Each one is the whole event with the next revision number, and replaces any older one that hasn't gone yet. A scheduled sender posts them to RaceHub with the club's key and an idempotency key, and retries with a growing wait while RaceHub can't be reached. The request is a mark on the event, saved in race control's own transaction so it survives a crash; a background job builds the export from it, and a slow or missing network never holds a race up. See [results-export-v1.md](results-export-v1.md).
+For an event imported from RaceHub, the app queues a **Results Export v1** document (`resultsexport/`) when a race finishes, when a finished race is corrected and when the race day is closed (an official completes the event). Each one is the whole event with the next revision number, and replaces any older one that hasn't gone yet. A scheduled sender posts them to RaceHub with the club's key and an idempotency key, and retries with a growing wait while RaceHub can't be reached. The request is a mark on the event, saved in race control's own transaction so it survives a crash; a background job builds the export from it, and a slow or missing network never holds a race up. See [results-export-v1.md](results-export-v1.md).
 
 ### Live feed to remote viewers
 
@@ -120,7 +120,7 @@ Only officials have accounts. Their roles are stackable — one account can hold
 
 ### Data, backups and packaging
 
-The SQLite file lives in a per-machine data folder outside the install folder, so upgrades keep it. The vendor is chosen in one place (`persistence/DatabaseConfig`), Java code uses only the jOOQ DSL and shared converters, and `PersistencePortabilityTest` fails the build on vendor-specific code, so the database could be swapped later (see [development.md](development.md)). Backups are taken when a race day closes, every night and on demand, while racing carries on; `restore` puts one back. The installers (`jpackage`, with their own Java runtime) install the app as a Windows service, a launchd daemon or a systemd unit; see [installing.md](installing.md).
+The SQLite file lives in a per-machine data folder outside the install folder, so upgrades keep it. The vendor is chosen in one place (`persistence/DatabaseConfig`), Java code uses only the jOOQ DSL and shared converters, and `PersistencePortabilityTest` fails the build on vendor-specific code, so the database could be swapped later (see [development.md](development.md)). Backups are taken when a race day closes (an official completes the event), every night and on demand, while racing carries on; `restore` puts one back. The installers (`jpackage`, with their own Java runtime) install the app as a Windows service, a launchd daemon or a systemd unit; see [installing.md](installing.md).
 
 ## What's built
 

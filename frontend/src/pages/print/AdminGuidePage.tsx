@@ -408,9 +408,10 @@ export default function AdminGuidePage() {
           <li>
             <span className="font-semibold">Backups:</span> In the Admin sidebar under
             <span className="font-semibold"> Operations</span>, click
-            <span className="font-semibold"> Backups</span>. RCTC backs up its database when a race
-            day is closed and every night, keeping the newest copies, and backing up is safe while
-            racing carries on. Click <span className="font-semibold">Back up now</span> to take one
+            <span className="font-semibold"> Backups</span>. RCTC backs up its database when you complete an
+            event (<span className="font-semibold">Complete Event</span>, which closes the race day)
+            and every night, keeping the newest copies, and backing up is safe while racing carries
+            on. If an event is never completed there is no day-close copy, only the nightly one. Click <span className="font-semibold">Back up now</span> to take one
             by hand. The page shows the backup folder and why each copy was taken. Copy the folder to
             a USB stick now and then. To restore, stop the service and run the restore command on the
             timing laptop (the installation guide, &quot;Restoring a backup&quot;); the database it
@@ -420,7 +421,7 @@ export default function AdminGuidePage() {
             <span className="font-semibold">Results to RaceHub:</span> Click
             <span className="font-semibold"> Results to RaceHub</span> to see what has been sent back.
             For events whose entries were imported from RaceHub, results are queued when a race
-            finishes, when a finished race is corrected, and when the race day is closed, and sent in
+            finishes, when a finished race is corrected, and when you complete the event, and sent in
             the background. Each row shows its state (<span className="font-semibold">Waiting to
             send</span>, <span className="font-semibold">Failed, will retry</span>,
             <span className="font-semibold"> Sent</span>, or <span className="font-semibold">Replaced

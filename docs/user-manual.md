@@ -64,11 +64,11 @@ When all races are done, complete the event. Results are on the public pages, pr
 
 ### 11. Backups
 
-RCTC backs up its database when you complete a race day and every night, and **Admin → Backups** lists the copies and takes one on demand. Keep a copy off the laptop. Restoring is done on the laptop with the service stopped: [installing.md](installing.md#restoring-a-backup).
+RCTC backs up its database when you complete the event (that closes the race day) and every night, and **Admin → Backups** lists the copies and takes one on demand. Keep a copy off the laptop. Restoring is done on the laptop with the service stopped: [installing.md](installing.md#restoring-a-backup).
 
 ### 12. Send results back to RaceHub
 
-For events whose entries came from RaceHub, results are queued when a race finishes, when one is corrected and when the day is closed, then sent in the background. The address and key go in the settings file ([installing.md](installing.md#sending-results-to-racehub)), and **Admin → Results to RaceHub** shows what has gone. The file format is in [results-export-v1.md](results-export-v1.md).
+For events whose entries came from RaceHub, results are queued when a race finishes, when one is corrected and when you complete the event (that closes the day), then sent in the background. The address and key go in the settings file ([installing.md](installing.md#sending-results-to-racehub)), and **Admin → Results to RaceHub** shows what has gone. The file format is in [results-export-v1.md](results-export-v1.md).
 
 ### 13. Share a live feed
 
