@@ -7,6 +7,7 @@ import dev.monkeypatch.rctiming.api.admin.dto.EntryResult;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
+import dev.monkeypatch.rctiming.domain.competitor.PossibleDuplicateCompetitorException;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
@@ -89,6 +90,10 @@ public class EntryService {
             competitor = competitorRepository.findById(req.competitorId())
                     .orElseThrow(() -> new EntityNotFoundException("Competitor not found: " + req.competitorId()));
         } else if (hasName) {
+            List<Competitor> possible = competitorService.findPossibleDuplicates(req.competitorName());
+            if (!possible.isEmpty() && !Boolean.TRUE.equals(req.confirmNewCompetitor())) {
+                throw new PossibleDuplicateCompetitorException(possible);
+            }
             competitor = competitorService.createWalkIn(req.competitorName());
         } else {
             throw new IllegalArgumentException("Choose a competitor or enter a name");

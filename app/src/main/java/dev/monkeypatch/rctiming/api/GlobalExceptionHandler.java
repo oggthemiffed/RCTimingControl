@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api;
 
+import dev.monkeypatch.rctiming.domain.competitor.PossibleDuplicateCompetitorException;
 import dev.monkeypatch.rctiming.domain.user.OfficialChangeRefusedException;
 import dev.monkeypatch.rctiming.backup.BackupFailedException;
 import dev.monkeypatch.rctiming.domain.event.IllegalStateTransitionException;
@@ -15,6 +16,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.DateTimeException;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 // Note: ResponseStatusException is handled directly by Spring MVC — no handler needed here.
@@ -26,6 +30,25 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ProblemDetail handleNotFound(EntityNotFoundException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    /** A typed walk-in name matches an existing competitor: say who, so the official can choose (#123). */
+    @ExceptionHandler(PossibleDuplicateCompetitorException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handlePossibleDuplicate(PossibleDuplicateCompetitorException ex) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        detail.setProperty("code", "POSSIBLE_DUPLICATE_COMPETITOR");
+        List<Map<String, Object>> matches = ex.getMatches().stream().map(c -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", c.getId());
+            m.put("displayName", c.getDisplayName());
+            m.put("brcaNumber", c.getBrcaNumber());
+            m.put("homeClub", c.getHomeClub());
+            m.put("spokenName", c.getSpokenName());
+            return m;
+        }).toList();
+        detail.setProperty("matches", matches);
+        return detail;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

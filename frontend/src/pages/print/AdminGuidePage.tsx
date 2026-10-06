@@ -234,7 +234,10 @@ export default function AdminGuidePage() {
           <li>
             <span className="font-semibold">Add a walk-in:</span> Click
             <span className="font-semibold"> Add entry</span>, pick an existing driver or type a
-            new name, and enter their transponder.
+            new name, and enter their transponder. If the name you type matches a driver who already
+            exists (ignoring capitals and spacing), RCTC asks whether it is the same person: choose
+            that driver, or <span className="font-semibold">No, this is a different person</span> to
+            add a new one. This keeps one driver&apos;s results and championship points together.
           </li>
           <li>
             <span className="font-semibold">Withdraw an entry:</span> Click

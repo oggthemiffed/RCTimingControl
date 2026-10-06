@@ -173,6 +173,7 @@
 - [x] **IMPORT-06**: An admin imports an RC-Timing style driver CSV into an event. The preview shows new, changed (old and new values), unchanged and missing entries; only the changed entries and missing entries the official picks are updated or withdrawn, and walk-ins and entries from other sources are never withdrawn (#39)
 - [x] **IMPORT-07**: An admin sets a URL (and optional access token) an event fetches Entry Export v1 from, on demand or every few minutes. A new revision that imports cleanly is applied automatically; anything blocked waits for an official to review. The token is stored encrypted and never shown again (#42)
 - [x] **WALKIN-01**: An admin or race director adds a walk-in entry by hand, with a competitor, class and transponders, until the event is completed (#17)
+- [x] **WALKIN-02**: A walk-in name typed by hand that matches an existing competitor (same name, ignoring case and spacing, from any source) is refused until the official picks that competitor or confirms it is a different person, so one driver is not created twice (#123)
 - [x] **COMPETITOR-01**: A competitor is the person an entry belongs to (display name, RaceHub driver ID, BRCA number, home club) and has no login (#12)
 - [x] **COMPETITOR-02**: Results, live timing and championship standings group by competitor across meetings (#13)
 - [x] **TRANSPONDER-01**: Each entry has a primary and an optional secondary transponder; a number already used in the event is accepted with a warning, not refused (#14)
@@ -354,6 +355,7 @@
 | IMPORT-06 | #39 | Complete |
 | IMPORT-07 | #42 | Complete |
 | WALKIN-01 | #17 | Complete |
+| WALKIN-02 | #123 | Complete |
 | COMPETITOR-01 | #12 | Complete |
 | COMPETITOR-02 | #13 | Complete |
 | TRANSPONDER-01 | #14 | Complete |

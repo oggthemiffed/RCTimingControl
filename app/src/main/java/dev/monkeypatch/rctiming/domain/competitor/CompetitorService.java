@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 public class CompetitorService {
@@ -24,6 +25,15 @@ public class CompetitorService {
         competitor.setCreatedAt(now);
         competitor.setUpdatedAt(now);
         return competitorRepository.save(competitor);
+    }
+
+    /**
+     * Existing competitors a typed walk-in name may be: the same name, ignoring case and spacing, from
+     * any source (#123). Empty when the name is new.
+     */
+    @Transactional(readOnly = true)
+    public List<Competitor> findPossibleDuplicates(String displayName) {
+        return competitorRepository.findByNormalizedName(displayName);
     }
 
     /** The longest spoken name accepted; it is a short pronunciation hint, not free text. */

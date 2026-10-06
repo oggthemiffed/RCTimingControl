@@ -6,7 +6,8 @@ import jakarta.validation.constraints.Size;
 
 /**
  * A walk-in entry added by hand (L9, #17). Give either an existing {@code competitorId} or a
- * {@code competitorName} for a new competitor.
+ * {@code competitorName} for a new competitor. A new name that matches an existing competitor is
+ * refused (409, with the matches) unless {@code confirmNewCompetitor} says it is a different person (#123).
  */
 public record AdminCreateEntryRequest(
         @NotNull Long eventId,
@@ -14,4 +15,5 @@ public record AdminCreateEntryRequest(
         Long competitorId,
         @Size(max = 255) String competitorName,
         @NotBlank @Size(max = 20) String primaryTransponder,
-        @Size(max = 20) String secondaryTransponder) {}
+        @Size(max = 20) String secondaryTransponder,
+        Boolean confirmNewCompetitor) {}
