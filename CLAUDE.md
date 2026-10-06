@@ -42,7 +42,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 
 **Entries:** imported from RaceHub's Entry Export v1 JSON (`domain/racehub`) or an RC-Timing style driver CSV (`domain/csvimport`, a preview-and-pick adapter), or added by hand as walk-ins. Each entry points at a **competitor** (`domain/competitor`: display name, RaceHub driver ID, BRCA number, home club) and carries a primary and an optional secondary transponder for that event.
 
-**Packaging:** Spring Boot serves the built React app (`-PbundleFrontend`). `jpackage` wraps the jar with its own Java runtime into a Windows `.msi`, macOS `.pkg` or Linux `.deb` that installs a background service. See `docs/installing.md`. There is no Docker or internet deployment.
+**Packaging:** Spring Boot serves the built React app (`-PbundleFrontend`). `jpackage` wraps the jar with its own Java runtime into a Windows `.msi`, macOS `.pkg` or Linux `.deb` that installs a background service. See `docs/installing.md`. `docker/Dockerfile` builds the same jar into an image, and `docker-compose.demo.yml` runs it with the demo club and the simulator for testers on any system (#99, `docs/docker.md`). There is no internet deployment.
 
 **Testing:** JUnit 5 + Mockito on temporary SQLite databases, no Docker (backend); Vitest + React Testing Library (frontend)
 
@@ -61,7 +61,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 - Vendor-specific SQL in Java code (jOOQ DSL and the shared converters only; the vendor lives in `persistence/vendor/`)
 - gRPC, a separate forwarder process, or cloud sync for timing (the app reads the decoder directly)
 - Racer accounts, self-registration or a `RACER` role (RaceHub owns racer identity)
-- Docker, nginx or TLS for deployment (the app installs natively and stays on the venue network)
+- nginx, TLS or internet deployment (the app stays on the venue network; it installs natively, or runs from the Docker image in `docker/`, see `docs/docker.md`)
 
 ## Architecture
 

@@ -16,7 +16,15 @@ See [docs/installing.md](docs/installing.md) for each system, the data folder, b
 
 ## Try it out
 
-To explore the app with a demo club and a simulated decoder sending live laps, install it and follow [docs/trial-quickstart.md](docs/trial-quickstart.md).
+To explore the app with a demo club and a simulated decoder sending live laps, the quickest way on any system is Docker:
+
+```bash
+git clone https://github.com/oggthemiffed/RCTimingControl.git
+cd RCTimingControl
+docker compose -f docker-compose.demo.yml up --build
+```
+
+Then open **http://localhost:8080** and sign in as `admin@example.com` / `trial123`. See [docs/docker.md](docs/docker.md), and [docs/trial-quickstart.md](docs/trial-quickstart.md#things-to-try) for what to try. The trial guide also covers the demo on an installed copy.
 
 ---
 
@@ -28,7 +36,8 @@ To explore the app with a demo club and a simulated decoder sending live laps, i
 | `frontend/` | React 18 + Vite + Tailwind + shadcn/ui — admin panel, check-in, race control, spectator boards and public results |
 | `decoder-simulator/` | Fake AMB decoder over TCP for development and trying the app out (generative and playback modes); the app runs it with `simulate` |
 | `decoder-protocol/` | Shared AMB/MyLaps decoder protocol parsing (RC-4 text; P3 binary is deferred) — used by `app/` and `decoder-simulator/` |
-| `docker-compose.yml` | Piper (TTS), optional, for announcer voices. The database is a SQLite file and club logos and TTS clips are stored on local disk, so nothing else needs Docker. |
+| `docker-compose.yml` | Piper (TTS), optional, for announcer voices in development. The database is a SQLite file and club logos and TTS clips are stored on local disk, so nothing else needs Docker. |
+| `docker/`, `docker-compose.demo.yml` | The app's Docker image, and the demo with a simulated decoder ([docs/docker.md](docs/docker.md)) |
 
 ### Quick start (dev)
 
@@ -110,6 +119,7 @@ See [docs/testing.md](docs/testing.md) for the full test matrix, including `deco
 
 - [Installing](docs/installing.md) — install on a venue laptop, data folder, backups, upgrades
 - [Trying it out](docs/trial-quickstart.md) — a demo club and a simulated decoder, no developer setup needed
+- [Running with Docker](docs/docker.md) — the demo on any system with Docker, and running a club's app in Docker
 - [Decoder setup guide](docs/decoder.md) — connecting the AMB decoder, simulator, status
 - [API reference](docs/api.md) — all endpoints with example requests
 - [Development guide](docs/development.md) — environment setup, config, env vars

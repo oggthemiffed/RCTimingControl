@@ -6,6 +6,10 @@ Each release on the [Releases page](https://github.com/oggthemiffed/RCTimingCont
 
 ## Upgrade notes
 
+### A Docker image and demo again (#99)
+
+`docker compose -f docker-compose.demo.yml up --build` runs the demo club and a simulated decoder on any system with Docker, built from a copy of the repository. The image can also run a club's app. See [docs/docker.md](docs/docker.md). Unlike the stacks removed in #24 there is no nginx and no frontend container, since the app serves the UI itself, and no published image yet.
+
 ### The profanity blocklist is gone (#30)
 
 The **Profanity Blocklist** card under **Admin → Audio** is removed, and the upgrade drops any words a club added to it. Nothing had been checked against it since racers stopped typing in their own names (#18).
