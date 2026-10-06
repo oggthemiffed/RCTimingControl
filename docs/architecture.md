@@ -120,7 +120,7 @@ Only officials have accounts. Their roles are stackable — one account can hold
 
 ### Data, backups and packaging
 
-The SQLite file lives in a per-machine data folder outside the install folder, so upgrades keep it. The vendor is chosen in one place (`persistence/DatabaseConfig`), Java code uses only the jOOQ DSL and shared converters, and `PersistencePortabilityTest` fails the build on vendor-specific code, so the database could be swapped later (see [development.md](development.md)). Backups are taken when a race day closes, every night and on demand, while racing carries on; `restore` puts one back. The installers (`jpackage`, with their own Java runtime) install the app as a Windows service, a launchd daemon or a systemd unit; see [installing.md](installing.md).
+The SQLite file lives in a per-machine data folder outside the install folder, so upgrades keep it. The vendor is chosen in one place (`persistence/DatabaseConfig`), Java code uses only the jOOQ DSL and shared converters, and `PersistencePortabilityTest` fails the build on vendor-specific code, so the database could be swapped later (see [development.md](development.md)). Backups are taken when a race day closes (an official completes the event), every night and on demand, while racing carries on; `restore` puts one back. The installers (`jpackage`, with their own Java runtime) install the app as a Windows service, a launchd daemon or a systemd unit; see [installing.md](installing.md).
 
 ## What's built
 

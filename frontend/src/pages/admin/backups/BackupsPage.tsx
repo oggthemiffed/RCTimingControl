@@ -78,7 +78,7 @@ export default function BackupsPage() {
           <DatabaseBackup className="h-10 w-10 text-muted-foreground mb-4" aria-hidden="true" />
           <h2 className="text-lg font-semibold">No backups yet</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            The first one is taken tonight or when you close a race day. You can take one now.
+            The first one is taken tonight or when you complete an event (Complete Event closes the race day). You can take one now.
           </p>
         </div>
       )}
