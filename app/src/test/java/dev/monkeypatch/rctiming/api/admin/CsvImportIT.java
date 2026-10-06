@@ -415,6 +415,25 @@ class CsvImportIT extends AbstractIntegrationTest {
         return out;
     }
 
+    @Test
+    void anAppliedUpdateLeavesASpokenNameAlone() {
+        importFile("initial.csv", false);
+        Competitor alan = entries().stream()
+                .map(e -> competitorRepository.findById(e.getCompetitorId()).orElseThrow())
+                .filter(c -> "Alan Turing".equals(c.getDisplayName()))
+                .findFirst().orElseThrow();
+        alan.setSpokenName("Al-an Tyoor-ing");
+        competitorRepository.save(alan);
+
+        JsonNode preview = importFile("changed.csv", true).getBody();
+        String key = row(preview, "CHANGED", "Alan M Turing").get("key").asText();
+        importFile("changed.csv", false, Map.of("update", List.of(key)));
+
+        Competitor after = competitorRepository.findById(alan.getId()).orElseThrow();
+        assertThat(after.getDisplayName()).isEqualTo("Alan M Turing");
+        assertThat(after.getSpokenName()).isEqualTo("Al-an Tyoor-ing");
+    }
+
     private List<Entry> entries() {
         return entryRepository.findByEventId(eventId);
     }

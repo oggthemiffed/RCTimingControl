@@ -163,6 +163,20 @@ class RaceHubImportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void reImport_leavesASpokenNameAlone() {
+        importFixture("entries-v1-initial.json", false);
+        Competitor ada = competitorRepository.findById(entry("a1").getCompetitorId()).orElseThrow();
+        ada.setSpokenName("Ay-da Luv-lace");
+        competitorRepository.save(ada);
+
+        importFixture("entries-v1-update.json", false);
+
+        Competitor after = competitorRepository.findById(ada.getId()).orElseThrow();
+        assertThat(after.getHomeClub()).isEqualTo("Difference Engine RC");
+        assertThat(after.getSpokenName()).isEqualTo("Ay-da Luv-lace");
+    }
+
+    @Test
     void reImport_keepsATransponderSwappedOnTheDay_andFlagsTheDifference() {
         importFixture("entries-v1-initial.json", false);
         Entry ada = entry("a1");

@@ -1,11 +1,28 @@
 package dev.monkeypatch.rctiming.api.admin;
 
+import dev.monkeypatch.rctiming.domain.club.ClubProfile;
+import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
+import dev.monkeypatch.rctiming.infrastructure.tts.PiperTtsClient;
+import dev.monkeypatch.rctiming.infrastructure.tts.TtsUnavailableException;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorQueryService;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorSummaryDto;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -14,14 +31,61 @@ import java.util.List;
 @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR', 'REFEREE')")
 public class AdminCompetitorController {
 
-    private final CompetitorQueryService competitorQueryService;
+    private static final String FALLBACK_VOICE = "en_GB-alan-medium";
 
-    public AdminCompetitorController(CompetitorQueryService competitorQueryService) {
+    private final CompetitorQueryService competitorQueryService;
+    private final CompetitorService competitorService;
+    private final ClubProfileRepository clubProfileRepository;
+    private final PiperTtsClient piperClient;
+
+    public AdminCompetitorController(CompetitorQueryService competitorQueryService,
+                                     CompetitorService competitorService,
+                                     ClubProfileRepository clubProfileRepository,
+                                     PiperTtsClient piperClient) {
         this.competitorQueryService = competitorQueryService;
+        this.competitorService = competitorService;
+        this.clubProfileRepository = clubProfileRepository;
+        this.piperClient = piperClient;
     }
 
     @GetMapping
     public List<CompetitorSummaryDto> listCompetitors() {
         return competitorQueryService.listAll();
+    }
+
+    /** Body for setting how a name is said aloud. Null or blank clears it. */
+    public record SpokenNameRequest(String spokenName) {}
+
+    /** Body for hearing some text in the club's voice. */
+    public record SpeechPreviewRequest(
+            @NotBlank @Size(max = CompetitorService.MAX_SPOKEN_NAME_LENGTH) String text) {}
+
+    /** Set, change or clear how a competitor's name is said aloud (#119). */
+    @PutMapping("/{id}/spoken-name")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CompetitorSummaryDto setSpokenName(@PathVariable Long id, @RequestBody SpokenNameRequest body) {
+        Competitor c = competitorService.setSpokenName(id, body.spokenName());
+        return new CompetitorSummaryDto(c.getId(), c.getDisplayName(), c.getBrcaNumber(), c.getHomeClub(),
+                c.getSpokenName());
+    }
+
+    /**
+     * Speaks the text with the club's current Piper voice so an admin can hear a spoken name before saving
+     * it (#119). 503 when Piper is not reachable; the page then uses the browser voice.
+     */
+    @PostMapping("/spoken-name/preview")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<byte[]> previewSpokenName(@Valid @RequestBody SpeechPreviewRequest body) {
+        String voice = clubProfileRepository.findAll().stream()
+                .findFirst()
+                .map(ClubProfile::getDefaultVoiceId)
+                .filter(v -> !v.isBlank())
+                .orElse(FALLBACK_VOICE);
+        try {
+            byte[] wav = piperClient.synthesize(body.text().trim(), voice);
+            return ResponseEntity.ok().contentType(MediaType.parseMediaType("audio/wav")).body(wav);
+        } catch (TtsUnavailableException e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "The announcer voice is not available");
+        }
     }
 }

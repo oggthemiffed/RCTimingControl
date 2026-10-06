@@ -43,6 +43,7 @@ public class CompetitorRepository extends JooqRepository<Competitor, Competitors
         c.setExternalId(r.getExternalId());
         c.setBrcaNumber(r.getBrcaNumber());
         c.setHomeClub(r.getHomeClub());
+        c.setSpokenName(r.getSpokenName());
         c.setCreatedAt(r.getCreatedAt());
         c.setUpdatedAt(r.getUpdatedAt());
         return c;
@@ -55,6 +56,7 @@ public class CompetitorRepository extends JooqRepository<Competitor, Competitors
         r.setExternalId(c.getExternalId());
         r.setBrcaNumber(c.getBrcaNumber());
         r.setHomeClub(c.getHomeClub());
+        r.setSpokenName(c.getSpokenName());
         r.setCreatedAt(c.getCreatedAt());
         r.setUpdatedAt(c.getUpdatedAt());
     }

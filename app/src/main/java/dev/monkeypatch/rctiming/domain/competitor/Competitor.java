@@ -14,6 +14,7 @@ public class Competitor {
     private String externalId;
     private String brcaNumber;
     private String homeClub;
+    private String spokenName;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -34,6 +35,15 @@ public class Competitor {
 
     public String getHomeClub() { return homeClub; }
     public void setHomeClub(String homeClub) { this.homeClub = homeClub; }
+
+    /** How the name is said aloud, or null to say the display name as written (#119). */
+    public String getSpokenName() { return spokenName; }
+    public void setSpokenName(String spokenName) { this.spokenName = spokenName; }
+
+    /** The text to speak for this competitor: the spoken name when set, else the display name. */
+    public String speechName() {
+        return spokenName != null && !spokenName.isBlank() ? spokenName : displayName;
+    }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

@@ -381,6 +381,8 @@ export interface CompetitorSummaryDto {
   displayName: string;
   brcaNumber: string | null;
   homeClub: string | null;
+  /** How the name is said aloud; null means the display name is spoken as written (#119). */
+  spokenName: string | null;
 }
 
 export interface ClubProfileDto {
@@ -705,6 +707,14 @@ export const adminApi = {
   competitors: {
     list: () =>
       api.get<CompetitorSummaryDto[]>('/api/v1/admin/competitors').then(r => r.data),
+    /** Set, change or clear (empty text) how a name is said aloud (#119). */
+    setSpokenName: (id: number, spokenName: string) =>
+      api.put<CompetitorSummaryDto>(`/api/v1/admin/competitors/${id}/spoken-name`, { spokenName })
+        .then(r => r.data),
+    /** The text spoken in the club's Piper voice, as audio. Rejects with a 503 when Piper is down. */
+    previewSpeech: (text: string) =>
+      api.post<Blob>('/api/v1/admin/competitors/spoken-name/preview', { text }, { responseType: 'blob' })
+        .then(r => r.data),
   },
 
   // Database backups (#22)

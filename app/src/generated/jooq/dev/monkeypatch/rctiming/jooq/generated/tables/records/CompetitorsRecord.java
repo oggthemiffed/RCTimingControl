@@ -132,6 +132,20 @@ public class CompetitorsRecord extends UpdatableRecordImpl<CompetitorsRecord> {
         return (Instant) get(7);
     }
 
+    /**
+     * Setter for <code>competitors.spoken_name</code>.
+     */
+    public void setSpokenName(String value) {
+        set(8, value);
+    }
+
+    /**
+     * Getter for <code>competitors.spoken_name</code>.
+     */
+    public String getSpokenName() {
+        return (String) get(8);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -155,7 +169,7 @@ public class CompetitorsRecord extends UpdatableRecordImpl<CompetitorsRecord> {
     /**
      * Create a detached, initialised CompetitorsRecord
      */
-    public CompetitorsRecord(Long id, String displayName, String externalSource, String externalId, String brcaNumber, String homeClub, Instant createdAt, Instant updatedAt) {
+    public CompetitorsRecord(Long id, String displayName, String externalSource, String externalId, String brcaNumber, String homeClub, Instant createdAt, Instant updatedAt, String spokenName) {
         super(Competitors.COMPETITORS);
 
         setId(id);
@@ -166,6 +180,7 @@ public class CompetitorsRecord extends UpdatableRecordImpl<CompetitorsRecord> {
         setHomeClub(homeClub);
         setCreatedAt(createdAt);
         setUpdatedAt(updatedAt);
+        setSpokenName(spokenName);
         resetChangedOnNotNull();
     }
 }

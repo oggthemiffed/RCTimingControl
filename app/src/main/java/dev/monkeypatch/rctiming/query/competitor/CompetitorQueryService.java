@@ -19,13 +19,15 @@ public class CompetitorQueryService {
     }
 
     public List<CompetitorSummaryDto> listAll() {
-        return dsl.select(COMPETITORS.ID, COMPETITORS.DISPLAY_NAME, COMPETITORS.BRCA_NUMBER, COMPETITORS.HOME_CLUB)
+        return dsl.select(COMPETITORS.ID, COMPETITORS.DISPLAY_NAME, COMPETITORS.BRCA_NUMBER, COMPETITORS.HOME_CLUB,
+                        COMPETITORS.SPOKEN_NAME)
                 .from(COMPETITORS)
                 .orderBy(COMPETITORS.DISPLAY_NAME.asc(), COMPETITORS.ID.asc())
                 .fetch(r -> new CompetitorSummaryDto(
                         r.get(COMPETITORS.ID),
                         r.get(COMPETITORS.DISPLAY_NAME),
                         r.get(COMPETITORS.BRCA_NUMBER),
-                        r.get(COMPETITORS.HOME_CLUB)));
+                        r.get(COMPETITORS.HOME_CLUB),
+                        r.get(COMPETITORS.SPOKEN_NAME)));
     }
 }

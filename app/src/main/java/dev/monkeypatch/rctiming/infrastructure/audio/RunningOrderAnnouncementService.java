@@ -2,6 +2,10 @@ package dev.monkeypatch.rctiming.infrastructure.audio;
 
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
+import dev.monkeypatch.rctiming.domain.entry.Entry;
+import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
@@ -33,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>First 10 minutes of a race: every 2 minutes</li>
  *   <li>After 10 minutes: every 5 minutes</li>
  * </ul>
+ * Names are spoken as the competitor's spoken name when set (#119).
  * The announcement depth (top N positions) is taken from the club's {@code audioSettings.runningOrderDepth}
  * with a default of 3.
  * <p>
@@ -55,6 +60,8 @@ public class RunningOrderAnnouncementService {
     private final ClubProfileRepository clubProfileRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final LapTimingService lapTimingService;
+    private final EntryRepository entryRepository;
+    private final CompetitorRepository competitorRepository;
 
     /** raceId → race start time (when RUNNING state was entered) */
     private final Map<Long, Instant> raceStartTimes = new ConcurrentHashMap<>();
@@ -64,11 +71,15 @@ public class RunningOrderAnnouncementService {
     public RunningOrderAnnouncementService(RaceRepository raceRepository,
                                            ClubProfileRepository clubProfileRepository,
                                            SimpMessagingTemplate messagingTemplate,
-                                           LapTimingService lapTimingService) {
+                                           LapTimingService lapTimingService,
+                                           EntryRepository entryRepository,
+                                           CompetitorRepository competitorRepository) {
         this.raceRepository = raceRepository;
         this.clubProfileRepository = clubProfileRepository;
         this.messagingTemplate = messagingTemplate;
         this.lapTimingService = lapTimingService;
+        this.entryRepository = entryRepository;
+        this.competitorRepository = competitorRepository;
     }
 
     /** Outbound STOMP message payload for running-order announcements. */
@@ -174,12 +185,21 @@ public class RunningOrderAnnouncementService {
         List<String> positions = rows.stream()
                 .sorted(Comparator.comparingInt(LiveTimingRowDto::position))
                 .limit(depth)
-                .map(LiveTimingRowDto::driverName)
+                .map(this::spokenNameOf)
                 .toList();
 
         RunningOrderAnnouncement announcement = new RunningOrderAnnouncement("running-order", positions);
         messagingTemplate.convertAndSend("/topic/race/" + raceId + "/audio", announcement);
         log.debug("Broadcast running order for race {}: top {} — {}", raceId, depth, positions);
+    }
+
+    /** The competitor's spoken name when one is set (#119), else the name shown on the timing screen. */
+    private String spokenNameOf(LiveTimingRowDto row) {
+        return entryRepository.findById(row.entryId())
+                .map(Entry::getCompetitorId)
+                .flatMap(competitorRepository::findById)
+                .map(Competitor::speechName)
+                .orElse(row.driverName());
     }
 
     private int resolveAnnouncementDepth() {

@@ -57,6 +57,10 @@ describe('grid call helpers', () => {
     expect(gridFallbackText(grid[0])).toBe('Alex Rowe.');
     expect(gridFallbackText({ ...grid[0], carNumber: '7' })).toBe('Car 7, Alex Rowe.');
   });
+  it('says the spoken name when one is set', () => {
+    expect(gridFallbackText({ ...grid[0], spokenName: 'Al-ex Roe' })).toBe('Al-ex Roe.');
+    expect(gridFallbackText({ ...grid[0], spokenName: '  ' })).toBe('Alex Rowe.');
+  });
 });
 
 describe('useAnnouncements grid call', () => {

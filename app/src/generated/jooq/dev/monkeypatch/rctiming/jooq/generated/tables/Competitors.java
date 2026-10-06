@@ -100,6 +100,11 @@ public class Competitors extends TableImpl<CompetitorsRecord> {
      */
     public final TableField<CompetitorsRecord, Instant> UPDATED_AT = createField(DSL.name("updated_at"), SQLDataType.BIGINT.nullable(false).defaultValue(DSL.field(DSL.raw("CAST(unixepoch('subsec') * 1000000 AS INTEGER)"), SQLDataType.BIGINT)), this, "", new InstantMicrosConverter());
 
+    /**
+     * The column <code>competitors.spoken_name</code>.
+     */
+    public final TableField<CompetitorsRecord, String> SPOKEN_NAME = createField(DSL.name("spoken_name"), SQLDataType.VARCHAR(255), this, "");
+
     private Competitors(Name alias, Table<CompetitorsRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

@@ -13,6 +13,8 @@ export interface GridEntry {
   entryId: number;
   carNumber: string | null;
   driverName: string;
+  /** How the name is said aloud; the driver name is spoken as written when empty (#119). */
+  spokenName?: string | null;
 }
 
 /** How long the grid call waits for the server's clips before using the browser voice. */
@@ -25,7 +27,8 @@ export function gridClipKey(entry: GridEntry): string {
 
 /** What the browser says for a grid call when no clip is available. */
 export function gridFallbackText(entry: GridEntry): string {
-  return entry.carNumber ? `Car ${entry.carNumber}, ${entry.driverName}.` : `${entry.driverName}.`;
+  const name = entry.spokenName?.trim() || entry.driverName;
+  return entry.carNumber ? `Car ${entry.carNumber}, ${name}.` : `${name}.`;
 }
 
 interface UseAnnouncementsOptions {
