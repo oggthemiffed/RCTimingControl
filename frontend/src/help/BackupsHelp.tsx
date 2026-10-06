@@ -5,13 +5,14 @@ export function BackupsHelp() {
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         The Backups page lists the copies of the club&apos;s database that RCTC keeps. It takes
-        one when you close a race day and every night, and keeps the newest copies. Backing up is
-        safe while racing carries on.
+        one when you complete an event (Complete Event on its page, which closes the race day) and
+        every night, and keeps the newest copies. If an event is never completed there is no
+        day-close copy, only the nightly one. Backing up is safe while racing carries on.
       </p>
 
       <ul className="mt-3 space-y-1.5 text-sm">
         <li><span className="font-semibold">Back up now:</span> Click &quot;Back up now&quot; before a big change, such as a new import or at the end of a meeting. The new copy appears at the top of the list.</li>
-        <li><span className="font-semibold">Why each copy was taken:</span> Each row says whether it was taken by hand, nightly, or when the race day was closed, and how big it is.</li>
+        <li><span className="font-semibold">Why each copy was taken:</span> Each row says whether it was taken by hand, nightly, or when an event was completed (shown as race day closed), and how big it is.</li>
         <li><span className="font-semibold">Backup folder:</span> The page shows where the copies are kept. Copy that folder to a USB stick now and then so a lost or broken laptop doesn&apos;t take the club&apos;s results with it.</li>
         <li><span className="font-semibold">Restoring:</span> This is done on the timing laptop with the service stopped, not from this page. The command for each system is in the installation guide, under &quot;Restoring a backup&quot;.</li>
       </ul>

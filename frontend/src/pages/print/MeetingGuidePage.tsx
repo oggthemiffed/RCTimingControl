@@ -289,7 +289,9 @@ export default function MeetingGuidePage() {
             <span className="font-semibold">Complete the event:</span> In Admin &rarr;
             Events, open the event detail and click
             <span className="font-semibold"> Complete Event</span> to transition from
-            "In Progress" to "Completed". This finalises the result snapshot.
+            "In Progress" to "Completed". This finalises the result snapshot, closes the race day
+            and so takes a backup of the database and, for an event imported from RaceHub, queues the
+            results to be sent back. Do not skip it at the end of the day.
           </li>
           <li>
             <span className="font-semibold">View results:</span> Completed event results

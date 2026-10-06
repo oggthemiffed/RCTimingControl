@@ -66,7 +66,7 @@ export default function ResultsExportsPage() {
         <h1 className="text-2xl font-semibold">Results to RaceHub</h1>
         <p className="text-sm text-muted-foreground mt-1">
           For events whose entries came from RaceHub, the results are sent back when a race finishes, when a
-          finished race is corrected, and when the race day is closed. Each send carries the whole event, so a
+          finished race is corrected, and when the event is completed. Each send carries the whole event, so a
           newer one replaces any that have not gone yet. Racing is never held up by sending.
         </p>
       </div>

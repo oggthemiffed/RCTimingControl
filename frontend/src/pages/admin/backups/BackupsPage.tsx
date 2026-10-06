@@ -48,8 +48,8 @@ export default function BackupsPage() {
         <div>
           <h1 className="text-2xl font-semibold">Backups</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            The app backs up its database when a race day is closed and every night, keeping the newest
-            copies. Backing up is safe while racing carries on.
+            The app backs up its database when you complete an event (that closes the race day) and every
+            night, keeping the newest copies. Backing up is safe while racing carries on.
           </p>
         </div>
         <Button onClick={onBackupNow} disabled={backupNow.isPending}>

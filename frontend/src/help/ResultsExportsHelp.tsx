@@ -7,8 +7,8 @@ export function ResultsExportsHelp() {
         The Results to RaceHub page shows the results RCTC has sent back to RaceHub. It only
         applies to events whose entries were imported from RaceHub. Results are queued when a
         race finishes, when a finished race is corrected (for example a penalty is given after
-        the finish), and when the race day is closed, then sent in the background. Racing is
-        never held up by sending.
+        the finish), and when you complete the event (the race day closes), then sent in the
+        background. Racing is never held up by sending.
       </p>
 
       <ul className="mt-3 space-y-1.5 text-sm">
