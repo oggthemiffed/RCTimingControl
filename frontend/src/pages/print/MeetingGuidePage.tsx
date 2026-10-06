@@ -193,14 +193,14 @@ export default function MeetingGuidePage() {
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3">6. Stopping and Finishing a Race</h2>
         <p className="text-sm mb-3">
-          A race finishes automatically when the configured race duration elapses, or
-          can be manually finished by the race director.
+          The race does not finish on its own when its time is up: the race director
+          finishes it once the cars have crossed the line.
         </p>
         <ol className="list-decimal list-inside space-y-2 text-sm">
           <li>
-            <span className="font-semibold">Automatic finish:</span> When the race timer
-            expires, the system transitions the race to FINISHED state and records a final
-            result snapshot with positions and lap times.
+            <span className="font-semibold">Finish the race:</span> Click
+            <span className="font-semibold"> Finish Race</span> and confirm. The race moves
+            to FINISHED and its result is saved with positions and lap times.
           </li>
           <li>
             <span className="font-semibold">Review the Finished panel:</span> The main

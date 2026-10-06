@@ -134,6 +134,17 @@ public class RaceControlController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/race/{raceId}/finish")
+    @Transactional
+    public ResponseEntity<Void> finishRace(@PathVariable long raceId) {
+        Race race = loadRace(raceId);
+        // Set before the transition, which saves the race before the result snapshot reads it
+        race.setFinishedAt(Instant.now());
+        stateMachine.transition(race, RaceStatus.FINISHED);
+        raceRepository.save(race);
+        return ResponseEntity.ok().build();
+    }
+
     // --- CTRL-08: Abandon ---
 
     @PostMapping("/race/{raceId}/abandon")

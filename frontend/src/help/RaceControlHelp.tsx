@@ -22,8 +22,9 @@ export function RaceControlHelp() {
         <p className="font-semibold mb-1">Common mistakes</p>
         <p>
           The Start button only appears once the race is in Grid state — you must click
-          "Call Grid" first. If a race shows Stopped, use "Resume Race" to continue or
-          "Abandon" to discard it. Bump-up promotions are shown as a toast notification
+          "Call Grid" first. When the race is over, click "Finish Race" to save its result.
+          If a race shows Stopped, use "Resume Race" to continue, "Finish Race" to end it
+          there, or "Abandon" to discard it. Bump-up promotions are shown as a toast notification
           after a Final finishes — always check the grid before starting the next final.
         </p>
       </div>

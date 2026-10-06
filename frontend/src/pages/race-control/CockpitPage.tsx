@@ -201,6 +201,13 @@ export default function CockpitPage() {
     });
   }
 
+  function onFinish() {
+    if (!confirm('Finish this race and save its result?')) return;
+    mutations.finish.mutate(undefined, {
+      onError: (e) => toast.error(`Finish failed: ${(e as Error).message}`),
+    });
+  }
+
   function onAbandon() {
     if (!confirm('Abandon this race? This cannot be undone.')) return;
     mutations.abandon.mutate(undefined, {
@@ -273,6 +280,9 @@ export default function CockpitPage() {
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">{raceTitle(selectedRace)}</h2>
               <div className="flex gap-2 ml-auto">
+                <Button onClick={onFinish} disabled={mutations.finish.isPending}>
+                  {mutations.finish.isPending ? 'Finishing…' : 'Finish Race'}
+                </Button>
                 <Button variant="outline" onClick={onStop} disabled={mutations.stop.isPending}>
                   {mutations.stop.isPending ? 'Stopping…' : 'Stop'}
                 </Button>
@@ -319,6 +329,9 @@ export default function CockpitPage() {
               <div className="flex gap-2 ml-auto">
                 <Button onClick={onStart} disabled={mutations.start.isPending}>
                   {mutations.start.isPending ? 'Resuming…' : 'Resume Race'}
+                </Button>
+                <Button variant="outline" onClick={onFinish} disabled={mutations.finish.isPending}>
+                  {mutations.finish.isPending ? 'Finishing…' : 'Finish Race'}
                 </Button>
                 <Button variant="outline" onClick={onRestart} disabled={mutations.restart.isPending}>
                   Restart
