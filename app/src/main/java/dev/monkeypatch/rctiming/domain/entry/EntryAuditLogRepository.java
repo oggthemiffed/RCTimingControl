@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Entries.ENTRIES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.ENTRY_AUDIT_LOG;
 
 @Repository
@@ -14,6 +15,17 @@ public class EntryAuditLogRepository extends JooqRepository<EntryAuditLog, Entry
 
     public EntryAuditLogRepository(DSLContext dsl) {
         super(dsl, ENTRY_AUDIT_LOG, ENTRY_AUDIT_LOG.ID);
+    }
+
+    /** The event's audit rows with {@code action}, oldest first. */
+    public List<EntryAuditLog> findByEventIdAndAction(long eventId, String action) {
+        return dsl.select(ENTRY_AUDIT_LOG.fields())
+                .from(ENTRY_AUDIT_LOG)
+                .join(ENTRIES).on(ENTRIES.ID.eq(ENTRY_AUDIT_LOG.ENTRY_ID))
+                .where(ENTRIES.EVENT_ID.eq(eventId))
+                .and(ENTRY_AUDIT_LOG.ACTION.eq(action))
+                .orderBy(ENTRY_AUDIT_LOG.CREATED_AT.asc(), ENTRY_AUDIT_LOG.ID.asc())
+                .fetch(r -> toEntity(r.into(ENTRY_AUDIT_LOG)));
     }
 
     public List<EntryAuditLog> findByEntryIdOrderByCreatedAtAsc(Long entryId) {

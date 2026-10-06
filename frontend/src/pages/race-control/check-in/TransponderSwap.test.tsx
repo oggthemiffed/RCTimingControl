@@ -23,6 +23,8 @@ const sampleEntry = {
   checkedIn: false,
   checkedInAt: null,
   racehubArrival: null,
+  importedTransponderNumber: null,
+  importedSecondaryTransponderNumber: null,
 };
 
 beforeEach(() => {

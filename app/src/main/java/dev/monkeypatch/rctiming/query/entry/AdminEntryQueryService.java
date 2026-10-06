@@ -27,6 +27,8 @@ public class AdminEntryQueryService {
                         COMPETITORS.DISPLAY_NAME,
                         ENTRIES.TRANSPONDER_NUMBER,
                         ENTRIES.SECONDARY_TRANSPONDER_NUMBER,
+                        ENTRIES.IMPORTED_TRANSPONDER_NUMBER,
+                        ENTRIES.IMPORTED_SECONDARY_TRANSPONDER_NUMBER,
                         ENTRIES.STATUS,
                         ENTRIES.SUBMITTED_AT,
                         ENTRIES.WITHDRAWN_AT)
@@ -42,6 +44,8 @@ public class AdminEntryQueryService {
                         r.get(COMPETITORS.DISPLAY_NAME),
                         r.get(ENTRIES.TRANSPONDER_NUMBER),
                         r.get(ENTRIES.SECONDARY_TRANSPONDER_NUMBER),
+                        r.get(ENTRIES.IMPORTED_TRANSPONDER_NUMBER),
+                        r.get(ENTRIES.IMPORTED_SECONDARY_TRANSPONDER_NUMBER),
                         r.get(ENTRIES.STATUS),
                         r.get(ENTRIES.SUBMITTED_AT),
                         r.get(ENTRIES.WITHDRAWN_AT)));

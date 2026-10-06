@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.domain.racehub;
 
+import dev.monkeypatch.rctiming.domain.checkin.TransponderSlot;
+import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.csvimport.CsvImportService;
@@ -67,19 +69,22 @@ public class RaceHubImportService {
     private final RaceHubClassMappingRepository mappingRepository;
     private final EntryRepository entryRepository;
     private final CompetitorRepository competitorRepository;
+    private final TransponderSwapService transponderSwapService;
 
     public RaceHubImportService(EventRepository eventRepository,
                                 EventClassRepository eventClassRepository,
                                 RacingClassRepository racingClassRepository,
                                 RaceHubClassMappingRepository mappingRepository,
                                 EntryRepository entryRepository,
-                                CompetitorRepository competitorRepository) {
+                                CompetitorRepository competitorRepository,
+                                TransponderSwapService transponderSwapService) {
         this.eventRepository = eventRepository;
         this.eventClassRepository = eventClassRepository;
         this.racingClassRepository = racingClassRepository;
         this.mappingRepository = mappingRepository;
         this.entryRepository = entryRepository;
         this.competitorRepository = competitorRepository;
+        this.transponderSwapService = transponderSwapService;
     }
 
     @Transactional
@@ -115,6 +120,7 @@ public class RaceHubImportService {
         Map<String, UnmappedAccumulator> unmapped = new TreeMap<>();
         List<Planned> plan = new ArrayList<>();
         Set<String> seenEntryIds = new HashSet<>();
+        Map<Long, Set<TransponderSlot>> swapped = transponderSwapService.swappedSlots(eventId);
 
         for (ExportEntry row : exportEntries) {
             if (row == null) {
@@ -164,7 +170,14 @@ public class RaceHubImportService {
                     unmapped.computeIfAbsent(classes.mappingKey(row), k -> new UnmappedAccumulator(row)).count++;
                 }
             }
-            plan.add(new Planned(row, action, existing, eventClassId));
+            Transponders transponders = action == Action.CREATE || action == Action.UPDATE
+                    ? transponders(row, existing, existing == null ? Set.of() : swapped.getOrDefault(existing.getId(), Set.of()))
+                    : null;
+            if (transponders != null) {
+                transponders.differences(row.driverDisplayName() != null ? row.driverDisplayName() : label)
+                        .forEach(warnings::add);
+            }
+            plan.add(new Planned(row, action, existing, eventClassId, transponders));
         }
 
         Map<String, Competitor> competitors = loadCompetitors(plan, source);
@@ -345,11 +358,11 @@ public class RaceHubImportService {
             Competitor c = competitors.get(p.row.driverProfileId());
             String driverKey = c == null ? "rh:" + p.row.driverProfileId() : "c:" + c.getId();
             String name = p.row.driverDisplayName() != null ? p.row.driverDisplayName() : "entry " + p.row.entryId();
-            String primary = rowWins ? primaryOf(p.row) : p.existing.getTransponderNumberSnapshot();
-            String secondary = rowWins ? secondaryOf(p.row) : p.existing.getSecondaryTransponderNumber();
+            String primary = rowWins ? p.transponders.primary() : p.existing.getTransponderNumberSnapshot();
+            String secondary = rowWins ? p.transponders.secondary() : p.existing.getSecondaryTransponderNumber();
             active.add(new Active(driverKey, name, p.eventClassId, primary, secondary));
 
-            if (rowWins && primaryOf(p.row).isEmpty()) {
+            if (rowWins && p.transponders.primary().isEmpty()) {
                 warnings.add(name + " (entry " + p.row.entryId() + ") has no transponder");
             }
         }
@@ -411,8 +424,10 @@ public class RaceHubImportService {
                 e.setEventClassId(p.eventClassId);
                 // Results go back to RaceHub by its class ids (#27), so another system's are not kept
                 e.setRacehubEventClassId(RACEHUB_SOURCE.equals(source) ? row.eventClassId() : null);
-                e.setTransponderNumberSnapshot(primaryOf(row));
-                e.setSecondaryTransponderNumber(secondaryOf(row));
+                e.setTransponderNumberSnapshot(p.transponders.primary());
+                e.setSecondaryTransponderNumber(p.transponders.secondary());
+                e.setImportedTransponderNumber(p.transponders.importedPrimary());
+                e.setImportedSecondaryTransponderNumber(p.transponders.importedSecondary());
                 if (e.getStatus() != EntryStatus.CONFIRMED) {
                     e.setStatus(EntryStatus.CONFIRMED);
                     e.setConfirmedAt(now);
@@ -464,7 +479,55 @@ public class RaceHubImportService {
         return s == null || s.isBlank() ? null : s.trim();
     }
 
-    private record Planned(ExportEntry row, Action action, Entry existing, Long eventClassId) {}
+    private record Planned(ExportEntry row, Action action, Entry existing, Long eventClassId, Transponders transponders) {}
+
+    /**
+     * The numbers an entry ends up with, and the file's numbers that a swap on the day overrides (#50).
+     *
+     * @param importedPrimary the file's primary, kept only when the primary was swapped on the day and differs
+     * @param importedSecondary the same for the secondary
+     */
+    private record Transponders(String primary, String secondary, String importedPrimary, String importedSecondary) {
+
+        List<String> differences(String name) {
+            List<String> messages = new ArrayList<>();
+            if (importedPrimary != null) {
+                messages.add(name + " keeps transponder " + primary + " swapped on the day; the file has "
+                        + importedPrimary);
+            }
+            if (importedSecondary != null) {
+                messages.add(name + " keeps " + (secondary == null
+                        ? "no secondary transponder (removed on the day)"
+                        : "secondary transponder " + secondary + " swapped on the day")
+                        + "; the file has " + importedSecondary);
+            }
+            return messages;
+        }
+    }
+
+    /**
+     * The file's numbers, except that a slot swapped on the day keeps the local number (#50). The swap stays and
+     * the file's number is recorded as a difference, so nothing is blocked.
+     */
+    private static Transponders transponders(ExportEntry row, Entry existing, Set<TransponderSlot> swapped) {
+        String filePrimary = primaryOf(row);
+        String fileSecondary = secondaryOf(row);
+        if (existing == null || swapped.isEmpty()) {
+            return new Transponders(filePrimary, fileSecondary, null, null);
+        }
+        boolean keepPrimary = swapped.contains(TransponderSlot.PRIMARY);
+        boolean keepSecondary = swapped.contains(TransponderSlot.SECONDARY);
+        String primary = keepPrimary ? existing.getTransponderNumberSnapshot() : filePrimary;
+        String secondary = keepSecondary ? existing.getSecondaryTransponderNumber() : fileSecondary;
+        String importedPrimary = keepPrimary && !Objects.equals(primary, filePrimary) && !filePrimary.isEmpty()
+                ? filePrimary : null;
+        String importedSecondary = keepSecondary && !Objects.equals(secondary, fileSecondary) ? fileSecondary : null;
+        // A kept number and a file number can't both sit on one entry
+        if (secondary != null && secondary.equals(primary)) {
+            secondary = null;
+        }
+        return new Transponders(primary, secondary, importedPrimary, importedSecondary);
+    }
 
     private static final class UnmappedAccumulator {
         final String rcClassName;

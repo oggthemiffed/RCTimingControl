@@ -4,11 +4,12 @@ import { render, screen } from '@testing-library/react';
 import EntryListSection from './EntryListSection';
 import { useAuth } from '@/hooks/useAuth';
 import type { AuthContextValue, AuthUser } from '@/providers/AuthProvider';
-import type { EventClassDto } from '@/lib/adminApi';
+import type { AdminEntryDto, EventClassDto } from '@/lib/adminApi';
 
 vi.mock('@/hooks/useAuth', () => ({ useAuth: vi.fn() }));
+let entries: AdminEntryDto[] = [];
 vi.mock('@/hooks/admin/useAdminEntries', () => ({
-  useEntriesForClass: () => ({ data: [], isLoading: false }),
+  useEntriesForClass: () => ({ data: entries, isLoading: false }),
   useWithdrawEntry: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock('./AddWalkInEntryDialog', () => ({ default: () => null }));
@@ -22,7 +23,10 @@ function signInAs(roles: AuthUser['roles']) {
 }
 
 describe('EntryListSection', () => {
-  beforeEach(() => vi.resetAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+    entries = [];
+  });
 
   it.each([['ADMIN'], ['RACE_DIRECTOR']] as const)('shows Add entry to %s', role => {
     signInAs([role]);
@@ -34,5 +38,19 @@ describe('EntryListSection', () => {
     signInAs(['REFEREE']);
     render(<EntryListSection eventId={5} classes={classes} />);
     expect(screen.queryByRole('button', { name: 'Add entry' })).not.toBeInTheDocument();
+  });
+
+  it('flags a booking number that differs from the one swapped on the day', () => {
+    signInAs(['ADMIN']);
+    entries = [{
+      id: 1, userId: null, competitorId: 2, displayName: 'Ada Lovelace', transponderNumber: '9900',
+      secondaryTransponderNumber: null, importedTransponderNumber: '7500', importedSecondaryTransponderNumber: null,
+      status: 'CONFIRMED', submittedAt: '2026-10-06T09:00:00Z', withdrawnAt: null,
+    }];
+
+    render(<EntryListSection eventId={5} classes={classes} />);
+
+    expect(screen.getByText('9900')).toBeInTheDocument();
+    expect(screen.getByTestId('imported-transponder-difference')).toHaveTextContent('Booking has transponder 7500');
   });
 });

@@ -364,6 +364,8 @@ Requires `ADMIN`. With `dryRun=true` it returns the preview and saves nothing. E
 
 `action` is `CREATE`, `UPDATE`, `WITHDRAW`, `UNCHANGED` (a replay), `STALE` (an older version) or `SKIP` (withdrawn and never imported).
 
+A transponder swapped at the check-in desk survives a re-import (#50). When an update carries a different number for a slot swapped on the day, the swapped number is kept, a warning names both numbers, and the file's number is stored on the entry as `importedTransponderNumber` (or `importedSecondaryTransponderNumber`). The entry list and the check-in desk show it. Nothing is blocked, and swapping to the file's number clears it.
+
 ### The file format, for any booking system
 
 Entry Export v1 is the format any booking system can produce to send its entries to RCTC, not only RaceHub. Its JSON Schema (draft 2020-12) is `app/src/main/resources/racehub/entry-export-v1.schema.json`, and a test checks every import test file against it.

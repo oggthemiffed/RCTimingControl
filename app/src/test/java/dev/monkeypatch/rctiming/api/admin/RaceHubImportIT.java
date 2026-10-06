@@ -6,6 +6,8 @@ import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.auth.LoginRequest;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.checkin.TransponderSlot;
+import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
@@ -50,8 +52,10 @@ class RaceHubImportIT extends AbstractIntegrationTest {
     @Autowired CompetitorRepository competitorRepository;
     @Autowired JdbcTemplate jdbc;
     @Autowired ObjectMapper objectMapper;
+    @Autowired TransponderSwapService swapService;
 
     private String adminToken;
+    private long adminUserId;
     private String run;
     private long eventId;
     private long buggyClassId;
@@ -156,6 +160,58 @@ class RaceHubImportIT extends AbstractIntegrationTest {
         assertThat(ada.getRacehubArrival()).isEqualTo("ARRIVED");
         assertThat(competitorRepository.findById(ada.getCompetitorId()).orElseThrow().getHomeClub())
                 .isEqualTo("Difference Engine RC");
+    }
+
+    @Test
+    void reImport_keepsATransponderSwappedOnTheDay_andFlagsTheDifference() {
+        importFixture("entries-v1-initial.json", false);
+        Entry ada = entry("a1");
+        swapService.swap(eventId, ada.getId(), TransponderSlot.PRIMARY, "99" + run, adminUserId);
+
+        // The update file moves Ada to 75…, but the desk gave her 99… on the day
+        JsonNode preview = importFixture("entries-v1-update.json", true).getBody();
+        assertThat(preview.get("blocked").asBoolean()).isFalse();
+        assertThat(preview.get("warnings").toString())
+                .contains("Ada Lovelace keeps transponder 99" + run + " swapped on the day; the file has 75" + run);
+
+        ResponseEntity<JsonNode> resp = importFixture("entries-v1-update.json", false);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp.getBody().get("applied").asBoolean()).isTrue();
+        ada = entry("a1");
+        assertThat(ada.getExternalEntryVersion()).isEqualTo(2L);
+        assertThat(ada.getRacehubArrival()).isEqualTo("ARRIVED");
+        assertThat(ada.getTransponderNumberSnapshot()).isEqualTo("99" + run);
+        assertThat(ada.getImportedTransponderNumber()).isEqualTo("75" + run);
+        // The secondary wasn't swapped, so the file still sets it
+        assertThat(ada.getSecondaryTransponderNumber()).isNull();
+        assertThat(ada.getImportedSecondaryTransponderNumber()).isNull();
+
+        JsonNode listed = restTemplate.exchange("/api/v1/admin/entries/events/" + eventId + "/classes/" + buggyClassId,
+                HttpMethod.GET, new HttpEntity<>(adminHeaders()), JsonNode.class).getBody();
+        JsonNode adaRow = null;
+        for (JsonNode row : listed) {
+            if (row.get("id").asLong() == ada.getId()) adaRow = row;
+        }
+        assertThat(adaRow).isNotNull();
+        assertThat(adaRow.get("importedTransponderNumber").asText()).isEqualTo("75" + run);
+
+        // Swapping to the file's number settles the difference
+        swapService.swap(eventId, ada.getId(), TransponderSlot.PRIMARY, "75" + run, adminUserId);
+        assertThat(entry("a1").getImportedTransponderNumber()).isNull();
+    }
+
+    @Test
+    void reImport_withTheSwappedNumber_flagsNothing() {
+        importFixture("entries-v1-initial.json", false);
+        swapService.swap(eventId, entry("a1").getId(), TransponderSlot.PRIMARY, "75" + run, adminUserId);
+
+        JsonNode body = importFixture("entries-v1-update.json", false).getBody();
+
+        assertThat(body.get("warnings").toString()).doesNotContain("swapped on the day");
+        Entry ada = entry("a1");
+        assertThat(ada.getTransponderNumberSnapshot()).isEqualTo("75" + run);
+        assertThat(ada.getImportedTransponderNumber()).isNull();
     }
 
     @Test
@@ -436,7 +492,7 @@ class RaceHubImportIT extends AbstractIntegrationTest {
         Instant now = Instant.now();
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
-        userRepository.save(user);
+        adminUserId = userRepository.save(user).getId();
         var login = restTemplate.postForEntity("/api/v1/auth/login", new LoginRequest(email, "pass12345"), AuthResponse.class);
         assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
         return login.getBody().accessToken();

@@ -45,6 +45,8 @@ const sampleEntry = {
   checkedIn: false,
   checkedInAt: null,
   racehubArrival: 'ARRIVED' as const,
+  importedTransponderNumber: null,
+  importedSecondaryTransponderNumber: null,
 };
 
 const freshConfirm = {
@@ -107,6 +109,17 @@ describe('CheckInDesk: keyboard-wedge path', () => {
     await screen.findByText('Checked in!');
     expect(checkInConfirm).toHaveBeenCalledWith(EVENT_ID, 5);
     expect(screen.getByText('Checked in')).toBeInTheDocument();
+  });
+
+  it('flags a booking number that differs from the one swapped on the day', async () => {
+    vi.mocked(checkInResolve).mockResolvedValue([{ ...sampleEntry, importedTransponderNumber: '7500' }]);
+
+    renderDesk();
+    scan('1234567');
+
+    expect(await screen.findByTestId('imported-transponder-difference')).toHaveTextContent(
+      'Booking has transponder 7500. Keeping the number swapped on the day.',
+    );
   });
 
   it('lists each entry when a competitor shares the transponder across classes', async () => {

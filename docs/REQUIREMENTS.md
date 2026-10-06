@@ -175,7 +175,7 @@
 - [x] **COMPETITOR-01**: A competitor is the person an entry belongs to (display name, RaceHub driver ID, BRCA number, home club) and has no login (#12)
 - [x] **COMPETITOR-02**: Results, live timing and championship standings group by competitor across meetings (#13)
 - [x] **TRANSPONDER-01**: Each entry has a primary and an optional secondary transponder; a number already used in the event is accepted with a warning, not refused (#14)
-- [x] **CHECKIN-01**: A check-in desk marks competitors present, accepts barcode input and swaps transponders on the day with an audit entry (#19)
+- [x] **CHECKIN-01**: A check-in desk marks competitors present, accepts barcode input and swaps transponders on the day with an audit entry (#19) **Changed**: a later re-import keeps a swapped number and flags the booking's different number without blocking (#50)
 - [x] **BOARDS-01**: Spectator boards show the race on now and next, live timing and results on screens at the venue without signing in (#20)
 - [x] **LOCAL-01**: A full meeting runs with no internet connection at the venue (#21)
 - [x] **DB-01**: The app keeps its data in one SQLite file in a per-machine data folder (#26)

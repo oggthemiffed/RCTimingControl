@@ -14,7 +14,7 @@ import {
   type CheckInEntry,
 } from '@/lib/raceControlApi';
 import BarcodeScanner from './BarcodeScanner';
-import { CheckInBadge, RaceHubArrival } from './CheckInStatus';
+import { CheckInBadge, ImportedTransponderDifference, RaceHubArrival } from './CheckInStatus';
 import { transponderLabel } from './transponderLabel';
 import KeyboardWedgeInput from './KeyboardWedgeInput';
 import RosterSearch from './RosterSearch';
@@ -189,6 +189,10 @@ function ResolvedEntryPanel({
         {shown.className ?? 'No class'} {transponderLabel(shown)}
       </p>
       <RaceHubArrival arrival={shown.racehubArrival} />
+      <ImportedTransponderDifference
+        primary={shown.importedTransponderNumber}
+        secondary={shown.importedSecondaryTransponderNumber}
+      />
 
       {confirmResult ? (
         confirmResult.alreadyCheckedIn ? (

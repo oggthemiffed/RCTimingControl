@@ -200,6 +200,9 @@ export interface AdminEntryDto {
   displayName: string | null;
   transponderNumber: string | null;
   secondaryTransponderNumber: string | null;
+  /** The imported file's numbers where they differ from a transponder swapped on the day (#50) */
+  importedTransponderNumber: string | null;
+  importedSecondaryTransponderNumber: string | null;
   status: 'PENDING' | 'CONFIRMED' | 'WITHDRAWN';
   submittedAt: string;
   withdrawnAt: string | null;
