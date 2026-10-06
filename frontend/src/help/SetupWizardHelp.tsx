@@ -1,3 +1,5 @@
+import { GuideLinks } from './GuideLinks';
+
 export function SetupWizardHelp() {
   return (
     <div className="space-y-4">
@@ -27,16 +29,7 @@ export function SetupWizardHelp() {
         </p>
       </div>
 
-      <div className="mt-4 pt-4 border-t">
-        <a
-          href="/print/admin-guide"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline"
-        >
-          Open Admin Configuration Guide (printable)
-        </a>
-      </div>
+      <GuideLinks admin />
     </div>
   );
 }

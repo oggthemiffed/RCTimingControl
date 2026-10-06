@@ -1,3 +1,5 @@
+import { GuideLinks } from './GuideLinks';
+
 export function CheckInHelp() {
   return (
     <div className="space-y-4">
@@ -24,6 +26,8 @@ export function CheckInHelp() {
           number first, then set both.
         </p>
       </div>
+
+      <GuideLinks meeting />
     </div>
   );
 }

@@ -9,6 +9,9 @@ import { RaceControlHelp } from './RaceControlHelp';
 import { ChampionshipHelp } from './ChampionshipHelp';
 import { PracticeHelp } from './PracticeHelp';
 import { RefereeHelp } from './RefereeHelp';
+import { OfficialsHelp } from './OfficialsHelp';
+import { SetupWizardHelp } from './SetupWizardHelp';
+import { EntryManagementHelp } from './EntryManagementHelp';
 
 describe('help panels', () => {
   it('explain the admin screens', () => {
@@ -54,5 +57,20 @@ describe('help panels', () => {
       expect(container.textContent).not.toMatch(/portal|self-service|racer account|log ?in as a racer/i);
       unmount();
     }
+  });
+
+  it('link to the printable guides that cover the screen', () => {
+    const adminOnly = [BackupsHelp, ResultsExportsHelp, DecoderHelp, OfficialsHelp, SetupWizardHelp];
+    const meetingOnly = [CheckInHelp, RaceControlHelp, PracticeHelp, RefereeHelp];
+    const both = [EntryManagementHelp, EventManagementHelp, ChampionshipHelp];
+    const hrefs = (Panel: () => React.ReactElement) => {
+      const { container, unmount } = render(<Panel />);
+      const found = [...container.querySelectorAll('a')].map(a => a.getAttribute('href'));
+      unmount();
+      return found;
+    };
+    for (const Panel of adminOnly) expect(hrefs(Panel)).toEqual(['/print/admin-guide']);
+    for (const Panel of meetingOnly) expect(hrefs(Panel)).toEqual(['/print/meeting-guide']);
+    for (const Panel of both) expect(hrefs(Panel)).toEqual(['/print/admin-guide', '/print/meeting-guide']);
   });
 });

@@ -1,3 +1,5 @@
+import { GuideLinks } from './GuideLinks';
+
 export function ResultsExportsHelp() {
   return (
     <div className="space-y-4">
@@ -27,6 +29,8 @@ export function ResultsExportsHelp() {
           is never sent.
         </p>
       </div>
+
+      <GuideLinks admin />
     </div>
   );
 }

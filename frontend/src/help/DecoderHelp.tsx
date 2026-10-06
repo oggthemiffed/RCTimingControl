@@ -1,3 +1,5 @@
+import { GuideLinks } from './GuideLinks';
+
 export function DecoderHelp() {
   return (
     <div className="space-y-4">
@@ -22,6 +24,8 @@ export function DecoderHelp() {
           first. The decoder guide has more on hardware and the simulator.
         </p>
       </div>
+
+      <GuideLinks admin />
     </div>
   );
 }

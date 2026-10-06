@@ -1,3 +1,5 @@
+import { GuideLinks } from './GuideLinks';
+
 export function BackupsHelp() {
   return (
     <div className="space-y-4">
@@ -23,6 +25,8 @@ export function BackupsHelp() {
           replaces is kept beside it, not deleted.
         </p>
       </div>
+
+      <GuideLinks admin />
     </div>
   );
 }

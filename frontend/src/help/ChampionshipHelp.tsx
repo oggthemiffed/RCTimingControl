@@ -1,3 +1,5 @@
+import { GuideLinks } from './GuideLinks';
+
 export function ChampionshipHelp() {
   return (
     <div className="space-y-4">
@@ -28,24 +30,7 @@ export function ChampionshipHelp() {
         </p>
       </div>
 
-      <div className="mt-4 pt-4 border-t space-y-1">
-        <a
-          href="/print/admin-guide"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-sm text-primary hover:underline"
-        >
-          Open Admin Configuration Guide (printable)
-        </a>
-        <a
-          href="/print/meeting-guide"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block text-sm text-primary hover:underline"
-        >
-          Open Race Meeting Guide (printable)
-        </a>
-      </div>
+      <GuideLinks admin meeting />
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { GuideLinks } from './GuideLinks';
+
 export function RefereeHelp() {
   return (
     <div className="space-y-4">
@@ -26,16 +28,7 @@ export function RefereeHelp() {
         </p>
       </div>
 
-      <div className="mt-4 pt-4 border-t">
-        <a
-          href="/print/meeting-guide"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline"
-        >
-          Open Race Meeting Guide (printable)
-        </a>
-      </div>
+      <GuideLinks meeting />
     </div>
   );
 }
