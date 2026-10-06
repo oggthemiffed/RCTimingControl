@@ -12,6 +12,8 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/adminApi', () => ({
   adminApi: {
     importRaceHubEntries: vi.fn(),
+    previewEntryFeed: vi.fn(),
+    applyEntryFeed: vi.fn(),
     listRaceHubClassMappings: vi.fn(),
     replaceRaceHubClassMappings: vi.fn(),
     listRacingClasses: vi.fn(),
@@ -61,11 +63,11 @@ function result(overrides: Partial<RaceHubImportResult> = {}): RaceHubImportResu
 const exportFile = () =>
   new File([JSON.stringify({ schema_version: 1, entries: [] })], 'entries.json', { type: 'application/json' });
 
-function renderDialog(onOpenChange = vi.fn()) {
+function renderDialog(onOpenChange = vi.fn(), feed = false) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <RaceHubImportDialog eventId={5} classes={classes} open onOpenChange={onOpenChange} />
+      <RaceHubImportDialog eventId={5} classes={classes} open onOpenChange={onOpenChange} feed={feed} />
     </QueryClientProvider>,
   );
   return onOpenChange;
@@ -210,5 +212,22 @@ describe('RaceHubImportDialog', () => {
 
     expect(await screen.findByText('entry x has no entry_version')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Import entries' })).toBeDisabled();
+  });
+
+  it('previews the entry feed\'s held file as soon as it opens, then imports it', async () => {
+    api.previewEntryFeed.mockResolvedValue(result({ revision: 7 }));
+    api.applyEntryFeed.mockResolvedValue(result({ dryRun: false, applied: true }));
+    const onOpenChange = renderDialog(vi.fn(), true);
+
+    expect(await screen.findByTestId('racehub-preview')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Entry Export file')).not.toBeInTheDocument();
+    expect(api.previewEntryFeed).toHaveBeenCalledWith(5);
+    const importButton = screen.getByRole('button', { name: 'Import entries' });
+    await waitFor(() => expect(importButton).toBeEnabled());
+    fireEvent.click(importButton);
+
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(api.applyEntryFeed).toHaveBeenCalledWith(5);
+    expect(api.importRaceHubEntries).not.toHaveBeenCalled();
   });
 });

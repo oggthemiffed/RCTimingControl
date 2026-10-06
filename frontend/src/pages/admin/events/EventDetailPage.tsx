@@ -41,6 +41,7 @@ import EventClassSection from './EventClassSection';
 import EntryListSection from './EntryListSection';
 import RaceHubImportDialog from './RaceHubImportDialog';
 import CsvImportDialog from './CsvImportDialog';
+import EntryFeedSection from './EntryFeedSection';
 import DownloadResultsButton from './DownloadResultsButton';
 
 // ── Status colors ──────────────────────────────────────────────────────────
@@ -382,6 +383,7 @@ export default function EventDetailPage() {
               Import from a CSV file
             </Button>
           </div>
+          <EntryFeedSection eventId={id} classes={data.classes} />
           <EntryListSection eventId={id} classes={data.classes} />
           <RaceHubImportDialog
             eventId={id}
