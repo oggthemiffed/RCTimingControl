@@ -202,6 +202,35 @@ class RaceHubImportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void reImport_keepsASwappedSecondary_andTheFileStillSetsThePrimary() {
+        importFixture("entries-v1-initial.json", false);
+        long adaId = entry("a1").getId();
+        swapService.swap(eventId, adaId, TransponderSlot.SECONDARY, "98" + run, adminUserId);
+
+        // The update file moves Ada to 75… and gives her secondary 76…, but the desk gave her secondary 98…
+        String update = fixture("entries-v1-update.json").replace(
+                "\"primary_transponder\": \"75" + run + "\",\n      \"secondary_transponder\": null",
+                "\"primary_transponder\": \"75" + run + "\",\n      \"secondary_transponder\": \"76" + run + "\"");
+        assertThat(update).contains("\"76" + run + "\"");
+        JsonNode body = restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-import?dryRun=false",
+                HttpMethod.POST, new HttpEntity<>(update, adminHeaders()), JsonNode.class).getBody();
+
+        assertThat(body.get("applied").asBoolean()).isTrue();
+        assertThat(body.get("warnings").toString())
+                .contains("Ada Lovelace keeps secondary transponder 98" + run + " swapped on the day; the file has 76"
+                        + run);
+        Entry ada = entry("a1");
+        assertThat(ada.getTransponderNumberSnapshot()).isEqualTo("75" + run);
+        assertThat(ada.getImportedTransponderNumber()).isNull();
+        assertThat(ada.getSecondaryTransponderNumber()).isEqualTo("98" + run);
+        assertThat(ada.getImportedSecondaryTransponderNumber()).isEqualTo("76" + run);
+
+        // Swapping the secondary to the file's number settles the difference
+        swapService.swap(eventId, adaId, TransponderSlot.SECONDARY, "76" + run, adminUserId);
+        assertThat(entry("a1").getImportedSecondaryTransponderNumber()).isNull();
+    }
+
+    @Test
     void reImport_withTheSwappedNumber_flagsNothing() {
         importFixture("entries-v1-initial.json", false);
         swapService.swap(eventId, entry("a1").getId(), TransponderSlot.PRIMARY, "75" + run, adminUserId);
