@@ -54,7 +54,8 @@ public class CompetitorRepository extends JooqRepository<Competitor, Competitors
 
     private static final Pattern WHITESPACE = Pattern.compile("\\s+", Pattern.UNICODE_CHARACTER_CLASS);
 
-    static String normalizeName(String displayName) {
+    /** The form of a name two competitors are compared by: no spacing, folded to lower case. */
+    public static String normalizeName(String displayName) {
         return WHITESPACE.matcher(displayName).replaceAll("").toLowerCase(Locale.ROOT);
     }
 

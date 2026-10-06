@@ -390,6 +390,43 @@ export interface CompetitorSummaryDto {
   spokenName: string | null;
 }
 
+/** Competitors that may be one person entered twice (#123). */
+export interface CompetitorDuplicateGroupDto {
+  reason: string;
+  competitors: CompetitorSummaryDto[];
+}
+
+export interface CompetitorMergeSide {
+  id: number;
+  displayName: string;
+  brcaNumber: string | null;
+  homeClub: string | null;
+  spokenName: string | null;
+  externalSource: string | null;
+  entries: number;
+}
+
+/** What merging a duplicate into the competitor to keep would do (#123). */
+export interface CompetitorMergePreview {
+  keep: CompetitorMergeSide;
+  duplicate: CompetitorMergeSide;
+  entriesToMove: number;
+  eventsAffected: number;
+  exclusionsToMove: number;
+  resultingSpokenName: string | null;
+  resultingExternalSource: string | null;
+  warnings: string[];
+  /** Reasons the merge can't go ahead. */
+  blockers: string[];
+  canMerge: boolean;
+}
+
+export interface CompetitorMergeResult {
+  keptCompetitorId: number;
+  entriesMoved: number;
+  exclusionsMoved: number;
+}
+
 export interface ClubProfileDto {
   id: number;
   name: string;
@@ -716,6 +753,14 @@ export const adminApi = {
     setSpokenName: (id: number, spokenName: string) =>
       api.put<CompetitorSummaryDto>(`/api/v1/admin/competitors/${id}/spoken-name`, { spokenName })
         .then(r => r.data),
+    possibleDuplicates: () =>
+      api.get<CompetitorDuplicateGroupDto[]>('/api/v1/admin/competitors/possible-duplicates').then(r => r.data),
+    mergePreview: (keepId: number, duplicateId: number) =>
+      api.get<CompetitorMergePreview>('/api/v1/admin/competitors/merge-preview', { params: { keepId, duplicateId } })
+        .then(r => r.data),
+    /** Moves the duplicate's entries onto the competitor to keep and deletes the duplicate. */
+    merge: (keepId: number, duplicateId: number) =>
+      api.post<CompetitorMergeResult>('/api/v1/admin/competitors/merge', { keepId, duplicateId }).then(r => r.data),
     /** The text spoken in the club's Piper voice, as audio. Rejects with a 503 when Piper is down. */
     previewSpeech: (text: string) =>
       api.post<Blob>('/api/v1/admin/competitors/spoken-name/preview', { text }, { responseType: 'blob' })

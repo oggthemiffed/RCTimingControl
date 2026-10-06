@@ -27,6 +27,11 @@ public class EntryRepository extends JooqRepository<Entry, EntriesRecord> {
         return findOne(ENTRIES.EXTERNAL_SOURCE.eq(externalSource).and(ENTRIES.EXTERNAL_ENTRY_ID.eq(externalEntryId)));
     }
 
+    /** Every entry a competitor has, of any status and in any event. */
+    public List<Entry> findByCompetitorId(Long competitorId) {
+        return findWhere(ENTRIES.COMPETITOR_ID.eq(competitorId));
+    }
+
     public List<Entry> findByEventId(Long eventId) {
         return findWhere(ENTRIES.EVENT_ID.eq(eventId));
     }

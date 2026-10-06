@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api;
 
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorMergeRefusedException;
 import dev.monkeypatch.rctiming.domain.competitor.PossibleDuplicateCompetitorException;
 import dev.monkeypatch.rctiming.domain.user.OfficialChangeRefusedException;
 import dev.monkeypatch.rctiming.backup.BackupFailedException;
@@ -48,6 +49,16 @@ public class GlobalExceptionHandler {
             return m;
         }).toList();
         detail.setProperty("matches", matches);
+        return detail;
+    }
+
+    /** Two competitors can't be merged as they are; say why (#123). */
+    @ExceptionHandler(CompetitorMergeRefusedException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handleMergeRefused(CompetitorMergeRefusedException ex) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        detail.setProperty("code", "COMPETITOR_MERGE_REFUSED");
+        detail.setProperty("blockers", ex.getBlockers());
         return detail;
     }
 

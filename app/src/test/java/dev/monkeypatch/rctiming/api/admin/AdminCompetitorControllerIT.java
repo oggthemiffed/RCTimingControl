@@ -119,6 +119,72 @@ class AdminCompetitorControllerIT extends AbstractIntegrationTest {
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
+    @Test
+    void mergePreviewAndMergeWorkForAnAdminAndAreRefusedForOthers() {
+        String admin = loginAs(Set.of(Role.ADMIN));
+        Competitor keep = competitorService.createWalkIn("Merge Keep " + UUID.randomUUID());
+        Competitor duplicate = competitorService.createWalkIn("Merge Dup " + UUID.randomUUID());
+        duplicate = competitorService.setSpokenName(duplicate.getId(), "Dup-ee");
+
+        ResponseEntity<JsonNode> preview = restTemplate.exchange(
+                "/api/v1/admin/competitors/merge-preview?keepId=" + keep.getId() + "&duplicateId=" + duplicate.getId(),
+                HttpMethod.GET, new HttpEntity<>(headers(admin)), JsonNode.class);
+        assertThat(preview.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(preview.getBody().get("canMerge").asBoolean()).isTrue();
+        assertThat(preview.getBody().get("resultingSpokenName").asText()).isEqualTo("Dup-ee");
+
+        ResponseEntity<JsonNode> refused = restTemplate.exchange("/api/v1/admin/competitors/merge", HttpMethod.POST,
+                new HttpEntity<>(Map.of("keepId", keep.getId(), "duplicateId", duplicate.getId()),
+                        headers(loginAs(Set.of(Role.RACE_DIRECTOR, Role.REFEREE)))), JsonNode.class);
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(competitorRepository.findById(duplicate.getId())).isPresent();
+
+        ResponseEntity<JsonNode> merged = restTemplate.exchange("/api/v1/admin/competitors/merge", HttpMethod.POST,
+                new HttpEntity<>(Map.of("keepId", keep.getId(), "duplicateId", duplicate.getId()), headers(admin)),
+                JsonNode.class);
+        assertThat(merged.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(merged.getBody().get("keptCompetitorId").asLong()).isEqualTo(keep.getId());
+        assertThat(competitorRepository.findById(duplicate.getId())).isEmpty();
+        assertThat(competitorRepository.findById(keep.getId()).orElseThrow().getSpokenName()).isEqualTo("Dup-ee");
+    }
+
+    @Test
+    void mergingACompetitorWithItselfIsABadRequestAndAnUnknownOneIsNotFound() {
+        String admin = loginAs(Set.of(Role.ADMIN));
+        Competitor c = competitorService.createWalkIn("Merge Self " + UUID.randomUUID());
+
+        assertThat(restTemplate.exchange("/api/v1/admin/competitors/merge", HttpMethod.POST,
+                new HttpEntity<>(Map.of("keepId", c.getId(), "duplicateId", c.getId()), headers(admin)),
+                JsonNode.class).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(restTemplate.exchange("/api/v1/admin/competitors/merge", HttpMethod.POST,
+                new HttpEntity<>(Map.of("keepId", c.getId(), "duplicateId", 999_999_999L), headers(admin)),
+                JsonNode.class).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void possibleDuplicatesListsCompetitorsThatShareANameOrABrcaNumber() {
+        String admin = loginAs(Set.of(Role.ADMIN));
+        String tag = UUID.randomUUID().toString();
+        Competitor a = competitorService.createWalkIn("Twin Name " + tag);
+        Competitor b = competitorService.createWalkIn("TWIN  name " + tag);
+        competitorService.createWalkIn("Not A Twin " + tag);
+
+        ResponseEntity<JsonNode> resp = restTemplate.exchange("/api/v1/admin/competitors/possible-duplicates",
+                HttpMethod.GET, new HttpEntity<>(headers(admin)), JsonNode.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        JsonNode group = null;
+        for (JsonNode g : resp.getBody()) {
+            for (JsonNode c : g.get("competitors")) {
+                if (c.get("id").asLong() == a.getId()) group = g;
+            }
+        }
+        assertThat(group).isNotNull();
+        assertThat(group.get("reason").asText()).isEqualTo("Same name");
+        assertThat(group.get("competitors")).hasSize(2);
+        assertThat(group.get("competitors").findValuesAsText("displayName")).contains(b.getDisplayName());
+    }
+
     private ResponseEntity<JsonNode> put(String token, long id, String spokenName) {
         return restTemplate.exchange("/api/v1/admin/competitors/" + id + "/spoken-name", HttpMethod.PUT,
                 new HttpEntity<>(Map.of("spokenName", spokenName), headers(token)), JsonNode.class);

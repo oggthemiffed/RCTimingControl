@@ -6,7 +6,12 @@ import CompetitorsPage from './CompetitorsPage';
 import { adminApi } from '@/lib/adminApi';
 
 vi.mock('@/lib/adminApi', () => ({
-  adminApi: { competitors: { list: vi.fn(), setSpokenName: vi.fn(), previewSpeech: vi.fn() } },
+  adminApi: {
+    competitors: {
+      list: vi.fn(), setSpokenName: vi.fn(), previewSpeech: vi.fn(),
+      possibleDuplicates: vi.fn(), mergePreview: vi.fn(), merge: vi.fn(),
+    },
+  },
 }));
 const mockUser = vi.fn();
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: mockUser() }) }));
@@ -27,6 +32,7 @@ describe('CompetitorsPage', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockUser.mockReturnValue({ roles: ['ADMIN'] });
+    api.competitors.possibleDuplicates.mockResolvedValue([]);
   });
 
   it('lists competitors and filters them by name, BRCA number or club', async () => {

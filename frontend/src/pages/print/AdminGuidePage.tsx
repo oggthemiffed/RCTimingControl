@@ -352,6 +352,17 @@ export default function AdminGuidePage() {
             next announcement. Only admins can change it. Clear it to go back to the name as
             written.
           </li>
+          <li>
+            <span className="font-semibold">Merge duplicates:</span> A driver entered twice has
+            their results and championship points split. The top of the Competitors page lists
+            <span className="font-semibold"> Possible duplicates</span> (the same name or BRCA
+            number). Click <span className="font-semibold">Merge…</span> on the one to remove, pick
+            the competitor to keep, read what will move, and confirm. The duplicate&apos;s entries
+            move to the one you keep and the duplicate is deleted; every moved entry has an audit
+            record. The kept competitor keeps its RaceHub link so the next import still finds them.
+            Two drivers linked to different RaceHub profiles, or with active entries in the same
+            class of an event, can&apos;t be merged: withdraw one entry first.
+          </li>
         </ol>
       </section>
 

@@ -3,23 +3,28 @@ package dev.monkeypatch.rctiming.api.admin;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorMergeService;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
 import dev.monkeypatch.rctiming.infrastructure.tts.PiperTtsClient;
 import dev.monkeypatch.rctiming.infrastructure.tts.TtsUnavailableException;
+import dev.monkeypatch.rctiming.query.competitor.CompetitorDuplicateGroupDto;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorQueryService;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorSummaryDto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -35,15 +40,18 @@ public class AdminCompetitorController {
 
     private final CompetitorQueryService competitorQueryService;
     private final CompetitorService competitorService;
+    private final CompetitorMergeService mergeService;
     private final ClubProfileRepository clubProfileRepository;
     private final PiperTtsClient piperClient;
 
     public AdminCompetitorController(CompetitorQueryService competitorQueryService,
                                      CompetitorService competitorService,
+                                     CompetitorMergeService mergeService,
                                      ClubProfileRepository clubProfileRepository,
                                      PiperTtsClient piperClient) {
         this.competitorQueryService = competitorQueryService;
         this.competitorService = competitorService;
+        this.mergeService = mergeService;
         this.clubProfileRepository = clubProfileRepository;
         this.piperClient = piperClient;
     }
@@ -51,6 +59,33 @@ public class AdminCompetitorController {
     @GetMapping
     public List<CompetitorSummaryDto> listCompetitors() {
         return competitorQueryService.listAll();
+    }
+
+    /** Competitors that may be one person entered twice, for an admin to review (#123). */
+    @GetMapping("/possible-duplicates")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<CompetitorDuplicateGroupDto> possibleDuplicates() {
+        return competitorQueryService.listPossibleDuplicates();
+    }
+
+    /** What merging {@code duplicateId} into {@code keepId} would move, and whether it can go ahead (#123). */
+    @GetMapping("/merge-preview")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CompetitorMergeService.Preview mergePreview(@RequestParam Long keepId, @RequestParam Long duplicateId) {
+        return mergeService.preview(keepId, duplicateId);
+    }
+
+    /** Body for merging a duplicate competitor into the one to keep. */
+    public record MergeRequest(@NotNull Long keepId, @NotNull Long duplicateId) {}
+
+    /**
+     * Moves the duplicate's entries onto the kept competitor and deletes the duplicate, in one
+     * transaction (#123). 409 with the reasons when they can't be merged.
+     */
+    @PostMapping("/merge")
+    @PreAuthorize("hasRole('ADMIN')")
+    public CompetitorMergeService.Result merge(Authentication auth, @Valid @RequestBody MergeRequest body) {
+        return mergeService.merge(body.keepId(), body.duplicateId(), Long.parseLong(auth.getName()));
     }
 
     /** Body for setting how a name is said aloud. Null or blank clears it. */
