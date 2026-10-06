@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useHelp } from '@/context/HelpContext';
 import { RefereeHelp } from '@/help/RefereeHelp';
@@ -13,6 +14,7 @@ import { RunOrderPanel } from './panels/RunOrderPanel';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useProximityAlerts } from './referee/useProximityAlerts';
+import { getRaceEntries } from '@/lib/raceControlApi';
 import type { IncidentReportRequest, PenaltyRequest } from '@/lib/raceControlApi';
 
 export default function RefereePage() {
@@ -42,6 +44,15 @@ export default function RefereePage() {
 
   const { rows: current } = useLiveTiming(selectedRaceId);
 
+  // Drivers to pick from come from the race's entries, not live timing: live timing is empty once
+  // the race has finished, and leaves out a car that has not been timed yet (#107)
+  const { data: raceEntries = [] } = useQuery({
+    queryKey: ['race-entries', selectedRaceId],
+    queryFn: () => getRaceEntries(selectedRaceId!),
+    enabled: selectedRaceId !== null,
+  });
+  const drivers = raceEntries.map((e) => ({ entryId: e.entryId, driverName: e.racerName }));
+
   // Cars closing on the one ahead between timing updates
   const highlightEntryIds = useProximityAlerts(selectedRaceId, current);
 
@@ -57,7 +68,14 @@ export default function RefereePage() {
 
   function onPenalty(req: PenaltyRequest) {
     mutations.penalty.mutate(req, {
-      onSuccess: () => { toast.success('Penalty applied'); setPenaltyOpen(false); },
+      onSuccess: () => {
+        toast.success(
+          selectedRace?.status === 'FINISHED'
+            ? 'Penalty applied; the result will be recalculated'
+            : 'Penalty applied',
+        );
+        setPenaltyOpen(false);
+      },
       onError: (e) => toast.error(`Failed: ${(e as Error).message}`),
     });
   }
@@ -120,14 +138,14 @@ export default function RefereePage() {
         onOpenChange={setIncidentOpen}
         onSubmit={onIncident}
         isPending={mutations.incident.isPending}
-        drivers={current.map((r) => ({ entryId: r.entryId, driverName: r.driverName }))}
+        drivers={drivers}
       />
       <PenaltyDialog
         open={penaltyOpen}
         onOpenChange={setPenaltyOpen}
         onSubmit={onPenalty}
         isPending={mutations.penalty.isPending}
-        drivers={current.map((r) => ({ entryId: r.entryId, driverName: r.driverName }))}
+        drivers={drivers}
       />
     </div>
   );

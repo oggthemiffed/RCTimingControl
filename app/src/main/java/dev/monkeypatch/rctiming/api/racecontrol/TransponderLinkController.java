@@ -46,8 +46,13 @@ public class TransponderLinkController {
         this.raceEntriesQuery = raceEntriesQuery;
     }
 
+    /**
+     * Everyone in the race, in any state. The race director picks from it to link a transponder, and
+     * the referee to pick a driver for an incident or penalty, which can come after the finish when
+     * live timing is empty (#107).
+     */
     @GetMapping("/entries")
-    @PreAuthorize("hasAnyRole('RACE_DIRECTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('RACE_DIRECTOR', 'REFEREE', 'ADMIN')")
     public ResponseEntity<List<RaceEntryDto>> getEntries(@PathVariable Long raceId) {
         return ResponseEntity.ok(raceEntriesQuery.findForRace(raceId));
     }

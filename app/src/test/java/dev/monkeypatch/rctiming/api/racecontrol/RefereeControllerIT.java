@@ -156,6 +156,56 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void aRefereeCanListTheEntriesOfAFinishedRaceToPickADriver() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.FINISHED);
+
+        ResponseEntity<dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto[]> resp = restTemplate.exchange(
+                "/api/v1/race-control/races/" + re.race().getId() + "/entries",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(refereeHeaders()),
+                dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto[].class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp.getBody()).extracting(dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto::entryId)
+                .containsExactly(re.entry().getId());
+    }
+
+    @Test
+    void aRefereeOnlyAccountCanLoadTheRunOrderTheRefereeViewStartsFrom() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+
+        ResponseEntity<Object[]> resp = restTemplate.exchange(
+                "/api/v1/race-control/event/" + resolveEventId(re.race()) + "/run-order",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(refereeHeaders()),
+                Object[].class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resp.getBody()).hasSize(1);
+    }
+
+    @Test
+    void aPenaltyCanStillBeAppliedAfterTheRaceHasFinished() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.FINISHED);
+
+        Map<String, Object> body = Map.of(
+                "entryId", re.entry().getId(),
+                "penaltyType", "TIME",
+                "value", 10,
+                "reason", "Protest upheld after the flag"
+        );
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/race-control/referee/race/" + re.race().getId() + "/penalty",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(body, refereeHeaders()),
+                Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(penaltyRepository.findByRaceId(re.race().getId())).hasSize(1);
+    }
+
+    @Test
     @Disabled("client-side per D-08 + plan 05; no backend endpoint exists")
     void proximityAlertLogic_computedFromLiveTimingStream() {
         // Covered by Vitest in frontend/src/pages/race-control/referee/alerts.test.ts
