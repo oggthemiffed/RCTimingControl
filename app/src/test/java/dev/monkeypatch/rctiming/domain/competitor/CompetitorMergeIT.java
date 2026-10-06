@@ -107,13 +107,14 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         Entry keepEntry = entry(keep.getId(), first.getId(), firstClass, EntryStatus.CONFIRMED);
         Entry dupEntry = entry(duplicate.getId(), second.getId(), secondClass, EntryStatus.CONFIRMED);
         Championship champ = championship(ScoringSource.FINALS);
-        long exclusionId = dsl.insertInto(CHAMPIONSHIP_EXCLUSIONS)
+        Long duplicateId = duplicate.getId();
+        long exclusionId = dsl.transactionResult(tx -> tx.dsl().insertInto(CHAMPIONSHIP_EXCLUSIONS)
                 .set(CHAMPIONSHIP_EXCLUSIONS.CHAMPIONSHIP_ID, champ.getId())
-                .set(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID, duplicate.getId())
+                .set(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID, duplicateId)
                 .set(CHAMPIONSHIP_EXCLUSIONS.EVENT_ID, second.getId())
                 .set(CHAMPIONSHIP_EXCLUSIONS.REASON, "test")
                 .set(CHAMPIONSHIP_EXCLUSIONS.CREATED_BY, adminId)
-                .returning(CHAMPIONSHIP_EXCLUSIONS.ID).fetchOne().get(CHAMPIONSHIP_EXCLUSIONS.ID);
+                .returning(CHAMPIONSHIP_EXCLUSIONS.ID).fetchOne().get(CHAMPIONSHIP_EXCLUSIONS.ID));
 
         CompetitorMergeService.Preview preview = mergeService.preview(keep.getId(), duplicate.getId());
         assertThat(preview.canMerge()).isTrue();
@@ -303,11 +304,12 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
     }
 
     private Long eventClass(Long eventId) {
-        return dsl.insertInto(EVENT_CLASSES)
+        // Writes go through a transaction, onto the write connection
+        return dsl.transactionResult(tx -> tx.dsl().insertInto(EVENT_CLASSES)
                 .set(EVENT_CLASSES.EVENT_ID, eventId)
                 .set(EVENT_CLASSES.RACING_CLASS_ID, racingClassId)
                 .set(EVENT_CLASSES.CONFIG_SNAPSHOT, "{\"type\":\"TIMED\"}")
-                .returning(EVENT_CLASSES.ID).fetchOne().get(EVENT_CLASSES.ID);
+                .returning(EVENT_CLASSES.ID).fetchOne().get(EVENT_CLASSES.ID));
     }
 
     private Entry entry(Long competitorId, Long eventId, Long eventClassId, EntryStatus status) {
