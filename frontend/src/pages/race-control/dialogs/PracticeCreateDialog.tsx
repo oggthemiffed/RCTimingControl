@@ -39,12 +39,15 @@ interface PracticeCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated: (session: PracticeSessionDto) => void;
+  /** The event the session belongs to, so its entries' transponders show by name */
+  eventId?: number;
 }
 
 export function PracticeCreateDialog({
   open,
   onOpenChange,
   onCreated,
+  eventId,
 }: PracticeCreateDialogProps) {
   const queryClient = useQueryClient();
 
@@ -60,6 +63,7 @@ export function PracticeCreateDialog({
     mutationFn: (values: CreateForm) =>
       createSession({
         name: values.name,
+        eventId,
         bestLapN: values.bestLapN,
       }).then((r) => r.data),
     onSuccess: (session) => {

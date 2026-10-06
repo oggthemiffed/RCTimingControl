@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PlusCircle, PlayCircle, CheckCircle2, Loader2, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,8 @@ function statusBadge(status: PracticeSessionDto['status']) {
 
 export function PracticeLandingPage() {
   const navigate = useNavigate();
+  const { eventId: eventIdParam } = useParams<{ eventId: string }>();
+  const eventId = eventIdParam ? Number(eventIdParam) : undefined;
   const [createOpen, setCreateOpen] = useState(false);
   const { setHelpContent } = useHelp();
 
@@ -106,6 +108,7 @@ export function PracticeLandingPage() {
       <PracticeCreateDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
+        eventId={eventId}
         onCreated={(s) => navigate(`/race-control/practice/${s.id}`)}
       />
     </div>

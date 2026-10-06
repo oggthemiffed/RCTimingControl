@@ -167,6 +167,39 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
         assertThat(adj.getAdjustedAt()).isNotNull();
     }
 
+    // --- CTRL-01: finish ---
+
+    @Test
+    void finishRace_savesResultSnapshotWithoutMarkingItAbandoned() {
+        Race race = seedRace(RaceStatus.RUNNING);
+
+        ResponseEntity<Void> resp = restTemplate.exchange(
+                "/api/v1/race-control/race/" + race.getId() + "/finish",
+                HttpMethod.POST, new HttpEntity<>(directorHeaders()), Void.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Race reloaded = raceRepository.findById(race.getId()).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(RaceStatus.FINISHED);
+        assertThat(reloaded.getFinishedAt()).isNotNull();
+        assertThat(reloaded.getAbandonedAt()).isNull();
+
+        ResponseEntity<Map> snapshot = restTemplate.exchange(
+                "/api/v1/race-control/race/" + race.getId() + "/result-snapshot",
+                HttpMethod.GET, new HttpEntity<>(directorHeaders()), Map.class);
+        assertThat(snapshot.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void finishRace_fromGrid_returns409() {
+        Race race = seedRace(RaceStatus.GRID);
+
+        ResponseEntity<Void> resp = restTemplate.exchange(
+                "/api/v1/race-control/race/" + race.getId() + "/finish",
+                HttpMethod.POST, new HttpEntity<>(directorHeaders()), Void.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    }
+
     // --- CTRL-08: abandon ---
 
     @Test

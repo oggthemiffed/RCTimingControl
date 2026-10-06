@@ -579,10 +579,6 @@ export const adminApi = {
       .then(r => r.data),
 
   // Event classes
-  listEventClasses: (eventId: number) =>
-    api
-      .get<EventClassDto[]>(`/api/v1/admin/events/${eventId}/classes`)
-      .then(r => r.data),
 
   addEventClass: (eventId: number, body: AddEventClassRequest) =>
     api

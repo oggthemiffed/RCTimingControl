@@ -155,6 +155,10 @@ export async function stopRace(raceId: number): Promise<void> {
   await api.post(`/api/v1/race-control/race/${raceId}/stop`);
 }
 
+export async function finishRace(raceId: number): Promise<void> {
+  await api.post(`/api/v1/race-control/race/${raceId}/finish`);
+}
+
 export async function abandonRace(raceId: number): Promise<void> {
   await api.post(`/api/v1/race-control/race/${raceId}/abandon`);
 }

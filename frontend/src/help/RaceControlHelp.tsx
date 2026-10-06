@@ -9,6 +9,7 @@ export function RaceControlHelp() {
       </p>
 
       <ul className="mt-3 space-y-1.5 text-sm">
+        <li><span className="font-semibold">Generate rounds:</span> A new event has no races. Click "Generate Rounds" to build its practice, qualifying and finals run order.</li>
         <li><span className="font-semibold">Select a race:</span> Click any race in the Run Order sidebar to make it the active race.</li>
         <li><span className="font-semibold">Call Grid:</span> When the race is in Pending state, click "Call Grid" to move it to Grid state and open the grid editor.</li>
         <li><span className="font-semibold">Start / Stop:</span> Use the "Start" button from the Grid editor to begin timing, and the "Stop" button during a running race to pause it.</li>
@@ -21,8 +22,9 @@ export function RaceControlHelp() {
         <p className="font-semibold mb-1">Common mistakes</p>
         <p>
           The Start button only appears once the race is in Grid state — you must click
-          "Call Grid" first. If a race shows Stopped, use "Resume Race" to continue or
-          "Abandon" to discard it. Bump-up promotions are shown as a toast notification
+          "Call Grid" first. When the race is over, click "Finish Race" to save its result.
+          If a race shows Stopped, use "Resume Race" to continue, "Finish Race" to end it
+          there, or "Abandon" to discard it. Bump-up promotions are shown as a toast notification
           after a Final finishes — always check the grid before starting the next final.
         </p>
       </div>

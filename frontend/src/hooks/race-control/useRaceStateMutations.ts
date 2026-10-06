@@ -3,6 +3,7 @@ import {
   callGrid,
   startRace,
   stopRace,
+  finishRace,
   abandonRace,
   restartRace,
   skipToRace,
@@ -38,6 +39,10 @@ export function useRaceStateMutations(raceId: number, eventId: number) {
     stop: useMutation({
       mutationFn: () => stopRace(raceId),
       onSuccess: invalidateRunOrder,
+    }),
+    finish: useMutation({
+      mutationFn: () => finishRace(raceId),
+      onSuccess: () => { invalidateRunOrder(); invalidateSnapshot(); },
     }),
     abandon: useMutation({
       mutationFn: () => abandonRace(raceId),
