@@ -76,14 +76,13 @@ public class EntryFeedService {
             return created;
         });
         if (!checkedUrl.equals(feed.getUrl())) {
-            // A file held from another address is not this feed's any more
+            // Nothing fetched from another address belongs to this feed any more
             feed.setHeldDocument(null);
             feed.setHeldRevision(null);
             feed.setAppliedRevision(null);
-            if (feed.getLastStatus() == EntryFeedStatus.WAITING) {
-                feed.setLastStatus(null);
-                feed.setLastError(null);
-            }
+            feed.setLastFetchAt(null);
+            feed.setLastStatus(null);
+            feed.setLastError(null);
         }
         feed.setUrl(checkedUrl);
         if (token != null) {
@@ -224,7 +223,7 @@ public class EntryFeedService {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not store the fetched file", e);
         }
-        return update(feed.getEventId(), f -> {
+        return update(feed, f -> {
             f.setHeldDocument(document);
             f.setHeldRevision(export.revision());
             f.setLastStatus(EntryFeedStatus.WAITING);
@@ -233,7 +232,7 @@ public class EntryFeedService {
     }
 
     private void recordApplied(EntryFeed feed, Long revision) {
-        update(feed.getEventId(), f -> {
+        update(feed, f -> {
             f.setAppliedRevision(revision);
             f.setHeldDocument(null);
             f.setHeldRevision(null);
@@ -243,7 +242,7 @@ public class EntryFeedService {
     }
 
     private EntryFeed recordUnchanged(EntryFeed feed) {
-        return update(feed.getEventId(), f -> {
+        return update(feed, f -> {
             // A file waiting for an official stays waiting; there's just nothing newer
             if (f.getHeldDocument() == null) {
                 f.setLastStatus(EntryFeedStatus.UNCHANGED);
@@ -254,7 +253,7 @@ public class EntryFeedService {
 
     private EntryFeed recordFailure(EntryFeed feed, Problem problem) {
         String message = problem.message() == null ? "The fetch failed" : problem.message();
-        return update(feed.getEventId(), f -> {
+        return update(feed, f -> {
             f.setLastStatus(problem.status());
             f.setLastError(message.length() > MAX_ERROR_LENGTH ? message.substring(0, MAX_ERROR_LENGTH) : message);
         });
@@ -262,14 +261,18 @@ public class EntryFeedService {
 
     /**
      * Applies a change to the feed as it is now, since an official may have changed its settings during the
-     * fetch. A feed removed meanwhile stays removed.
+     * fetch. A feed removed meanwhile stays removed, and one moved to another URL keeps no outcome from the old one.
      */
-    private EntryFeed update(long eventId, java.util.function.Consumer<EntryFeed> change) {
-        Optional<EntryFeed> current = feedRepository.findByEventId(eventId);
+    private EntryFeed update(EntryFeed fetched, java.util.function.Consumer<EntryFeed> change) {
+        Optional<EntryFeed> current = feedRepository.findByEventId(fetched.getEventId());
         if (current.isEmpty()) {
             return null;
         }
         EntryFeed feed = current.get();
+        if (!Objects.equals(feed.getUrl(), fetched.getUrl())) {
+            // The URL changed during the fetch, so the outcome belongs to the old address
+            return feed;
+        }
         Instant now = Instant.now();
         change.accept(feed);
         feed.setLastFetchAt(now);

@@ -416,7 +416,7 @@ All require `ADMIN`. `GET` answers **204** when the event has no feed. `PUT` sav
 
 - `url` must be `https`, or `http` only to the laptop itself (`localhost` or a loopback address).
 - `token` is sent as `Authorization: Bearer`. Leave it out to keep the saved token; an empty string removes it. It is stored encrypted with a key kept in the data folder (`entry-feed-key`), so a copy of the database alone, such as a backup, doesn't give it away. A token saved on another laptop can't be read and has to be entered again.
-- Changing the URL drops any file fetched from the old one.
+- Changing the URL drops any file fetched from the old one, and its last outcome.
 
 The feed comes back as:
 

@@ -59,6 +59,7 @@ class EntryFeedIT extends AbstractIntegrationTest {
     @Autowired JdbcTemplate jdbc;
 
     private String adminToken;
+    private Long adminUserId;
     private String run;
     private long eventId;
     private long buggyClassId;
@@ -97,8 +98,23 @@ class EntryFeedIT extends AbstractIntegrationTest {
     }
 
     @AfterEach
-    void stopFeedServer() {
+    void tearDown() {
         feedServer.stop(0);
+        jdbc.update("delete from entry_feeds where event_id = ?", eventId);
+        List<Long> competitorIds = jdbc.queryForList(
+                "select distinct competitor_id from entries where event_id = ?", Long.class, eventId);
+        jdbc.update("delete from entries where event_id = ?", eventId);
+        competitorIds.forEach(id -> jdbc.update(
+                "delete from competitors where id = ? and not exists (select 1 from entries where competitor_id = ?)", id, id));
+        jdbc.update("delete from racehub_class_mappings where event_id = ?", eventId);
+        List<Long> racingClassIds = jdbc.queryForList(
+                "select racing_class_id from event_classes where event_id = ?", Long.class, eventId);
+        jdbc.update("delete from event_classes where event_id = ?", eventId);
+        racingClassIds.forEach(id -> jdbc.update("delete from racing_classes where id = ?", id));
+        jdbc.update("delete from events where id = ?", eventId);
+        jdbc.update("delete from refresh_tokens where user_id = ?", adminUserId);
+        jdbc.update("delete from user_roles where user_id = ?", adminUserId);
+        jdbc.update("delete from users where id = ?", adminUserId);
     }
 
     @Test
@@ -211,6 +227,19 @@ class EntryFeedIT extends AbstractIntegrationTest {
         assertThat(fetched.getBody().get("lastStatus").asText()).isEqualTo("AUTH_FAILED");
         assertThat(fetched.getBody().get("lastMessage").asText()).contains("token");
         assertThat(fetched.getBody().get("waiting").asBoolean()).isFalse();
+    }
+
+    @Test
+    void changingTheUrl_clearsTheOldAddressesOutcome() {
+        feedStatus = 401;
+        saveFeed(feedUrl(), TOKEN, false);
+        post("/fetch");
+
+        JsonNode moved = saveFeed(feedUrl() + "?event=2", TOKEN, false).getBody();
+
+        assertThat(moved.get("lastStatus").isNull()).isTrue();
+        assertThat(moved.get("lastMessage").isNull()).isTrue();
+        assertThat(moved.get("lastFetchAt").isNull()).isTrue();
     }
 
     @Test
@@ -334,7 +363,7 @@ class EntryFeedIT extends AbstractIntegrationTest {
         Instant now = Instant.now();
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
-        userRepository.save(user);
+        adminUserId = userRepository.save(user).getId();
         var login = restTemplate.postForEntity("/api/v1/auth/login", new LoginRequest(email, "pass12345"), AuthResponse.class);
         assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
         return login.getBody().accessToken();
