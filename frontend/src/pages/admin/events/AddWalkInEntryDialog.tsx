@@ -27,6 +27,9 @@ interface AddWalkInEntryDialogProps {
 
 const MAX_MATCHES = 8;
 
+/** The server's rule for the same name: ignore case and all spacing (#123). */
+const sameNameKey = (name: string) => name.replace(/\s+/g, '').toLowerCase();
+
 /** Add a walk-in entry by hand: pick an existing driver or type a new name (L9, #17). */
 export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenChange }: AddWalkInEntryDialogProps) {
   const [driverText, setDriverText] = useState('');
@@ -56,7 +59,9 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
   const matches = selected || !query
     ? []
     : competitors.filter(c => c.displayName.toLowerCase().includes(query)).slice(0, MAX_MATCHES);
-  const exactMatch = competitors.find(c => c.displayName.trim().toLowerCase() === query);
+  const exactMatch = query
+    ? competitors.find(c => sameNameKey(c.displayName) === sameNameKey(driverText))
+    : undefined;
 
   async function submit(options: { competitor?: CompetitorSummaryDto; confirmNew?: boolean } = {}) {
     const chosen = options.competitor ?? selected;

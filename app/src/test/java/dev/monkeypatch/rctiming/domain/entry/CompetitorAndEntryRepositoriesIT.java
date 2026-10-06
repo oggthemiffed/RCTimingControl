@@ -85,6 +85,22 @@ class CompetitorAndEntryRepositoriesIT extends AbstractIntegrationTest {
         assertThat(competitors.findByNormalizedName("Nobody Like " + name)).isEmpty();
     }
 
+    @Test
+    void findByNormalizedNameIgnoresAccentedCapitalsAndTabs() {
+        String n = String.valueOf(System.nanoTime());
+        Competitor accented = competitors.save(named("Ren\u00e9 M\u00fcller " + n));
+        cleanup.add(() -> competitors.deleteById(accented.getId()));
+        Competitor tabbed = competitors.save(named("Alex\tRowe " + n));
+        cleanup.add(() -> competitors.deleteById(tabbed.getId()));
+
+        assertThat(competitors.findByNormalizedName("REN\u00c9  M\u00dcLLER " + n))
+                .extracting(Competitor::getId).containsExactly(accented.getId());
+        assertThat(competitors.findByNormalizedName("alex rowe " + n))
+                .extracting(Competitor::getId).containsExactly(tabbed.getId());
+        assertThat(competitors.findByNormalizedName("Alex\u00a0Rowe " + n))
+                .extracting(Competitor::getId).containsExactly(tabbed.getId());
+    }
+
     private static Competitor named(String displayName) {
         Competitor c = new Competitor();
         c.setDisplayName(displayName);

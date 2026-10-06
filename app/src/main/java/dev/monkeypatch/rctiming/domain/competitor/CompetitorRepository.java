@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETITORS;
 
@@ -36,14 +37,25 @@ public class CompetitorRepository extends JooqRepository<Competitor, Competitors
 
     /**
      * Competitors from any source whose name is the same as this one, ignoring case and spacing, so
-     * "alex  rowe" finds "Alex Rowe". The rule a typed walk-in name is checked against (#123).
+     * "alex  rowe" finds "Alex Rowe", and capitals are folded for every letter, accented ones included.
+     * Accents themselves are kept. The rule a typed walk-in name is checked against (#123).
+     * <p>
+     * The names are compared in Java, not SQL: the database's own {@code lower()} only folds ASCII and
+     * {@code replace()} only removes a literal space, so SQL would miss accents and tabs, and the rule
+     * must not depend on the database vendor. A club has hundreds of competitors, and this runs once
+     * per typed walk-in.
      */
     public List<Competitor> findByNormalizedName(String displayName) {
-        return findWhere(DSL.lower(DSL.replace(COMPETITORS.DISPLAY_NAME, " ", "")).eq(normalizeName(displayName)));
+        String target = normalizeName(displayName);
+        return findAll().stream()
+                .filter(c -> c.getDisplayName() != null && normalizeName(c.getDisplayName()).equals(target))
+                .toList();
     }
 
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+", Pattern.UNICODE_CHARACTER_CLASS);
+
     static String normalizeName(String displayName) {
-        return displayName.replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
+        return WHITESPACE.matcher(displayName).replaceAll("").toLowerCase(Locale.ROOT);
     }
 
     @Override

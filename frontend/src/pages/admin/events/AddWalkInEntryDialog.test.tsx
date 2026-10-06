@@ -181,6 +181,14 @@ describe('AddWalkInEntryDialog', () => {
     expect(screen.queryByText(/will be added as a new driver/)).not.toBeInTheDocument();
   });
 
+  it('warns about a spacing variant of an existing name, as the server would', async () => {
+    renderDialog();
+
+    type('Driver', 'Ada   LOVELACE');
+    expect(await screen.findByText(/Ada Lovelace is already a driver/)).toBeInTheDocument();
+    expect(screen.queryByText(/will be added as a new driver/)).not.toBeInTheDocument();
+  });
+
   it('needs a driver and a primary transponder before calling the server', async () => {
     renderDialog();
 
