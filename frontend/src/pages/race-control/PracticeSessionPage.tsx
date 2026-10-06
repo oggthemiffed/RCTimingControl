@@ -40,7 +40,7 @@ export function PracticeSessionPage() {
     enabled: !isNaN(id),
   });
 
-  const { rows, unknownTransponders, isLoading: _timingLoading } = usePracticeTiming(
+  const { rows, unknownTransponders } = usePracticeTiming(
     session ? id : null,
   );
 

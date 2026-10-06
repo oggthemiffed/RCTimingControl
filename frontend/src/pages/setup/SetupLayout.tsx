@@ -143,16 +143,20 @@ export default function SetupLayout() {
   // would trigger the refresh interceptor loop before bootstrap completes (T-08-02 mitigation).
   const { data: progress } = useSetupProgress({ enabled: !!user });
 
-  // Derive current step from progress on first load (first incomplete step)
-  useEffect(() => {
-    if (!progress) return;
-    if (!progress.club) setCurrentStep(1);
-    else if (!progress.track) setCurrentStep(2);
-    else if (!progress.format) setCurrentStep(3);
-    else if (!progress.staff) setCurrentStep(4);
-    else if (!progress.decoder) setCurrentStep(5);
-    else setCurrentStep(6); // all complete -> summary (Plan 06)
-  }, [progress]);
+  // Move to the first incomplete step whenever progress loads or changes (adjusting state while rendering
+  // rather than in an effect)
+  const [seenProgress, setSeenProgress] = useState<typeof progress>(undefined);
+  if (progress !== seenProgress) {
+    setSeenProgress(progress);
+    if (progress) {
+      if (!progress.club) setCurrentStep(1);
+      else if (!progress.track) setCurrentStep(2);
+      else if (!progress.format) setCurrentStep(3);
+      else if (!progress.staff) setCurrentStep(4);
+      else if (!progress.decoder) setCurrentStep(5);
+      else setCurrentStep(6); // all complete -> summary (Plan 06)
+    }
+  }
 
   if (statusLoading) {
     return (

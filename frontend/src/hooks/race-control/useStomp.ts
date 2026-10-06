@@ -8,14 +8,17 @@ export function useStomp<T>(topic: string | null) {
   // Each frame is tagged with its topic so a previous topic's last frame is never returned
   // after the topic changes (e.g. a board moving on to the next race).
   const [frame, setFrame] = useState<{ topic: string; data: T } | null>(null);
-  const [status, setStatus] = useState<StompStatus>('disconnected');
+  // The connection status is tagged the same way, so a new topic reads as connecting until its own client reports
+  const [connection, setConnection] = useState<{ topic: string; status: StompStatus } | null>(null);
   const clientRef = useRef<Client | null>(null);
 
   useEffect(() => {
-    if (!topic) {
-      setStatus('disconnected');
-      return;
-    }
+    if (!topic) return;
+    // A client being shut down can still report; only the current one changes the status or the data
+    let active = true;
+    const setStatus = (status: StompStatus) => {
+      if (active) setConnection({ topic, status });
+    };
 
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${proto}//${window.location.host}/ws/timing`;
@@ -31,7 +34,7 @@ export function useStomp<T>(topic: string | null) {
         setStatus('connected');
         client.subscribe(topic, (msg) => {
           try {
-            setFrame({ topic, data: JSON.parse(msg.body) as T });
+            if (active) setFrame({ topic, data: JSON.parse(msg.body) as T });
           } catch {
             // ignore malformed frame
           }
@@ -42,17 +45,22 @@ export function useStomp<T>(topic: string | null) {
       onWebSocketError: () => setStatus('error'),
     });
 
-    setStatus('connecting');
     client.activate();
     clientRef.current = client;
 
     return () => {
+      active = false;
       client.deactivate();
       clientRef.current = null;
-      setStatus('disconnected');
+      setConnection(null);
     };
   }, [topic]);
 
   const data = frame && frame.topic === topic ? frame.data : null;
+  const status: StompStatus = !topic
+    ? 'disconnected'
+    : connection && connection.topic === topic
+      ? connection.status
+      : 'connecting';
   return { data, status };
 }

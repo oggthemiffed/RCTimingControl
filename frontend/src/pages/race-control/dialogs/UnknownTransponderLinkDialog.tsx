@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -39,10 +39,12 @@ export function UnknownTransponderLinkDialog({
 }: Props) {
   const [selectedEntryId, setSelectedEntryId] = useState<string>('');
 
-  // Reset selection when dialog opens
-  useEffect(() => {
+  // Reset the selection each time the dialog opens (adjusting state while rendering rather than in an effect)
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) setSelectedEntryId('');
-  }, [open]);
+  }
 
   const { data: entries = [], isLoading: entriesLoading } = useQuery({
     queryKey: ['race-entries', raceId],

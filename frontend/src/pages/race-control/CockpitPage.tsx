@@ -50,15 +50,17 @@ export default function CockpitPage() {
   // Unknown transponder link dialog state
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkTransponderNumber, setLinkTransponderNumber] = useState<string>('');
-  const [unknownTransponders, setUnknownTransponders] = useState<string[]>([]);
+  // Unknown transponders seen in the selected race
+  const [unknown, setUnknown] = useState<{ raceId: number | null; numbers: string[] }>({
+    raceId: null,
+    numbers: [],
+  });
 
-  // Auto-select first non-FINISHED race on load
-  useEffect(() => {
-    if (runOrder.length > 0 && selectedRaceId === null) {
-      const active = runOrder.find((r) => r.status !== 'FINISHED') ?? runOrder[0];
-      setSelectedRaceId(active.raceId);
-    }
-  }, [runOrder, selectedRaceId]);
+  // Auto-select first non-FINISHED race on load (adjusting state while rendering rather than in an effect)
+  if (runOrder.length > 0 && selectedRaceId === null) {
+    const active = runOrder.find((r) => r.status !== 'FINISHED') ?? runOrder[0];
+    setSelectedRaceId(active.raceId);
+  }
 
   const selectedRace = runOrder.find((r) => r.raceId === selectedRaceId);
 
@@ -131,20 +133,20 @@ export default function CockpitPage() {
       : null;
   const { data: unknownTransponderEvent } = useStomp<{ transponderNumber: string }>(unknownTopic);
 
-  // Accumulate unknown transponders
-  useEffect(() => {
-    if (unknownTransponderEvent?.transponderNumber) {
-      setUnknownTransponders((prev) => {
-        if (prev.includes(unknownTransponderEvent.transponderNumber)) return prev;
-        return [...prev, unknownTransponderEvent.transponderNumber];
-      });
+  // Clear unknown transponders when the race changes, then add each new one reported. Both adjust state while
+  // rendering rather than in an effect.
+  if (unknown.raceId !== selectedRaceId) {
+    setUnknown({ raceId: selectedRaceId, numbers: [] });
+  }
+  const [seenUnknownEvent, setSeenUnknownEvent] = useState(unknownTransponderEvent);
+  if (unknownTransponderEvent !== seenUnknownEvent) {
+    setSeenUnknownEvent(unknownTransponderEvent);
+    const number = unknownTransponderEvent?.transponderNumber;
+    if (number) {
+      setUnknown((prev) => (prev.numbers.includes(number) ? prev : { ...prev, numbers: [...prev.numbers, number] }));
     }
-  }, [unknownTransponderEvent]);
-
-  // Clear unknown transponders when race changes
-  useEffect(() => {
-    setUnknownTransponders([]);
-  }, [selectedRaceId]);
+  }
+  const unknownTransponders = unknown.raceId === selectedRaceId ? unknown.numbers : [];
 
   // Subscribe to bump-up alert — fires when a B/C-final finishes and promotes drivers to the next final
   const bumpUpTopic =
@@ -170,7 +172,7 @@ export default function CockpitPage() {
   }
 
   function handleLinked() {
-    setUnknownTransponders((prev) => prev.filter((t) => t !== linkTransponderNumber));
+    setUnknown((prev) => ({ ...prev, numbers: prev.numbers.filter((t) => t !== linkTransponderNumber) }));
     setLinkTransponderNumber('');
   }
 
