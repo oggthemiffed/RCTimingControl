@@ -1,7 +1,7 @@
 # Requirements: RCTimingControl
 
 **Defined:** 2026-04-15
-**Updated:** 2026-10-05
+**Updated:** 2026-10-06
 **Core Value:** Officials run a full race meeting from a laptop at the track, on Windows, macOS or Linux, with live timing fed directly from AMB/MyLaps hardware and no dependence on the internet. Entries come in from RaceHub in one file, and the club's results and championships stay on the laptop, backed up.
 
 > **Status.** Every phase of the original v1 plan is complete, so the v1 requirements still in force are ticked. In October 2026 RCTC became local-only timing for the RaceHub suite (tracking issue #8): RaceHub owns booking, racer accounts and entry, and RCTC runs on a laptop at the venue. Requirements that plan removed are struck through with the issue that removed them, requirements it changed carry a **Changed** note, and the requirements it added are under [Local-only timing](#local-only-timing-8). Removed requirements keep their IDs so older references still resolve.
@@ -272,6 +272,7 @@
 | EVENT-07 | Phase 3 | Complete |
 | ENTRY-01 | Phase 2 | Changed (#15) |
 | ENTRY-02 | Phase 3 | Complete |
+| ENTRY-03 | Phase 4 | Complete |
 | FORMAT-01 | Phase 1 | Complete |
 | FORMAT-02 | Phase 1 | Complete |
 | FORMAT-04 | Phase 1 | Complete |
