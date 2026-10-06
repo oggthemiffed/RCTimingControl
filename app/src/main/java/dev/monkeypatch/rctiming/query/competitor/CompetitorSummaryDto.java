@@ -5,5 +5,7 @@ public record CompetitorSummaryDto(
         Long id,
         String displayName,
         String brcaNumber,
-        String homeClub) {
+        String homeClub,
+        /** How the name is said aloud, or null when the display name is spoken as written (#119). */
+        String spokenName) {
 }

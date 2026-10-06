@@ -142,6 +142,7 @@ public class PreRaceReadinessQuery {
                         RACE_ENTRIES.ENTRY_ID,
                         RACE_ENTRIES.GRID_POSITION,
                         DSL.coalesce(COMPETITORS.DISPLAY_NAME, DSL.val("Unknown")).as("driverName"),
+                        COMPETITORS.SPOKEN_NAME,
                         RACING_CLASSES.NAME.as("className"),
                         ENTRIES.CHECKED_IN_AT,
                         ENTRIES.RACEHUB_ARRIVAL)
@@ -159,6 +160,7 @@ public class PreRaceReadinessQuery {
                                 : 0,
                         r.get(RACE_ENTRIES.ENTRY_ID),
                         r.get("driverName", String.class),
+                        r.get(COMPETITORS.SPOKEN_NAME),
                         null, // car_number not yet on Entry — tracked as gap, see REQUIREMENTS.md ENTRY-03
                         r.get("className", String.class),
                         r.get(ENTRIES.CHECKED_IN_AT) != null,

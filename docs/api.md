@@ -500,7 +500,31 @@ GET /admin/competitors
 Authorization: Bearer <token>
 ```
 
-Requires an official role. Lists competitors: the people entries point at. A competitor has no account. One imported from RaceHub is keyed by its RaceHub driver ID; a walk-in is created by name. Results, live timing and championship standings group by competitor.
+Requires an official role. Lists competitors: the people entries point at. A competitor has no account. One imported from RaceHub is keyed by its RaceHub driver ID; a walk-in is created by name. Results, live timing and championship standings group by competitor. Each row carries `spokenName`, how the name is said aloud, or `null` when the display name is spoken as written.
+
+### Set how a name is said aloud
+
+```http
+PUT /admin/competitors/{id}/spoken-name
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "spokenName": "Shiv-awn Keen" }
+```
+
+Admin only. Send an empty string to clear it. The text is trimmed and can be at most 100 characters (400 otherwise); an unknown competitor is 404. Returns the competitor. The name is used from the next race to reach the grid, and a RaceHub or CSV re-import never changes it.
+
+### Hear it in the announcer voice
+
+```http
+POST /admin/competitors/spoken-name/preview
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "text": "Shiv-awn Keen" }
+```
+
+Admin only. Returns `audio/wav` made with the club's current voice. 503 when the voice service is not running.
 
 ---
 

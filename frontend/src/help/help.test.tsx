@@ -12,6 +12,7 @@ import { RefereeHelp } from './RefereeHelp';
 import { OfficialsHelp } from './OfficialsHelp';
 import { SetupWizardHelp } from './SetupWizardHelp';
 import { EntryManagementHelp } from './EntryManagementHelp';
+import { CompetitorsHelp } from './CompetitorsHelp';
 
 describe('help panels', () => {
   it('explain the admin screens', () => {
@@ -72,5 +73,11 @@ describe('help panels', () => {
     for (const Panel of adminOnly) expect(hrefs(Panel)).toEqual(['/print/admin-guide']);
     for (const Panel of meetingOnly) expect(hrefs(Panel)).toEqual(['/print/meeting-guide']);
     for (const Panel of both) expect(hrefs(Panel)).toEqual(['/print/admin-guide', '/print/meeting-guide']);
+  });
+
+  it('explain how to fix a mispronounced name', () => {
+    render(<CompetitorsHelp />);
+    expect(screen.getByText('Say as:')).toBeTruthy();
+    expect(screen.getByText('When it takes effect:')).toBeTruthy();
   });
 });

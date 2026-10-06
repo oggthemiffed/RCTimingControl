@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Clips generated (AUDIO-09):
  * <ul>
  *   <li>Countdown intervals: 10m, 5m, 2m, 1m, 30s</li>
- *   <li>Grid calls: one per entry, keyed {@code grid-<entryId>}, saying the competitor's name</li>
+ *   <li>Grid calls: one per entry, keyed {@code grid-<entryId>}, saying the competitor's spoken name (or display name)</li>
  *   <li>Race finished: one clip, keyed {@code finish}</li>
  * </ul>
  * All clip URLs are cached in-memory keyed by raceId and served to the race control client
@@ -122,7 +122,7 @@ public class AudioPreGenerationService {
             if (competitor == null) continue;
 
             String url = clipService.generateGridCallClip(
-                    raceId, entry.getId(), competitor.getDisplayName() + ".", voiceId);
+                    raceId, entry.getId(), competitor.speechName() + ".", voiceId);
             if (url != null) {
                 clips.put("grid-" + entry.getId(), url);
             }

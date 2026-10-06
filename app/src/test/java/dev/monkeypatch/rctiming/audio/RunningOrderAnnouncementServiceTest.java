@@ -3,6 +3,10 @@ package dev.monkeypatch.rctiming.audio;
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
+import dev.monkeypatch.rctiming.domain.entry.Entry;
+import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
@@ -14,6 +18,7 @@ import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,6 +33,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,6 +45,8 @@ class RunningOrderAnnouncementServiceTest {
     @Mock ClubProfileRepository clubProfileRepository;
     @Mock SimpMessagingTemplate messagingTemplate;
     @Mock LapTimingService lapTimingService;
+    @Mock EntryRepository entryRepository;
+    @Mock CompetitorRepository competitorRepository;
 
     @InjectMocks RunningOrderAnnouncementService service;
 
@@ -170,6 +178,39 @@ class RunningOrderAnnouncementServiceTest {
 
         service.checkAndAnnounce();
         // No NPE / no exception = depth defaults correctly
+    }
+
+    @Test
+    void checkAndAnnounce_speaksTheSpokenNameWhenOneIsSet() throws Exception {
+        service.onRaceStarted(1L);
+        backdateRaceStart(1L, Instant.now().minusSeconds(150));
+
+        LiveRaceState liveState = mock(LiveRaceState.class);
+        when(liveState.calculatePositions()).thenReturn(List.of(makeRow(1, "Siobhan Keane"), makeRow(2, "Sam Ito")));
+        when(lapTimingService.peek(1L)).thenReturn(Optional.of(liveState));
+        when(raceRepository.findById(1L)).thenReturn(Optional.of(runningRace));
+        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+
+        Entry first = new Entry();
+        first.setCompetitorId(10L);
+        Entry second = new Entry();
+        second.setCompetitorId(11L);
+        when(entryRepository.findById(1L)).thenReturn(Optional.of(first));
+        when(entryRepository.findById(2L)).thenReturn(Optional.of(second));
+        Competitor withSpoken = new Competitor();
+        withSpoken.setDisplayName("Siobhan Keane");
+        withSpoken.setSpokenName("Shiv-awn Keen");
+        Competitor plain = new Competitor();
+        plain.setDisplayName("Sam Ito");
+        when(competitorRepository.findById(10L)).thenReturn(Optional.of(withSpoken));
+        when(competitorRepository.findById(11L)).thenReturn(Optional.of(plain));
+
+        service.checkAndAnnounce();
+
+        ArgumentCaptor<Object> sent = ArgumentCaptor.forClass(Object.class);
+        verify(messagingTemplate).convertAndSend(eq("/topic/race/1/audio"), sent.capture());
+        assertThat(((RunningOrderAnnouncementService.RunningOrderAnnouncement) sent.getValue()).positions())
+                .containsExactly("Shiv-awn Keen", "Sam Ito");
     }
 
     // -------------------------------------------------------------------------
