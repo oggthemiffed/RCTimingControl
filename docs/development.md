@@ -335,4 +335,4 @@ Key docs to reference in a session:
 - `docs/PROJECT.md` — what the system is and its requirements
 - `docs/REQUIREMENTS.md` — full requirement list: current, planned and removed, with the issue behind each change
 - `docs/architecture.md` — deeper architecture notes
-- `.planning/phases/` — historical decision log per phase (useful if you hit an unexpected behaviour)
+- `docs/plans/archive/v1-planning/phases/` — the original phase plans, archived as a historical decision log per phase (useful if you hit an unexpected behaviour, but not current design)
