@@ -1,7 +1,7 @@
 # Requirements: RCTimingControl
 
 **Defined:** 2026-04-15
-**Updated:** 2026-10-05
+**Updated:** 2026-10-06
 **Core Value:** Officials run a full race meeting from a laptop at the track, on Windows, macOS or Linux, with live timing fed directly from AMB/MyLaps hardware and no dependence on the internet. Entries come in from RaceHub in one file, and the club's results and championships stay on the laptop, backed up.
 
 > **Status.** Every phase of the original v1 plan is complete, so the v1 requirements still in force are ticked. In October 2026 RCTC became local-only timing for the RaceHub suite (tracking issue #8): RaceHub owns booking, racer accounts and entry, and RCTC runs on a laptop at the venue. Requirements that plan removed are struck through with the issue that removed them, requirements it changed carry a **Changed** note, and the requirements it added are under [Local-only timing](#local-only-timing-8). Removed requirements keep their IDs so older references still resolve.
@@ -159,7 +159,7 @@
 - [x] **RESULT-01**: Final race results are published after each race
 - [x] **RESULT-02**: Results correctly reflect any marshal lap adjustments and penalties applied, including time penalties and corrections made after the race finishes (#63)
 - [x] **RESULT-03**: Per-racer result history is viewable on the racer's portal page **Changed**: results group by competitor on the public pages, since there is no racer portal (#12, #13).
-- [x] **RESULT-04**: Printed/PDF results optionally display a racer's car tag values beneath their name; controlled by an admin display setting **Changed**: car tags show only on result snapshots saved before #18; new results have none.
+- ~~**RESULT-04**: Printed/PDF results optionally display a racer's car tag values beneath their name; controlled by an admin display setting~~ **Removed** (#18): car tags went with racer garages, and no results show them.
 - [x] **RESULT-05**: Result records include full individual lap time data (every lap, not just totals and best lap)
 
 ### Local-only timing (#8)
@@ -176,6 +176,7 @@
 - [x] **COMPETITOR-02**: Results, live timing and championship standings group by competitor across meetings (#13)
 - [x] **TRANSPONDER-01**: Each entry has a primary and an optional secondary transponder; a number already used in the event is accepted with a warning, not refused (#14)
 - [x] **CHECKIN-01**: A check-in desk marks competitors present, accepts barcode input and swaps transponders on the day with an audit entry (#19) **Changed**: a later re-import keeps a swapped number and flags the booking's different number without blocking (#50)
+- [x] **CHECKIN-02**: RCTC's check-in is the only record of who has arrived on the day; RaceHub's arrival mark is imported and shown read-only, and never checks anyone in (#92, O2)
 - [x] **BOARDS-01**: Spectator boards show the race on now and next, live timing and results on screens at the venue without signing in (#20)
 - [x] **LOCAL-01**: A full meeting runs with no internet connection at the venue (#21)
 - [x] **DB-01**: The app keeps its data in one SQLite file in a per-machine data folder (#26)
@@ -271,6 +272,7 @@
 | EVENT-07 | Phase 3 | Complete |
 | ENTRY-01 | Phase 2 | Changed (#15) |
 | ENTRY-02 | Phase 3 | Complete |
+| ENTRY-03 | Phase 4 | Complete |
 | FORMAT-01 | Phase 1 | Complete |
 | FORMAT-02 | Phase 1 | Complete |
 | FORMAT-04 | Phase 1 | Complete |
@@ -340,7 +342,7 @@
 | RESULT-01 | Phase 7 | Complete |
 | RESULT-02 | Phase 7 | Complete |
 | RESULT-03 | Phase 7 | Changed (#12) |
-| RESULT-04 | Phase 7 | Changed |
+| RESULT-04 | Phase 7 | Removed (#18) |
 | RESULT-05 | Phase 7 | Complete |
 | IMPORT-01 | #15 | Complete |
 | IMPORT-02 | #15 | Complete |
@@ -348,11 +350,13 @@
 | IMPORT-04 | #16 | Complete |
 | IMPORT-05 | #15, #16 | Complete |
 | IMPORT-06 | #39 | Complete |
+| IMPORT-07 | #42 | Complete |
 | WALKIN-01 | #17 | Complete |
 | COMPETITOR-01 | #12 | Complete |
 | COMPETITOR-02 | #13 | Complete |
 | TRANSPONDER-01 | #14 | Complete |
 | CHECKIN-01 | #19 | Complete |
+| CHECKIN-02 | #19, #92 | Complete |
 | BOARDS-01 | #20 | Complete |
 | LOCAL-01 | #21 | Complete |
 | DB-01 | #26 | Complete |
@@ -365,12 +369,13 @@
 | OVERLAY-01 | #29 | Complete |
 
 **Coverage:**
-- Requirements: 129 total (106 from the original v1 plan, 22 added for local-only timing, 1 for entry import from other systems)
-- Complete: 89, changed and complete: 16, removed: 24, planned: 0
+- Requirements: 132 total (109 from the original v1 plan, 23 in the local-only timing section)
+- Complete: 91, changed and complete: 16, removed: 25, planned: 0
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-10-05 — IMPORT-06 added for the RC-Timing CSV entry import (#39)*
+*Last updated: 2026-10-06 — CHECKIN-02 records that RCTC's check-in decides who has arrived; RESULT-04 removed, as no results show car tags (#92)*
+*Previously updated: 2026-10-05 — IMPORT-06 added for the RC-Timing CSV entry import (#39)*
 *Previously updated: 2026-10-05 — AUTH-06 and AUTH-07 added for managing officials and the command-line admin password reset (#61)*
 *Previously updated: 2026-10-05 — AUDIO-14 removed with the profanity blocklist (#30)*
 *Previously updated: 2026-10-05 — local-only timing (#8, #25): racer, forwarder and P3-forwarder requirements removed, changed requirements annotated, Local-only timing section added, traceability brought up to date*

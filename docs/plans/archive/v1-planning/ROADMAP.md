@@ -217,7 +217,7 @@ Plans:
   2. A demo-seed container runs once on first boot and populates the database with a sample club, track, race formats, racer accounts, and a completed historical event so the system is not a blank slate
   3. The fake decoder container replays a recorded RC-4 passing file on a loop so live timing is visible in the race control client without physical AMB hardware
   4. The setup wizard (Phase 8) is accessible and functional within the trial environment, allowing clubs to reconfigure it to match their own club details
-  5. A `docker-compose.ghcr.yml` variant pulls pre-built images from GitHub Container Registry (GHCR) so non-technical clubs do not need to build from source; images are published automatically by a GitHub Actions workflow on each version tag
+  5. A pre-built image variant means non-technical clubs do not need to build from source
 **Plans**: 4 plans
 Plans:
 
@@ -229,7 +229,7 @@ Plans:
 - [x] 10-03-PLAN.md — Commit jOOQ sources; app & frontend Dockerfiles; nginx reverse-proxy config; docker-compose.trial.yml
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [x] 10-04-PLAN.md — .env.example; docker-compose.ghcr.yml; GitHub Actions GHCR publish workflow
+- [x] 10-04-PLAN.md — .env.example and the pre-built image variant
 
 ## Progress
 

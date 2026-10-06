@@ -18,4 +18,4 @@ RC Timing Control runs on one laptop at the track and serves browsers on the ven
 
 Backups contain the whole database, including officials' password hashes. Store copies somewhere only officials can reach.
 
-The security review from the original forwarder phase is kept for history in `.planning/phases/05-live-timing-forwarder/05-SECURITY.md`; the forwarder it covers was removed in #10.
+The security review from the original forwarder phase is kept for history in `docs/plans/archive/v1-planning/phases/05-live-timing-forwarder/05-SECURITY.md`; the forwarder it covers was removed in #10.
