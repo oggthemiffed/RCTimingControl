@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
  * Key conventions:
  * <ul>
  *   <li>{@code audio/race/{raceId}/countdown-{seconds}-{voiceId}.wav} — countdown clip</li>
- *   <li>{@code audio/race/{raceId}/car-{carNumber}-{voiceId}.wav} — car number stagger clip</li>
- *   <li>{@code audio/race/{raceId}/finish-{competitorId}-{voiceId}.wav} — finish announcement clip</li>
+ *   <li>{@code audio/race/{raceId}/grid-{entryId}-{voiceId}.wav} — grid call (stagger) clip for one entry</li>
+ *   <li>{@code audio/race/{raceId}/finish-{voiceId}.wav} — race-finished clip</li>
  * </ul>
  * When Piper is unavailable, methods log a warning and return {@code null} (graceful degradation).
  */
@@ -51,35 +51,34 @@ public class TtsClipService {
     }
 
     /**
-     * Generate and store a car number stagger call clip.
+     * Generate and store the grid-call clip for one entry (the stagger call).
      *
-     * @param raceId    database ID of the race
-     * @param carNumber car number to announce
-     * @param text      announcement text (e.g. "Car 42")
-     * @param voiceId   Piper voice model name, or null to use default
+     * @param raceId  database ID of the race
+     * @param entryId database ID of the entry being called
+     * @param text    announcement text (e.g. "Alan Smith.")
+     * @param voiceId Piper voice model name, or null to use default
      * @return storage public URL, or null if Piper was unavailable
      */
-    public String generateCarNumberClip(Long raceId, int carNumber, String text, String voiceId) {
+    public String generateGridCallClip(Long raceId, Long entryId, String text, String voiceId) {
         String effectiveVoice = resolve(voiceId);
-        String key = String.format("audio/race/%d/car-%d-%s.wav", raceId, carNumber, effectiveVoice);
+        String key = String.format("audio/race/%d/grid-%d-%s.wav", raceId, entryId, effectiveVoice);
         return synthesizeAndUpload(key, text, effectiveVoice,
-                "race {} car {} clip", raceId, carNumber);
+                "race {} grid call entry {} clip", raceId, entryId);
     }
 
     /**
-     * Generate and store a finish announcement clip.
+     * Generate and store the race-finished clip, played once when the race ends.
      *
-     * @param raceId    database ID of the race
-     * @param competitorId database ID of the competitor
-     * @param text      announcement text (e.g. "Alan Smith has finished")
-     * @param voiceId   Piper voice model name, or null to use default
+     * @param raceId  database ID of the race
+     * @param text    announcement text (e.g. "Race finished. Checkered flag.")
+     * @param voiceId Piper voice model name, or null to use default
      * @return storage public URL, or null if Piper was unavailable
      */
-    public String generateFinishClip(Long raceId, Long competitorId, String text, String voiceId) {
+    public String generateRaceFinishedClip(Long raceId, String text, String voiceId) {
         String effectiveVoice = resolve(voiceId);
-        String key = String.format("audio/race/%d/finish-%d-%s.wav", raceId, competitorId, effectiveVoice);
+        String key = String.format("audio/race/%d/finish-%s.wav", raceId, effectiveVoice);
         return synthesizeAndUpload(key, text, effectiveVoice,
-                "race {} finish competitor {} clip", raceId, competitorId);
+                "race {} finished clip", raceId);
     }
 
     // -------------------------------------------------------------------------

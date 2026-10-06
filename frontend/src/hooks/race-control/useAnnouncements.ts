@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useStomp } from '@/hooks/race-control/useStomp';
 import type { AudioSettingsDto } from '@/lib/audioApi';
 
@@ -10,8 +10,22 @@ interface RunningOrderEvent {
 }
 
 export interface GridEntry {
+  entryId: number;
   carNumber: string | null;
   driverName: string;
+}
+
+/** How long the grid call waits for the server's clips before using the browser voice. */
+export const CLIP_GRACE_MS = 6000;
+
+/** Clip key the server stores an entry's grid call under (AudioPreGenerationService). */
+export function gridClipKey(entry: GridEntry): string {
+  return `grid-${entry.entryId}`;
+}
+
+/** What the browser says for a grid call when no clip is available. */
+export function gridFallbackText(entry: GridEntry): string {
+  return entry.carNumber ? `Car ${entry.carNumber}, ${entry.driverName}.` : `${entry.driverName}.`;
 }
 
 interface UseAnnouncementsOptions {
@@ -83,9 +97,13 @@ export function useAnnouncements({
   }, [fallbackSpeak]);
 
   // setClipMap: populate the clip cache from outside (called by usePregeneratedClips)
+  // Which race the clip cache belongs to once it has clips; a different race has none yet
+  const [clipsRaceId, setClipsRaceId] = useState<number | null>(null);
+  const clipsReady = raceId != null && clipsRaceId === raceId;
   const setClipMap = useCallback((map: Record<string, string>) => {
     clipMapRef.current = map;
-  }, []);
+    setClipsRaceId(Object.keys(map).length > 0 ? raceId : null);
+  }, [raceId]);
 
   // Handle running-order announcements (AUDIO-06)
   useEffect(() => {
@@ -154,19 +172,29 @@ export function useAnnouncements({
 
   // Guard so the stagger fires at most once per GRID entry, even if gridEntries refetches
   const staggerFiredRef = useRef(false);
+  // The server makes the grid clips after GRID starts, so wait a moment for them
+  const [graceRaceId, setGraceRaceId] = useState<number | null>(null);
+  const graceElapsed = raceId != null && graceRaceId === raceId;
   useEffect(() => {
     if (raceState !== 'GRID') {
       staggerFiredRef.current = false;
+      staggerTimeoutsRef.current.forEach(clearTimeout);
+      staggerTimeoutsRef.current = [];
+      return;
     }
-  }, [raceState]);
+    const t = setTimeout(() => setGraceRaceId(raceId), CLIP_GRACE_MS);
+    return () => clearTimeout(t);
+  }, [raceState, raceId]);
 
-  // Stagger sequencer: call car numbers in sequence at GRID state (AUDIO-03)
+  // Stagger sequencer: call each driver in sequence at GRID state (AUDIO-03).
+  // No cleanup here: a refetch of gridEntries must not cancel calls already scheduled.
   useEffect(() => {
     if (raceState !== 'GRID') return;
     if (staggerFiredRef.current) return;
     const s = settingsRef.current;
     if (!s?.announceStagger) return;
     if (!gridEntries || gridEntries.length === 0) return;
+    if (!clipsReady && !graceElapsed) return;
 
     staggerFiredRef.current = true;
     staggerTimeoutsRef.current.forEach(clearTimeout);
@@ -176,20 +204,12 @@ export function useAnnouncements({
       const t = setTimeout(() => {
         if (raceStateRef.current !== 'GRID') return;
         if (!settingsRef.current?.announceStagger) return;
-        const fallbackText = entry.carNumber
-          ? `Car ${entry.carNumber}, ${entry.driverName}.`
-          : `${entry.driverName}.`;
-        playClip(`car-${entry.carNumber ?? entry.driverName}`, fallbackText);
+        playClip(gridClipKey(entry), gridFallbackText(entry));
       }, index * 2000);
 
       staggerTimeoutsRef.current.push(t);
     });
-
-    return () => {
-      staggerTimeoutsRef.current.forEach(clearTimeout);
-      staggerTimeoutsRef.current = [];
-    };
-  }, [raceState, gridEntries, playClip]);
+  }, [raceState, gridEntries, clipsReady, graceElapsed, playClip]);
 
   // Per-lap improvement beeps (AUDIO-04) via AudioContext
   const playBeep = useCallback(

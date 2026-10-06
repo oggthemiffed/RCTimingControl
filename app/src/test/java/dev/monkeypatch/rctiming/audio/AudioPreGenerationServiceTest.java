@@ -82,35 +82,7 @@ class AudioPreGenerationServiceTest {
     }
 
     @Test
-    void onRaceGridTransition_generatesStaggerCallClips() {
-        RaceEntry entry1 = new RaceEntry();
-        entry1.setId(10L);
-        entry1.setRaceId(1L);
-        entry1.setEntryId(100L);
-        entry1.setGridPosition(1);
-
-        RaceEntry entry2 = new RaceEntry();
-        entry2.setId(11L);
-        entry2.setRaceId(1L);
-        entry2.setEntryId(101L);
-        entry2.setGridPosition(2);
-
-        when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
-        when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(entry1, entry2));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
-        when(entryRepository.findById(anyLong())).thenReturn(Optional.empty()); // no entry data needed for car clip
-        when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
-        when(clipService.generateCarNumberClip(anyLong(), anyInt(), anyString(), anyString()))
-                .thenReturn("http://localhost:8080/storage/car.wav");
-
-        service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
-
-        verify(clipService).generateCarNumberClip(eq(1L), eq(1), anyString(), anyString());
-        verify(clipService).generateCarNumberClip(eq(1L), eq(2), anyString(), anyString());
-    }
-
-    @Test
-    void onRaceGridTransition_generatesFinishClipsFromTheCompetitorName() {
+    void onRaceGridTransition_generatesGridCallClipsKeyedByEntryId() {
         RaceEntry raceEntry = new RaceEntry();
         raceEntry.setId(10L);
         raceEntry.setRaceId(1L);
@@ -131,14 +103,49 @@ class AudioPreGenerationServiceTest {
         when(entryRepository.findById(100L)).thenReturn(Optional.of(entry));
         when(competitorRepository.findById(200L)).thenReturn(Optional.of(competitor));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
-        when(clipService.generateCarNumberClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
-        when(clipService.generateFinishClip(anyLong(), anyLong(), anyString(), anyString()))
+        when(clipService.generateRaceFinishedClip(anyLong(), anyString(), anyString())).thenReturn(null);
+        when(clipService.generateGridCallClip(anyLong(), anyLong(), anyString(), anyString()))
+                .thenReturn("http://localhost:8080/storage/grid.wav");
+
+        service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
+
+        verify(clipService).generateGridCallClip(eq(1L), eq(100L), eq("Alan Smith."), anyString());
+        assertThat(service.getClipMap(1L)).containsKey("grid-100");
+    }
+
+    @Test
+    void onRaceGridTransition_skipsGridCallWhenEntryHasNoCompetitor() {
+        RaceEntry raceEntry = new RaceEntry();
+        raceEntry.setId(10L);
+        raceEntry.setRaceId(1L);
+        raceEntry.setEntryId(100L);
+        raceEntry.setGridPosition(1);
+
+        when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
+        when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
+        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(entryRepository.findById(100L)).thenReturn(Optional.empty());
+        when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
+        when(clipService.generateRaceFinishedClip(anyLong(), anyString(), anyString())).thenReturn(null);
+
+        service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
+
+        verify(clipService, never()).generateGridCallClip(anyLong(), anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    void onRaceGridTransition_generatesOneRaceFinishedClip() {
+        when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
+        when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(Collections.emptyList());
+        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
+        when(clipService.generateRaceFinishedClip(anyLong(), anyString(), anyString()))
                 .thenReturn("http://localhost:8080/storage/finish.wav");
 
         service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
 
-        verify(clipService).generateFinishClip(eq(1L), eq(200L), eq("Alan Smith has finished"), anyString());
-        assertThat(service.getClipMap(1L)).containsKey("finish-200");
+        verify(clipService).generateRaceFinishedClip(eq(1L), eq("Race finished. Checkered flag."), anyString());
+        assertThat(service.getClipMap(1L)).containsKey("finish");
     }
 
     @Test
@@ -168,8 +175,8 @@ class AudioPreGenerationServiceTest {
         service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.RUNNING));
 
         verify(clipService, never()).generateCountdownClip(anyLong(), anyInt(), anyString(), anyString());
-        verify(clipService, never()).generateCarNumberClip(anyLong(), anyInt(), anyString(), anyString());
-        verify(clipService, never()).generateFinishClip(anyLong(), anyLong(), anyString(), anyString());
+        verify(clipService, never()).generateGridCallClip(anyLong(), anyLong(), anyString(), anyString());
+        verify(clipService, never()).generateRaceFinishedClip(anyLong(), anyString(), anyString());
     }
 
     @Test

@@ -30,8 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Clips generated (AUDIO-09):
  * <ul>
  *   <li>Countdown intervals: 10m, 5m, 2m, 1m, 30s</li>
- *   <li>Car stagger calls: one per entry (using grid position as car number)</li>
- *   <li>Finish announcements: one per racer</li>
+ *   <li>Grid calls: one per entry, keyed {@code grid-<entryId>}, saying the competitor's name</li>
+ *   <li>Race finished: one clip, keyed {@code finish}</li>
  * </ul>
  * All clip URLs are cached in-memory keyed by raceId and served to the race control client
  * via {@link #getClipMap(Long)} (AUDIO-10).
@@ -102,43 +102,37 @@ public class AudioPreGenerationService {
                 .map(ClubProfile::getDefaultVoiceId)
                 .orElse("en_GB-alan-medium");
 
-        String raceName = "Race " + race.getHeatNumber();
         Map<String, String> clips = new HashMap<>();
 
-        // 1. Countdown clips (AUDIO-02)
+        // 1. Countdown clips (AUDIO-02). The text matches the browser's spoken fallback.
         for (int seconds : COUNTDOWN_SECONDS) {
-            String label = formatCountdownLabel(seconds);
-            String url = clipService.generateCountdownClip(raceId, seconds, raceName + ", " + label, voiceId);
+            String url = clipService.generateCountdownClip(
+                    raceId, seconds, formatCountdownLabel(seconds) + " remaining.", voiceId);
             if (url != null) {
                 clips.put("countdown-" + seconds, url);
             }
         }
 
-        // 2. Stagger car-number calls (AUDIO-03)
+        // 2. Grid calls (AUDIO-03): one per entry, keyed by entry id so the browser can find it
         List<RaceEntry> entries = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId);
-        for (RaceEntry raceEntry : entries) {
-            Integer gridPos = raceEntry.getGridPosition();
-            if (gridPos == null) continue;
-            String text = "Car " + gridPos + ", on the line";
-            String url = clipService.generateCarNumberClip(raceId, gridPos, text, voiceId);
-            if (url != null) {
-                clips.put("car-" + gridPos, url);
-            }
-        }
-
-        // 3. Finish announcements (AUDIO-05) — one per racer
         for (RaceEntry raceEntry : entries) {
             Entry entry = entryRepository.findById(raceEntry.getEntryId()).orElse(null);
             if (entry == null || entry.getCompetitorId() == null) continue;
             Competitor competitor = competitorRepository.findById(entry.getCompetitorId()).orElse(null);
             if (competitor == null) continue;
 
-            Long competitorId = competitor.getId();
-            String url = clipService.generateFinishClip(
-                    raceId, competitorId, competitor.getDisplayName() + " has finished", voiceId);
+            String url = clipService.generateGridCallClip(
+                    raceId, entry.getId(), competitor.getDisplayName() + ".", voiceId);
             if (url != null) {
-                clips.put("finish-" + competitorId, url);
+                clips.put("grid-" + entry.getId(), url);
             }
+        }
+
+        // 3. Race finished (AUDIO-05): one clip for the whole race
+        String finishUrl = clipService.generateRaceFinishedClip(
+                raceId, "Race finished. Checkered flag.", voiceId);
+        if (finishUrl != null) {
+            clips.put("finish", finishUrl);
         }
 
         clipCache.put(raceId, Collections.unmodifiableMap(clips));
