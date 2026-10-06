@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useStomp } from '@/hooks/race-control/useStomp';
 import { Badge } from '@/components/ui/badge';
@@ -65,20 +65,20 @@ export function DecoderStatusBar({ children }: { children?: ReactNode }) {
     refetchInterval: 5000,
   });
 
-  useEffect(() => {
-    if (initialStatus) {
-      setDecoderState(initialStatus.decoderState);
-    }
-  }, [initialStatus]);
-
   // Override with live STOMP pushes on state change
   const { data: stompData } = useStomp<DecoderStatusDto>('/topic/system/decoder-status');
 
-  useEffect(() => {
-    if (stompData) {
-      setDecoderState(stompData.decoderState);
-    }
-  }, [stompData]);
+  // Whichever of the two changed last wins. The state is adjusted while rendering rather than in an effect.
+  const [seenStatus, setSeenStatus] = useState<DecoderStatusDto | null | undefined>(undefined);
+  if (initialStatus !== seenStatus) {
+    setSeenStatus(initialStatus);
+    if (initialStatus) setDecoderState(initialStatus.decoderState);
+  }
+  const [seenStomp, setSeenStomp] = useState<DecoderStatusDto | null>(null);
+  if (stompData !== seenStomp) {
+    setSeenStomp(stompData);
+    if (stompData) setDecoderState(stompData.decoderState);
+  }
 
   return (
     <div className="flex h-8 items-center gap-3 px-4 bg-card border-b shrink-0">

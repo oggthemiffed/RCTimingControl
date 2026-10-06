@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useHelp } from '@/context/HelpContext';
@@ -12,8 +12,8 @@ import { PenaltyDialog } from './dialogs/PenaltyDialog';
 import { RunOrderPanel } from './panels/RunOrderPanel';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { computeProximityAlerts } from './referee/alerts';
-import type { LiveTimingRowDto, IncidentReportRequest, PenaltyRequest } from '@/lib/raceControlApi';
+import { useProximityAlerts } from './referee/useProximityAlerts';
+import type { IncidentReportRequest, PenaltyRequest } from '@/lib/raceControlApi';
 
 export default function RefereePage() {
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
@@ -31,32 +31,19 @@ export default function RefereePage() {
   const [incidentOpen, setIncidentOpen] = useState(false);
   const [penaltyOpen, setPenaltyOpen] = useState(false);
 
-  useEffect(() => {
-    if (runOrder.length > 0 && selectedRaceId === null) {
-      const active =
-        runOrder.find((r) => r.status === 'RUNNING' || r.status === 'STOPPED') ??
-        runOrder.find((r) => r.status !== 'FINISHED') ??
-        runOrder[0];
-      setSelectedRaceId(active.raceId);
-    }
-  }, [runOrder, selectedRaceId]);
+  // Auto-select the race in progress on load (adjusting state while rendering rather than in an effect)
+  if (runOrder.length > 0 && selectedRaceId === null) {
+    const active =
+      runOrder.find((r) => r.status === 'RUNNING' || r.status === 'STOPPED') ??
+      runOrder.find((r) => r.status !== 'FINISHED') ??
+      runOrder[0];
+    setSelectedRaceId(active.raceId);
+  }
 
   const { rows: current } = useLiveTiming(selectedRaceId);
 
-  // Track previous rows for proximity alert calculation (closing gaps between updates)
-  const previousRef = useRef<LiveTimingRowDto[]>([]);
-  const highlightEntryIds = useMemo(
-    () => computeProximityAlerts(current, previousRef.current.length > 0 ? previousRef.current : null),
-    [current],
-  );
-  useEffect(() => {
-    if (current.length > 0) previousRef.current = current;
-  }, [current]);
-
-  // Reset previous when race changes so stale highlights don't bleed across races
-  useEffect(() => {
-    previousRef.current = [];
-  }, [selectedRaceId]);
+  // Cars closing on the one ahead between timing updates
+  const highlightEntryIds = useProximityAlerts(selectedRaceId, current);
 
   const selectedRace = runOrder.find((r) => r.raceId === selectedRaceId);
   const mutations = useRaceStateMutations(selectedRaceId ?? 0, eventId);

@@ -26,7 +26,7 @@ export function usePracticeTiming(sessionId: number | null) {
   const rows = useMemo(
     () => stompRows ?? snapshot ?? [],
     // stompRows or snapshot reference changes only when data changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [stompRows, snapshot],
   );
 

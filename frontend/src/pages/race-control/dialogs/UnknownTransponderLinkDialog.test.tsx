@@ -179,5 +179,26 @@ describe('UnknownTransponderLinkDialog', () => {
       );
     });
   });
-});
 
+  it('clears the chosen entry when the dialog is opened again', async () => {
+    const props = {
+      transponderNumber: '12345678', raceId: 1, passingCount: 3, onOpenChange: vi.fn(), onLinked: vi.fn(),
+    };
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const view = (open: boolean) => (
+      <QueryClientProvider client={queryClient}>
+        <UnknownTransponderLinkDialog {...props} open={open} />
+      </QueryClientProvider>
+    );
+    const { rerender } = render(view(true));
+    await waitFor(() => expect(screen.getByRole('combobox')).not.toBeDisabled());
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '1' } });
+    await waitFor(() => expect(screen.getByText('Link Entry')).not.toBeDisabled());
+
+    rerender(view(false));
+    rerender(view(true));
+
+    await waitFor(() => expect(screen.getByRole('combobox')).toHaveValue(''));
+    expect(screen.getByText('Link Entry')).toBeDisabled();
+  });
+});

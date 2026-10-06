@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -65,7 +65,7 @@ export function DecoderSettingsForm({ onSaved, onBack, onSkip, saveLabel = 'Save
   });
 
   const userEditedPortRef = useRef(false);
-  const watchedProtocol = form.watch('decoderProtocol');
+  const watchedProtocol = useWatch({ control: form.control, name: 'decoderProtocol' });
 
   useEffect(() => {
     if (!userEditedPortRef.current) {

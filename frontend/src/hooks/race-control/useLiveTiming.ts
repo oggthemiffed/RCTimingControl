@@ -26,7 +26,7 @@ export function useLiveTiming(raceId: number | null) {
 
   const sorted = useMemo(
     () => (rows ? [...rows].sort((a, b) => a.position - b.position) : []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [rows],
   );
 

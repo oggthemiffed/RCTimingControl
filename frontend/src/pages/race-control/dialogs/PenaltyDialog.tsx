@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -56,7 +56,7 @@ export function PenaltyDialog({ open, onOpenChange, onSubmit, isPending, drivers
     form.reset();
   }
 
-  const penaltyType = form.watch('penaltyType');
+  const penaltyType = useWatch({ control: form.control, name: 'penaltyType' });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

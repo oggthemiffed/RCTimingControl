@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DecoderStatusBar } from './DecoderStatusBar';
+import { fetchDecoderStatus } from '@/lib/raceControlApi';
 
 // Mock useStomp hook
 const mockUseStomp = vi.fn();
@@ -75,5 +76,17 @@ describe('DecoderStatusBar', () => {
     const decoderPill = screen.getByLabelText(/DECODER connection status: unknown/i);
     expect(decoderPill).toHaveClass('text-[var(--flag-red)]');
     expect(screen.getByText('DECODER —')).toBeInTheDocument();
+  });
+
+  it('starts from the status the server reports, then follows live pushes', async () => {
+    vi.mocked(fetchDecoderStatus).mockResolvedValueOnce({ decoderState: 'CONNECTED' } as never);
+    mockUseStomp.mockReturnValue({ data: null, status: 'connected' });
+    const { rerender } = render(<DecoderStatusBar />, { wrapper });
+
+    expect(await screen.findByText('DECODER connected')).toBeInTheDocument();
+
+    mockUseStomp.mockReturnValue({ data: { decoderState: 'DISCONNECTED' }, status: 'connected' });
+    rerender(<DecoderStatusBar />);
+    expect(screen.getByText('DECODER disconnected')).toBeInTheDocument();
   });
 });
