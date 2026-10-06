@@ -2,38 +2,48 @@ export function ChampionshipHelp() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        The Championship Detail page configures a season-long series. It has six tabs:
-        Config (name and scoring rules), Classes (racing classes in the championship),
-        Events (linked round events), Points Scale (per-position points), Standings
-        (live standings table), and Exclusions (DSQ and removal records).
+        The Championship Detail page sets up a series that adds up results across several events.
+        It has six tabs: Config (name and scoring rules), Classes (racing classes in the
+        championship), Events (the events that count as rounds), Points Scale (points per
+        finishing position), Standings (the table so far) and Exclusions (drivers taken out of
+        a round). Competitors need no account: standings group results by competitor.
       </p>
 
       <ul className="mt-3 space-y-1.5 text-sm">
-        <li><span className="font-semibold">Add Class:</span> On the Classes tab, click "Add Class" to include a racing class and optionally set a per-class "best X from Y rounds" override.</li>
-        <li><span className="font-semibold">Link Event:</span> On the Events tab, click "Link Event" to associate an existing event with a round number. Round numbers must be unique.</li>
-        <li><span className="font-semibold">Points Scale:</span> On the Points Scale tab, set the points awarded per finishing position (P1, P2, etc.) for this championship.</li>
-        <li><span className="font-semibold">Standings:</span> The Standings tab shows the live calculated standings — points are calculated on demand from result snapshots, not stored.</li>
-        <li><span className="font-semibold">Add Exclusion:</span> On the Exclusions tab, click "Add Exclusion" to exclude a driver from a specific round with a recorded reason.</li>
+        <li><span className="font-semibold">Config:</span> Set the Name and the Scoring Source (Qualifying, Finals or Both), which says which finished races count. Under "Rounds scoring" you can set "Count best X from Y rounds", filling in both numbers or neither. TQ Bonus Points go to a driver who finished first in a qualifier, and A-Final Winner Bonus to a winner of an A-Final. Click Save.</li>
+        <li><span className="font-semibold">Add Class:</span> On the Classes tab, click "Add Class", choose a racing class, and optionally set a per-class "Count best X from Y rounds" override (both numbers or neither). A class with no override shows "Inherit" and uses the Config setting. The bin icon removes a class.</li>
+        <li><span className="font-semibold">Link Event:</span> On the Events tab, click "Link Event", choose an event and give it a Round Number. The bin icon unlinks an event.</li>
+        <li><span className="font-semibold">Points Scale:</span> On the Points Scale tab, type the points for each finishing position, or start from the ROAR or BRCA preset. "Add Row" adds a position, the bin icon removes one, and you must click Save for the change to count.</li>
+        <li><span className="font-semibold">Standings:</span> The Standings tab is worked out each time you open it from the saved results of finished races in the linked events, so a corrected result changes it. Each round shows its points; a struck-through score was dropped by the best-X-from-Y rule, EXC means excluded and DNS means did not start.</li>
+        <li><span className="font-semibold">Add Exclusion:</span> On the Exclusions tab, click "Add Exclusion", search for the driver by name or BRCA number, choose the event (round) and give a reason. The bin icon removes an exclusion.</li>
       </ul>
 
       <div className="mt-4 rounded-md bg-muted p-3 text-sm">
         <p className="font-semibold mb-1">Common mistakes</p>
         <p>
-          Each event can only be linked to one round number — attempting to link the same
-          event to two rounds will show a conflict error. The "best X from Y rounds"
-          override on a class takes precedence over the championship-level setting; leave
-          it blank on the class to inherit the championship default.
+          An event can be linked only once, and each Round Number can be used only once in a
+          championship, so linking a second event to round 3 shows a conflict. Standings stay empty
+          until a linked event has a finished race of the kind the Scoring Source counts. Points
+          are not stored: if you change the Points Scale, the standings change with it.
         </p>
       </div>
 
-      <div className="mt-4 pt-4 border-t">
+      <div className="mt-4 pt-4 border-t space-y-1">
         <a
           href="/print/admin-guide"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-primary hover:underline"
+          className="block text-sm text-primary hover:underline"
         >
           Open Admin Configuration Guide (printable)
+        </a>
+        <a
+          href="/print/meeting-guide"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-sm text-primary hover:underline"
+        >
+          Open Race Meeting Guide (printable)
         </a>
       </div>
     </div>

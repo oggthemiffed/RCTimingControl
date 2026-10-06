@@ -260,15 +260,16 @@ export default function AdminGuidePage() {
           </li>
           <li>
             <span className="font-semibold">Create a championship:</span> Click
-            <span className="font-semibold"> Create championship</span>. Enter a name and
-            description.
+            <span className="font-semibold"> Create Championship</span>. Enter a name and
+            choose the scoring options.
           </li>
           <li>
             <span className="font-semibold">Configure scoring (Config tab):</span> Open
             the championship detail. The <span className="font-semibold">Config</span> tab
-            holds the championship name, description, season, and the default best-X-from-Y
-            rounds setting. Set the number of rounds that count toward the title (e.g.
-            "Count best 8 from 10 rounds").
+            holds the Name, the Scoring Source (Qualifying, Finals or Both, which says which
+            finished races count), the optional "Rounds scoring" setting, and the TQ Bonus Points and
+            A-Final Winner Bonus. Set the number of rounds that count toward the title (e.g.
+            "Count best 8 from 10 rounds"), then click Save.
           </li>
           <li>
             <span className="font-semibold">Add classes (Classes tab):</span> Click
@@ -283,7 +284,7 @@ export default function AdminGuidePage() {
           <li>
             <span className="font-semibold">Configure points scale (Points Scale tab):</span>
             The Points Scale tab shows the points awarded for each finishing position
-            (1st, 2nd, 3rd, etc.). Edit the points values to match your club's scale.
+            (1st, 2nd, 3rd, etc.). Edit the points values, or start from the ROAR or BRCA preset, then click Save.
           </li>
           <li>
             <span className="font-semibold">View standings (Standings tab):</span> The
