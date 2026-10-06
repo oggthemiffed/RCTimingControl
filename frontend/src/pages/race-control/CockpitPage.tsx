@@ -46,12 +46,12 @@ export default function CockpitPage() {
     return () => setHelpContent(null);
   }, [setHelpContent]);
 
-  const { data: runOrder = [], isLoading } = useRunOrder(eventId || null);
+  const { data: runOrder = [], isLoading, isError } = useRunOrder(eventId || null);
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);
 
-  // An event has no races until its rounds are generated; only these roles may generate them
+  // Generating rounds and finishing races are race director commands; referees also see the cockpit
   const { user } = useAuth();
-  const canGenerateRounds = !!user?.roles.some((r) => r === 'ADMIN' || r === 'RACE_DIRECTOR');
+  const canControlRace = !!user?.roles.some((r) => r === 'ADMIN' || r === 'RACE_DIRECTOR');
   const [generatorOpen, setGeneratorOpen] = useState(false);
 
   // Unknown transponder link dialog state
@@ -223,16 +223,24 @@ export default function CockpitPage() {
   }
 
   function renderMainPanel() {
+    if (isError) {
+      return (
+        <div className="flex items-center justify-center h-48 text-destructive text-sm">
+          Could not load the run order. Check the connection to the timing laptop and try again.
+        </div>
+      );
+    }
+
     if (!isLoading && runOrder.length === 0) {
       return (
         <div className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold">No races yet</h2>
           <p className="text-sm text-muted-foreground">
-            {canGenerateRounds
+            {canControlRace
               ? 'Generate the practice, qualifying and finals rounds for this event to build its run order.'
               : 'A race director or admin needs to generate the rounds for this event first.'}
           </p>
-          {canGenerateRounds && (
+          {canControlRace && (
             <Button onClick={() => setGeneratorOpen(true)} className="w-fit">
               Generate Rounds
             </Button>
@@ -280,9 +288,11 @@ export default function CockpitPage() {
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold">{raceTitle(selectedRace)}</h2>
               <div className="flex gap-2 ml-auto">
-                <Button onClick={onFinish} disabled={mutations.finish.isPending}>
-                  {mutations.finish.isPending ? 'Finishing…' : 'Finish Race'}
-                </Button>
+                {canControlRace && (
+                  <Button onClick={onFinish} disabled={mutations.finish.isPending}>
+                    {mutations.finish.isPending ? 'Finishing…' : 'Finish Race'}
+                  </Button>
+                )}
                 <Button variant="outline" onClick={onStop} disabled={mutations.stop.isPending}>
                   {mutations.stop.isPending ? 'Stopping…' : 'Stop'}
                 </Button>
@@ -330,9 +340,11 @@ export default function CockpitPage() {
                 <Button onClick={onStart} disabled={mutations.start.isPending}>
                   {mutations.start.isPending ? 'Resuming…' : 'Resume Race'}
                 </Button>
-                <Button variant="outline" onClick={onFinish} disabled={mutations.finish.isPending}>
-                  {mutations.finish.isPending ? 'Finishing…' : 'Finish Race'}
-                </Button>
+                {canControlRace && (
+                  <Button variant="outline" onClick={onFinish} disabled={mutations.finish.isPending}>
+                    {mutations.finish.isPending ? 'Finishing…' : 'Finish Race'}
+                  </Button>
+                )}
                 <Button variant="outline" onClick={onRestart} disabled={mutations.restart.isPending}>
                   Restart
                 </Button>

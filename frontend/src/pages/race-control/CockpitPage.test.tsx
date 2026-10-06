@@ -10,7 +10,11 @@ vi.mock('@/context/HelpContext', () => ({ useHelp: () => ({ setHelpContent: vi.f
 
 const mockRunOrder = vi.fn();
 vi.mock('@/hooks/race-control/useRunOrder', () => ({ useRunOrder: () => mockRunOrder() }));
-vi.mock('@/hooks/race-control/useRaceStateMutations', () => ({ useRaceStateMutations: () => ({}) }));
+vi.mock('@/hooks/race-control/useRaceStateMutations', () => ({
+  useRaceStateMutations: () =>
+    new Proxy({}, { get: () => ({ mutate: vi.fn(), isPending: false }) }),
+}));
+vi.mock('./panels/LiveTimingPanel', () => ({ LiveTimingPanel: () => null }));
 vi.mock('@/hooks/race-control/useStomp', () => ({ useStomp: () => ({ data: null }) }));
 vi.mock('@/hooks/race-control/useLiveTiming', () => ({ useLiveTiming: () => ({ rows: [] }) }));
 vi.mock('@/hooks/race-control/useAnnouncements', () => ({
@@ -50,7 +54,7 @@ function renderCockpit() {
 describe('CockpitPage with no races', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRunOrder.mockReturnValue({ data: [], isLoading: false });
+    mockRunOrder.mockReturnValue({ data: [], isLoading: false, isError: false });
   });
 
   it('lets a race director generate the rounds', async () => {
@@ -76,5 +80,37 @@ describe('CockpitPage with no races', () => {
 
     expect(screen.getByText(/race director or admin needs to generate/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Generate Rounds' })).not.toBeInTheDocument();
+  });
+
+  it('shows a load failure instead of offering to generate rounds', () => {
+    mockUser.mockReturnValue({ roles: ['RACE_DIRECTOR'] });
+    mockRunOrder.mockReturnValue({ data: undefined, isLoading: false, isError: true });
+    renderCockpit();
+
+    expect(screen.getByText(/could not load the run order/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Generate Rounds' })).not.toBeInTheDocument();
+  });
+});
+
+describe('CockpitPage with a running race', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockRunOrder.mockReturnValue({
+      data: [{ raceId: 3, status: 'RUNNING', roundType: 'PRACTICE', roundNumber: 1, className: '13.5 Touring', heatNumber: 1 }],
+      isLoading: false,
+      isError: false,
+    });
+  });
+
+  it('offers Finish Race to a race director', () => {
+    mockUser.mockReturnValue({ roles: ['RACE_DIRECTOR'] });
+    renderCockpit();
+    expect(screen.getByRole('button', { name: 'Finish Race' })).toBeInTheDocument();
+  });
+
+  it('hides Finish Race from a referee', () => {
+    mockUser.mockReturnValue({ roles: ['REFEREE'] });
+    renderCockpit();
+    expect(screen.queryByRole('button', { name: 'Finish Race' })).not.toBeInTheDocument();
   });
 });
