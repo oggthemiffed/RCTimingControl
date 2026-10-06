@@ -34,6 +34,8 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
   const [primary, setPrimary] = useState('');
   const [secondary, setSecondary] = useState('');
   const [error, setError] = useState<string | null>(null);
+  // Existing drivers the typed name matches, while the official decides if it is one of them (#123)
+  const [possibleDuplicates, setPossibleDuplicates] = useState<CompetitorSummaryDto[]>([]);
 
   const { data: competitors = [] } = useAdminCompetitorsList();
   const createEntry = useCreateWalkInEntry(eventId, classId);
@@ -45,6 +47,7 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
       setPrimary('');
       setSecondary('');
       setError(null);
+      setPossibleDuplicates([]);
     }
     onOpenChange(next);
   }
@@ -55,9 +58,9 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
     : competitors.filter(c => c.displayName.toLowerCase().includes(query)).slice(0, MAX_MATCHES);
   const exactMatch = competitors.find(c => c.displayName.trim().toLowerCase() === query);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!selected && !driverText.trim()) {
+  async function submit(options: { competitor?: CompetitorSummaryDto; confirmNew?: boolean } = {}) {
+    const chosen = options.competitor ?? selected;
+    if (!chosen && !driverText.trim()) {
       setError('Choose a driver or enter a name.');
       return;
     }
@@ -72,22 +75,31 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
     setError(null);
     try {
       const result = await createEntry.mutateAsync({
-        ...(selected ? { competitorId: selected.id } : { competitorName: driverText.trim() }),
+        ...(chosen ? { competitorId: chosen.id } : { competitorName: driverText.trim() }),
+        ...(!chosen && options.confirmNew ? { confirmNewCompetitor: true } : {}),
         primaryTransponder: primary.trim(),
         ...(secondary.trim() ? { secondaryTransponder: secondary.trim() } : {}),
       });
-      toast.success(`Entry added for ${selected?.displayName ?? driverText.trim()}.`);
+      toast.success(`Entry added for ${chosen?.displayName ?? driverText.trim()}.`);
       result.warnings.forEach(w => toast.warning(w));
       handleOpenChange(false);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 409) {
-        setError(err.response.data?.detail ?? 'This driver already has an entry in this class.');
+      const data = axios.isAxiosError(err) ? err.response?.data : undefined;
+      if (axios.isAxiosError(err) && err.response?.status === 409 && data?.code === 'POSSIBLE_DUPLICATE_COMPETITOR') {
+        setPossibleDuplicates(data.matches ?? []);
+      } else if (axios.isAxiosError(err) && err.response?.status === 409) {
+        setError(data?.detail ?? 'This driver already has an entry in this class.');
       } else if (axios.isAxiosError(err) && (err.response?.status === 400 || err.response?.status === 422)) {
-        setError(err.response.data?.detail ?? 'Check the details and try again.');
+        setError(data?.detail ?? 'Check the details and try again.');
       } else {
         setError('Could not add the entry. Check your connection and try again.');
       }
     }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    void submit();
   }
 
   return (
@@ -116,7 +128,10 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
                 <Input
                   id="walkin-driver"
                   value={driverText}
-                  onChange={e => setDriverText(e.target.value)}
+                  onChange={e => {
+                    setDriverText(e.target.value);
+                    setPossibleDuplicates([]);
+                  }}
                   placeholder="Search drivers or type a new name"
                   autoComplete="off"
                 />
@@ -143,8 +158,8 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
                 )}
                 {exactMatch && (
                   <p className="text-xs text-amber-700 dark:text-amber-400">
-                    {exactMatch.displayName} is already a driver. Pick them from the list to use their record, or
-                    “{driverText.trim()}” will be added as a separate new driver.
+                    {exactMatch.displayName} is already a driver. Pick them from the list to use their record. If
+                    you add “{driverText.trim()}” as typed, you will be asked whether it is the same person.
                   </p>
                 )}
               </>
@@ -166,6 +181,48 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
               />
             </div>
           </div>
+
+          {possibleDuplicates.length > 0 && (
+            <div role="alert" className="space-y-2 rounded-md border border-amber-500 p-3 text-sm">
+              <p className="font-medium">
+                {possibleDuplicates.length === 1
+                  ? `${possibleDuplicates[0].displayName} already exists${possibleDuplicates[0].homeClub ? ` (${possibleDuplicates[0].homeClub})` : ''}. Is this the same person?`
+                  : `${possibleDuplicates.length} drivers called “${driverText.trim()}” already exist. Is this one of them?`}
+              </p>
+              <ul className="space-y-1">
+                {possibleDuplicates.map(c => (
+                  <li key={c.id}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={createEntry.isPending}
+                      onClick={() => {
+                        setSelected(c);
+                        setPossibleDuplicates([]);
+                        void submit({ competitor: c });
+                      }}
+                    >
+                      Use {c.displayName}
+                      {c.homeClub ? ` (${c.homeClub})` : ''}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={createEntry.isPending}
+                onClick={() => {
+                  setPossibleDuplicates([]);
+                  void submit({ confirmNew: true });
+                }}
+              >
+                No, this is a different person
+              </Button>
+            </div>
+          )}
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 

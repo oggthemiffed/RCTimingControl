@@ -34,6 +34,18 @@ public class CompetitorRepository extends JooqRepository<Competitor, Competitors
                 .and(DSL.lower(DSL.trim(COMPETITORS.DISPLAY_NAME)).eq(displayName.trim().toLowerCase(Locale.ROOT))));
     }
 
+    /**
+     * Competitors from any source whose name is the same as this one, ignoring case and spacing, so
+     * "alex  rowe" finds "Alex Rowe". The rule a typed walk-in name is checked against (#123).
+     */
+    public List<Competitor> findByNormalizedName(String displayName) {
+        return findWhere(DSL.lower(DSL.replace(COMPETITORS.DISPLAY_NAME, " ", "")).eq(normalizeName(displayName)));
+    }
+
+    static String normalizeName(String displayName) {
+        return displayName.replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
+    }
+
     @Override
     protected Competitor toEntity(CompetitorsRecord r) {
         Competitor c = new Competitor();

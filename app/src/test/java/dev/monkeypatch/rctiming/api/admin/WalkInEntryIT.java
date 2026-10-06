@@ -173,6 +173,47 @@ class WalkInEntryIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void aTypedNameThatMatchesAnExistingDriverIsRefusedWithTheMatches() {
+        long existing = createCompetitor("Alex Rowe " + run);
+
+        ResponseEntity<JsonNode> resp = create(Map.of("competitorName", "  alex   ROWE " + run,
+                "primaryTransponder", "75" + run));
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(resp.getBody().get("code").asText()).isEqualTo("POSSIBLE_DUPLICATE_COMPETITOR");
+        assertThat(resp.getBody().get("matches")).hasSize(1);
+        assertThat(resp.getBody().get("matches").get(0).get("id").asLong()).isEqualTo(existing);
+        assertThat(resp.getBody().get("matches").get(0).get("displayName").asText()).isEqualTo("Alex Rowe " + run);
+        assertThat(entryRepository.findByEventId(eventId)).isEmpty();
+        assertThat(competitorRepository.findByNormalizedName("Alex Rowe " + run)).hasSize(1);
+    }
+
+    @Test
+    void confirmingItIsADifferentPersonCreatesTheNewDriver() {
+        long existing = createCompetitor("Sam Ito " + run);
+
+        ResponseEntity<JsonNode> resp = create(Map.of("competitorName", "Sam Ito " + run,
+                "confirmNewCompetitor", true, "primaryTransponder", "76" + run));
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        long entryId = resp.getBody().get("entry").get("id").asLong();
+        assertThat(entryRepository.findById(entryId).orElseThrow().getCompetitorId()).isNotEqualTo(existing);
+        assertThat(competitorRepository.findByNormalizedName("Sam Ito " + run)).hasSize(2);
+    }
+
+    @Test
+    void pickingTheExistingDriverReusesThem() {
+        long existing = createCompetitor("Pat Lee " + run);
+
+        ResponseEntity<JsonNode> resp = create(Map.of("competitorId", existing, "primaryTransponder", "77" + run));
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        long entryId = resp.getBody().get("entry").get("id").asLong();
+        assertThat(entryRepository.findById(entryId).orElseThrow().getCompetitorId()).isEqualTo(existing);
+        assertThat(competitorRepository.findByNormalizedName("Pat Lee " + run)).hasSize(1);
+    }
+
+    @Test
     void requiresACompetitor() {
         var resp = create(Map.of("primaryTransponder", "69" + run));
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);

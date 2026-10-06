@@ -546,7 +546,7 @@ Content-Type: application/json
 }
 ```
 
-Requires `ADMIN` or `RACE_DIRECTOR`. Give either `competitorId` (an existing competitor) or `competitorName` (a new one), not both. **201 Created** with `{ "entry": {...}, "warnings": [...] }`; a transponder another active entry in the event uses is a warning. **409** if the competitor already has an entry in the class; **422** if the event is completed.
+Requires `ADMIN` or `RACE_DIRECTOR`. Give either `competitorId` (an existing competitor) or `competitorName` (a new one), not both. **201 Created** with `{ "entry": {...}, "warnings": [...] }`; a transponder another active entry in the event uses is a warning. **409** if the competitor already has an entry in the class; **422** if the event is completed. A new `competitorName` that matches an existing competitor (same name, ignoring case and spacing) is refused with **409** and `{ "code": "POSSIBLE_DUPLICATE_COMPETITOR", "matches": [{ "id": 7, "displayName": "Wendy Walkin", "brcaNumber": null, "homeClub": null, "spokenName": null }] }`. Send that `competitorId` to use them, or add `"confirmNewCompetitor": true` to say this is a different person.
 
 ---
 

@@ -367,6 +367,11 @@ export interface CreateWalkInEntryRequest {
   /** An existing competitor, or leave out and give competitorName for a new one. */
   competitorId?: number;
   competitorName?: string;
+  /**
+   * Say that a typed name is a different person from an existing driver of the same name. Without
+   * it, such a name is refused with a 409 listing the matches (#123).
+   */
+  confirmNewCompetitor?: boolean;
   primaryTransponder: string;
   secondaryTransponder?: string;
 }

@@ -56,6 +56,7 @@ class CompetitorAndEntryRepositoriesIT extends AbstractIntegrationTest {
             c.setExternalId(null);
             c.setBrcaNumber(null);
             c.setHomeClub("Other club");
+            c.setSpokenName(null);
             c.setCreatedAt(T2);
             c.setUpdatedAt(T2);
             return c;
@@ -67,6 +68,29 @@ class CompetitorAndEntryRepositoriesIT extends AbstractIntegrationTest {
         assertThat(competitors.findByExternalSourceAndExternalId("RACEHUB", externalId))
                 .get().extracting(Competitor::getId).isEqualTo(imported.getId());
         assertThat(competitors.findByExternalSourceAndExternalId("RACEHUB", "missing")).isEmpty();
+    }
+
+    @Test
+    void findByNormalizedNameIgnoresCaseAndSpacing() {
+        String name = "Normal Name " + System.nanoTime();
+        Competitor saved = competitors.save(named(name));
+        cleanup.add(() -> competitors.deleteById(saved.getId()));
+        Competitor other = competitors.save(named(name + " Jr"));
+        cleanup.add(() -> competitors.deleteById(other.getId()));
+
+        assertThat(competitors.findByNormalizedName("  " + name.toUpperCase().replace(" ", "   ") + " "))
+                .extracting(Competitor::getId).containsExactly(saved.getId());
+        assertThat(competitors.findByNormalizedName(name.toLowerCase().replace(" ", "")))
+                .extracting(Competitor::getId).containsExactly(saved.getId());
+        assertThat(competitors.findByNormalizedName("Nobody Like " + name)).isEmpty();
+    }
+
+    private static Competitor named(String displayName) {
+        Competitor c = new Competitor();
+        c.setDisplayName(displayName);
+        c.setCreatedAt(T1);
+        c.setUpdatedAt(T1);
+        return c;
     }
 
     @Test
@@ -157,6 +181,7 @@ class CompetitorAndEntryRepositoriesIT extends AbstractIntegrationTest {
         c.setExternalId(externalId);
         c.setBrcaNumber("BRCA-123");
         c.setHomeClub("Test club");
+        c.setSpokenName("Round-trip say as");
         c.setCreatedAt(T1);
         c.setUpdatedAt(T1);
         return c;
