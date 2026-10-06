@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { getRaceClipMap } from '@/lib/audioApi';
 
 interface UsePregeneratedClipsOptions {
@@ -7,36 +7,57 @@ interface UsePregeneratedClipsOptions {
   setClipMap: (map: Record<string, string>) => void;
 }
 
+/** The server makes the clips after GRID starts, so ask again until they arrive. */
+export const CLIP_POLL_MS = 2000;
+export const CLIP_POLL_MAX_ATTEMPTS = 30;
+
 /**
- * Fetches pre-generated TTS audio clips when a race enters GRID state (AUDIO-10).
+ * Fetches pre-generated TTS audio clips for a race at GRID or RUNNING (AUDIO-10).
  *
- * On GRID transition, calls getRaceClipMap and populates the clip cache via
- * setClipMap. Errors are non-fatal — Web Speech API fallback handles missing clips.
+ * The server generates clips asynchronously and publishes them all at once, so an
+ * early request returns an empty map. This polls until a non-empty map arrives,
+ * then stops. Errors and a map that never arrives are non-fatal: the Web Speech
+ * API fallback speaks instead.
  */
 export function usePregeneratedClips({
   raceId,
   raceState,
   setClipMap,
 }: UsePregeneratedClipsOptions) {
-  // Track which raceId we've already fetched to avoid duplicate requests
-  const fetchedForRaceRef = useRef<number | null>(null);
+  const active = raceState === 'GRID' || raceState === 'RUNNING';
 
   useEffect(() => {
-    if (raceState !== 'GRID') return;
-    if (!raceId) return;
-    if (fetchedForRaceRef.current === raceId) return;
+    if (!active || !raceId) return;
 
-    fetchedForRaceRef.current = raceId;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let attempts = 0;
 
-    getRaceClipMap(raceId)
-      .then(({ data }) => {
-        setClipMap(data);
-      })
-      .catch((err) => {
-        console.warn(
-          'Failed to fetch pre-generated clips — falling back to Web Speech API:',
-          err,
-        );
-      });
-  }, [raceState, raceId, setClipMap]);
+    const poll = () => {
+      attempts += 1;
+      getRaceClipMap(raceId)
+        .then(({ data }) => {
+          if (cancelled) return;
+          if (Object.keys(data).length > 0) {
+            setClipMap(data);
+          } else if (attempts < CLIP_POLL_MAX_ATTEMPTS) {
+            timer = setTimeout(poll, CLIP_POLL_MS);
+          }
+        })
+        .catch((err) => {
+          if (cancelled) return;
+          console.warn(
+            'Failed to fetch pre-generated clips — falling back to Web Speech API:',
+            err,
+          );
+          if (attempts < CLIP_POLL_MAX_ATTEMPTS) timer = setTimeout(poll, CLIP_POLL_MS);
+        });
+    };
+    poll();
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [active, raceId, setClipMap]);
 }

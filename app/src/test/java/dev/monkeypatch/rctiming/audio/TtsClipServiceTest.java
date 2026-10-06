@@ -36,17 +36,17 @@ class TtsClipServiceTest {
     }
 
     @Test
-    void generateFinishClip_storesWithCompetitorKey() {
-        when(piperClient.synthesize("Alan Smith has finished", "en_GB-cori-high")).thenReturn(FAKE_WAV);
+    void generateRaceFinishedClip_storesWithRaceKey() {
+        when(piperClient.synthesize("Race finished. Checkered flag.", "en_GB-cori-high")).thenReturn(FAKE_WAV);
         when(storageService.upload(
-                eq("audio/race/3/finish-42-en_GB-cori-high.wav"),
+                eq("audio/race/3/finish-en_GB-cori-high.wav"),
                 any(), any()))
-                .thenReturn("http://localhost:8080/storage/rctiming/audio/race/3/finish-42-en_GB-cori-high.wav");
+                .thenReturn("http://localhost:8080/storage/rctiming/audio/race/3/finish-en_GB-cori-high.wav");
 
-        String url = service.generateFinishClip(3L, 42L, "Alan Smith has finished", "en_GB-cori-high");
+        String url = service.generateRaceFinishedClip(3L, "Race finished. Checkered flag.", "en_GB-cori-high");
 
         assertNotNull(url);
-        verify(storageService).upload(eq("audio/race/3/finish-42-en_GB-cori-high.wav"), eq(FAKE_WAV), eq("audio/wav"));
+        verify(storageService).upload(eq("audio/race/3/finish-en_GB-cori-high.wav"), eq(FAKE_WAV), eq("audio/wav"));
     }
 
     @Test
@@ -77,17 +77,17 @@ class TtsClipServiceTest {
     }
 
     @Test
-    void generateCarNumberClip_storesWithCorrectKey() {
-        when(piperClient.synthesize(eq("Car 42"), anyString())).thenReturn(FAKE_WAV);
+    void generateGridCallClip_storesWithEntryKey() {
+        when(piperClient.synthesize(eq("Alan Smith."), anyString())).thenReturn(FAKE_WAV);
         when(storageService.upload(
-                eq("audio/race/5/car-42-en_GB-alan-medium.wav"),
+                eq("audio/race/5/grid-42-en_GB-alan-medium.wav"),
                 any(), any()))
                 .thenReturn("http://localhost:8080/storage/");
 
-        service.generateCarNumberClip(5L, 42, "Car 42", null);
+        service.generateGridCallClip(5L, 42L, "Alan Smith.", null);
 
         verify(storageService).upload(
-                eq("audio/race/5/car-42-en_GB-alan-medium.wav"),
+                eq("audio/race/5/grid-42-en_GB-alan-medium.wav"),
                 eq(FAKE_WAV), eq("audio/wav"));
     }
 }

@@ -115,13 +115,13 @@
 
 - [x] **AUDIO-01**: Race control browser produces voice announcements throughout the meeting using the Web Speech API; all announcement types are individually configurable on/off
 - [x] **AUDIO-02**: Countdown announcements fire at configurable intervals before each race (default: 10m, 5m, 2m, 1m, 30s) announcing race number and time remaining
-- [x] **AUDIO-03**: In STAGGER start mode, car numbers are called at the configured stagger interval; each driver starts when their car number is called
+- [x] **AUDIO-03**: In STAGGER start mode, each competitor on the grid is called by name at the configured stagger interval (entries have no car number); each driver starts when their name is called. The call is one Piper clip per entry, played in turn; the browser voice speaks it if the clip isn't ready in a few seconds
 - [x] **AUDIO-04**: Each lap crossing produces a high-pitched beep if the driver is improving on their best result, low-pitched otherwise
-- [x] **AUDIO-05**: When a driver finishes, a longer beep followed by their car number is announced
+- [x] **AUDIO-05**: When a race ends, one "Race finished" announcement is made (there is no per-driver finish announcement)
 - [x] **AUDIO-06**: Running order is announced at 2-minute intervals for the first 10 minutes of a race, then at 5-minute intervals
 - [x] **AUDIO-07**: Admin can enable or disable individual announcement types from the settings panel
 - [x] **AUDIO-08**: When a racer profile is created or updated, the server generates a TTS audio clip for the racer's name using a configured TTS provider (e.g. Google Cloud TTS) and stores it; the clip is regenerated if the display name or phonetic spelling changes **Changed**: there are no racer profiles. Name clips are generated with Piper TTS from the competitor's display name when a race reaches `GRID` (see AUDIO-09).
-- [x] **AUDIO-09**: When a race transitions to `GRID` state, the server pre-generates audio clips for all predictable announcements for that race: car number calls (stagger start), countdown intervals with race number, and per-driver finish announcements; clips are cached and ready before the race starts
+- [x] **AUDIO-09**: When a race transitions to `GRID` state, the server pre-generates audio clips for all predictable announcements for that race: a grid call by name for each entry (stagger start), the countdown intervals, and the race-finished announcement; clips are cached and ready before the race starts
 - [x] **AUDIO-10**: Pre-generated audio clips are served via HTTP; the race control client fetches and locally caches all clips for the current race during grid preparation before the race starts
 - [x] **AUDIO-11**: If a pre-generated clip is unavailable at playback time, the client falls back to Web Speech API synthesis; clip unavailability is non-blocking and never prevents a race from running
 - ~~**AUDIO-12**: Racer profile includes an optional **phonetic spelling** field for their display name, editable by the racer and admins; if set, it is used as the TTS input instead of the display name~~ **Removed** (#18): phonetic spellings were part of racer profiles.

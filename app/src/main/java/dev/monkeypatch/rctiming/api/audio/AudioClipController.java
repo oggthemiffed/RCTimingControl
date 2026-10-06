@@ -33,8 +33,8 @@ public class AudioClipController {
      * {
      *   "countdown-600": "http://localhost:8080/storage/audio/race/1/countdown-600-en_GB-alan-medium.wav",
      *   "countdown-30":  "http://localhost:8080/storage/audio/race/1/countdown-30-en_GB-alan-medium.wav",
-     *   "car-1":         "http://localhost:8080/storage/audio/race/1/car-1-en_GB-alan-medium.wav",
-     *   "finish-200":    "http://localhost:8080/storage/audio/race/1/finish-200-en_GB-alan-medium.wav"
+     *   "grid-100":       "http://localhost:8080/storage/audio/race/1/grid-100-en_GB-alan-medium.wav",
+     *   "finish":        "http://localhost:8080/storage/audio/race/1/finish-en_GB-alan-medium.wav"
      * }
      * }</pre>
      * Returns an empty object {@code {}} if clips have not yet been generated (race not in GRID).
