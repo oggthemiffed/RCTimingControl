@@ -84,6 +84,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    // Revoke this browser's refresh token on the server, or the cookie would sign the official straight
+    // back in on the next load. Best effort: signing out here must work even when the server cannot be reached.
+    api.delete('/api/v1/auth/refresh').catch(() => {});
     clearAccessToken();
     setAccessTokenState(null);
     setUser(null);

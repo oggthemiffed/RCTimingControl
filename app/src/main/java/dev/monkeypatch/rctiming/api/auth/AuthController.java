@@ -14,6 +14,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -112,6 +113,34 @@ public class AuthController {
         return ResponseEntity.ok(buildAuthResponse(user, newAccessToken));
     }
 
+    /**
+     * Signs this browser out: revokes the refresh token its cookie holds and expires the cookie. Without
+     * it, clearing the page's in-memory access token would not sign anyone out, because the 7-day cookie
+     * would simply issue a new one on the next load.
+     *
+     * <p>This is {@code DELETE /refresh} rather than a separate {@code /logout} URL because the cookie's
+     * path is {@code /api/v1/auth/refresh}: the browser sends it only to that path. Open to anyone who can
+     * send the cookie (the access token has usually expired by then) and idempotent: no cookie, an unknown token or an already revoked one all answer 204. Only this
+     * browser's token is revoked, so the same official stays signed in elsewhere. The access token already
+     * issued stays valid until it expires (15 minutes).
+     */
+    @DeleteMapping("/refresh")
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = "refresh_token", required = false) String rawCookieToken,
+            HttpServletResponse response) {
+        if (rawCookieToken != null) {
+            refreshTokenRepository.findByTokenHash(sha256Hex(rawCookieToken)).ifPresent(token -> {
+                if (!token.isRevoked()) {
+                    token.setRevoked(true);
+                    refreshTokenRepository.save(token);
+                }
+            });
+        }
+        // Same name, path and attributes as the cookie that was set, with no lifetime, so the browser drops it
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie("", Duration.ZERO).toString());
+        return ResponseEntity.noContent().build();
+    }
+
     // --- helpers ---
 
     private void setRefreshCookie(User user, HttpServletResponse response) {
@@ -126,14 +155,22 @@ public class AuthController {
         refreshToken.setRevoked(false);
         refreshTokenRepository.save(refreshToken);
 
-        ResponseCookie cookie = ResponseCookie.from("refresh_token", rawToken)
+        response.addHeader(HttpHeaders.SET_COOKIE,
+                refreshCookie(rawToken, Duration.ofMillis(jwtTokenService.getRefreshTokenTtlMs())).toString());
+    }
+
+    /**
+     * The refresh cookie. Not marked Secure because RCTC is served over plain HTTP on the venue network
+     * (there is no TLS); SameSite=Lax keeps it off cross-site POSTs, and the path keeps it off every other request.
+     */
+    private static ResponseCookie refreshCookie(String value, Duration maxAge) {
+        return ResponseCookie.from("refresh_token", value)
                 .httpOnly(true)
-                .secure(false)   // false for dev; override in prod via config
+                .secure(false)
                 .sameSite("Lax")
                 .path("/api/v1/auth/refresh")
-                .maxAge(Duration.ofMillis(jwtTokenService.getRefreshTokenTtlMs()))
+                .maxAge(maxAge)
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     private AuthResponse buildAuthResponse(User user, String accessToken) {

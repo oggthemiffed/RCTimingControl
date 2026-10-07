@@ -198,7 +198,78 @@ class AuthControllerIT extends AbstractIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    @Test
+    void logout_revokesTheRefreshTokenAndClearsTheCookie() {
+        String email = createUser(Set.of(Role.RACE_DIRECTOR));
+        String cookie = loginCookie(email);
+
+        ResponseEntity<Void> logout = deleteRefresh(cookie);
+
+        assertThat(logout.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        String cleared = logout.getHeaders().get(HttpHeaders.SET_COOKIE).stream()
+                .filter(c -> c.startsWith("refresh_token="))
+                .findFirst().orElseThrow();
+        assertThat(cleared).startsWith("refresh_token=;");
+        assertThat(cleared).contains("Max-Age=0").contains("Path=/api/v1/auth/refresh").containsIgnoringCase("HttpOnly");
+        // The cookie the browser still holds can no longer sign anyone in
+        assertThat(refresh(cookie).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void logout_onlyEndsThisBrowsersSession() {
+        String email = createUser(Set.of(Role.RACE_DIRECTOR));
+        String thisBrowser = loginCookie(email);
+        String otherBrowser = loginCookie(email);
+
+        deleteRefresh(thisBrowser);
+
+        assertThat(refresh(thisBrowser).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(refresh(otherBrowser).getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void logout_withNoCookieOrAnUnknownOne_isStillNoContent() {
+        assertThat(deleteRefresh(null).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(deleteRefresh("garbage-token").getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    void logout_twice_isStillNoContent() {
+        String cookie = loginCookie(createUser(Set.of(Role.REFEREE)));
+
+        deleteRefresh(cookie);
+
+        assertThat(deleteRefresh(cookie).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
     // --- helpers ---
+
+    /** Signs in and returns the raw refresh cookie value, as a browser would hold it. */
+    private String loginCookie(String email) {
+        ResponseEntity<AuthResponse> login = restTemplate.postForEntity(
+                BASE_URL + "/login", new LoginRequest(email, "password123"), AuthResponse.class);
+        assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
+        String header = login.getHeaders().get(HttpHeaders.SET_COOKIE).stream()
+                .filter(c -> c.startsWith("refresh_token="))
+                .findFirst().orElseThrow();
+        return extractCookieValue(header, "refresh_token");
+    }
+
+    private ResponseEntity<Void> deleteRefresh(String cookieValue) {
+        HttpHeaders headers = new HttpHeaders();
+        if (cookieValue != null) {
+            headers.add(HttpHeaders.COOKIE, "refresh_token=" + cookieValue);
+        }
+        return restTemplate.exchange(RequestEntity.delete(URI.create(BASE_URL + "/refresh")).headers(headers).build(),
+                Void.class);
+    }
+
+    private ResponseEntity<Void> refresh(String cookieValue) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.COOKIE, "refresh_token=" + cookieValue);
+        return restTemplate.exchange(RequestEntity.post(URI.create(BASE_URL + "/refresh")).headers(headers).build(),
+                Void.class);
+    }
 
     private String extractCookieValue(String setCookieHeader, String cookieName) {
         for (String part : setCookieHeader.split(";")) {

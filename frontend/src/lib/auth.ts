@@ -1,3 +1,7 @@
+import axios from 'axios';
+
+// The access token lives only in memory. The HttpOnly refresh cookie is what keeps an official signed
+// in across page loads, so a reload gets a new access token from /auth/refresh (see AuthProvider).
 let accessToken: string | null = null;
 
 export function getAccessToken(): string | null {
@@ -10,6 +14,57 @@ export function setAccessToken(token: string | null): void {
 
 export function clearAccessToken(): void {
   accessToken = null;
+}
+
+// Refreshes in flight share one request: the refresh token rotates, so a second concurrent call would
+// present a token the first has already used up and sign the official out.
+let refreshing: Promise<string> | null = null;
+
+/**
+ * Gets a new access token with the refresh cookie and stores it. Uses plain axios, not the api
+ * instance, so its own 401 cannot trigger another refresh. Rejects when the cookie is missing, expired
+ * or revoked.
+ */
+export function refreshAccessToken(): Promise<string> {
+  refreshing ??= axios
+    .post<{ accessToken: string }>('/api/v1/auth/refresh', {}, { withCredentials: true })
+    .then(({ data }) => {
+      setAccessToken(data.accessToken);
+      return data.accessToken;
+    })
+    .finally(() => {
+      refreshing = null;
+    });
+  return refreshing;
+}
+
+/** Seconds since the epoch at which a JWT expires, or null when it cannot be read. */
+function expiryOf(token: string): number | null {
+  try {
+    const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const exp = (JSON.parse(atob(payload)) as { exp?: unknown }).exp;
+    return typeof exp === 'number' ? exp : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The access token to connect with: the current one, or a new one when it has expired or is about to.
+ * Access tokens last 15 minutes, and a WebSocket that reconnects with an expired one is refused, so a
+ * long-open page must renew it before each connect. Returns null for an anonymous visitor (nothing to
+ * renew) and when the session can no longer be refreshed, which leaves only the public topics.
+ */
+export async function currentAccessToken(): Promise<string | null> {
+  const token = getAccessToken();
+  if (!token) return null;
+  const exp = expiryOf(token);
+  if (exp === null || exp * 1000 - Date.now() > 30_000) return token;
+  try {
+    return await refreshAccessToken();
+  } catch {
+    return null;
+  }
 }
 
 /** Thrown by login when the account holds no official role: only officials can sign in. */

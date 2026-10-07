@@ -33,13 +33,42 @@ vi.mock('@stomp/stompjs', () => ({
   }),
 }));
 
-vi.mock('@/lib/auth', () => ({ getAccessToken: () => null }));
+const { currentAccessToken } = vi.hoisted(() => ({ currentAccessToken: vi.fn() }));
+vi.mock('@/lib/auth', () => ({ currentAccessToken }));
 
 import { useStomp } from './useStomp';
 
 describe('useStomp', () => {
   beforeEach(() => {
     clients.length = 0;
+    currentAccessToken.mockReset();
+    currentAccessToken.mockResolvedValue(null);
+  });
+
+  it('asks for a current token before every connect, so a reconnect never reuses an expired one', async () => {
+    currentAccessToken.mockResolvedValueOnce('first').mockResolvedValueOnce('second');
+    renderHook(() => useStomp<{ n: number }>('/topic/a'));
+    const config = clients[0].config as unknown as {
+      beforeConnect: (c: { connectHeaders: Record<string, string> }) => Promise<void>;
+    };
+    const client = { connectHeaders: {} as Record<string, string> };
+
+    await config.beforeConnect(client);
+    expect(client.connectHeaders).toEqual({ Authorization: 'Bearer first' });
+    await config.beforeConnect(client);
+    expect(client.connectHeaders).toEqual({ Authorization: 'Bearer second' });
+  });
+
+  it('connects without a token when there is none (a spectator board)', async () => {
+    renderHook(() => useStomp<{ n: number }>('/topic/a'));
+    const config = clients[0].config as unknown as {
+      beforeConnect: (c: { connectHeaders: Record<string, string> }) => Promise<void>;
+    };
+    const client = { connectHeaders: { Authorization: 'Bearer stale' } as Record<string, string> };
+
+    await config.beforeConnect(client);
+
+    expect(client.connectHeaders).toEqual({});
   });
 
   it('is disconnected with no topic and opens no connection', () => {
