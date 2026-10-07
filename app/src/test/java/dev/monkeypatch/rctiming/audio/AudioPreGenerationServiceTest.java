@@ -145,6 +145,36 @@ class AudioPreGenerationServiceTest {
     }
 
     @Test
+    void onRaceGridTransition_gridCallTidiesADisplayNameWithNoSpokenName() {
+        RaceEntry raceEntry = new RaceEntry();
+        raceEntry.setId(10L);
+        raceEntry.setRaceId(1L);
+        raceEntry.setEntryId(100L);
+        raceEntry.setGridPosition(1);
+
+        Entry entry = new Entry();
+        entry.setId(100L);
+        entry.setCompetitorId(200L);
+
+        Competitor competitor = new Competitor();
+        competitor.setId(200L);
+        competitor.setDisplayName("ALEX ROWE (Wyvern)");
+
+        when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
+        when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
+        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(entryRepository.findById(100L)).thenReturn(Optional.of(entry));
+        when(competitorRepository.findById(200L)).thenReturn(Optional.of(competitor));
+        when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
+        when(clipService.generateRaceFinishedClip(anyLong(), anyString(), anyString())).thenReturn(null);
+        when(clipService.generateGridCallClip(anyLong(), anyLong(), anyString(), anyString())).thenReturn(null);
+
+        service.onRaceStatusChanged(new RaceStatusChangedEvent(this, 1L, RaceStatus.GRID));
+
+        verify(clipService).generateGridCallClip(eq(1L), eq(100L), eq("Alex Rowe."), anyString());
+    }
+
+    @Test
     void onRaceGridTransition_skipsGridCallWhenEntryHasNoCompetitor() {
         RaceEntry raceEntry = new RaceEntry();
         raceEntry.setId(10L);

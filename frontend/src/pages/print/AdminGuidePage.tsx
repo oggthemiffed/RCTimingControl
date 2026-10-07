@@ -350,7 +350,10 @@ export default function AdminGuidePage() {
             It stays with the driver for later meetings and imports never change it. It is used for
             the grid call of the next race to reach the grid, and for the running order from its
             next announcement. Only admins can change it. Clear it to go back to the name as
-            written.
+            written. Without one, RCTC tidies the name for speech: bracketed nicknames and club
+            tags are left out, emoji and stray symbols dropped, and names in capitals are said as
+            normal capitals. The page shows <span className="font-semibold">Spoken as</span> when that
+            changes the name, and nothing shown on results or boards is affected.
           </li>
           <li>
             <span className="font-semibold">Merge duplicates:</span> A driver entered twice has

@@ -186,7 +186,8 @@ class RunningOrderAnnouncementServiceTest {
         backdateRaceStart(1L, Instant.now().minusSeconds(150));
 
         LiveRaceState liveState = mock(LiveRaceState.class);
-        when(liveState.calculatePositions()).thenReturn(List.of(makeRow(1, "Siobhan Keane"), makeRow(2, "Sam Ito")));
+        when(liveState.calculatePositions()).thenReturn(List.of(makeRow(1, "Siobhan Keane"), makeRow(2, "Sam Ito"),
+                makeRow(3, "TOM  HALL (Wyvern)")));
         when(lapTimingService.peek(1L)).thenReturn(Optional.of(liveState));
         when(raceRepository.findById(1L)).thenReturn(Optional.of(runningRace));
         when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
@@ -210,7 +211,7 @@ class RunningOrderAnnouncementServiceTest {
         ArgumentCaptor<Object> sent = ArgumentCaptor.forClass(Object.class);
         verify(messagingTemplate).convertAndSend(eq("/topic/race/1/audio"), sent.capture());
         assertThat(((RunningOrderAnnouncementService.RunningOrderAnnouncement) sent.getValue()).positions())
-                .containsExactly("Shiv-awn Keen", "Sam Ito");
+                .containsExactly("Shiv-awn Keen", "Sam Ito", "Tom Hall"); // no competitor found: the row's name, tidied
     }
 
     // -------------------------------------------------------------------------

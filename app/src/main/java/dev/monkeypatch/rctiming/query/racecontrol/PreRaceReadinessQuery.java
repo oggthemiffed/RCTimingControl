@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
 import dev.monkeypatch.rctiming.api.racecontrol.dto.GridCallSlotDto;
+import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalDutyRowDto;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.PreRaceReadinessDto;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
@@ -160,7 +161,7 @@ public class PreRaceReadinessQuery {
                                 : 0,
                         r.get(RACE_ENTRIES.ENTRY_ID),
                         r.get("driverName", String.class),
-                        r.get(COMPETITORS.SPOKEN_NAME),
+                        SpeechName.of(r.get(COMPETITORS.SPOKEN_NAME), r.get("driverName", String.class)),
                         null, // car_number not yet on Entry — tracked as gap, see REQUIREMENTS.md ENTRY-03
                         r.get("className", String.class),
                         r.get(ENTRIES.CHECKED_IN_AT) != null,

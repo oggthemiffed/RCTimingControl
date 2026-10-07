@@ -6,8 +6,8 @@ export type GridCallSlotDto = {
   gridPosition: number;
   entryId: number;
   driverName: string;
-  /** How the name is said aloud; null means say driverName as written (#119). */
-  spokenName: string | null;
+  /** What the announcer says for this driver: their spoken name, else the name tidied for speech (#119, #120). */
+  speechName: string;
   carNumber: string | null;
   className: string;
   /** Checked in at the desk (L11). */

@@ -101,7 +101,7 @@ public class AdminCompetitorController {
     public CompetitorSummaryDto setSpokenName(@PathVariable Long id, @RequestBody SpokenNameRequest body) {
         Competitor c = competitorService.setSpokenName(id, body.spokenName());
         return new CompetitorSummaryDto(c.getId(), c.getDisplayName(), c.getBrcaNumber(), c.getHomeClub(),
-                c.getSpokenName());
+                c.getSpokenName(), c.speechName());
     }
 
     /**

@@ -6,6 +6,8 @@ public record CompetitorSummaryDto(
         String displayName,
         String brcaNumber,
         String homeClub,
-        /** How the name is said aloud, or null when the display name is spoken as written (#119). */
-        String spokenName) {
+        /** The admin's override for how the name is said aloud, or null for none (#119). */
+        String spokenName,
+        /** What the announcer says: the spoken name when set, else the display name tidied for speech (#120). */
+        String speechName) {
 }

@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
+import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.race.Race;
@@ -193,13 +194,13 @@ public class RunningOrderAnnouncementService {
         log.debug("Broadcast running order for race {}: top {} — {}", raceId, depth, positions);
     }
 
-    /** The competitor's spoken name when one is set (#119), else the name shown on the timing screen. */
+    /** What to say for a row: the competitor's spoken name (#119), else their tidied name (#120). */
     private String spokenNameOf(LiveTimingRowDto row) {
         return entryRepository.findById(row.entryId())
                 .map(Entry::getCompetitorId)
                 .flatMap(competitorRepository::findById)
                 .map(Competitor::speechName)
-                .orElse(row.driverName());
+                .orElseGet(() -> SpeechName.tidy(row.driverName()));
     }
 
     private int resolveAnnouncementDepth() {

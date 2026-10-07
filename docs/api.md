@@ -500,7 +500,7 @@ GET /admin/competitors
 Authorization: Bearer <token>
 ```
 
-Requires an official role. Lists competitors: the people entries point at. A competitor has no account. One imported from RaceHub is keyed by its RaceHub driver ID; a walk-in is created by name. Results, live timing and championship standings group by competitor. Each row carries `spokenName`, how the name is said aloud, or `null` when the display name is spoken as written.
+Requires an official role. Lists competitors: the people entries point at. A competitor has no account. One imported from RaceHub is keyed by its RaceHub driver ID; a walk-in is created by name. Results, live timing and championship standings group by competitor. Each row carries `spokenName`, how the name is said aloud, or `null` when none is set, and `speechName`, what the announcer actually says: the spoken name, else the display name tidied for speech (brackets, symbols and spacing removed, ALL CAPITALS in normal capitals).
 
 ### Set how a name is said aloud
 

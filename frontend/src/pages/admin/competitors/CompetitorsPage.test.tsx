@@ -37,8 +37,8 @@ describe('CompetitorsPage', () => {
 
   it('lists competitors and filters them by name, BRCA number or club', async () => {
     api.competitors.list.mockResolvedValue([
-      { id: 1, displayName: 'Ada Lovelace', brcaNumber: '12345', homeClub: 'Analytical RC', spokenName: null },
-      { id: 2, displayName: 'Grace Hopper', brcaNumber: null, homeClub: 'Compiler Club', spokenName: null },
+      { id: 1, displayName: 'Ada Lovelace', brcaNumber: '12345', homeClub: 'Analytical RC', spokenName: null, speechName: 'Ada Lovelace' },
+      { id: 2, displayName: 'Grace Hopper', brcaNumber: null, homeClub: 'Compiler Club', spokenName: null, speechName: 'Grace Hopper' },
     ]);
     renderPage();
 
@@ -59,7 +59,7 @@ describe('CompetitorsPage', () => {
   });
 
   describe('say as', () => {
-    const siobhan = { id: 7, displayName: 'Siobhan Keane', brcaNumber: null, homeClub: null, spokenName: null };
+    const siobhan = { id: 7, displayName: 'Siobhan Keane', brcaNumber: null, homeClub: null, spokenName: null, speechName: 'Siobhan Keane' };
 
     const play = vi.fn().mockResolvedValue(undefined);
     beforeEach(() => {
@@ -71,12 +71,26 @@ describe('CompetitorsPage', () => {
     it('shows a spoken name, or that the name is said as written', async () => {
       api.competitors.list.mockResolvedValue([
         siobhan,
-        { id: 8, displayName: 'Sam Ito', brcaNumber: null, homeClub: null, spokenName: 'Sam Ee-toe' },
+        { id: 8, displayName: 'Sam Ito', brcaNumber: null, homeClub: null, spokenName: 'Sam Ee-toe', speechName: 'Sam Ee-toe' },
       ]);
       renderPage();
 
       expect(await screen.findByText('Said as written')).toBeInTheDocument();
       expect(screen.getByText('Sam Ee-toe')).toBeInTheDocument();
+    });
+
+    it('shows how a tidied name will be spoken, and plays that when nothing is typed', async () => {
+      api.competitors.list.mockResolvedValue([
+        { id: 9, displayName: 'ALEX ROWE (Wyvern)', brcaNumber: null, homeClub: null, spokenName: null, speechName: 'Alex Rowe' },
+      ]);
+      api.competitors.previewSpeech.mockResolvedValue(new Blob(['RIFF']));
+      renderPage();
+
+      expect(await screen.findByText('Alex Rowe')).toBeInTheDocument();
+      fireEvent.click(screen.getByLabelText('Edit how ALEX ROWE (Wyvern) is said'));
+      fireEvent.click(screen.getByLabelText('Play ALEX ROWE (Wyvern)'));
+
+      await waitFor(() => expect(api.competitors.previewSpeech).toHaveBeenCalledWith('Alex Rowe'));
     });
 
     it('does not offer Say as… to a race director or referee', async () => {
