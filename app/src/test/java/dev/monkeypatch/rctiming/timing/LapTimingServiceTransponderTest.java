@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -86,7 +87,7 @@ class LapTimingServiceTransponderTest {
     @Test
     void aDatabaseFaultIsNotTreatedAsAnUnknownTransponder() {
         addEntry(1L, 10L, "1001", null, EntryStatus.CONFIRMED);
-        when(entryRepository.findAllById(any())).thenThrow(new IllegalStateException("database is locked"));
+        doThrow(new IllegalStateException("database is locked")).when(entryRepository).findAllById(any());
 
         assertThatThrownBy(() -> lap(1L, "1001", 1_000)).isInstanceOf(IllegalStateException.class);
 
