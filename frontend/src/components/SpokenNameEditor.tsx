@@ -49,7 +49,8 @@ export default function SpokenNameEditor({
   const [note, setNote] = useState<string | null>(null);
   const save = useSetSpokenName();
   const { data: changes } = useCompetitorChanges(competitorId, showHistory);
-  const last = changes?.[0];
+  // Cached history from an earlier admin session must never show to a non-admin
+  const last = showHistory ? changes?.[0] : undefined;
 
   // What Play speaks: the typed text, else what the announcer will say for them now
   const heard = draft.trim() || speechName;
