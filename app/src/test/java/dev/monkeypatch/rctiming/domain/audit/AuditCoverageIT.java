@@ -28,6 +28,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AuditCoverageIT extends AbstractIntegrationTest {
 
     private static final Set<RequestMethod> READS = Set.of(RequestMethod.GET, RequestMethod.HEAD, RequestMethod.OPTIONS);
+    private static final Set<RequestMethod> WRITES =
+            Set.of(RequestMethod.POST, RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.DELETE);
 
     @Autowired
     @Qualifier("requestMappingHandlerMapping")
@@ -38,9 +40,16 @@ class AuditCoverageIT extends AbstractIntegrationTest {
         Set<String> audited = new TreeSet<>();
         Set<String> unaudited = new TreeSet<>();
         for (Map.Entry<RequestMappingInfo, HandlerMethod> mapping : handlerMapping.getHandlerMethods().entrySet()) {
+            if (mapping.getValue().getBeanType().getName().startsWith("org.springframework.")
+                    || mapping.getKey().getPathPatternsCondition() == null) {
+                continue;   // the framework's own endpoints, such as /error
+            }
             boolean isAudited = AnnotatedElementUtils.hasAnnotation(mapping.getValue().getMethod(), Audited.class);
-            for (RequestMethod method : mapping.getKey().getMethodsCondition().getMethods()) {
-                if (READS.contains(method) || mapping.getKey().getPathPatternsCondition() == null) {
+            // A mapping with no method named accepts every method, so it counts as one that can change data
+            Set<RequestMethod> declared = mapping.getKey().getMethodsCondition().getMethods();
+            Set<RequestMethod> methods = declared.isEmpty() ? WRITES : declared;
+            for (RequestMethod method : methods) {
+                if (READS.contains(method)) {
                     continue;
                 }
                 for (String pattern : mapping.getKey().getPathPatternsCondition().getPatternValues()) {

@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,17 +42,20 @@ public class AuthController {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuditService audit;
+    private final TransactionTemplate transactions;
 
     public AuthController(UserService userService,
                           JwtTokenService jwtTokenService,
                           RefreshTokenRepository refreshTokenRepository,
                           PasswordEncoder passwordEncoder,
-                          AuditService audit) {
+                          AuditService audit,
+                          TransactionTemplate transactions) {
         this.userService = userService;
         this.jwtTokenService = jwtTokenService;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.audit = audit;
+        this.transactions = transactions;
     }
 
     /** Signs in. Every attempt is recorded in the audit log, wrong passwords included. */
@@ -82,14 +86,18 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(disabled);
         }
         String accessToken = jwtTokenService.generateAccessToken(user);
-        // A new sign-in starts a new family of refresh tokens
+        // A new sign-in starts a new family of refresh tokens. The token and the audit row are written in one
+        // transaction, so there is no session without its record. Only this part is in a transaction: the
+        // password check above is slow on purpose and must not hold the single write connection.
         NewRefreshToken refreshToken = newRefreshToken(user, UUID.randomUUID().toString());
-        refreshTokenRepository.save(refreshToken.entity());
+        transactions.executeWithoutResult(status -> {
+            refreshTokenRepository.save(refreshToken.entity());
+            audit.entry(Actor.official(user.getId()), "LOGIN_SUCCEEDED")
+                    .entity("official", user.getId())
+                    .summary("Signed in")
+                    .record();
+        });
         setRefreshCookie(refreshToken.rawValue(), response);
-        audit.entry(Actor.official(user.getId()), "LOGIN_SUCCEEDED")
-                .entity("official", user.getId())
-                .summary("Signed in")
-                .recordStandalone();
         return ResponseEntity.ok(buildAuthResponse(user, accessToken));
     }
 

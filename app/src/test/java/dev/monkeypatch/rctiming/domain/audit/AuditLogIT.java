@@ -11,6 +11,7 @@ import dev.monkeypatch.rctiming.query.audit.AuditEntryDto;
 import dev.monkeypatch.rctiming.query.audit.AuditFilter;
 import dev.monkeypatch.rctiming.query.audit.AuditPageDto;
 import dev.monkeypatch.rctiming.query.audit.AuditQueryService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -19,11 +20,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.IllegalTransactionStateException;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -39,6 +43,22 @@ class AuditLogIT extends AbstractIntegrationTest {
     @Autowired UserRepository userRepository;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired TestRestTemplate restTemplate;
+    @Autowired JdbcTemplate jdbc;
+
+    /** Users this test created, removed afterwards: every test class shares one database. */
+    private final List<Long> createdUsers = new ArrayList<>();
+
+    @AfterEach
+    void cleanUp() {
+        for (Long id : createdUsers) {
+            jdbc.update("delete from audit_log where actor_user_id = ?", id);
+            jdbc.update("delete from refresh_tokens where user_id = ?", id);
+            jdbc.update("delete from user_roles where user_id = ?", id);
+            jdbc.update("delete from users where id = ?", id);
+        }
+        jdbc.update("delete from audit_log where entity_type like 'it-%'");
+        createdUsers.clear();
+    }
 
     /** Every test works on its own entity type, because all tests share one database. */
     private static String uniqueType() {
@@ -196,7 +216,9 @@ class AuditLogIT extends AbstractIntegrationTest {
         user.setRoles(roles);
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        createdUsers.add(saved.getId());
+        return saved;
     }
 
     private String loginAs(Set<Role> roles) {
