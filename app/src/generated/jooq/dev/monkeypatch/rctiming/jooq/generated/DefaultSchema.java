@@ -10,6 +10,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipPointsScale;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles;
+import dev.monkeypatch.rctiming.jooq.generated.tables.AuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DecoderLoops;
@@ -93,6 +94,11 @@ public class DefaultSchema extends SchemaImpl {
      * The table <code>club_profiles</code>.
      */
     public final ClubProfiles CLUB_PROFILES = ClubProfiles.CLUB_PROFILES;
+
+    /**
+     * The table <code>audit_log</code>.
+     */
+    public final AuditLog AUDIT_LOG = AuditLog.AUDIT_LOG;
 
     /**
      * The table <code>competitor_audit_log</code>.
@@ -276,6 +282,7 @@ public class DefaultSchema extends SchemaImpl {
             ChampionshipPointsScale.CHAMPIONSHIP_POINTS_SCALE,
             Championships.CHAMPIONSHIPS,
             ClubProfiles.CLUB_PROFILES,
+            AuditLog.AUDIT_LOG,
             CompetitorAuditLog.COMPETITOR_AUDIT_LOG,
             Competitors.COMPETITORS,
             DecoderLoops.DECODER_LOOPS,

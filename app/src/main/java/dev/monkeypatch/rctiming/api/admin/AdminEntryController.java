@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api.admin;
 
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.admin.dto.AdminCreateEntryRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.AdminWithdrawRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.EntryDto;
@@ -42,6 +43,7 @@ public class AdminEntryController {
     }
 
     /** Adds a walk-in entry by hand (L9, #17). */
+    @Audited("entry_audit_log")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
@@ -50,6 +52,7 @@ public class AdminEntryController {
         return entryService.adminCreateEntry(adminId, req);
     }
 
+    @Audited("entry_audit_log")
     @PostMapping("/{id}/withdraw")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public EntryDto withdrawEntry(@PathVariable Long id,

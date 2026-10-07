@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalAdjustmentRequest;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.RunOrderItemDto;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.SkipToRaceRequest;
@@ -163,6 +164,7 @@ public class RaceControlController {
 
     // --- CTRL-03: Marshal adjustment ---
 
+    @Audited("marshal_adjustments")
     @PostMapping("/race/{raceId}/marshal-adjustment")
     @Transactional
     public ResponseEntity<Void> marshalAdjustment(@PathVariable long raceId,

@@ -59,14 +59,14 @@ public class RefreshTokenRepository extends JooqRepository<RefreshToken, Refresh
     /**
      * Revokes the given token and every other token in its family, so a sign-out ends the whole chain one
      * sign-in has been rotated through. A token with no family (issued before families) is revoked alone.
+     * Returns how many tokens were revoked, which is 0 when the sign-in had already ended.
      */
     @Transactional
-    public void revokeFamily(RefreshToken token) {
+    public int revokeFamily(RefreshToken token) {
         if (token.getFamilyId() == null) {
-            revokeIfActive(token.getId());
-            return;
+            return revokeIfActive(token.getId()) ? 1 : 0;
         }
-        dsl.update(REFRESH_TOKENS)
+        return dsl.update(REFRESH_TOKENS)
                 .set(REFRESH_TOKENS.REVOKED, true)
                 .where(REFRESH_TOKENS.FAMILY_ID.eq(token.getFamilyId()).and(REFRESH_TOKENS.REVOKED.isFalse()))
                 .execute();

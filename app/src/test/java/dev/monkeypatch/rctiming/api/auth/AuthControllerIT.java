@@ -32,6 +32,9 @@ class AuthControllerIT extends AbstractIntegrationTest {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Autowired
+    org.springframework.jdbc.core.JdbcTemplate jdbc;
+
     private static final String BASE_URL = "/api/v1/auth";
 
     /** Creates a user with a unique email and the given roles; returns the email. Password is "password123". */
@@ -296,6 +299,101 @@ class AuthControllerIT extends AbstractIntegrationTest {
         deleteRefresh(cookie);
 
         assertThat(deleteRefresh(cookie).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+    }
+
+    // --- the audit log (#138) ---
+
+    @Test
+    void aWrongPasswordIsRecordedAgainstTheOfficialItWasTriedOn() {
+        String email = createUser(Set.of(Role.RACE_DIRECTOR));
+        Long officialId = userRepository.findByEmail(email).orElseThrow().getId();
+
+        restTemplate.postForEntity(BASE_URL + "/login", new LoginRequest(email, "wrongPassword"), Void.class);
+
+        var rows = jdbc.queryForList(
+                "select action, entity_type, entity_id, summary, actor_user_id, source from audit_log where actor_label = ?",
+                "anonymous:" + email);
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)).containsEntry("action", "LOGIN_FAILED")
+                .containsEntry("entity_type", "official")
+                .containsEntry("entity_id", String.valueOf(officialId))
+                .containsEntry("source", "UI");
+        assertThat(rows.get(0).get("actor_user_id")).isNull();
+        assertThat((String) rows.get(0).get("summary")).doesNotContain("wrongPassword");
+    }
+
+    @Test
+    void anUnknownEmailIsRecordedWithoutAnOfficial() {
+        String email = "nobody-" + UUID.randomUUID() + "@example.com";
+
+        restTemplate.postForEntity(BASE_URL + "/login", new LoginRequest(email, "whatever123"), Void.class);
+
+        var rows = jdbc.queryForList("select action, entity_id from audit_log where actor_label = ?", "anonymous:" + email);
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)).containsEntry("action", "LOGIN_FAILED");
+        assertThat(rows.get(0).get("entity_id")).isNull();
+    }
+
+    @Test
+    void anAccountWithNoOfficialRoleIsRecordedAsRefused() {
+        String email = createUser(Set.of());
+
+        restTemplate.postForEntity(BASE_URL + "/login", new LoginRequest(email, "password123"), Void.class);
+
+        String summary = jdbc.queryForObject("select summary from audit_log where actor_label = ?", String.class,
+                "anonymous:" + email);
+        assertThat(summary).isEqualTo("Sign-in refused: not an official");
+    }
+
+    @Test
+    void aSignInIsRecordedAgainstTheOfficial() {
+        String email = createUser(Set.of(Role.REFEREE));
+        Long officialId = userRepository.findByEmail(email).orElseThrow().getId();
+
+        loginCookie(email);
+
+        Integer count = jdbc.queryForObject(
+                "select count(*) from audit_log where action = 'LOGIN_SUCCEEDED' and actor_user_id = ?",
+                Integer.class, officialId);
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void aSignOutIsRecordedOnceAndASecondOneAddsNothing() {
+        String email = createUser(Set.of(Role.REFEREE));
+        Long officialId = userRepository.findByEmail(email).orElseThrow().getId();
+        String cookie = loginCookie(email);
+
+        deleteRefresh(cookie);
+        deleteRefresh(cookie);
+
+        Integer count = jdbc.queryForObject(
+                "select count(*) from audit_log where action = 'LOGOUT' and actor_user_id = ?", Integer.class, officialId);
+        assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void aRefusedRefreshIsRecordedButNoCookieAtAllIsNot() {
+        String email = createUser(Set.of(Role.REFEREE));
+        Long officialId = userRepository.findByEmail(email).orElseThrow().getId();
+        String cookie = loginCookie(email);
+        deleteRefresh(cookie);
+        int before = refusedRefreshRows(officialId);
+
+        refresh(cookie);                       // a token that has been signed out
+        restTemplate.postForEntity(BASE_URL + "/refresh", null, Void.class);   // no cookie: an anonymous page load
+
+        assertThat(refusedRefreshRows(officialId)).isEqualTo(before + 1);
+        String summary = jdbc.queryForObject(
+                "select summary from audit_log where action = 'REFRESH_REFUSED' and entity_id = ?", String.class,
+                String.valueOf(officialId));
+        assertThat(summary).isEqualTo("Refresh refused: token already used or revoked");
+    }
+
+    private int refusedRefreshRows(Long officialId) {
+        return jdbc.queryForObject(
+                "select count(*) from audit_log where action = 'REFRESH_REFUSED' and entity_id = ?", Integer.class,
+                String.valueOf(officialId));
     }
 
     // --- helpers ---

@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api.admin;
 
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.user.OfficialService;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
@@ -69,6 +70,7 @@ public class OfficialController {
         return officialQueryService.recentChanges(RECENT_CHANGES);
     }
 
+    @Audited("official_audit_log")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public OfficialDto add(@RequestBody @Valid AddOfficialRequest request, Authentication auth) {
@@ -77,22 +79,26 @@ public class OfficialController {
         return toDto(user);
     }
 
+    @Audited("official_audit_log")
     @PutMapping("/{id}/roles")
     public OfficialDto changeRoles(@PathVariable long id, @RequestBody @Valid RolesRequest request, Authentication auth) {
         return toDto(officialService.changeRoles(id, request.roles(), actorId(auth)));
     }
 
+    @Audited("official_audit_log")
     @PutMapping("/{id}/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void setPassword(@PathVariable long id, @RequestBody @Valid PasswordRequest request, Authentication auth) {
         officialService.setPassword(id, request.password(), actorId(auth));
     }
 
+    @Audited("official_audit_log")
     @PostMapping("/{id}/disable")
     public OfficialDto disable(@PathVariable long id, Authentication auth) {
         return toDto(officialService.disable(id, actorId(auth)));
     }
 
+    @Audited("official_audit_log")
     @PostMapping("/{id}/enable")
     public OfficialDto enable(@PathVariable long id, Authentication auth) {
         return toDto(officialService.enable(id, actorId(auth)));

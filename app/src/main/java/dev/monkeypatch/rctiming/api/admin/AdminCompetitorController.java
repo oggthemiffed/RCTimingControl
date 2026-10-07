@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api.admin;
 
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
@@ -107,6 +108,7 @@ public class AdminCompetitorController {
      * Set, change or clear how a competitor's name is said aloud (#119). Any official may, since it is
      * often noticed on the day at the check-in desk; each change is recorded with who made it.
      */
+    @Audited("competitor_audit_log")
     @PutMapping("/{id}/spoken-name")
     public CompetitorSummaryDto setSpokenName(Authentication auth, @PathVariable Long id,
                                               @RequestBody SpokenNameRequest body) {
