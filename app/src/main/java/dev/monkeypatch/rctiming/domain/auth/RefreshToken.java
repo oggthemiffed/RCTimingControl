@@ -16,6 +16,9 @@ public class RefreshToken {
 
     private boolean revoked = false;
 
+    /** Ties together the tokens one sign-in has been rotated through; null for a token from before families. */
+    private String familyId;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -33,4 +36,7 @@ public class RefreshToken {
 
     public boolean isRevoked() { return revoked; }
     public void setRevoked(boolean revoked) { this.revoked = revoked; }
+
+    public String getFamilyId() { return familyId; }
+    public void setFamilyId(String familyId) { this.familyId = familyId; }
 }

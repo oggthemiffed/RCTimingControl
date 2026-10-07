@@ -104,6 +104,20 @@ public class RefreshTokensRecord extends UpdatableRecordImpl<RefreshTokensRecord
         return (Boolean) get(5);
     }
 
+    /**
+     * Setter for <code>refresh_tokens.family_id</code>.
+     */
+    public void setFamilyId(String value) {
+        set(6, value);
+    }
+
+    /**
+     * Getter for <code>refresh_tokens.family_id</code>.
+     */
+    public String getFamilyId() {
+        return (String) get(6);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -127,7 +141,7 @@ public class RefreshTokensRecord extends UpdatableRecordImpl<RefreshTokensRecord
     /**
      * Create a detached, initialised RefreshTokensRecord
      */
-    public RefreshTokensRecord(Long id, Long userId, String tokenHash, Instant expiresAt, Instant createdAt, Boolean revoked) {
+    public RefreshTokensRecord(Long id, Long userId, String tokenHash, Instant expiresAt, Instant createdAt, Boolean revoked, String familyId) {
         super(RefreshTokens.REFRESH_TOKENS);
 
         setId(id);
@@ -136,6 +150,7 @@ public class RefreshTokensRecord extends UpdatableRecordImpl<RefreshTokensRecord
         setExpiresAt(expiresAt);
         setCreatedAt(createdAt);
         setRevoked(revoked);
+        setFamilyId(familyId);
         resetChangedOnNotNull();
     }
 }

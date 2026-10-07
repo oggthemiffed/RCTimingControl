@@ -216,6 +216,36 @@ class AuthControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void logout_withAnOlderCookie_alsoRevokesTheTokenItWasRotatedInto() {
+        // The state a racing refresh leaves behind: the browser's cookie is one rotation behind
+        String original = loginCookie(createUser(Set.of(Role.RACE_DIRECTOR)));
+        ResponseEntity<Void> refreshed = refresh(original);
+        assertThat(refreshed.getStatusCode()).isEqualTo(HttpStatus.OK);
+        String rotated = extractCookieValue(refreshed.getHeaders().get(HttpHeaders.SET_COOKIE).stream()
+                .filter(c -> c.startsWith("refresh_token=")).findFirst().orElseThrow(), "refresh_token");
+        assertThat(rotated).isNotEqualTo(original);
+
+        deleteRefresh(original);
+
+        assertThat(refresh(rotated).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void refresh_keepsTheTokenInTheSameFamily_soASeparateSignInIsUnaffectedByTheLogout() {
+        String email = createUser(Set.of(Role.REFEREE));
+        String first = loginCookie(email);
+        String second = loginCookie(email);
+        ResponseEntity<Void> refreshed = refresh(first);
+        String rotatedFirst = extractCookieValue(refreshed.getHeaders().get(HttpHeaders.SET_COOKIE).stream()
+                .filter(c -> c.startsWith("refresh_token=")).findFirst().orElseThrow(), "refresh_token");
+
+        deleteRefresh(rotatedFirst);
+
+        assertThat(refresh(rotatedFirst).getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(refresh(second).getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
     void logout_onlyEndsThisBrowsersSession() {
         String email = createUser(Set.of(Role.RACE_DIRECTOR));
         String thisBrowser = loginCookie(email);

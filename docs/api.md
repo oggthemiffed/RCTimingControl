@@ -57,7 +57,7 @@ Uses the same cookie, and the same path, as refresh: the browser sends the cooki
 DELETE /auth/refresh
 ```
 
-**204 No Content** — always, whether or not the cookie was valid. Revokes the refresh token the cookie holds and expires the cookie, so this browser cannot sign back in. Other browsers the same official is signed in on are not affected, and the access token already issued works until it expires (15 minutes).
+**204 No Content** — always, whether or not the cookie was valid. Revokes the refresh token the cookie holds and every token it was rotated into (they share a family), and expires the cookie, so this browser cannot sign back in, even if a refresh was in flight. Other browsers the same official is signed in on are not affected, and the access token already issued works until it expires (15 minutes).
 
 ---
 
