@@ -31,8 +31,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Practice session lap processing service.
  *
  * Listens to the same LapPassingEvent as LapTimingService, but only acts when a practice session is
- * RUNNING. LapTimingService ignores a passing with no running race ({@link LapPassingEvent#NO_RACE}), which
- * is the case practice relies on, so the two never both handle one passing.
+ * RUNNING. Practice is meant for the time between races: LapTimingService ignores a passing with no running
+ * race ({@link LapPassingEvent#NO_RACE}), so then only practice counts it. Nothing stops a practice session
+ * running while a race does, and then a passing is counted by both.
  *
  * Runs on the single timing thread, like LapTimingService, so passings arrive in decoder order. Lap time
  * is the difference between a transponder's consecutive rtcTimeMicros (UTC epoch microseconds, as in
@@ -129,11 +130,16 @@ public class PracticeTimingService {
 
         // Persist lap record (only when we have a real lap time)
         if (lapTimeMs != null) {
-            // Asks the database once per transponder, for laps saved before a restart; after that it counts
+            // Asks the database once per transponder, for laps saved before a restart; after that it counts.
+            // The highest saved number, not the row count: the numbers need not be unbroken
             int lapNumber = state.nextLapNumber(transponderNumber, () -> lapRepository
                     .findByPracticeSessionIdAndTransponderNumberOrderByLapNumberAsc(
-                            session.getId(), transponderNumber)
-                    .size());
+                            session.getId(), transponderNumber).stream()
+                    .map(PracticeLap::getLapNumber)
+                    .filter(java.util.Objects::nonNull)
+                    .mapToInt(Integer::intValue)
+                    .max()
+                    .orElse(0));
 
             PracticeLap lap = new PracticeLap();
             lap.setPracticeSessionId(session.getId());

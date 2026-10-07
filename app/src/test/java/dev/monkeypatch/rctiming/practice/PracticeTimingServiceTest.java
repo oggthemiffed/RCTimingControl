@@ -96,9 +96,13 @@ class PracticeTimingServiceTest {
     @Test
     void lapsAreNumberedInMemoryAfterTheFirstLookup() {
         when(sessionRepository.findRunningSession()).thenReturn(Optional.of(runningSession));
-        // Two laps were saved before a restart in the middle of the session
+        // Laps 1 and 3 were saved before a restart in the middle of the session: the numbers have a gap
+        PracticeLap first = new PracticeLap();
+        first.setLapNumber(1);
+        PracticeLap third = new PracticeLap();
+        third.setLapNumber(3);
         when(lapRepository.findByPracticeSessionIdAndTransponderNumberOrderByLapNumberAsc(42L, "T1"))
-                .thenReturn(List.of(new PracticeLap(), new PracticeLap()));
+                .thenReturn(List.of(first, third));
 
         service.startSession(runningSession);
         service.onLapPassing(new LapPassingEvent(0L, "T1", 1_000_000_000L));
@@ -107,7 +111,7 @@ class PracticeTimingServiceTest {
 
         ArgumentCaptor<PracticeLap> saved = ArgumentCaptor.forClass(PracticeLap.class);
         verify(lapRepository, times(2)).save(saved.capture());
-        assertThat(saved.getAllValues()).extracting(PracticeLap::getLapNumber).containsExactly(3, 4);
+        assertThat(saved.getAllValues()).extracting(PracticeLap::getLapNumber).containsExactly(4, 5);
         // Looked up once for the transponder, not once per passing
         verify(lapRepository, times(1))
                 .findByPracticeSessionIdAndTransponderNumberOrderByLapNumberAsc(anyLong(), anyString());
