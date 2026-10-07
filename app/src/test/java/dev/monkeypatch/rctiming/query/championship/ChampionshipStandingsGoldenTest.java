@@ -56,9 +56,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Builds a two-class, three-round championship that exercises best-X-from-Y drops, TQ and
  * A-final bonuses, DNS rounds, an exclusion and a driver racing in two classes. The expected
- * output in {@code golden/championship-standings.txt} was captured from the user-keyed
- * implementation before standings switched to competitors, so this test proves the switch
- * leaves the standings unchanged.
+ * output in {@code golden/championship-standings.txt} was first captured from the user-keyed
+ * implementation before standings switched to competitors, which proved the switch left the
+ * standings unchanged. It was updated for #133, when the TQ and A-final bonuses became per class
+ * per round (CHAMP-07, CHAMP-08): Alice earns a bonus in both classes, Dan earns the Stock A-final
+ * bonus in two rounds, and Bob's excluded round earns no TQ bonus. The base points per round did not change.
  */
 class ChampionshipStandingsGoldenTest extends AbstractIntegrationTest {
 

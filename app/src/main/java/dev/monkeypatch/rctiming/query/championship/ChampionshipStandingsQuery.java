@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -37,7 +38,9 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACIN
  * CHAMP-01, CHAMP-02, CHAMP-04, CHAMP-07, CHAMP-08, CHAMP-09 read side.
  *
  * Implements full championship standings computation: best-X-from-Y drop logic,
- * TQ bonus, A-final winner bonus, DNS semantics.
+ * TQ bonus, A-final winner bonus, DNS semantics. The two bonuses are per driver, per class and per
+ * round (an event linked to the championship): winning in two classes, or two rounds, earns each.
+ * A round a driver is excluded from earns no bonus either.
  * Reads only through the jOOQ DSL, with no repositories.
  *
  * Drivers are competitors (L5, #13): entries map to {@code entries.competitor_id}, so a driver
@@ -138,9 +141,10 @@ public class ChampionshipStandingsQuery {
         // Map driverKey to driverId
         Map<String, Long> driverKeyToDriverId = new HashMap<>();
 
-        // TQ and A-final bonus tracking
-        Set<Long> tqDrivers = new HashSet<>();   // drivers who had position=1 in a QUALIFIER
-        Set<Long> afinalWinners = new HashSet<>(); // drivers who had position=1 in an A-FINAL
+        // TQ and A-final bonus tracking (CHAMP-07, CHAMP-08): one bonus per driver, per class, per round.
+        // A driver who tops qualifying in two classes, or in two rounds, is paid for each.
+        Set<ClassRound> tqBonuses = new HashSet<>();      // position 1 in a QUALIFIER race
+        Set<ClassRound> afinalBonuses = new HashSet<>();  // position 1 in an A final
 
         // Step 6: Per event link — find finished races and build RoundResultDtos
         for (var link : eventLinks) {
@@ -255,9 +259,11 @@ public class ChampionshipStandingsQuery {
             // When scoringSource=FINALS, finishedRaces contains no QUALIFIERs, so TQ bonus was never
             // awarded. Separate query ensures bonuses are always evaluated from the correct race type.
             var bonusRaces = dsl
-                    .select(RACES.ID, RACES.FINAL_LETTER, ROUNDS.TYPE, RESULT_SNAPSHOTS.POSITIONS_JSON)
+                    .select(RACES.ID, RACES.FINAL_LETTER, ROUNDS.TYPE, EVENT_CLASSES.RACING_CLASS_ID,
+                            RESULT_SNAPSHOTS.POSITIONS_JSON)
                     .from(RACES)
                     .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
+                    .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
                     .leftJoin(RESULT_SNAPSHOTS).on(RESULT_SNAPSHOTS.RACE_ID.eq(RACES.ID))
                     .where(ROUNDS.EVENT_ID.eq(eventId))
                     .and(RACES.STATUS.eq("FINISHED"))
@@ -277,6 +283,7 @@ public class ChampionshipStandingsQuery {
             for (var race : bonusRaces) {
                 String roundType = race.get(ROUNDS.TYPE);
                 String finalLetter = race.get(RACES.FINAL_LETTER);
+                Long bonusClassId = race.get(EVENT_CLASSES.RACING_CLASS_ID);
                 String posJson = race.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
                 if (posJson == null) continue;
                 try {
@@ -285,11 +292,14 @@ public class ChampionshipStandingsQuery {
                     for (ResultSnapshotDto.ResultRow row : positions) {
                         Long driverId = bonusEntryToDriver.get(row.entryId());
                         if (driverId == null) continue;
+                        // An excluded driver earns nothing from that round, bonuses included (CHAMP-09)
+                        if (exclusionKeys.contains(driverId + ":" + eventId)) continue;
+                        ClassRound won = new ClassRound(driverId, bonusClassId, eventId);
                         if ("QUALIFIER".equals(roundType) && row.position() == 1) {
-                            tqDrivers.add(driverId);
+                            tqBonuses.add(won);
                         }
                         if ("FINAL".equals(roundType) && "A".equals(finalLetter) && row.position() == 1) {
-                            afinalWinners.add(driverId);
+                            afinalBonuses.add(won);
                         }
                     }
                 } catch (Exception e) {
@@ -402,13 +412,9 @@ public class ChampionshipStandingsQuery {
                     .mapToInt(RoundResultDto::points)
                     .sum();
 
-            // Step 9: Apply TQ and A-final bonuses
-            if (tqDrivers.contains(driverId)) {
-                totalPoints += tqBonus;
-            }
-            if (afinalWinners.contains(driverId)) {
-                totalPoints += afinalBonus;
-            }
+            // Step 9: Apply TQ and A-final bonuses: one for each round this driver won in this class
+            totalPoints += tqBonus * roundsWon(tqBonuses, driverId, rcId);
+            totalPoints += afinalBonus * roundsWon(afinalBonuses, driverId, rcId);
 
             String displayName = driverDisplayName.getOrDefault(driverId, "");
 
@@ -432,5 +438,15 @@ public class ChampionshipStandingsQuery {
         }
 
         return result;
+    }
+
+    /** A driver winning something in one class at one event (a round of the championship). */
+    private record ClassRound(Long driverId, Long racingClassId, Long eventId) {}
+
+    /** How many rounds the driver won in the class: each is paid its bonus once. */
+    private static int roundsWon(Set<ClassRound> wins, Long driverId, Long racingClassId) {
+        return (int) wins.stream()
+                .filter(w -> w.driverId().equals(driverId) && Objects.equals(w.racingClassId(), racingClassId))
+                .count();
     }
 }
