@@ -45,6 +45,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -366,6 +367,67 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
         StandingsRowDto row = standings.get(0);
         // 10 (1st place) + 2 (TQ bonus) = 12
         assertThat(row.totalPoints()).isEqualTo(12);
+    }
+
+    @Test
+    void winningTwoQualifyingHeatsInOneClassAtOneEventPaysTheTqBonusOnce() throws Exception {
+        // Two heats of the same class in one qualifying round, both won by the same driver (#133)
+        Championship champ = makeChampionship(2, 0, null, null, ScoringSource.QUALIFYING);
+        User driver = makeUser("Heat", "Winner");
+        addPointsScale(champ.getId(), Map.of(1, 10, 2, 8));
+
+        Event event = makeEvent("Two-heats-event");
+        linkEventToChampionship(champ.getId(), event.getId(), 1);
+        Long ecId = makeEventClass(event.getId());
+        Round qualRound = makeRound(event.getId(), RoundType.QUALIFIER, 1);
+        Entry entry = makeEntry(driver.getId(), event.getId(), ecId);
+        for (int heat = 1; heat <= 2; heat++) {
+            Race race = makeRace(qualRound.getId(), ecId, null, heat);
+            makeRaceEntry(race.getId(), entry.getId());
+            makeSnapshot(race.getId(), String.format(
+                    "[{\"position\":1,\"entryId\":%d,\"driverName\":\"Heat\",\"carNumber\":\"7\","
+                    + "\"lapsCompleted\":12,\"totalTimeMs\":60000,\"bestLapMs\":5000,\"gapToLeaderMs\":0}]",
+                    entry.getId()));
+        }
+
+        List<StandingsRowDto> standings = query.computeStandings(champ.getId());
+
+        assertThat(standings).hasSize(1);
+        // 10 (best qualifying position) + 2 (one TQ bonus for this class and round, not one per heat)
+        assertThat(standings.get(0).totalPoints()).isEqualTo(12);
+    }
+
+    @Test
+    void anExcludedDriverEarnsNoAFinalBonusForTheRound() throws Exception {
+        Championship champ = makeChampionship(0, 3, null, null, ScoringSource.FINALS);
+        User driver = makeUser("Excluded", "Winner");
+        addPointsScale(champ.getId(), Map.of(1, 10, 2, 8));
+
+        Event event = makeEvent("Excluded-winner-event");
+        linkEventToChampionship(champ.getId(), event.getId(), 1);
+        Long ecId = makeEventClass(event.getId());
+        Round finalRound = makeRound(event.getId(), RoundType.FINAL, 1);
+        Race aFinal = makeRace(finalRound.getId(), ecId, "A", 1);
+        Entry entry = makeEntry(driver.getId(), event.getId(), ecId);
+        makeRaceEntry(aFinal.getId(), entry.getId());
+        makeSnapshot(aFinal.getId(), String.format(
+                "[{\"position\":1,\"entryId\":%d,\"driverName\":\"Excluded\",\"carNumber\":\"42\","
+                + "\"lapsCompleted\":15,\"totalTimeMs\":65000,\"bestLapMs\":4300,\"gapToLeaderMs\":0}]",
+                entry.getId()));
+        dsl.transactionResult(tx -> tx.dsl().insertInto(CHAMPIONSHIP_EXCLUSIONS)
+                .set(CHAMPIONSHIP_EXCLUSIONS.CHAMPIONSHIP_ID, champ.getId())
+                .set(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID, competitorIdFor(driver.getId()))
+                .set(CHAMPIONSHIP_EXCLUSIONS.EVENT_ID, event.getId())
+                .set(CHAMPIONSHIP_EXCLUSIONS.REASON, "Non-eligible equipment")
+                .set(CHAMPIONSHIP_EXCLUSIONS.CREATED_BY, driver.getId())
+                .execute());
+
+        List<StandingsRowDto> standings = query.computeStandings(champ.getId());
+
+        assertThat(standings).hasSize(1);
+        // Excluded from the round: no finishing points and no A-final bonus
+        assertThat(standings.get(0).totalPoints()).isZero();
+        assertThat(standings.get(0).rounds().get(0).excluded()).isTrue();
     }
 
     @Test
