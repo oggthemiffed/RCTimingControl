@@ -563,11 +563,17 @@ class ResultsExportIT extends AbstractIntegrationTest {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-        ResponseEntity<JsonNode> resp = restTemplate.exchange(
+        // Read the body as text so a failure says what the server answered. This set-up step failed once
+        // in CI with only the status to go on (#117).
+        ResponseEntity<String> resp = restTemplate.exchange(
                 "/api/v1/admin/events/" + eventId + "/racehub-import?dryRun=false",
-                HttpMethod.POST, new HttpEntity<>(file, headers()), JsonNode.class);
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(resp.getBody().get("applied").asBoolean()).isTrue();
+                HttpMethod.POST, new HttpEntity<>(file, headers()), String.class);
+        assertThat(resp.getStatusCode())
+                .as("RaceHub import of the set-up entries, response body: %s", resp.getBody())
+                .isEqualTo(HttpStatus.OK);
+        assertThat(json(resp.getBody()).get("applied").asBoolean())
+                .as("RaceHub import of the set-up entries was applied, response body: %s", resp.getBody())
+                .isTrue();
     }
 
     private long entryId(String externalEntryId) {
