@@ -153,7 +153,7 @@
 - [x] **CHAMP-06**: Championship can score from qualifying results, final results, or both; if both, points from each source are summed per round
 - [x] **CHAMP-07**: Championship can award a configurable bonus point to the top qualifier (TQ) per class per round: a driver who tops qualifying in two classes, or at two events, earns it for each (#133)
 - [x] **CHAMP-08**: Championship can award a configurable bonus point to the A-final winner per class per round, earned once per class and event (#133)
-- [x] **CHAMP-09**: Individual drivers can be excluded from championship points for a specific round (DQ, non-eligible equipment, factory driver), bonus points for that round included; exclusion is audit-logged
+- [x] **CHAMP-09**: Individual drivers can be excluded from championship points for a specific round (DQ, non-eligible equipment, factory driver), and earns no TQ or A-final bonus for that round either; exclusion is audit-logged
 - [x] **CHAMP-10**: Championship standings can be displayed in best-to-worst order per driver to surface drop scores and remaining title contenders
 
 ### Results
