@@ -43,10 +43,10 @@ public final class SpeechName {
         String original = name.trim();
         String withoutBrackets = original.replaceAll("[(\\[{][^)\\]}]*[)\\]}]", " ");
         String spoken = withoutBrackets.codePoints()
-                .map(cp -> isSpoken(cp) ? cp : ' ')
+                .map(cp -> isSpace(cp) || !isSpoken(cp) ? ' ' : cp)
                 .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
                 .toString()
-                .replaceAll("\\s+", " ")
+                .replaceAll(" +", " ")
                 .trim();
         if (spoken.isEmpty() || spoken.codePoints().noneMatch(Character::isLetterOrDigit)) {
             return original;
@@ -70,8 +70,12 @@ public final class SpeechName {
         return Character.isLetterOrDigit(cp)
                 || Character.getType(cp) == Character.NON_SPACING_MARK
                 || Character.getType(cp) == Character.COMBINING_SPACING_MARK
-                || cp == '\'' || cp == '’' || cp == '-' || cp == '.'
-                || Character.isWhitespace(cp);
+                || cp == '\'' || cp == '\u2019' || cp == '-' || cp == '.';
+    }
+
+    /** Any kind of space, such as a tab, a non-breaking space or an em space, is spoken as one plain space. */
+    private static boolean isSpace(int cp) {
+        return Character.isWhitespace(cp) || Character.isSpaceChar(cp);
     }
 
     private static boolean shouldTitleCase(String word, boolean allCapitals) {
@@ -92,7 +96,7 @@ public final class SpeechName {
             int cp = lower.codePointAt(i);
             i += Character.charCount(cp);
             out.appendCodePoint(startOfPart ? Character.toTitleCase(cp) : cp);
-            startOfPart = cp == '-' || cp == '\'' || cp == '’';
+            startOfPart = cp == '-' || cp == '\'' || cp == '\u2019';
         }
         return out.toString();
     }

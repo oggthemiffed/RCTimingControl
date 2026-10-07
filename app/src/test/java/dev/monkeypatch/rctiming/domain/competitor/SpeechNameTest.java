@@ -64,6 +64,14 @@ class SpeechNameTest {
     }
 
     @Test
+    void anyKindOfSpaceIsOnePlainSpace() {
+        assertThat(SpeechName.tidy("Alex\u2003\u2003Rowe")).isEqualTo("Alex Rowe");
+        assertThat(SpeechName.tidy("Alex\u00a0Rowe")).isEqualTo("Alex Rowe");
+        assertThat(SpeechName.tidy("Alex\tRowe\n")).isEqualTo("Alex Rowe");
+        assertThat(SpeechName.tidy("ALEX\u2003ROWE")).isEqualTo("Alex Rowe");
+    }
+
+    @Test
     void trimsTheEnds() {
         assertThat(SpeechName.tidy("  Alex   Rowe  ")).isEqualTo("Alex Rowe");
         assertThat(SpeechName.tidy("  ...  ")).isEqualTo("...");

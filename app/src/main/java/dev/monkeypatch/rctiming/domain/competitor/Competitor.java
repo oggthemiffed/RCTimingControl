@@ -36,7 +36,10 @@ public class Competitor {
     public String getHomeClub() { return homeClub; }
     public void setHomeClub(String homeClub) { this.homeClub = homeClub; }
 
-    /** How the name is said aloud, or null to say the display name as written (#119). */
+    /**
+     * The admin's override for how the name is said aloud, or null for none (#119). With none, what is
+     * spoken is the display name tidied for speech: see {@link #speechName()}.
+     */
     public String getSpokenName() { return spokenName; }
     public void setSpokenName(String spokenName) { this.spokenName = spokenName; }
 

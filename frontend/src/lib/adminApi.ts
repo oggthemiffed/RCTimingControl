@@ -386,7 +386,7 @@ export interface CompetitorSummaryDto {
   displayName: string;
   brcaNumber: string | null;
   homeClub: string | null;
-  /** How the name is said aloud; null means the display name is spoken as written (#119). */
+  /** The admin's override for how the name is said aloud; null means none (#119). */
   spokenName: string | null;
   /** What the announcer says: the spoken name, else the display name tidied for speech (#120). */
   speechName: string;
