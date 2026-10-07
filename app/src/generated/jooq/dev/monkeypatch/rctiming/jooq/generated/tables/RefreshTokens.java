@@ -91,6 +91,11 @@ public class RefreshTokens extends TableImpl<RefreshTokensRecord> {
      */
     public final TableField<RefreshTokensRecord, Boolean> REVOKED = createField(DSL.name("revoked"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.field(DSL.raw("0"), SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>refresh_tokens.family_id</code>.
+     */
+    public final TableField<RefreshTokensRecord, String> FAMILY_ID = createField(DSL.name("family_id"), SQLDataType.VARCHAR(36), this, "");
+
     private RefreshTokens(Name alias, Table<RefreshTokensRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

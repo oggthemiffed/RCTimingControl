@@ -14,6 +14,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HexFormat;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -67,7 +69,10 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(disabled);
         }
         String accessToken = jwtTokenService.generateAccessToken(user);
-        setRefreshCookie(user, response);
+        // A new sign-in starts a new family of refresh tokens
+        NewRefreshToken refreshToken = newRefreshToken(user, UUID.randomUUID().toString());
+        refreshTokenRepository.save(refreshToken.entity());
+        setRefreshCookie(refreshToken.rawValue(), response);
         return ResponseEntity.ok(buildAuthResponse(user, accessToken));
     }
 
@@ -91,10 +96,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // Token rotation: revoke old, issue new
-        oldToken.setRevoked(true);
-        refreshTokenRepository.save(oldToken);
-
         User user = userService.findById(oldToken.getUserId()).orElse(null);
         if (user == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -106,34 +107,87 @@ public class AuthController {
             // Disabling revokes the tokens too (#61); this covers one issued in between
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+
+        // Token rotation: revoke the old token and store its replacement in the same family, in one
+        // transaction. The old token is revoked with a compare-and-set, so a token used by two requests at
+        // once (a double click, two tabs) is accepted for only one of them, and a sign-out that got in first
+        // makes this fail rather than leaving a live token behind it.
+        String familyId = oldToken.getFamilyId() != null ? oldToken.getFamilyId() : UUID.randomUUID().toString();
+        NewRefreshToken replacement = newRefreshToken(user, familyId);
+        if (!refreshTokenRepository.rotate(oldToken.getId(), replacement.entity())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         String newAccessToken = jwtTokenService.generateAccessToken(user);
-        setRefreshCookie(user, response);
+        setRefreshCookie(replacement.rawValue(), response);
 
         return ResponseEntity.ok(buildAuthResponse(user, newAccessToken));
     }
 
+    /**
+     * Signs this browser out: revokes the refresh token its cookie holds and expires the cookie. Without
+     * it, clearing the page's in-memory access token would not sign anyone out, because the 7-day cookie
+     * would simply issue a new one on the next load.
+     *
+     * <p>This is {@code DELETE /refresh} rather than a separate {@code /logout} URL because the cookie's
+     * path is {@code /api/v1/auth/refresh}: the browser sends it only to that path. Open to anyone who can
+     * send the cookie (the access token has usually expired by then) and idempotent: no cookie, an unknown
+     * token or an already revoked one all answer 204. Only this browser's sign-in is ended, so the same
+     * official stays signed in elsewhere. The access token already issued stays valid until it expires
+     * (15 minutes).
+     *
+     * <p>Revokes the token's whole family, not just the token: a refresh that rotated it a moment earlier (the
+     * browser's cookie may be one rotation behind) has already issued a replacement, and that is revoked
+     * too. A refresh racing this call either lands first and is revoked here, or lands second and is refused
+     * (see {@link RefreshTokenRepository#rotate}). The page also waits for its own in-flight refresh before
+     * calling this (see {@code endSession} in the frontend's {@code lib/auth.ts}).
+     */
+    @DeleteMapping("/refresh")
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = "refresh_token", required = false) String rawCookieToken,
+            HttpServletResponse response) {
+        if (rawCookieToken != null) {
+            refreshTokenRepository.findByTokenHash(sha256Hex(rawCookieToken))
+                    .ifPresent(refreshTokenRepository::revokeFamily);
+        }
+        // Same name, path and attributes as the cookie that was set, with no lifetime, so the browser drops it
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie("", Duration.ZERO).toString());
+        return ResponseEntity.noContent().build();
+    }
+
     // --- helpers ---
 
-    private void setRefreshCookie(User user, HttpServletResponse response) {
-        String rawToken = jwtTokenService.generateRefreshTokenValue();
-        String tokenHash = sha256Hex(rawToken);
+    /** A refresh token ready to store, with the raw value the browser will hold (only its hash is stored). */
+    private record NewRefreshToken(String rawValue, RefreshToken entity) {}
 
+    private NewRefreshToken newRefreshToken(User user, String familyId) {
+        String rawToken = jwtTokenService.generateRefreshTokenValue();
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUserId(user.getId());
-        refreshToken.setTokenHash(tokenHash);
+        refreshToken.setTokenHash(sha256Hex(rawToken));
         refreshToken.setExpiresAt(Instant.now().plusMillis(jwtTokenService.getRefreshTokenTtlMs()));
         refreshToken.setCreatedAt(Instant.now());
         refreshToken.setRevoked(false);
-        refreshTokenRepository.save(refreshToken);
+        refreshToken.setFamilyId(familyId);
+        return new NewRefreshToken(rawToken, refreshToken);
+    }
 
-        ResponseCookie cookie = ResponseCookie.from("refresh_token", rawToken)
+    private void setRefreshCookie(String rawToken, HttpServletResponse response) {
+        response.addHeader(HttpHeaders.SET_COOKIE,
+                refreshCookie(rawToken, Duration.ofMillis(jwtTokenService.getRefreshTokenTtlMs())).toString());
+    }
+
+    /**
+     * The refresh cookie. Not marked Secure because RCTC is served over plain HTTP on the venue network
+     * (there is no TLS); SameSite=Lax keeps it off cross-site POSTs, and the path keeps it off every other request.
+     */
+    private static ResponseCookie refreshCookie(String value, Duration maxAge) {
+        return ResponseCookie.from("refresh_token", value)
                 .httpOnly(true)
-                .secure(false)   // false for dev; override in prod via config
+                .secure(false)
                 .sameSite("Lax")
                 .path("/api/v1/auth/refresh")
-                .maxAge(Duration.ofMillis(jwtTokenService.getRefreshTokenTtlMs()))
+                .maxAge(maxAge)
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     private AuthResponse buildAuthResponse(User user, String accessToken) {

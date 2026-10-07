@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Client } from '@stomp/stompjs';
-import { getAccessToken } from '@/lib/auth';
+import { currentAccessToken } from '@/lib/auth';
 
 export type StompStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
@@ -25,11 +25,15 @@ export function useStomp<T>(topic: string | null) {
 
     // Anonymous spectators (L12 boards) connect without a token; the server only lets
     // them subscribe to a race's timing/state topics.
-    const token = getAccessToken();
     const client = new Client({
       brokerURL: wsUrl,
-      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
       reconnectDelay: 5_000,
+      // Runs before every connect and reconnect, so a page left open past the 15-minute access token
+      // reconnects with a renewed token instead of repeating one the server now refuses
+      beforeConnect: async (c) => {
+        const token = await currentAccessToken();
+        c.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+      },
       onConnect: () => {
         setStatus('connected');
         client.subscribe(topic, (msg) => {

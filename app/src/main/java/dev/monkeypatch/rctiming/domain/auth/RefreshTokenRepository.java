@@ -27,6 +27,51 @@ public class RefreshTokenRepository extends JooqRepository<RefreshToken, Refresh
         return findWhere(REFRESH_TOKENS.USER_ID.eq(userId).and(REFRESH_TOKENS.REVOKED.isFalse()));
     }
 
+    /**
+     * Revokes one token if it is still active, in a single statement. Returns false when it was already
+     * revoked, so of two requests that present the same token at once, only one gets true. That keeps a
+     * refresh token single-use under concurrency, where a read followed by a save would let both through.
+     */
+    @Transactional
+    public boolean revokeIfActive(Long tokenId) {
+        return dsl.update(REFRESH_TOKENS)
+                .set(REFRESH_TOKENS.REVOKED, true)
+                .where(REFRESH_TOKENS.ID.eq(tokenId).and(REFRESH_TOKENS.REVOKED.isFalse()))
+                .execute() == 1;
+    }
+
+    /**
+     * Rotates a token: revokes the old one and stores its replacement, in one transaction. False (and nothing
+     * stored) when the old one was already revoked. Because this and {@link #revokeFamily} both run as write
+     * transactions, which take turns on the single write connection, a sign-out either lands first (and this
+     * returns false) or lands after (and revokes the replacement too). A refresh can never slip a live token
+     * past a sign-out.
+     */
+    @Transactional
+    public boolean rotate(Long oldTokenId, RefreshToken replacement) {
+        if (!revokeIfActive(oldTokenId)) {
+            return false;
+        }
+        save(replacement);
+        return true;
+    }
+
+    /**
+     * Revokes the given token and every other token in its family, so a sign-out ends the whole chain one
+     * sign-in has been rotated through. A token with no family (issued before families) is revoked alone.
+     */
+    @Transactional
+    public void revokeFamily(RefreshToken token) {
+        if (token.getFamilyId() == null) {
+            revokeIfActive(token.getId());
+            return;
+        }
+        dsl.update(REFRESH_TOKENS)
+                .set(REFRESH_TOKENS.REVOKED, true)
+                .where(REFRESH_TOKENS.FAMILY_ID.eq(token.getFamilyId()).and(REFRESH_TOKENS.REVOKED.isFalse()))
+                .execute();
+    }
+
     /** Revokes every refresh token the official still holds, signing them out of every browser. */
     @Transactional
     public int revokeAllForUser(Long userId) {
@@ -50,6 +95,7 @@ public class RefreshTokenRepository extends JooqRepository<RefreshToken, Refresh
         t.setExpiresAt(r.getExpiresAt());
         t.setCreatedAt(r.getCreatedAt());
         t.setRevoked(r.getRevoked());
+        t.setFamilyId(r.getFamilyId());
         return t;
     }
 
@@ -60,6 +106,7 @@ public class RefreshTokenRepository extends JooqRepository<RefreshToken, Refresh
         r.setExpiresAt(t.getExpiresAt());
         r.setCreatedAt(t.getCreatedAt());
         r.setRevoked(t.isRevoked());
+        r.setFamilyId(t.getFamilyId());
     }
 
     @Override

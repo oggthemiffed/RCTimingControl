@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAccessToken, setAccessToken, clearAccessToken } from './auth';
+import { getAccessToken, clearAccessToken, refreshAccessToken } from './auth';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '',
@@ -12,35 +12,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-let isRefreshing = false;
-let failedQueue: Array<{ resolve: (v: unknown) => void; reject: (e: unknown) => void }> = [];
-
+// An expired access token is renewed once and the request retried. The auth endpoints themselves are
+// left alone: a wrong password is a 401 the login form must show, not a reason to refresh.
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(() => api(originalRequest));
-      }
+    const isAuthCall = String(originalRequest?.url ?? '').includes('/api/v1/auth/');
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthCall) {
       originalRequest._retry = true;
-      isRefreshing = true;
       try {
-        const { data } = await axios.post('/api/v1/auth/refresh', {}, { withCredentials: true });
-        setAccessToken(data.accessToken);
-        failedQueue.forEach((p) => p.resolve(undefined));
-        failedQueue = [];
+        await refreshAccessToken();
         return api(originalRequest);
       } catch {
-        failedQueue.forEach((p) => p.reject(error));
-        failedQueue = [];
         clearAccessToken();
+        // A full load, not a router navigation: every page and open socket starts clean after sign-out
         const from = encodeURIComponent(window.location.pathname + window.location.search);
         window.location.href = `/login?from=${from}`;
-      } finally {
-        isRefreshing = false;
       }
     }
     return Promise.reject(error);

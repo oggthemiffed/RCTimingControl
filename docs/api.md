@@ -49,6 +49,16 @@ POST /auth/refresh
 **200 OK** — new access token + rotated refresh cookie.  
 **401 Unauthorized** — cookie missing, expired, or revoked, or the account has been disabled.
 
+### Sign out
+
+Uses the same cookie, and the same path, as refresh: the browser sends the cookie only to `/auth/refresh`.
+
+```http
+DELETE /auth/refresh
+```
+
+**204 No Content** — always, whether or not the cookie was valid. Revokes the refresh token the cookie holds and every token it was rotated into (they share a family), and expires the cookie, so this browser cannot sign back in, even if a refresh was in flight. Other browsers the same official is signed in on are not affected, and the access token already issued works until it expires (15 minutes).
+
 ---
 
 ## Admin — Club
