@@ -94,6 +94,37 @@ class PracticeTimingServiceTest {
     }
 
     @Test
+    void lapsAreNumberedInMemoryAfterTheFirstLookup() {
+        when(sessionRepository.findRunningSession()).thenReturn(Optional.of(runningSession));
+        // Two laps were saved before a restart in the middle of the session
+        when(lapRepository.findByPracticeSessionIdAndTransponderNumberOrderByLapNumberAsc(42L, "T1"))
+                .thenReturn(List.of(new PracticeLap(), new PracticeLap()));
+
+        service.startSession(runningSession);
+        service.onLapPassing(new LapPassingEvent(0L, "T1", 1_000_000_000L));
+        service.onLapPassing(new LapPassingEvent(0L, "T1", 1_060_000_000L));
+        service.onLapPassing(new LapPassingEvent(0L, "T1", 1_120_000_000L));
+
+        ArgumentCaptor<PracticeLap> saved = ArgumentCaptor.forClass(PracticeLap.class);
+        verify(lapRepository, times(2)).save(saved.capture());
+        assertThat(saved.getAllValues()).extracting(PracticeLap::getLapNumber).containsExactly(3, 4);
+        // Looked up once for the transponder, not once per passing
+        verify(lapRepository, times(1))
+                .findByPracticeSessionIdAndTransponderNumberOrderByLapNumberAsc(anyLong(), anyString());
+    }
+
+    @Test
+    void aPassingNoLaterThanThePreviousGivesNoLapTime() {
+        when(sessionRepository.findRunningSession()).thenReturn(Optional.of(runningSession));
+
+        service.startSession(runningSession);
+        service.onLapPassing(new LapPassingEvent(0L, "T1", 1_000_000_000L));
+        service.onLapPassing(new LapPassingEvent(0L, "T1", 1_000_000_000L));
+
+        verify(lapRepository, never()).save(any());
+    }
+
+    @Test
     void onLapPassingEvent_noSession_ignored() {
         when(sessionRepository.findRunningSession()).thenReturn(Optional.empty());
 

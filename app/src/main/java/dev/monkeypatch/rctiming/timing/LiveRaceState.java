@@ -74,26 +74,7 @@ public class LiveRaceState {
             return p;
         });
 
-        long prevPassingTime = pos.getLastPassingTimeMs();
-        pos.setLapsCompleted(pos.getLapsCompleted() + 1);
-        pos.setLastPassingTimeMs(passingTimeMs);
-
-        // Update best lap, last lap duration, running average, and race overall best
-        if (prevPassingTime > 0) {
-            long lapMs = passingTimeMs - prevPassingTime;
-            if (lapMs > 0) {
-                pos.setLastLapMs(lapMs);
-                pos.accumulateLap(lapMs);
-                pos.getLapTimes().add(lapMs);
-                Long currentBest = pos.getBestLapMs();
-                if (currentBest == null || lapMs < currentBest) {
-                    pos.setBestLapMs(lapMs);
-                }
-                if (overallBestLapMs == null || lapMs < overallBestLapMs) {
-                    overallBestLapMs = lapMs;
-                }
-            }
-        }
+        creditLap(pos, passingTimeMs);
 
         return false;
     }
@@ -220,6 +201,15 @@ public class LiveRaceState {
             p.setEntryId(id);
             return p;
         });
+        creditLap(pos, passingTimeMs);
+    }
+
+    /**
+     * Counts one more lap for a position and works out its lap time from the previous passing: last,
+     * best and average lap, and the race's overall best. A gap of 0 or less (a repeat or out-of-order
+     * passing) still counts the lap but gives no lap time.
+     */
+    private void creditLap(LiveRacePosition pos, long passingTimeMs) {
         long prevPassingTime = pos.getLastPassingTimeMs();
         pos.setLapsCompleted(pos.getLapsCompleted() + 1);
         pos.setLastPassingTimeMs(passingTimeMs);

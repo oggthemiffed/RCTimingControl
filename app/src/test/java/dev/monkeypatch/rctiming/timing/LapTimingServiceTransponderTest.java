@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -80,6 +81,16 @@ class LapTimingServiceTransponderTest {
         assertThat(service.peek(LapPassingEvent.NO_RACE)).isEmpty();
         verifyNoInteractions(hub);
         verifyNoInteractions(raceEntryRepository);
+    }
+
+    @Test
+    void aDatabaseFaultIsNotTreatedAsAnUnknownTransponder() {
+        addEntry(1L, 10L, "1001", null, EntryStatus.CONFIRMED);
+        when(entryRepository.findAllById(any())).thenThrow(new IllegalStateException("database is locked"));
+
+        assertThatThrownBy(() -> lap(1L, "1001", 1_000)).isInstanceOf(IllegalStateException.class);
+
+        verify(hub, never()).broadcastUnknownTransponder(anyLong(), eq("1001"));
     }
 
     @Test

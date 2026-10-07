@@ -9,11 +9,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.IntSupplier;
 
 /**
  * In-memory practice session timing state.
  * One instance per active practice session, held in PracticeTimingService.
  * Thread-safe via ConcurrentHashMap and synchronized compute operations.
+ *
+ * Also holds what the service needs between passings of one session: each transponder's previous passing
+ * time and the number of laps already saved, so a passing needs no query to work out its lap time or number.
  *
  * Sorted by: laps desc, then best lap asc (consistent with live race display).
  * Best-N consecutive laps uses O(n) sliding window algorithm.
@@ -23,6 +27,9 @@ public class LivePracticeState {
     private final Long sessionId;
     private final int bestLapN;
     private final Map<String, ParticipantState> participants = new ConcurrentHashMap<>();
+    private final Map<String, Long> lastRtcMicros = new ConcurrentHashMap<>();
+    /** The highest lap number given to each transponder so far. */
+    private final Map<String, Integer> savedLaps = new ConcurrentHashMap<>();
 
     public LivePracticeState(Long sessionId, int bestLapN) {
         this.sessionId = sessionId;
@@ -31,6 +38,29 @@ public class LivePracticeState {
 
     public Long getSessionId() {
         return sessionId;
+    }
+
+    /**
+     * Notes a passing and returns the lap time since the transponder's previous one, in milliseconds.
+     * Null for its first passing, and for one that is not later than the last (a lap needs a positive time).
+     */
+    public Long lapTimeSincePrevious(String transponderNumber, long rtcTimeMicros) {
+        Long previous = lastRtcMicros.put(transponderNumber, rtcTimeMicros);
+        if (previous == null) {
+            return null;
+        }
+        long deltaMs = (rtcTimeMicros - previous) / 1000L;
+        return deltaMs > 0 ? deltaMs : null;
+    }
+
+    /**
+     * The number for the transponder's next saved lap. {@code alreadySaved} is asked once per
+     * transponder, the first time, so laps saved before this state was built (a restart in the middle of
+     * a session) are not numbered again.
+     */
+    public int nextLapNumber(String transponderNumber, IntSupplier alreadySaved) {
+        return savedLaps.compute(transponderNumber,
+                (t, saved) -> (saved == null ? alreadySaved.getAsInt() : saved) + 1);
     }
 
     /**
