@@ -97,7 +97,7 @@ AMB Decoder (TCP) → DecoderListener (Netty) → LapTimingService
   → LiveTimingHub → STOMP broadcast → browser clients
 ```
 
-The decoder listener runs on a **dedicated background thread** (`SmartLifecycle`), completely isolated from the Tomcat thread pool. It posts parsed `LapPassingEvent`s to `LapTimingService` via `ApplicationEventPublisher` (async listener). A transponder that matches no entry in the running race, or more than one, goes to the referee's unknown-transponder flow and is never silently credited.
+The decoder listener runs on a **dedicated background thread** (`SmartLifecycle`), completely isolated from the Tomcat thread pool. It hands each parsed passing to a single timing thread (`timingExecutor`), which publishes a `LapPassingEvent` to `LapTimingService` via `ApplicationEventPublisher`, so passings are handled one at a time in decoder order and the decoder thread never touches the database. A transponder that matches no entry in the running race, or more than one, goes to the referee's unknown-transponder flow and is never silently credited.
 
 ### Race State Machine
 

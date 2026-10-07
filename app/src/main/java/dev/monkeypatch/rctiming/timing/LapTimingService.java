@@ -10,7 +10,6 @@ import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashSet;
@@ -23,8 +22,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * In-memory race state manager for live timing.
  * Holds a ConcurrentHashMap<Long, LiveRaceState> keyed by raceId.
- * All mutations of a given LiveRaceState go through synchronized blocks (Pitfall 3).
  * Positions are calculated in memory and broadcast over STOMP — never persisted during a race.
+ *
+ * <p><strong>Threading.</strong> Decoder passings reach {@link #onLapPassing} synchronously on the
+ * single timing thread ({@code timingExecutor}), so they are handled one at a time in decoder order and
+ * broadcasts go out in that order. REST requests (marshal laps, transponder links) call in from request
+ * threads, so every change to a {@link LiveRaceState} is made while holding that state's monitor.
  */
 @Service
 public class LapTimingService {
@@ -70,11 +73,16 @@ public class LapTimingService {
      * Handles a LapPassingEvent published by the ApplicationEventPublisher.
      * Resolves transponder number → entry ID, first checking runtime links (from retroactive
      * linking), then falling back to the entries' primary and secondary numbers in the DB.
+     *
+     * <p>A passing with no running race ({@link LapPassingEvent#NO_RACE}) is for practice only and is
+     * ignored here; otherwise it would create state for a race that does not exist.
      */
     @EventListener(LapPassingEvent.class)
-    @Async
     public void onLapPassing(LapPassingEvent event) {
         long raceId = event.raceId();
+        if (raceId == LapPassingEvent.NO_RACE) {
+            return;
+        }
         String transponderNumber = event.transponderNumber();
 
         LiveRaceState state = stateFor(raceId);
@@ -170,14 +178,16 @@ public class LapTimingService {
      */
     private Long resolveEntryId(long raceId, String transponderNumber) {
         try {
-            List<RaceEntry> raceEntries = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId);
+            // One query for the race's entries, one for their transponders: this runs on every passing
+            List<Long> entryIds = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId).stream()
+                    .map(RaceEntry::getEntryId)
+                    .toList();
             Set<Long> matches = new LinkedHashSet<>();
-            for (RaceEntry raceEntry : raceEntries) {
-                Optional<Entry> entry = entryRepository.findById(raceEntry.getEntryId());
-                if (entry.isPresent() && entry.get().getStatus() != EntryStatus.WITHDRAWN
-                        && (transponderNumber.equals(entry.get().getTransponderNumberSnapshot())
-                            || transponderNumber.equals(entry.get().getSecondaryTransponderNumber()))) {
-                    matches.add(raceEntry.getEntryId());
+            for (Entry entry : entryRepository.findAllById(entryIds)) {
+                if (entry.getStatus() != EntryStatus.WITHDRAWN
+                        && (transponderNumber.equals(entry.getTransponderNumberSnapshot())
+                            || transponderNumber.equals(entry.getSecondaryTransponderNumber()))) {
+                    matches.add(entry.getId());
                 }
             }
             if (matches.size() == 1) {

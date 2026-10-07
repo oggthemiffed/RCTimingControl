@@ -29,10 +29,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -61,6 +63,23 @@ class LapTimingServiceTransponderTest {
                 .thenAnswer(inv -> raceEntriesByRace.getOrDefault(inv.<Long>getArgument(0), List.of()));
         when(entryRepository.findById(anyLong()))
                 .thenAnswer(inv -> Optional.ofNullable(entriesById.get(inv.<Long>getArgument(0))));
+        when(entryRepository.findAllById(any()))
+                .thenAnswer(inv -> {
+                    List<Entry> found = new ArrayList<>();
+                    for (Long id : inv.<Iterable<Long>>getArgument(0)) {
+                        if (entriesById.containsKey(id)) found.add(entriesById.get(id));
+                    }
+                    return found;
+                });
+    }
+
+    @Test
+    void aPassingWithNoRunningRaceIsIgnored() {
+        lap(LapPassingEvent.NO_RACE, "1001", 1_000);
+
+        assertThat(service.peek(LapPassingEvent.NO_RACE)).isEmpty();
+        verifyNoInteractions(hub);
+        verifyNoInteractions(raceEntryRepository);
     }
 
     @Test
