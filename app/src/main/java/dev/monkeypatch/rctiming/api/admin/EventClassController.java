@@ -30,6 +30,7 @@ public class EventClassController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public EventClassDto addClassToEvent(@PathVariable Long eventId,
                                           @RequestBody @Valid AddEventClassRequest request) {
@@ -37,6 +38,7 @@ public class EventClassController {
     }
 
     @PutMapping("/{classId}/overrides")
+    @PreAuthorize("hasRole('ADMIN')")
     public EventClassDto updateOverrides(@PathVariable Long eventId,
                                           @PathVariable Long classId,
                                           @RequestBody @Valid UpdateEventClassOverrideRequest request) {
@@ -44,6 +46,7 @@ public class EventClassController {
     }
 
     @PostMapping("/combine")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<EventClassDto> combineClasses(@PathVariable Long eventId,
                                                @RequestBody @Valid CombineClassesRequest request) {
         return eventClassService.combineClasses(eventId, request.eventClassIds());

@@ -70,18 +70,21 @@ public class EventController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public EventDto createEvent(@RequestBody @Valid CreateEventRequest request) {
         return eventService.create(request);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public EventDto updateEvent(@PathVariable Long id,
                                  @RequestBody @Valid UpdateEventRequest request) {
         return eventService.update(id, request);
     }
 
     @PostMapping("/{id}/transition")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public EventDto transitionEvent(@PathVariable Long id,
                                      @RequestBody @Valid TransitionEventRequest request) {
         return eventService.transition(id, request.targetStatus());

@@ -1,3 +1,4 @@
+import { useRoles } from '@/hooks/useRoles';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -279,6 +280,7 @@ interface EventClassSectionProps {
 
 export default function EventClassSection({ eventId, classes }: EventClassSectionProps) {
   const addEventClass = useAddEventClass(eventId);
+  const { isAdmin } = useRoles();
   const { data: racingClasses = [] } = useRacingClasses();
 
   const [addOpen, setAddOpen] = useState(false);
@@ -341,12 +343,16 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <h3 className="text-base font-semibold mb-1">No classes added</h3>
         <p className="text-sm text-muted-foreground mb-4">
-          Add a racing class to configure entry groups for this event.
+          {isAdmin
+            ? 'Add a racing class to configure entry groups for this event.'
+            : 'An admin has not added any classes to this event yet.'}
         </p>
-        <Button size="sm" onClick={() => setAddOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Add Class
-        </Button>
+        {isAdmin && (
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Add Class
+          </Button>
+        )}
         {addDialog}
       </div>
     );
@@ -358,7 +364,7 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
       <div className="flex items-center justify-between">
         <h3 className="text-base font-semibold">Classes</h3>
         <div className="flex items-center gap-2">
-          {selectedIds.size >= 2 && (
+          {isAdmin && selectedIds.size >= 2 && (
             <Button
               size="sm"
               variant="outline"
@@ -367,10 +373,12 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
               Combine into Shared Race ({selectedIds.size})
             </Button>
           )}
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Add Class
-          </Button>
+          {isAdmin && (
+            <Button size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Add Class
+            </Button>
+          )}
         </div>
       </div>
 
@@ -381,6 +389,7 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
             key={cls.id}
             className="rounded-lg border bg-card p-4 flex items-start gap-3"
           >
+            {isAdmin && (
             <Checkbox
               id={`cls-${cls.id}`}
               checked={selectedIds.has(cls.id)}
@@ -388,6 +397,7 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
               aria-label={`Select ${resolveClassName(cls.racingClassId)} for combining`}
               className="mt-0.5"
             />
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-sm">
@@ -408,19 +418,21 @@ export default function EventClassSection({ eventId, classes }: EventClassSectio
                 <ConfigSummary config={cls.configSnapshot} />
               </div>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                setOverrideState({
-                  open: true,
-                  classId: cls.id,
-                  currentOverride: cls.configOverride,
-                })
-              }
-            >
-              Edit Overrides
-            </Button>
+            {isAdmin && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setOverrideState({
+                    open: true,
+                    classId: cls.id,
+                    currentOverride: cls.configOverride,
+                  })
+                }
+              >
+                Edit Overrides
+              </Button>
+            )}
           </div>
         ))}
       </div>

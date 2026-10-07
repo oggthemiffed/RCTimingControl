@@ -44,23 +44,27 @@ public class TrackController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public TrackDto createTrack(@RequestBody @Valid CreateTrackRequest request) {
         return trackService.create(request);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public TrackDto updateTrack(@PathVariable Long id, @RequestBody @Valid CreateTrackRequest request) {
         return trackService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTrack(@PathVariable Long id) {
         trackService.delete(id);
     }
 
     @PostMapping("/{trackId}/loops")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public DecoderLoopDto addDecoderLoop(@PathVariable Long trackId,
                                           @RequestBody @Valid CreateDecoderLoopRequest request) {
@@ -68,18 +72,21 @@ public class TrackController {
     }
 
     @PutMapping("/loops/{loopId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public DecoderLoopDto updateDecoderLoop(@PathVariable Long loopId,
                                              @RequestBody @Valid CreateDecoderLoopRequest request) {
         return trackService.updateDecoderLoop(loopId, request);
     }
 
     @DeleteMapping("/loops/{loopId}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteDecoderLoop(@PathVariable Long loopId) {
         trackService.deleteDecoderLoop(loopId);
     }
 
     @PostMapping("/{trackId}/thresholds")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public TrackLapThresholdDto setLapThreshold(@PathVariable Long trackId,
                                                  @RequestBody @Valid CreateThresholdRequest request) {
@@ -87,6 +94,7 @@ public class TrackController {
     }
 
     @DeleteMapping("/thresholds/{thresholdId}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteLapThreshold(@PathVariable Long thresholdId) {
         trackService.deleteLapThreshold(thresholdId);

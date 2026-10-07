@@ -72,11 +72,13 @@ const router = createBrowserRouter([
           { index: true, element: <Navigate to="/admin/events" replace /> },
           { path: 'events', element: <EventListPage /> },
           { path: 'events/:id', element: <EventDetailPage /> },
+          // Only an admin can change these, so only an admin opens them (#132). Everyone can still read the data through the API and the public pages.
+          // Championships stay open to every official: a referee records a DQ there. Only an admin can change the rest of a championship.
           { path: 'championships', element: <ChampionshipListPage /> },
           { path: 'championships/:id', element: <ChampionshipDetailPage /> },
-          { path: 'club', element: <ClubProfilePage /> },
-          { path: 'tracks', element: <TracksPage /> },
-          { path: 'formats', element: <FormatsPage /> },
+          { path: 'club', element: <ProtectedRoute roles={['ADMIN']}><ClubProfilePage /></ProtectedRoute> },
+          { path: 'tracks', element: <ProtectedRoute roles={['ADMIN']}><TracksPage /></ProtectedRoute> },
+          { path: 'formats', element: <ProtectedRoute roles={['ADMIN']}><FormatsPage /></ProtectedRoute> },
           { path: 'race-control', element: <RaceControlSelectPage /> },
           { path: 'decoder', element: <ProtectedRoute roles={['ADMIN']}><DecoderSettingsPage /></ProtectedRoute> },
           { path: 'backups', element: <ProtectedRoute roles={['ADMIN']}><BackupsPage /></ProtectedRoute> },

@@ -18,6 +18,7 @@ import {
   CloudUpload,
   UserCog,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -26,31 +27,44 @@ import { useHelp } from '@/context/HelpContext';
 
 // ── Nav definition ─────────────────────────────────────────────────────────
 
-const eventsGroup = [
+interface NavEntry {
+  to: string;
+  label: string;
+  Icon: LucideIcon;
+  /** Shown to admins only: only an admin can change what it opens (#132). */
+  adminOnly?: boolean;
+}
+
+const eventsGroup: NavEntry[] = [
   { to: '/admin/events', label: 'Events', Icon: Calendar },
   { to: '/admin/championships', label: 'Championships', Icon: Trophy },
-] as const;
+];
 
-const operationsGroup = [
+const operationsGroup: NavEntry[] = [
   { to: '/admin/race-control', label: 'Race Control', Icon: Flag },
   { to: '/admin/competitors', label: 'Competitors', Icon: Users },
   { to: '/setup', label: 'Setup Wizard', Icon: Wand2 },
-] as const;
+];
 
 // Decoder settings, backups and results sent to RaceHub are admin-only, so these items are shown only to ADMIN users.
-const adminOnlyOperations = [
+const adminOnlyOperations: NavEntry[] = [
   { to: '/admin/decoder', label: 'Decoder', Icon: Radio },
   { to: '/admin/backups', label: 'Backups', Icon: DatabaseBackup },
   { to: '/admin/results-exports', label: 'Results to RaceHub', Icon: CloudUpload },
   { to: '/admin/officials', label: 'Officials', Icon: UserCog },
-] as const;
+];
 
-const configGroup = [
-  { to: '/admin/tracks', label: 'Tracks', Icon: MapPin },
-  { to: '/admin/formats', label: 'Formats', Icon: Sliders },
-  { to: '/admin/club', label: 'Club Profile', Icon: Building2 },
+const configGroup: NavEntry[] = [
+  { to: '/admin/tracks', label: 'Tracks', Icon: MapPin, adminOnly: true },
+  { to: '/admin/formats', label: 'Formats', Icon: Sliders, adminOnly: true },
+  { to: '/admin/club', label: 'Club Profile', Icon: Building2, adminOnly: true },
   { to: '/admin/audio', label: 'Audio Settings', Icon: Volume2 },
-] as const;
+];
+
+/** The entries this official is allowed to open. */
+function visibleTo(entries: NavEntry[], isAdmin: boolean): NavEntry[] {
+  return entries.filter(entry => isAdmin || !entry.adminOnly);
+}
 
 // ── Shared nav link style ──────────────────────────────────────────────────
 
@@ -88,6 +102,7 @@ function NavItem({
 
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { user, logout } = useAuth();
+  const isAdmin = !!user?.roles.includes('ADMIN');
 
   return (
     <div className="flex flex-col h-full">
@@ -103,7 +118,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         <p className="px-3 mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Events &amp; Competitions
         </p>
-        {eventsGroup.map(({ to, label, Icon }) => (
+        {visibleTo(eventsGroup, isAdmin).map(({ to, label, Icon }) => (
           <NavItem key={to} to={to} label={label} Icon={Icon} onClick={onNavClick} />
         ))}
 
@@ -115,7 +130,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         <p className="px-3 pt-4 mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Operations
         </p>
-        {operationsGroup.map(({ to, label, Icon }) => (
+        {visibleTo(operationsGroup, isAdmin).map(({ to, label, Icon }) => (
           <NavItem key={to} to={to} label={label} Icon={Icon} onClick={onNavClick} />
         ))}
         {user?.roles.includes('ADMIN') &&
@@ -131,7 +146,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         <p className="px-3 pt-4 mb-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Configuration
         </p>
-        {configGroup.map(({ to, label, Icon }) => (
+        {visibleTo(configGroup, isAdmin).map(({ to, label, Icon }) => (
           <NavItem key={to} to={to} label={label} Icon={Icon} onClick={onNavClick} />
         ))}
       </nav>
@@ -165,6 +180,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 export default function AdminPanelLayout() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const { helpContent, isOpen, setIsOpen } = useHelp();
+  const isAdmin = !!useAuth().user?.roles.includes('ADMIN');
 
   return (
     <div className="min-h-screen bg-background">
@@ -230,7 +246,7 @@ export default function AdminPanelLayout() {
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 inset-x-0 flex md:hidden border-t bg-background z-10 h-14">
-        {[...eventsGroup, ...operationsGroup, ...configGroup].slice(0, 5).map(({ to, label, Icon }) => (
+        {visibleTo([...eventsGroup, ...operationsGroup, ...configGroup], isAdmin).slice(0, 5).map(({ to, label, Icon }) => (
           <NavLink
             key={to}
             to={to}

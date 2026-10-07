@@ -45,6 +45,7 @@ public class ClubProfileController {
     }
 
     @PutMapping("/profile")
+    @PreAuthorize("hasRole('ADMIN')")
     public ClubProfileDto createOrUpdateProfile(@RequestBody @Valid CreateClubProfileRequest request) {
         return clubProfileService.createOrUpdateProfile(request);
     }
@@ -55,24 +56,28 @@ public class ClubProfileController {
     }
 
     @PostMapping("/affiliations")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public GoverningBodyAffiliationDto createAffiliation(@RequestBody @Valid CreateGoverningBodyRequest request) {
         return clubProfileService.createAffiliation(request);
     }
 
     @PutMapping("/affiliations/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public GoverningBodyAffiliationDto updateAffiliation(@PathVariable Long id,
                                                           @RequestBody @Valid CreateGoverningBodyRequest request) {
         return clubProfileService.updateAffiliation(id, request);
     }
 
     @DeleteMapping("/affiliations/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAffiliation(@PathVariable Long id) {
         clubProfileService.deleteAffiliation(id);
     }
 
     @PutMapping(value = "/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public LogoUploadResponse uploadLogo(@RequestPart("file") MultipartFile file) {
         Long profileId = clubProfileService.getSingletonProfileId();
         String url = logoUploadService.uploadLogo(profileId, file);
