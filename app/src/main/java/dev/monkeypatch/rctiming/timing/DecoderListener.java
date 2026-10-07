@@ -170,11 +170,7 @@ public class DecoderListener implements SmartLifecycle {
         log.info("Direct decoder listener starting — decoder={}:{}", settings.host(), settings.port());
         int current = generation;
         source = sourceFactory.create(settings.host(), settings.port(),
-                passing -> {
-                    if (current == generation) {
-                        onPassing(passing);
-                    }
-                },
+                passing -> onPassing(current, passing),
                 state -> onStatus(current, state));
         source.start();
     }
@@ -200,13 +196,24 @@ public class DecoderListener implements SmartLifecycle {
         }
     }
 
+    /** As {@link #onPassing(int, EpochCorrectedPassing)}, for the source that is current right now. */
+    void onPassing(EpochCorrectedPassing passing) {
+        onPassing(generation, passing);
+    }
+
     /**
      * Hands one decoded passing to the timing thread. Runs on the Netty event-loop thread, which must
-     * not touch the database, so the race lookup happens in {@link #publishPassing}. Package-private so
-     * it can be exercised without a socket.
+     * not touch the database, so the race lookup happens in {@link #publishPassing}. The generation is
+     * checked again when the timing thread gets to it, not only here: the passing may wait behind others,
+     * and the source can be retired in the meantime. Package-private so it can be exercised without a
+     * socket.
      */
-    void onPassing(EpochCorrectedPassing passing) {
-        timingExecutor.execute(() -> publishPassing(passing));
+    void onPassing(int sourceGeneration, EpochCorrectedPassing passing) {
+        timingExecutor.execute(() -> {
+            if (sourceGeneration == generation) {
+                publishPassing(passing);
+            }
+        });
     }
 
     /** Runs on the timing thread: finds the running race and publishes the passing to its listeners. */

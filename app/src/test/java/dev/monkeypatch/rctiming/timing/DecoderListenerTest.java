@@ -124,6 +124,23 @@ class DecoderListenerTest {
     }
 
     @Test
+    void aPassingQueuedBeforeTheSourceWasRetired_isNotPublishedWhenItsTurnComes() {
+        List<Runnable> queued = new ArrayList<>();
+        timingExecutor = queued::add;
+        when(raceRepository.findFirstByStatus(RaceStatus.RUNNING)).thenReturn(Optional.empty());
+        listener.start();
+        configure("localhost", 5100, "RC4");
+
+        passingCallbacks.get(0).accept(new EpochCorrectedPassing("1234567", 1_000_000L, 1, 1, 63, 1));
+        assertThat(queued).hasSize(1);
+        configure("localhost", 5200, "RC4");   // retires the first source while its passing waits
+        queued.get(0).run();
+
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
+        verify(raceRepository, never()).findFirstByStatus(any());
+    }
+
+    @Test
     void currentSourceStatus_isPublishedToStatusPublisher() {
         listener.start();
         configure("localhost", 5100, "RC4");
