@@ -97,7 +97,7 @@ class BackupIT extends AbstractIntegrationTest {
 
     @Test
     void keepingNoBackupsIsRejected() {
-        assertThatThrownBy(() -> new BackupProperties(backupFolder, 0, "-"))
+        assertThatThrownBy(() -> new BackupProperties(backupFolder, 0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("at least 1");
     }
@@ -105,7 +105,7 @@ class BackupIT extends AbstractIntegrationTest {
     @Test
     void aConfiguredFolderThatIsMissingIsNotCreatedOnTheLocalDisk() {
         Path unplugged = backupFolder.resolve("usb-stick");
-        BackupService toUsb = new BackupService(databaseProperties, new BackupProperties(unplugged, 14, "-"));
+        BackupService toUsb = new BackupService(databaseProperties, new BackupProperties(unplugged, 14));
 
         assertThatThrownBy(() -> toUsb.backup("manual"))
                 .isInstanceOf(BackupFailedException.class)
@@ -121,7 +121,7 @@ class BackupIT extends AbstractIntegrationTest {
         // A data directory with no app database: the copy is made but fails the check
         DatabaseProperties noDatabase = new DatabaseProperties(databaseProperties.vendor(), emptyDataDirectory,
                 databaseProperties.migrationLocations(), databaseProperties.readConnections());
-        BackupService failing = new BackupService(noDatabase, new BackupProperties(backupFolder, 14, "-"));
+        BackupService failing = new BackupService(noDatabase, new BackupProperties(backupFolder, 14));
 
         assertThatThrownBy(() -> failing.backup("manual")).isInstanceOf(BackupFailedException.class);
         try (var files = java.nio.file.Files.list(backupFolder)) {
@@ -131,13 +131,28 @@ class BackupIT extends AbstractIntegrationTest {
 
     @Test
     void onlyTheNewestBackupsAreKept() {
-        BackupService keepTwo = new BackupService(databaseProperties, new BackupProperties(backupFolder, 2, "-"));
+        BackupService keepTwo = new BackupService(databaseProperties, new BackupProperties(backupFolder, 2));
 
         keepTwo.backup("manual");
         keepTwo.backup("manual");
         BackupFile newest = keepTwo.backup("nightly");
 
         assertThat(keepTwo.list()).hasSize(2).first().isEqualTo(newest);
+    }
+
+    @Test
+    void aBackupIsStillReportedWhenAnOldOneCannotBeDeleted() throws Exception {
+        // A non-empty folder with a backup's name sorts oldest and cannot be deleted like a file
+        Path stuck = backupFolder.resolve("rctiming-20200101-000000-manual.db");
+        java.nio.file.Files.createDirectories(stuck);
+        java.nio.file.Files.writeString(stuck.resolve("inside"), "x");
+        java.nio.file.Files.setLastModifiedTime(stuck, java.nio.file.attribute.FileTime.fromMillis(0));
+        BackupService keepOne = new BackupService(databaseProperties, new BackupProperties(backupFolder, 1));
+
+        BackupFile taken = keepOne.backup("manual");
+
+        assertThat(java.nio.file.Files.isRegularFile(backupFolder.resolve(taken.name()))).isTrue();
+        assertThat(java.nio.file.Files.exists(stuck)).isTrue();
     }
 
     @Test
@@ -173,7 +188,7 @@ class BackupIT extends AbstractIntegrationTest {
             return passings;
         });
         try {
-            BackupService duringRace = new BackupService(databaseProperties, new BackupProperties(backupFolder, 5, "-"));
+            BackupService duringRace = new BackupService(databaseProperties, new BackupProperties(backupFolder, 5));
             await().atMost(Duration.ofSeconds(20)).until(() -> lapsSoFar(sessionId) > 20);
 
             BackupFile backup = duringRace.backup("manual");

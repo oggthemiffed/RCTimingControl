@@ -5,6 +5,12 @@ spring:
       add-mappings: false
   flyway:
     enabled: true
+  task:
+    scheduling:
+      # The scheduled jobs (decoder check, announcements, results export, backup, entry feed) share these
+      # threads. Boot's default of one lets a slow RaceHub or a long backup hold up the rest.
+      pool:
+        size: 3
 
 rctiming:
   database:

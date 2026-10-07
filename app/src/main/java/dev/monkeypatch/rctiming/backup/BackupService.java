@@ -63,7 +63,7 @@ public class BackupService {
             database.vendor().checkBackup(partial);
             Files.move(partial, target);
             log.info("Database backed up to {}", target);
-            prune();
+            tidyOldBackups();
             return describe(target);
         } catch (IOException | SQLException e) {
             deleteQuietly(partial, e);
@@ -120,6 +120,18 @@ public class BackupService {
             Files.deleteIfExists(partial);
         } catch (IOException e) {
             cause.addSuppressed(e);
+        }
+    }
+
+    /**
+     * Deletes the oldest backups beyond the number kept. The new backup is already in place, so a failure
+     * here is logged and not thrown: it must not make a good backup report as failed.
+     */
+    private void tidyOldBackups() {
+        try {
+            prune();
+        } catch (IOException | BackupFailedException e) {
+            log.warn("Backup taken, but old backups in {} could not be deleted: {}", directory(), e.getMessage());
         }
     }
 

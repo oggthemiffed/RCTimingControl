@@ -74,7 +74,7 @@ Idempotency-Key: rctc-results-<racehub_event_id>-r<revision>
 ```
 
 - Any `2xx` answer means sent.
-- Anything else, or no answer, means failed. The export is tried again after 30 seconds, then after a wait that doubles each time up to 30 minutes. The sender stops at the first failure each round, so exports for an event arrive in revision order.
+- Anything else, or no answer, means failed. The export is tried again after 30 seconds, then after a wait that doubles each time up to 30 minutes. A failure holds back only that event's later exports for the round, so an event's exports arrive in revision order while a refused event does not stop the others from being sent.
 - When a newer export for the same event is queued, any older one that hasn't gone yet is marked `SUPERSEDED` and never sent, because the newer one carries everything it did.
 - The same revision may arrive more than once (for example when RaceHub saved it but its answer was lost). The `Idempotency-Key` and the revision both let RaceHub recognise a repeat and answer `2xx` without changing anything.
 

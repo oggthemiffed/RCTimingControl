@@ -11,13 +11,14 @@ import java.nio.file.Path;
  * @param directory   folder for backups, which may be a USB stick or network share; defaults to
  *                    {@code backups} inside the data directory
  * @param keep        how many backups to keep, at least 1; the oldest beyond this are deleted
- * @param nightlyCron when the nightly backup runs (Spring cron, server time); "-" turns it off
+ *
+ * <p>When the nightly backup runs ({@code rctiming.backup.nightly-cron}) is read by {@code BackupScheduler},
+ * the only place that uses it.
  */
 @ConfigurationProperties(prefix = "rctiming.backup")
 public record BackupProperties(
         Path directory,
-        @DefaultValue("14") int keep,
-        @DefaultValue("0 0 2 * * *") String nightlyCron) {
+        @DefaultValue("14") int keep) {
 
     public BackupProperties {
         if (keep < 1) {
