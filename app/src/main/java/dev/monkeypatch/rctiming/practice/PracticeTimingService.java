@@ -30,14 +30,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Practice session lap processing service.
  *
- * Listens to the same LapPassingEvent as LapTimingService, but only acts
- * when a practice session is RUNNING. Does NOT conflict with LapTimingService
- * because practice sessions are created outside of race context (raceId = 0
- * in LapTimingService has no RUNNING race, so no positions are broadcast for that).
+ * Listens to the same LapPassingEvent as LapTimingService, but only acts when a practice session is
+ * RUNNING. Practice is meant for the time between races: LapTimingService ignores a passing with no running
+ * race ({@link LapPassingEvent#NO_RACE}), so then only practice counts it. Nothing stops a practice session
+ * running while a race does, and then a passing is counted by both.
  *
- * Lap time computed from rtcTimeMicros delta (same technique as LiveRaceState).
- * CrossingTime uses Instant.now() (server receipt time) since rtcTimeMicros is
- * a raw hardware counter, not epoch-based.
+ * Runs on the single timing thread, like LapTimingService, so passings arrive in decoder order. Lap time
+ * is the difference between a transponder's consecutive rtcTimeMicros (UTC epoch microseconds, as in
+ * LiveRaceState). CrossingTime uses Instant.now() (the time the server handled the passing).
  */
 @Service
 public class PracticeTimingService {
@@ -53,13 +53,6 @@ public class PracticeTimingService {
 
     /** Active practice session states keyed by sessionId. */
     private final Map<Long, LivePracticeState> activeStates = new ConcurrentHashMap<>();
-
-    /**
-     * Per-transponder last RTC time (micros) tracked per active session.
-     * Used to compute lap duration from consecutive passings.
-     * Key: sessionId + "|" + transponderNumber
-     */
-    private final Map<String, Long> lastRtcMicros = new ConcurrentHashMap<>();
 
     public PracticeTimingService(PracticeSessionRepository sessionRepository,
                                  PracticeLapRepository lapRepository,
@@ -95,8 +88,6 @@ public class PracticeTimingService {
      */
     public void stopSession(Long sessionId) {
         activeStates.remove(sessionId);
-        // Remove RTC tracking entries for this session
-        lastRtcMicros.keySet().removeIf(k -> k.startsWith(sessionId + "|"));
         log.info("Practice session {} stopped timing", sessionId);
     }
 
@@ -128,16 +119,7 @@ public class PracticeTimingService {
         String transponderNumber = event.transponderNumber();
         Instant crossingTime = Instant.now();
 
-        // Compute lap time from RTC delta
-        String rtcKey = session.getId() + "|" + transponderNumber;
-        Long prevRtcMicros = lastRtcMicros.put(rtcKey, event.rtcTimeMicros());
-        Long lapTimeMs = null;
-        if (prevRtcMicros != null) {
-            long deltaMs = (event.rtcTimeMicros() - prevRtcMicros) / 1000L;
-            if (deltaMs > 0) {
-                lapTimeMs = deltaMs;
-            }
-        }
+        Long lapTimeMs = state.lapTimeSincePrevious(transponderNumber, event.rtcTimeMicros());
 
         // Resolve transponder → competitor through the session's event entries (L10, #18).
         // A session with no event, or a transponder no entry uses, stays unknown.
@@ -148,10 +130,16 @@ public class PracticeTimingService {
 
         // Persist lap record (only when we have a real lap time)
         if (lapTimeMs != null) {
-            int lapNumber = lapRepository
+            // Asks the database once per transponder, for laps saved before a restart; after that it counts.
+            // The highest saved number, not the row count: the numbers need not be unbroken
+            int lapNumber = state.nextLapNumber(transponderNumber, () -> lapRepository
                     .findByPracticeSessionIdAndTransponderNumberOrderByLapNumberAsc(
-                            session.getId(), transponderNumber)
-                    .size() + 1;
+                            session.getId(), transponderNumber).stream()
+                    .map(PracticeLap::getLapNumber)
+                    .filter(java.util.Objects::nonNull)
+                    .mapToInt(Integer::intValue)
+                    .max()
+                    .orElse(0));
 
             PracticeLap lap = new PracticeLap();
             lap.setPracticeSessionId(session.getId());

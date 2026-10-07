@@ -151,17 +151,12 @@ public class LapTimingService {
      * can include driver names without hitting the DB on every lap.
      */
     private void loadEntryNames(long raceId, LiveRaceState state) {
-        try {
-            List<RaceEntry> raceEntries = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId);
-            for (RaceEntry raceEntry : raceEntries) {
-                entryRepository.findById(raceEntry.getEntryId())
-                        .map(Entry::getCompetitorId)
-                        .flatMap(competitorRepository::findById)
-                        .ifPresent(competitor ->
-                                state.putEntryName(raceEntry.getEntryId(), competitor.getDisplayName()));
-            }
-        } catch (Exception e) {
-            log.warn("Failed to load entry names for race {}: {}", raceId, e.getMessage());
+        for (RaceEntry raceEntry : raceEntryRepository.findByRaceIdOrderByGridPosition(raceId)) {
+            entryRepository.findById(raceEntry.getEntryId())
+                    .map(Entry::getCompetitorId)
+                    .flatMap(competitorRepository::findById)
+                    .ifPresent(competitor ->
+                            state.putEntryName(raceEntry.getEntryId(), competitor.getDisplayName()));
         }
     }
 
@@ -175,30 +170,30 @@ public class LapTimingService {
      * unknown-transponder flow. Withdrawn entries never match.
      *
      * <p>Does NOT check runtime links — callers must check state.getRuntimeLink() first.
+     *
+     * <p>A database fault is not caught here: treating it as "unknown transponder" would send a referee to
+     * link a passing that was never the transponder's fault. It reaches {@code DecoderListener}, which logs
+     * the lost passing and carries on with the next one.
      */
     private Long resolveEntryId(long raceId, String transponderNumber) {
-        try {
-            // One query for the race's entries, one for their transponders: this runs on every passing
-            List<Long> entryIds = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId).stream()
-                    .map(RaceEntry::getEntryId)
-                    .toList();
-            Set<Long> matches = new LinkedHashSet<>();
-            for (Entry entry : entryRepository.findAllById(entryIds)) {
-                if (entry.getStatus() != EntryStatus.WITHDRAWN
-                        && (transponderNumber.equals(entry.getTransponderNumberSnapshot())
-                            || transponderNumber.equals(entry.getSecondaryTransponderNumber()))) {
-                    matches.add(entry.getId());
-                }
+        // One query for the race's entries, one for their transponders: this runs on every passing
+        List<Long> entryIds = raceEntryRepository.findByRaceIdOrderByGridPosition(raceId).stream()
+                .map(RaceEntry::getEntryId)
+                .toList();
+        Set<Long> matches = new LinkedHashSet<>();
+        for (Entry entry : entryRepository.findAllById(entryIds)) {
+            if (entry.getStatus() != EntryStatus.WITHDRAWN
+                    && (transponderNumber.equals(entry.getTransponderNumberSnapshot())
+                        || transponderNumber.equals(entry.getSecondaryTransponderNumber()))) {
+                matches.add(entry.getId());
             }
-            if (matches.size() == 1) {
-                return matches.iterator().next();
-            }
-            if (matches.size() > 1) {
-                log.warn("Transponder {} matches entries {} in race {} — not credited, flagged as unknown",
-                        transponderNumber, matches, raceId);
-            }
-        } catch (Exception e) {
-            log.warn("Failed to resolve transponder {} for race {}: {}", transponderNumber, raceId, e.getMessage());
+        }
+        if (matches.size() == 1) {
+            return matches.iterator().next();
+        }
+        if (matches.size() > 1) {
+            log.warn("Transponder {} matches entries {} in race {} — not credited, flagged as unknown",
+                    transponderNumber, matches, raceId);
         }
         return null;
     }
