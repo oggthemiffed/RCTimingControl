@@ -37,7 +37,7 @@ interface NavEntry {
 
 const eventsGroup: NavEntry[] = [
   { to: '/admin/events', label: 'Events', Icon: Calendar },
-  { to: '/admin/championships', label: 'Championships', Icon: Trophy, adminOnly: true },
+  { to: '/admin/championships', label: 'Championships', Icon: Trophy },
 ];
 
 const operationsGroup: NavEntry[] = [

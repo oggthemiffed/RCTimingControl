@@ -1,3 +1,4 @@
+import { useRoles } from '@/hooks/useRoles';
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
@@ -409,6 +410,19 @@ function CreateExclusionDialog({
 
 // ── Main component ─────────────────────────────────────────────────────────
 
+/**
+ * Greys out everything inside it unless the official is an admin. Only an admin changes a championship's
+ * set-up; the Exclusions tab is outside this because a referee records a disqualification there (#132).
+ */
+function ReadOnlyUnlessAdmin({ isAdmin, children }: { isAdmin: boolean; children: React.ReactNode }) {
+  return (
+    <>
+      {!isAdmin && <p className="mb-3 text-xs text-muted-foreground">Only an admin can change this.</p>}
+      <fieldset disabled={!isAdmin} className="min-w-0 border-0 p-0 m-0">{children}</fieldset>
+    </>
+  );
+}
+
 export default function ChampionshipDetailPage() {
   const { id: idParam } = useParams<{ id: string }>();
   const id = Number(idParam);
@@ -440,6 +454,7 @@ export default function ChampionshipDetailPage() {
     return c.brcaNumber ? `${c.displayName} (BRCA: ${c.brcaNumber})` : c.displayName;
   };
 
+  const { isAdmin } = useRoles();
   const [addClassOpen, setAddClassOpen] = useState(false);
   const [linkEventOpen, setLinkEventOpen] = useState(false);
   const [createExclusionOpen, setCreateExclusionOpen] = useState(false);
@@ -491,15 +506,18 @@ export default function ChampionshipDetailPage() {
 
         {/* Config tab */}
         <TabsContent value="config" className="mt-4">
+          <ReadOnlyUnlessAdmin isAdmin={isAdmin}>
           <ChampionshipConfigForm
             initialValue={data}
             onSubmit={handleUpdate}
             submitLabel="Save"
           />
+        </ReadOnlyUnlessAdmin>
         </TabsContent>
 
         {/* Classes tab */}
         <TabsContent value="classes" className="mt-4">
+          <ReadOnlyUnlessAdmin isAdmin={isAdmin}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold">Racing Classes</h2>
             <Button size="sm" onClick={() => setAddClassOpen(true)}>
@@ -560,10 +578,12 @@ export default function ChampionshipDetailPage() {
             open={addClassOpen}
             onOpenChange={setAddClassOpen}
           />
+        </ReadOnlyUnlessAdmin>
         </TabsContent>
 
         {/* Events tab */}
         <TabsContent value="events" className="mt-4">
+          <ReadOnlyUnlessAdmin isAdmin={isAdmin}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold">Linked Events</h2>
             <Button size="sm" onClick={() => setLinkEventOpen(true)}>
@@ -622,11 +642,14 @@ export default function ChampionshipDetailPage() {
             open={linkEventOpen}
             onOpenChange={setLinkEventOpen}
           />
+        </ReadOnlyUnlessAdmin>
         </TabsContent>
 
         {/* Points Scale tab */}
         <TabsContent value="points-scale" className="mt-4">
+          <ReadOnlyUnlessAdmin isAdmin={isAdmin}>
           <PointsScaleEditor championshipId={id} initialScale={data.pointsScale} />
+        </ReadOnlyUnlessAdmin>
         </TabsContent>
 
         {/* Standings tab */}

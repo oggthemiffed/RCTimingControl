@@ -111,8 +111,9 @@ public class ChampionshipController {
         return championshipService.listExclusions(id);
     }
 
+    // Not admin-only, unlike the rest of championship setup: a referee records a disqualification (DQ), so
+    // every official may add or remove an exclusion (#132). The flow is to be revisited after user testing.
     @PostMapping("/{id}/exclusions")
-    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public ChampionshipExclusionDto createExclusion(@PathVariable Long id,
                                                      Authentication auth,
@@ -122,7 +123,6 @@ public class ChampionshipController {
     }
 
     @DeleteMapping("/{id}/exclusions/{exclusionId}")
-    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteExclusion(@PathVariable Long id, @PathVariable Long exclusionId) {
         championshipService.deleteExclusion(id, exclusionId);

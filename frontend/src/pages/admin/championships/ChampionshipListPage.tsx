@@ -1,3 +1,4 @@
+import { useRoles } from '@/hooks/useRoles';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -28,6 +29,7 @@ import type { ChampionshipDto } from '@/lib/adminApi';
 export default function ChampionshipListPage() {
   const navigate = useNavigate();
   const [createOpen, setCreateOpen] = useState(false);
+  const { isAdmin } = useRoles();
 
   const { data: championships, isLoading, isError, refetch } = useChampionshipsList();
   const createChampionship = useCreateChampionship();
@@ -42,10 +44,12 @@ export default function ChampionshipListPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Championships</h1>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Create Championship
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Create Championship
+          </Button>
+        )}
       </div>
 
       {isError && (
@@ -65,12 +69,14 @@ export default function ChampionshipListPage() {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <h2 className="text-xl font-semibold mb-2">No championships yet</h2>
           <p className="text-muted-foreground text-sm mb-6">
-            Create your first championship series to get started.
+            {isAdmin ? 'Create your first championship series to get started.' : 'An admin has not created any championships yet.'}
           </p>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Create Championship
-          </Button>
+          {isAdmin && (
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Create Championship
+            </Button>
+          )}
         </div>
       ) : (
         <div className="rounded-lg border">

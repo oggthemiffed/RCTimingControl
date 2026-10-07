@@ -28,8 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Club config, tracks, racing classes, formats, event classes, events and championships can be changed by
- * an admin only (#132). Any official can still read them, and a race director can still move an event
- * through its day (publish, open, close entries, start, complete).
+ * an admin only (#132). Any official can still read them, a race director can still move an event
+ * through its day (publish, open, close entries, start, complete), and any official can still record or
+ * remove a championship exclusion, because a referee's disqualification (DQ) goes there.
  *
  * <p>The write attempts here either have no body or a valid one, because a body that fails validation is
  * answered 400 before the role check runs. The ids do not exist, so an admin gets 404, which shows the 403
@@ -64,7 +65,6 @@ class ConfigAdminOnlyIT extends AbstractIntegrationTest {
         changes.put("/api/v1/admin/classes/" + MISSING, HttpMethod.DELETE);
         changes.put("/api/v1/admin/formats/" + MISSING, HttpMethod.DELETE);
         changes.put("/api/v1/admin/club/affiliations/" + MISSING, HttpMethod.DELETE);
-        changes.put("/api/v1/admin/championships/" + MISSING + "/exclusions/1", HttpMethod.DELETE);
         changes.put("/api/v1/admin/championships/" + MISSING + "/classes/1", HttpMethod.DELETE);
         changes.put("/api/v1/admin/championships/" + MISSING + "/events/1", HttpMethod.DELETE);
 
@@ -74,6 +74,16 @@ class ConfigAdminOnlyIT extends AbstractIntegrationTest {
                     .as("%s %s as %s", method, path, role).isEqualTo(HttpStatus.FORBIDDEN));
             assertThat(call(HttpMethod.POST, "/api/v1/admin/classes", token, Map.of("name", "Blocked " + UUID.randomUUID()))
                     .getStatusCode()).as("%s creating a class", role).isEqualTo(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    @Test
+    void anyOfficialCanStillRecordOrRemoveAnExclusion_aRefereesDisqualification() {
+        for (Role role : List.of(Role.RACE_DIRECTOR, Role.REFEREE)) {
+            // Past the role check: the championship does not exist, so 404 rather than 403
+            assertThat(call(HttpMethod.DELETE, "/api/v1/admin/championships/" + MISSING + "/exclusions/1",
+                    loginAs(role), null).getStatusCode()).as("%s removing an exclusion", role)
+                    .isEqualTo(HttpStatus.NOT_FOUND);
         }
     }
 

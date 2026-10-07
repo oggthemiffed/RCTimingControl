@@ -93,7 +93,7 @@ describe('AdminPanelLayout Results to RaceHub entry', () => {
 });
 
 describe('AdminPanelLayout config entries (#132)', () => {
-  const adminOnlyLinks = [/^Championships$/, /^Tracks$/, /^Formats$/, /^Club Profile$/];
+  const adminOnlyLinks = [/^Tracks$/, /^Formats$/, /^Club Profile$/];
 
   beforeEach(() => {
     auth.roles = ['ADMIN'];
@@ -115,6 +115,8 @@ describe('AdminPanelLayout config entries (#132)', () => {
       expect(screen.queryByRole('link', { name })).not.toBeInTheDocument();
     }
     expect(screen.getAllByRole('link', { name: /^Events$/ }).length).toBeGreaterThan(0);
+    // Open to every official: a referee records a disqualification in a championship
+    expect(screen.getAllByRole('link', { name: /^Championships$/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: /^Competitors$/ }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: /^Audio Settings$/ }).length).toBeGreaterThan(0);
   });
