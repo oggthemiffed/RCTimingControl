@@ -263,6 +263,33 @@ class ChampionshipStandingsQueryTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void aResultInAClassWithNoRacingClassStillGivesStandings() throws Exception {
+        Championship champ = makeChampionship(0, 0, null, null, ScoringSource.FINALS);
+        User driver = makeUser("No", "Class");
+        addPointsScale(champ.getId(), Map.of(1, 10));
+
+        Event event = makeEvent("No-racing-class-event");
+        linkEventToChampionship(champ.getId(), event.getId(), 1);
+        Long ecId = dsl.transactionResult(tx -> tx.dsl().insertInto(EVENT_CLASSES)
+                .set(EVENT_CLASSES.EVENT_ID, event.getId())
+                .set(EVENT_CLASSES.CONFIG_SNAPSHOT, "{\"type\":\"TIMED\"}")
+                .returning(EVENT_CLASSES.ID).fetchOne().get(EVENT_CLASSES.ID));
+        Round round = makeRound(event.getId(), RoundType.FINAL, 1);
+        Race race = makeRace(round.getId(), ecId, "A", 1);
+        Entry entry = makeEntry(driver.getId(), event.getId(), ecId);
+        makeRaceEntry(race.getId(), entry.getId());
+        makeSnapshot(race.getId(), String.format(
+                "[{\"position\":1,\"entryId\":%d,\"driverName\":\"No Class\",\"carNumber\":\"1\","
+                + "\"lapsCompleted\":10,\"totalTimeMs\":60000,\"bestLapMs\":6000,\"gapToLeaderMs\":0}]",
+                entry.getId()));
+
+        List<StandingsRowDto> standings = query.computeStandings(champ.getId());
+
+        assertThat(standings).hasSize(1);
+        assertThat(standings.get(0).totalPoints()).isEqualTo(10);
+    }
+
+    @Test
     void bestXFromYDropsWorstRounds() throws Exception {
         // Championship: best 2 from 3 (drop worst 1 of 3 rounds)
         Championship champ = makeChampionship(0, 0, 2, 3, ScoringSource.FINALS);

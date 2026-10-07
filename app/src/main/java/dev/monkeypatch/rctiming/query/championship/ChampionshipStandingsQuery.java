@@ -422,7 +422,10 @@ public class ChampionshipStandingsQuery {
         // racing class order: the order the rows were first seen in follows hash-map iteration, which
         // changes with the ids and made the output order depend on how many classes existed before.
         List<StandingsRowDto> result = new ArrayList<>();
-        for (var classRows2 : new TreeMap<>(byClass).values()) {
+        // (nullsLast: a class can have no racing class assigned)
+        Map<Long, List<StandingsRowDto>> inClassOrder = new TreeMap<>(Comparator.nullsLast(Comparator.<Long>naturalOrder()));
+        inClassOrder.putAll(byClass);
+        for (var classRows2 : inClassOrder.values()) {
             classRows2.sort(Comparator.comparingInt(StandingsRowDto::totalPoints).reversed()
                     .thenComparing(StandingsRowDto::displayName));
             result.addAll(classRows2);

@@ -34,6 +34,7 @@ import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.query.championship.ChampionshipStandingsQuery;
 import dev.monkeypatch.rctiming.query.championship.StandingsRowDto;
 import org.jooq.DSLContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +42,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.ENTRY_AUDIT_LOG;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.RaceEntries.RACE_ENTRIES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.ResultSnapshots.RESULT_SNAPSHOTS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -76,6 +82,14 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
     private Long racingClassId;
     private Long adminId;
 
+    /** Undo what the test created, newest first, so later tests share a clean database. */
+    private final List<Runnable> cleanup = new ArrayList<>();
+
+    @AfterEach
+    void cleanUp() {
+        cleanup.reversed().forEach(Runnable::run);
+    }
+
     @BeforeEach
     void setUp() {
         run = UUID.randomUUID().toString().substring(0, 8);
@@ -84,6 +98,7 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         rc.setCreatedAt(Instant.now());
         rc.setUpdatedAt(Instant.now());
         racingClassId = racingClassRepository.save(rc).getId();
+        cleanup.add(() -> racingClassRepository.deleteById(racingClassId));
 
         User admin = new User();
         admin.setEmail("merge-" + run + "@test.com");
@@ -94,6 +109,7 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         admin.setCreatedAt(Instant.now());
         admin.setUpdatedAt(Instant.now());
         adminId = userRepository.save(admin).getId();
+        cleanup.add(() -> userRepository.deleteById(adminId));
     }
 
     @Test
@@ -147,6 +163,20 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         assertThat(audit.get(0).getEntryId()).isEqualTo(dupEntry.getId());
         assertThat(audit.get(0).getAdminUserId()).isEqualTo(adminId);
         assertThat(audit.get(0).getReason()).contains("Alex  Rowe " + run).contains("Alex Rowe " + run);
+    }
+
+    @Test
+    void entriesWithNoClassDoNotBlockAMerge() {
+        Competitor keep = competitor("No Class " + run, null, null, null, null, null);
+        Competitor duplicate = competitor("No Class " + run, null, null, null, null, null);
+        Event event = event("No class meeting " + run);
+        entry(keep.getId(), event.getId(), null, EntryStatus.CONFIRMED);
+        Entry moving = entry(duplicate.getId(), event.getId(), null, EntryStatus.CONFIRMED);
+
+        assertThat(mergeService.preview(keep.getId(), duplicate.getId()).canMerge()).isTrue();
+        mergeService.merge(keep.getId(), duplicate.getId(), adminId);
+
+        assertThat(entryRepository.findById(moving.getId()).orElseThrow().getCompetitorId()).isEqualTo(keep.getId());
     }
 
     @Test
@@ -291,7 +321,10 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         c.setSpokenName(spoken);
         c.setCreatedAt(Instant.now());
         c.setUpdatedAt(Instant.now());
-        return competitorRepository.save(c);
+        Competitor saved = competitorRepository.save(c);
+        // The merge deletes the duplicate, so this may find nothing
+        cleanup.add(() -> competitorRepository.deleteById(saved.getId()));
+        return saved;
     }
 
     private Event event(String name) {
@@ -300,16 +333,20 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         e.setEventDate(LocalDate.of(2026, 1, 1));
         e.setCreatedAt(Instant.now());
         e.setUpdatedAt(Instant.now());
-        return eventRepository.save(e);
+        Event saved = eventRepository.save(e);
+        cleanup.add(() -> eventRepository.deleteById(saved.getId()));
+        return saved;
     }
 
     private Long eventClass(Long eventId) {
         // Writes go through a transaction, onto the write connection
-        return dsl.transactionResult(tx -> tx.dsl().insertInto(EVENT_CLASSES)
+        Long id = dsl.transactionResult(tx -> tx.dsl().insertInto(EVENT_CLASSES)
                 .set(EVENT_CLASSES.EVENT_ID, eventId)
                 .set(EVENT_CLASSES.RACING_CLASS_ID, racingClassId)
                 .set(EVENT_CLASSES.CONFIG_SNAPSHOT, "{\"type\":\"TIMED\"}")
                 .returning(EVENT_CLASSES.ID).fetchOne().get(EVENT_CLASSES.ID));
+        cleanup.add(() -> dsl.transaction(tx -> tx.dsl().deleteFrom(EVENT_CLASSES).where(EVENT_CLASSES.ID.eq(id)).execute()));
+        return id;
     }
 
     private Entry entry(Long competitorId, Long eventId, Long eventClassId, EntryStatus status) {
@@ -321,7 +358,13 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         e.setStatus(status);
         e.setSubmittedAt(Instant.now());
         e.setUpdatedAt(Instant.now());
-        return entryRepository.save(e);
+        Entry saved = entryRepository.save(e);
+        cleanup.add(() -> {
+            dsl.transaction(tx -> tx.dsl().deleteFrom(RACE_ENTRIES).where(RACE_ENTRIES.ENTRY_ID.eq(saved.getId())).execute());
+            dsl.transaction(tx -> tx.dsl().deleteFrom(ENTRY_AUDIT_LOG).where(ENTRY_AUDIT_LOG.ENTRY_ID.eq(saved.getId())).execute());
+            entryRepository.deleteById(saved.getId());
+        });
+        return saved;
     }
 
     private Championship championship(ScoringSource source) {
@@ -332,7 +375,13 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         c.setScoringSource(source);
         c.setCreatedAt(Instant.now());
         c.setUpdatedAt(Instant.now());
-        return championshipRepository.save(c);
+        Championship saved = championshipRepository.save(c);
+        cleanup.add(() -> {
+            dsl.transaction(tx -> tx.dsl().deleteFrom(CHAMPIONSHIP_EXCLUSIONS)
+                    .where(CHAMPIONSHIP_EXCLUSIONS.CHAMPIONSHIP_ID.eq(saved.getId())).execute());
+            championshipRepository.deleteById(saved.getId());
+        });
+        return saved;
     }
 
     /** A meeting in the championship where the competitor finished the A final in the given position. */
@@ -344,6 +393,9 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         link.setRoundNumber(roundNumber);
         link.setCreatedAt(Instant.now());
         eventLinkRepository.save(link);
+        cleanup.add(() -> dsl.transaction(tx -> tx.dsl().deleteFrom(CHAMPIONSHIP_EVENT_LINKS)
+                .where(CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID.eq(champ.getId()))
+                .and(CHAMPIONSHIP_EVENT_LINKS.EVENT_ID.eq(event.getId())).execute()));
         Long ecId = eventClass(event.getId());
         Round round = new Round();
         round.setEventId(event.getId());
@@ -353,6 +405,8 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         round.setCreatedAt(Instant.now());
         round.setUpdatedAt(Instant.now());
         round = roundRepository.save(round);
+        Long roundId = round.getId();
+        cleanup.add(() -> roundRepository.deleteById(roundId));
         Race race = new Race();
         race.setRoundId(round.getId());
         race.setEventClassId(ecId);
@@ -365,6 +419,8 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         race.setUpdatedAt(Instant.now());
         race.setFinishedAt(Instant.now());
         race = raceRepository.save(race);
+        Long raceId = race.getId();
+        cleanup.add(() -> raceRepository.deleteById(raceId));
         Entry entry = entry(competitorId, event.getId(), ecId, EntryStatus.CONFIRMED);
         RaceEntry re = new RaceEntry();
         re.setRaceId(race.getId());
@@ -380,5 +436,7 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         snap.setFinishedAt(Instant.now());
         snap.setCreatedAt(Instant.now());
         resultSnapshotRepository.save(snap);
+        cleanup.add(() -> dsl.transaction(tx -> tx.dsl().deleteFrom(RESULT_SNAPSHOTS)
+                .where(RESULT_SNAPSHOTS.RACE_ID.eq(raceId)).execute()));
     }
 }

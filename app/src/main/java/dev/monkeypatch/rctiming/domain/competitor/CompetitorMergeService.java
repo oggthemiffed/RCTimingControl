@@ -196,12 +196,13 @@ public class CompetitorMergeService {
 
     /** Both competitors can't hold an active entry in the same class of the same event. */
     private List<String> classConflicts(Competitor duplicate, List<Entry> moving, List<Entry> keepEntries) {
+        // An entry with no class can't clash: the one-active-entry index treats missing classes as distinct
         Set<List<Long>> keepSlots = keepEntries.stream()
-                .filter(e -> e.getStatus() != EntryStatus.WITHDRAWN)
+                .filter(e -> e.getStatus() != EntryStatus.WITHDRAWN && e.getEventClassId() != null)
                 .map(e -> List.of(e.getEventId(), e.getEventClassId()))
                 .collect(Collectors.toSet());
         List<Long> conflictingClasses = moving.stream()
-                .filter(e -> e.getStatus() != EntryStatus.WITHDRAWN)
+                .filter(e -> e.getStatus() != EntryStatus.WITHDRAWN && e.getEventClassId() != null)
                 .filter(e -> keepSlots.contains(List.of(e.getEventId(), e.getEventClassId())))
                 .map(Entry::getEventClassId)
                 .distinct()

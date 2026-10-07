@@ -163,6 +163,24 @@ class ResultsExportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void theExportNamesTheEntrysCurrentCompetitorNotTheOneStoredInTheSnapshot() throws IOException {
+        // A merge moves an entry to another competitor, and leaves the stored snapshot as it was
+        importEntries();
+        long walkIn = walkIn("Walk-in Wendy");
+        long raceId = finishedRace(entryId("a1-" + run), walkIn);
+        jdbc.update("update result_snapshots set positions_json = replace(positions_json, "
+                + "'\"entryId\":" + walkIn + ",\"competitorId\":null', '\"entryId\":" + walkIn
+                + ",\"competitorId\":987654321') where race_id = ?", raceId);
+        long currentCompetitor = jdbc.queryForObject("select competitor_id from entries where id = ?", Long.class, walkIn);
+
+        ResultsOutboxItem item = exportService.enqueue(eventId, ExportReason.RACE_FINISHED).orElseThrow();
+
+        JsonNode second = json(item.getPayload()).at("/races/0/results/1");
+        assertThat(second.at("/rctc_entry_id").asLong()).isEqualTo(walkIn);
+        assertThat(second.at("/rctc_competitor_id").asLong()).isEqualTo(currentCompetitor);
+    }
+
+    @Test
     void anEntryFromAnotherSourceIsSentLikeAWalkIn() throws IOException {
         importEntries();
         long ada = entryId("a1-" + run);
