@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
+import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -36,7 +37,8 @@ public class CompetitorQueryService {
                         r.get(COMPETITORS.DISPLAY_NAME),
                         r.get(COMPETITORS.BRCA_NUMBER),
                         r.get(COMPETITORS.HOME_CLUB),
-                        r.get(COMPETITORS.SPOKEN_NAME)));
+                        r.get(COMPETITORS.SPOKEN_NAME),
+                        SpeechName.of(r.get(COMPETITORS.SPOKEN_NAME), r.get(COMPETITORS.DISPLAY_NAME))));
     }
 
     /**

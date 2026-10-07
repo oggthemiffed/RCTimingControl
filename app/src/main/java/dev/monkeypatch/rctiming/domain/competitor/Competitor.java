@@ -40,9 +40,12 @@ public class Competitor {
     public String getSpokenName() { return spokenName; }
     public void setSpokenName(String spokenName) { this.spokenName = spokenName; }
 
-    /** The text to speak for this competitor: the spoken name when set, else the display name. */
+    /**
+     * The text to speak for this competitor: the spoken name when set, else the display name tidied for
+     * speech (#119, #120).
+     */
     public String speechName() {
-        return spokenName != null && !spokenName.isBlank() ? spokenName : displayName;
+        return SpeechName.of(spokenName, displayName);
     }
 
     public Instant getCreatedAt() { return createdAt; }

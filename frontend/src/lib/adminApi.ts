@@ -388,6 +388,8 @@ export interface CompetitorSummaryDto {
   homeClub: string | null;
   /** How the name is said aloud; null means the display name is spoken as written (#119). */
   spokenName: string | null;
+  /** What the announcer says: the spoken name, else the display name tidied for speech (#120). */
+  speechName: string;
 }
 
 /** Competitors that may be one person entered twice (#123). */

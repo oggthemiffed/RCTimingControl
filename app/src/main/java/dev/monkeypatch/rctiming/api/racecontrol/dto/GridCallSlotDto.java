@@ -6,7 +6,7 @@ package dev.monkeypatch.rctiming.api.racecontrol.dto;
  * @param gridPosition the 1-based grid position; 0 indicates an unseeded bump-up slot with no assigned position
  * @param entryId      the entry ID for this slot
  * @param driverName   the competitor's display name (L5)
- * @param spokenName   how the name is said aloud, or null to say {@code driverName} as written (#119)
+ * @param speechName   what the announcer says for this driver: their spoken name, else the display name tidied for speech (#119, #120)
  * @param carNumber    the car number/label (null if not recorded in the system)
  * @param className    the racing class name for this event class
  * @param checkedIn      whether the competitor has checked in at the desk (L11)
@@ -16,7 +16,7 @@ public record GridCallSlotDto(
         int gridPosition,
         long entryId,
         String driverName,
-        String spokenName,
+        String speechName,
         String carNumber,
         String className,
         boolean checkedIn,

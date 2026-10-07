@@ -129,6 +129,7 @@
 - ~~**AUDIO-14**: Display name and phonetic spelling fields are screened against a configurable profanity blocklist before saving; if a match is found the save is rejected with a validation error informing the racer their submission contains inappropriate content; admins can extend the blocklist with club-specific terms~~ **Removed** (#30): names were screened as racers typed them into their own profiles. Racer accounts went in #18, so the blocklist and its admin screen were removed; RaceHub, where racers now enter their names, is the place to screen them.
 - ~~**AUDIO-15**: Admin can review any racer's phonetic spelling, override it, or clear the generated clip to force regeneration~~ **Removed** (#18): there are no racer phonetic spellings to review.
 - [x] **AUDIO-16**: A competitor has an optional **spoken name** ("say as"), set by an admin on the Competitors screen with a play button to hear it in the club's voice before saving. When set, it is the speech text for every announcement of that name (grid call, running order and the browser fallback); otherwise the display name is spoken as written. It belongs to the competitor, so it carries over to later meetings, and a RaceHub or CSV re-import never changes it. Replaces AUDIO-12 (#119)
+- [x] **AUDIO-17**: A name with no spoken name is tidied before it is spoken, in one place used by every announcement: text in brackets (a nickname or club tag) is left out, emoji and stray symbols and punctuation are dropped, spacing is collapsed, and names in ALL CAPITALS (and capitalised words of three letters or more in a mixed-case name; initials such as "AJ" stay) are spoken in normal capitalisation. A spoken name is always used exactly as typed. It changes only what is spoken, never what is displayed or exported (#120)
 
 ### Race Official Views
 
@@ -327,6 +328,7 @@
 | AUDIO-14 | Phase 6 | Removed (#30) |
 | AUDIO-15 | Phase 6 | Removed (#18) |
 | AUDIO-16 | Local-only plan | Complete (#119) |
+| AUDIO-17 | Local-only plan | Complete (#120) |
 | OFFICIAL-01 | Phase 4 | Complete |
 | OFFICIAL-02 | Phase 4 | Complete |
 | OFFICIAL-03 | Phase 4 | Complete |

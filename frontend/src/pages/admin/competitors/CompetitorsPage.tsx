@@ -42,7 +42,8 @@ function CompetitorRow({ competitor, canEdit, onMerge }: {
 
   const meta = [competitor.brcaNumber && `BRCA ${competitor.brcaNumber}`, competitor.homeClub]
     .filter(Boolean).join(' · ');
-  const heard = draft.trim() || competitor.displayName;
+  // What Play speaks: the typed text, else what the announcer will say for them now
+  const heard = draft.trim() || competitor.speechName;
 
   const startEditing = () => {
     setDraft(competitor.spokenName ?? '');
@@ -72,7 +73,7 @@ function CompetitorRow({ competitor, canEdit, onMerge }: {
               value={draft}
               onChange={e => setDraft(e.target.value)}
               maxLength={MAX_SPOKEN_NAME}
-              placeholder={`Say as (leave empty to say “${competitor.displayName}”)`}
+              placeholder={`Say as (leave empty to say “${competitor.speechName}”)`}
               aria-label={`Say ${competitor.displayName} as`}
             />
             <Button type="button" variant="outline" size="sm" onClick={play}
@@ -94,7 +95,11 @@ function CompetitorRow({ competitor, canEdit, onMerge }: {
       ) : (
         <div className="flex items-center justify-between gap-4 text-sm">
           <span className="text-muted-foreground">
-            {competitor.spokenName ? <>Say as: <span className="text-foreground">{competitor.spokenName}</span></> : 'Said as written'}
+            {competitor.spokenName
+              ? <>Say as: <span className="text-foreground">{competitor.spokenName}</span></>
+              : competitor.speechName !== competitor.displayName
+                ? <>Spoken as: <span className="text-foreground">{competitor.speechName}</span></>
+                : 'Said as written'}
           </span>
           {canEdit && (
             <span className="flex items-center gap-1">

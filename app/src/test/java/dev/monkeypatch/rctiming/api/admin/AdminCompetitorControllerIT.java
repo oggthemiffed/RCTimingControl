@@ -59,10 +59,13 @@ class AdminCompetitorControllerIT extends AbstractIntegrationTest {
         JsonNode listed = list(token, c.getId());
         assertThat(listed.get("spokenName").asText()).isEqualTo("Shiv-awn Keen");
         assertThat(listed.get("displayName").asText()).isEqualTo(c.getDisplayName());
+        assertThat(listed.get("speechName").asText()).isEqualTo("Shiv-awn Keen");
 
         ResponseEntity<JsonNode> cleared = put(token, c.getId(), "");
         assertThat(cleared.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(cleared.getBody().get("spokenName").isNull()).isTrue();
+        // With none set, the display name is what is spoken (a name with nothing to tidy is unchanged)
+        assertThat(cleared.getBody().get("speechName").asText()).isEqualTo(c.getDisplayName());
         assertThat(competitorRepository.findById(c.getId()).orElseThrow().getSpokenName()).isNull();
     }
 
