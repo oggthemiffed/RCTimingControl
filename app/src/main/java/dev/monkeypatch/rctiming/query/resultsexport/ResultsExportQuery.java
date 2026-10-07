@@ -118,7 +118,7 @@ public class ResultsExportQuery {
                         entry == null ? null : entry.racehubEventClassId(),
                         p.entryId(),
                         // The entry's competitor now, not the snapshot's: a merge moves entries to another competitor
-                        entry != null && entry.competitorId() != null ? entry.competitorId() : p.competitorId(),
+                        entry != null ? Long.valueOf(entry.competitorId()) : p.competitorId(),
                         p.driverName() != null ? p.driverName() : entry == null ? null : entry.displayName(),
                         p.carNumber(),
                         p.lapsCompleted(),
