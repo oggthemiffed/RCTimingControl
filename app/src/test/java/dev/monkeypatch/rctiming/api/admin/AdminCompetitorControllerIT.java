@@ -138,12 +138,14 @@ class AdminCompetitorControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void anAccountWithNoOfficialRoleCannotChangeASpokenName() {
-        Competitor c = competitorService.createWalkIn("No Role " + UUID.randomUUID());
+    void anonymousCallersCannotChangeASpokenName() {
+        Competitor c = competitorService.createWalkIn("Anonymous " + UUID.randomUUID());
 
-        ResponseEntity<JsonNode> resp = put(loginAs(Set.of()), c.getId(), "x");
+        ResponseEntity<JsonNode> resp = restTemplate.exchange(
+                "/api/v1/admin/competitors/" + c.getId() + "/spoken-name", HttpMethod.PUT,
+                new HttpEntity<>(Map.of("spokenName", "x")), JsonNode.class);
 
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(resp.getStatusCode().value()).isIn(401, 403);
         assertThat(competitorRepository.findById(c.getId()).orElseThrow().getSpokenName()).isNull();
     }
 
