@@ -7,6 +7,7 @@ import dev.monkeypatch.rctiming.api.auth.LoginRequest;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -19,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +45,16 @@ class ConfigAdminOnlyIT extends AbstractIntegrationTest {
     @Autowired TestRestTemplate restTemplate;
     @Autowired UserRepository userRepository;
     @Autowired PasswordEncoder passwordEncoder;
+
+    // The database is shared by every integration test, and others pick a user with findAll(), so the
+    // accounts made here are removed again
+    private final List<Long> createdUserIds = new ArrayList<>();
+
+    @AfterEach
+    void removeCreatedUsers() {
+        createdUserIds.forEach(userRepository::deleteById);
+        createdUserIds.clear();
+    }
 
     @Test
     void anyOfficialCanStillReadTheConfig() {
@@ -131,6 +143,7 @@ class ConfigAdminOnlyIT extends AbstractIntegrationTest {
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
         userRepository.save(user);
+        createdUserIds.add(user.getId());
         ResponseEntity<AuthResponse> login = restTemplate.postForEntity("/api/v1/auth/login",
                 new LoginRequest(user.getEmail(), "password123"), AuthResponse.class);
         assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
