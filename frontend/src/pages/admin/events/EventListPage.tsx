@@ -35,6 +35,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useAdminEventsList, useCreateAdminEvent } from '@/hooks/admin/useAdminEvents';
+import { useRoles } from '@/hooks/useRoles';
 import type { AdminEventListDto, EventStatus } from '@/lib/adminApi';
 import { useHelp } from '@/context/HelpContext';
 import { EntryManagementHelp } from '@/help/EntryManagementHelp';
@@ -86,6 +87,7 @@ export default function EventListPage() {
 
   const { data: events, isLoading, isError, refetch } = useAdminEventsList();
   const createEvent = useCreateAdminEvent();
+  const { isAdmin } = useRoles();
 
   const {
     register,
@@ -191,10 +193,12 @@ export default function EventListPage() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Events</h1>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Create Event
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Create Event
+          </Button>
+        )}
       </div>
 
       {/* Error state */}
@@ -219,12 +223,14 @@ export default function EventListPage() {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <h2 className="text-xl font-semibold mb-2">No events yet</h2>
           <p className="text-muted-foreground text-sm mb-6">
-            Create your first event to get started.
+            {isAdmin ? 'Create your first event to get started.' : 'An admin has not created any events yet.'}
           </p>
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-1" />
-            Create Event
-          </Button>
+          {isAdmin && (
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" />
+              Create Event
+            </Button>
+          )}
         </div>
       ) : (
         <div className="rounded-lg border">

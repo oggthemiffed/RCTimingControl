@@ -55,6 +55,7 @@ public class RaceFormatController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public RaceFormatTemplateDto createFormat(@RequestBody @Valid CreateRaceFormatTemplateRequest request) {
         return RaceFormatTemplateDto.from(
@@ -62,6 +63,7 @@ public class RaceFormatController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public RaceFormatTemplateDto updateFormat(@PathVariable Long id,
                                                @RequestBody @Valid CreateRaceFormatTemplateRequest request) {
         return RaceFormatTemplateDto.from(
@@ -69,6 +71,7 @@ public class RaceFormatController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFormat(@PathVariable Long id) {
         raceFormatService.delete(id);
@@ -94,6 +97,7 @@ public class RaceFormatController {
 
     @PostMapping(value = "/import",
                  consumes = {MediaType.APPLICATION_JSON_VALUE, "application/yaml"})
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public RaceFormatTemplateDto importFormat(
             @RequestParam(defaultValue = "Imported template") String name,

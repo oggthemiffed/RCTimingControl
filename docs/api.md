@@ -65,6 +65,8 @@ DELETE /auth/refresh
 
 All admin endpoints require a staff role: `ADMIN`, `RACE_DIRECTOR`, or `REFEREE`.
 
+Reading is open to every official. **Changing** club config, tracks, racing classes, race formats, event classes, events and championships (every `POST`, `PUT`, `PATCH` and `DELETE` on those, including championship exclusions) needs `ADMIN`, and answers **403** to a race director or referee. The one exception is `POST /admin/events/{id}/transition` (publish, open, close entries, start, complete), which a `RACE_DIRECTOR` may also call, as may generating rounds and seeding finals.
+
 ### Get club profile
 
 ```http

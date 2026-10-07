@@ -40,18 +40,21 @@ public class RacingClassController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public RacingClassDto createRacingClass(@RequestBody @Valid CreateRacingClassRequest request) {
         return racingClassService.create(request);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public RacingClassDto updateRacingClass(@PathVariable Long id,
                                              @RequestBody @Valid CreateRacingClassRequest request) {
         return racingClassService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRacingClass(@PathVariable Long id) {
         racingClassService.delete(id);

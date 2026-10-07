@@ -35,6 +35,7 @@ import {
   useTracks,
 } from '@/hooks/admin/useAdminEvents';
 import type { EventStatus } from '@/lib/adminApi';
+import { useRoles } from '@/hooks/useRoles';
 import { useHelp } from '@/context/HelpContext';
 import { EventManagementHelp } from '@/help/EventManagementHelp';
 import EventClassSection from './EventClassSection';
@@ -143,6 +144,7 @@ export default function EventDetailPage() {
   const updateEvent = useUpdateAdminEvent(id);
   const transitionMutation = useTransitionEvent(id);
   const { data: tracks = [] } = useTracks();
+  const { isAdmin, canRunEvent } = useRoles();
 
   const [transitionTarget, setTransitionTarget] = useState<EventStatus | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -259,10 +261,10 @@ export default function EventDetailPage() {
           </p>
         </div>
 
-        {(validNextStatuses.length > 0 || hasResults) && (
+        {((canRunEvent && validNextStatuses.length > 0) || hasResults) && (
           <div className="flex gap-2 flex-wrap">
             {hasResults && <DownloadResultsButton eventId={id} />}
-            {validNextStatuses.map(target => (
+            {canRunEvent && validNextStatuses.map(target => (
               <Button
                 key={target}
                 variant={
@@ -295,6 +297,8 @@ export default function EventDetailPage() {
 
         <TabsContent value="overview" className="mt-4">
           <form onSubmit={handleSubmit(onEditSubmit)} className="space-y-4 max-w-md">
+            {/* A disabled fieldset greys out every control inside it: only an admin changes event details (#132) */}
+            <fieldset disabled={!isAdmin} className="space-y-4 min-w-0 border-0 p-0 m-0">
             <div className="space-y-1.5">
               <Label htmlFor="ov-name">Event Name</Label>
               <Input
@@ -345,7 +349,9 @@ export default function EventDetailPage() {
                 )}
               />
             </div>
-            {canEditDetails ? (
+            {!isAdmin ? (
+              <p className="text-xs text-muted-foreground">Only an admin can change event details.</p>
+            ) : canEditDetails ? (
               <Button type="submit" disabled={!isDirty || isSubmitting || updateEvent.isPending}>
                 {updateEvent.isPending ? 'Saving…' : 'Save Event Details'}
               </Button>
@@ -354,6 +360,7 @@ export default function EventDetailPage() {
                 Event details can only be edited while the event is in Draft status.
               </p>
             )}
+            </fieldset>
           </form>
         </TabsContent>
 
@@ -376,12 +383,16 @@ export default function EventDetailPage() {
                 'Not imported from RaceHub yet.'
               )}
             </p>
-            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
-              Import entries from RaceHub
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setCsvImportOpen(true)}>
-              Import from a CSV file
-            </Button>
+            {isAdmin && (
+              <>
+                <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+                  Import entries from RaceHub
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setCsvImportOpen(true)}>
+                  Import from a CSV file
+                </Button>
+              </>
+            )}
           </div>
           <EntryFeedSection eventId={id} classes={data.classes} />
           <EntryListSection eventId={id} classes={data.classes} />

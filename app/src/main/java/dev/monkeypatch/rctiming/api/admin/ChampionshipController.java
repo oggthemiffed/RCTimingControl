@@ -56,18 +56,21 @@ public class ChampionshipController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public ChampionshipDto create(@RequestBody @Valid CreateChampionshipRequest request) {
         return championshipService.create(request);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ChampionshipDto update(@PathVariable Long id,
                                    @RequestBody @Valid UpdateChampionshipRequest request) {
         return championshipService.update(id, request);
     }
 
     @PostMapping("/{id}/classes")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public ChampionshipClassDto addClass(@PathVariable Long id,
                                           @RequestBody @Valid AddChampionshipClassRequest request) {
@@ -75,12 +78,14 @@ public class ChampionshipController {
     }
 
     @DeleteMapping("/{id}/classes/{racingClassId}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removeClass(@PathVariable Long id, @PathVariable Long racingClassId) {
         championshipService.removeClass(id, racingClassId);
     }
 
     @PostMapping("/{id}/events")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public ChampionshipEventLinkDto linkEvent(@PathVariable Long id,
                                                @RequestBody @Valid AddChampionshipEventRequest request) {
@@ -88,12 +93,14 @@ public class ChampionshipController {
     }
 
     @DeleteMapping("/{id}/events/{eventId}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void unlinkEvent(@PathVariable Long id, @PathVariable Long eventId) {
         championshipService.unlinkEvent(id, eventId);
     }
 
     @PutMapping("/{id}/points-scale")
+    @PreAuthorize("hasRole('ADMIN')")
     public List<PointsScaleEntryDto> replacePointsScale(@PathVariable Long id,
                                                          @RequestBody @Valid UpdatePointsScaleRequest request) {
         return championshipService.replacePointsScale(id, request);
@@ -105,6 +112,7 @@ public class ChampionshipController {
     }
 
     @PostMapping("/{id}/exclusions")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public ChampionshipExclusionDto createExclusion(@PathVariable Long id,
                                                      Authentication auth,
@@ -114,6 +122,7 @@ public class ChampionshipController {
     }
 
     @DeleteMapping("/{id}/exclusions/{exclusionId}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteExclusion(@PathVariable Long id, @PathVariable Long exclusionId) {
         championshipService.deleteExclusion(id, exclusionId);
