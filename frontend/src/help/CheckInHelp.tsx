@@ -14,6 +14,7 @@ export function CheckInHelp() {
         <li><span className="font-semibold">Keyboard scanner:</span> Click the scanner field and scan, or type the transponder number and press Enter.</li>
         <li><span className="font-semibold">Search:</span> Type at least two letters of the competitor&apos;s name. An unmatched scan fills the search for you.</li>
         <li><span className="font-semibold">Confirm:</span> Click Confirm check-in. A competitor racing two classes on one transponder shows one card per class.</li>
+        <li><span className="font-semibold">Say as…:</span> If the announcer will get a name wrong, click Say as… on the driver&apos;s card, type how it should sound, press Play to hear it, then Save. It applies to every announcement for that driver and is logged with who changed it.</li>
         <li><span className="font-semibold">Swap a transponder:</span> Find the entry, choose Primary or Secondary, and enter the new number. Leave the secondary blank to remove it. Laps count on the new number from the next passing.</li>
         <li><span className="font-semibold">After a re-import:</span> Importing a newer RaceHub file later does not undo a swap made here. The swapped number stays, and the entry shows &quot;Booking has transponder &hellip;. Keeping the number swapped on the day.&quot; so you can see the booking differs. Swap to the booking&apos;s number to clear the note.</li>
       </ul>

@@ -392,6 +392,15 @@ export interface CompetitorSummaryDto {
   speechName: string;
 }
 
+/** One recorded change to a competitor: when, who, and the spoken name before and after (null means none). */
+export interface CompetitorChangeDto {
+  at: string;
+  by: string;
+  action: string;
+  before: string | null;
+  after: string | null;
+}
+
 /** Competitors that may be one person entered twice (#123). */
 export interface CompetitorDuplicateGroupDto {
   reason: string;
@@ -755,6 +764,9 @@ export const adminApi = {
     setSpokenName: (id: number, spokenName: string) =>
       api.put<CompetitorSummaryDto>(`/api/v1/admin/competitors/${id}/spoken-name`, { spokenName })
         .then(r => r.data),
+    /** Who changed how a competitor's name is said, newest first. Admin only. */
+    changes: (id: number) =>
+      api.get<CompetitorChangeDto[]>(`/api/v1/admin/competitors/${id}/changes`).then(r => r.data),
     possibleDuplicates: () =>
       api.get<CompetitorDuplicateGroupDto[]>('/api/v1/admin/competitors/possible-duplicates').then(r => r.data),
     mergePreview: (keepId: number, duplicateId: number) =>

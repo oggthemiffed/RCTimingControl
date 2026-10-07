@@ -9,7 +9,7 @@ vi.mock('@/lib/adminApi', () => ({
   adminApi: {
     competitors: {
       list: vi.fn(), setSpokenName: vi.fn(), previewSpeech: vi.fn(),
-      possibleDuplicates: vi.fn(), mergePreview: vi.fn(), merge: vi.fn(),
+      possibleDuplicates: vi.fn(), mergePreview: vi.fn(), merge: vi.fn(), changes: vi.fn(),
     },
   },
 }));
@@ -33,6 +33,7 @@ describe('CompetitorsPage', () => {
     vi.resetAllMocks();
     mockUser.mockReturnValue({ roles: ['ADMIN'] });
     api.competitors.possibleDuplicates.mockResolvedValue([]);
+    api.competitors.changes.mockResolvedValue([]);
   });
 
   it('lists competitors and filters them by name, BRCA number or club', async () => {
@@ -93,13 +94,32 @@ describe('CompetitorsPage', () => {
       await waitFor(() => expect(api.competitors.previewSpeech).toHaveBeenCalledWith('Alex Rowe'));
     });
 
-    it('does not offer Say as… to a race director or referee', async () => {
+    it('lets a race director or referee fix how a name is said, but not merge or see the history', async () => {
       mockUser.mockReturnValue({ roles: ['RACE_DIRECTOR', 'REFEREE'] });
       api.competitors.list.mockResolvedValue([{ ...siobhan, spokenName: 'Shiv-awn Keen' }]);
+      api.competitors.setSpokenName.mockResolvedValue(siobhan);
       renderPage();
 
       expect(await screen.findByText('Shiv-awn Keen')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Edit how Siobhan Keane is said')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Merge/ })).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByLabelText('Edit how Siobhan Keane is said'));
+      fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+
+      await waitFor(() => expect(api.competitors.setSpokenName).toHaveBeenCalledWith(7, ''));
+      expect(api.competitors.changes).not.toHaveBeenCalled();
+    });
+
+    it('shows an admin who last changed how a name is said', async () => {
+      api.competitors.list.mockResolvedValue([siobhan]);
+      api.competitors.changes.mockResolvedValue([
+        { at: '2026-05-01T10:00:00Z', by: 'Dana Director', action: 'SPOKEN_NAME_CHANGED', before: null, after: 'Shiv-awn Keen' },
+      ]);
+      renderPage();
+
+      fireEvent.click(await screen.findByLabelText('Edit how Siobhan Keane is said'));
+
+      expect(await screen.findByText(/Last changed by Dana Director/)).toBeInTheDocument();
     });
 
     it('saves what the admin types', async () => {

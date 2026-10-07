@@ -5,6 +5,8 @@
 import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import SpokenNameEditor from '@/components/SpokenNameEditor';
+import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
 import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 import {
@@ -179,12 +181,50 @@ function ResolvedEntryPanel({
   onConfirm: () => void;
 }) {
   const shown = confirmResult?.entry ?? entry;
+  const roles = useAuth().user?.roles ?? [];
+  const isAdmin = roles.includes('ADMIN');
+  const canSetSpokenName =
+    isAdmin || roles.includes('RACE_DIRECTOR') || roles.includes('REFEREE');
+  const [editing, setEditing] = useState(false);
+  // What the editor saved, so the panel shows it without another lookup
+  const [saved, setSaved] = useState<{ spokenName: string | null; speechName: string } | null>(null);
+  const spokenName = saved ? saved.spokenName : shown.spokenName;
+  const speechName = saved ? saved.speechName : shown.speechName;
   return (
     <Card className="flex flex-col gap-2 p-4">
       <div className="flex items-center justify-between gap-2">
         <p className="font-medium">{shown.competitorName}</p>
         <CheckInBadge checkedIn={shown.checkedIn} />
       </div>
+      {canSetSpokenName && shown.competitorId != null && (
+        editing ? (
+          <SpokenNameEditor
+            competitorId={shown.competitorId}
+            displayName={shown.competitorName}
+            spokenName={spokenName}
+            speechName={speechName}
+            showHistory={isAdmin}
+            onSaved={(competitor) => {
+              setSaved({ spokenName: competitor.spokenName, speechName: competitor.speechName });
+              setEditing(false);
+            }}
+            onCancel={() => setEditing(false)}
+          />
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Announced as “{speechName}”</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label={`Edit how ${shown.competitorName} is said`}
+              onClick={() => setEditing(true)}
+            >
+              Say as…
+            </Button>
+          </div>
+        )
+      )}
       <p className="text-sm text-muted-foreground">
         {shown.className ?? 'No class'} {transponderLabel(shown)}
       </p>

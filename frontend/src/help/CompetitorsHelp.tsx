@@ -10,7 +10,7 @@ export function CompetitorsHelp() {
       </p>
 
       <ul className="mt-3 space-y-1.5 text-sm">
-        <li><span className="font-semibold">Say as:</span> If a name is mispronounced, click Say as… on the row and type it the way it should sound, such as <em>Shiv-awn Keen</em> for Siobhan Keane. The display name on results and boards does not change.</li>
+        <li><span className="font-semibold">Say as:</span> If a name is mispronounced, click Say as… on the row and type it the way it should sound, such as <em>Shiv-awn Keen</em> for Siobhan Keane. Admins, race directors and referees can do this; the change is logged with who made it, and admins see who changed it last. The display name on results and boards does not change.</li>
         <li><span className="font-semibold">Play:</span> Click Play to hear it in the announcer voice (the voice set under Audio) before you save. If that voice is not running, Play uses the browser&apos;s voice, which may sound different.</li>
         <li><span className="font-semibold">Tidied automatically:</span> With no Say as, RCTC tidies the name before it is spoken: text in brackets such as a nickname or club tag is left out, emoji and stray symbols are dropped, spacing is fixed, and ALL CAPITALS are spoken as normal capitals (ALEX ROWE is said as Alex Rowe). The row says &quot;Spoken as&quot; when that changes the name. The name shown on results and boards never changes, and a Say as is never tidied.</li>
         <li><span className="font-semibold">Clear:</span> Click Clear, or save it empty, to go back to saying the name as written.</li>

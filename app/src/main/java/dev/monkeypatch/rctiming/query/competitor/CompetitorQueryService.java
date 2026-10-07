@@ -15,7 +15,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog.COMPETITOR_AUDIT_LOG;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETITORS;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Users.USERS;
 
 @Service
 @Transactional(readOnly = true)
@@ -39,6 +41,22 @@ public class CompetitorQueryService {
                         r.get(COMPETITORS.HOME_CLUB),
                         r.get(COMPETITORS.SPOKEN_NAME),
                         SpeechName.of(r.get(COMPETITORS.SPOKEN_NAME), r.get(COMPETITORS.DISPLAY_NAME))));
+    }
+
+    /** A competitor's recorded changes, newest first, with the name of the official who made each. */
+    public List<CompetitorChangeDto> listChanges(Long competitorId) {
+        return dsl.select(COMPETITOR_AUDIT_LOG.CREATED_AT, USERS.FIRST_NAME, USERS.LAST_NAME,
+                        COMPETITOR_AUDIT_LOG.ACTION, COMPETITOR_AUDIT_LOG.BEFORE_VALUE, COMPETITOR_AUDIT_LOG.AFTER_VALUE)
+                .from(COMPETITOR_AUDIT_LOG)
+                .join(USERS).on(USERS.ID.eq(COMPETITOR_AUDIT_LOG.ACTOR_USER_ID))
+                .where(COMPETITOR_AUDIT_LOG.COMPETITOR_ID.eq(competitorId))
+                .orderBy(COMPETITOR_AUDIT_LOG.CREATED_AT.desc(), COMPETITOR_AUDIT_LOG.ID.desc())
+                .fetch(r -> new CompetitorChangeDto(
+                        r.get(COMPETITOR_AUDIT_LOG.CREATED_AT),
+                        (r.get(USERS.FIRST_NAME) + " " + r.get(USERS.LAST_NAME)).trim(),
+                        r.get(COMPETITOR_AUDIT_LOG.ACTION),
+                        r.get(COMPETITOR_AUDIT_LOG.BEFORE_VALUE),
+                        r.get(COMPETITOR_AUDIT_LOG.AFTER_VALUE)));
     }
 
     /**

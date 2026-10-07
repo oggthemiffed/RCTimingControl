@@ -10,6 +10,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipPointsScale;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles;
+import dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DecoderLoops;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries;
@@ -47,6 +48,7 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipExclus
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipPointsScaleRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.ClubProfilesRecord;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.CompetitorAuditLogRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.CompetitorsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.DecoderLoopsRecord;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.EntriesRecord;
@@ -103,6 +105,7 @@ public class Keys {
     public static final UniqueKey<ChampionshipPointsScaleRecord> CHAMPIONSHIP_POINTS_SCALE__PK_CHAMPIONSHIP_POINTS_SCALE = Internal.createUniqueKey(ChampionshipPointsScale.CHAMPIONSHIP_POINTS_SCALE, DSL.name("pk_championship_points_scale"), new TableField[] { ChampionshipPointsScale.CHAMPIONSHIP_POINTS_SCALE.CHAMPIONSHIP_ID, ChampionshipPointsScale.CHAMPIONSHIP_POINTS_SCALE.POSITION }, true);
     public static final UniqueKey<ChampionshipsRecord> CHAMPIONSHIPS__PK_CHAMPIONSHIPS = Internal.createUniqueKey(Championships.CHAMPIONSHIPS, DSL.name("pk_championships"), new TableField[] { Championships.CHAMPIONSHIPS.ID }, true);
     public static final UniqueKey<ClubProfilesRecord> CLUB_PROFILES__PK_CLUB_PROFILES = Internal.createUniqueKey(ClubProfiles.CLUB_PROFILES, DSL.name("pk_club_profiles"), new TableField[] { ClubProfiles.CLUB_PROFILES.ID }, true);
+    public static final UniqueKey<CompetitorAuditLogRecord> COMPETITOR_AUDIT_LOG__PK_COMPETITOR_AUDIT_LOG = Internal.createUniqueKey(CompetitorAuditLog.COMPETITOR_AUDIT_LOG, DSL.name("pk_competitor_audit_log"), new TableField[] { CompetitorAuditLog.COMPETITOR_AUDIT_LOG.ID }, true);
     public static final UniqueKey<CompetitorsRecord> COMPETITORS__PK_COMPETITORS = Internal.createUniqueKey(Competitors.COMPETITORS, DSL.name("pk_competitors"), new TableField[] { Competitors.COMPETITORS.ID }, true);
     public static final UniqueKey<CompetitorsRecord> COMPETITORS__UQ_COMPETITORS_EXTERNAL = Internal.createUniqueKey(Competitors.COMPETITORS, DSL.name("uq_competitors_external"), new TableField[] { Competitors.COMPETITORS.EXTERNAL_SOURCE, Competitors.COMPETITORS.EXTERNAL_ID }, true);
     public static final UniqueKey<DecoderLoopsRecord> DECODER_LOOPS__PK_DECODER_LOOPS = Internal.createUniqueKey(DecoderLoops.DECODER_LOOPS, DSL.name("pk_decoder_loops"), new TableField[] { DecoderLoops.DECODER_LOOPS.ID }, true);
@@ -143,6 +146,8 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
+    public static final ForeignKey<CompetitorAuditLogRecord, UsersRecord> COMPETITOR_AUDIT_LOG__COMPETITOR_AUDIT_LOG_ACTOR_USER_ID_FKEY = Internal.createForeignKey(CompetitorAuditLog.COMPETITOR_AUDIT_LOG, DSL.name("competitor_audit_log_actor_user_id_fkey"), new TableField[] { CompetitorAuditLog.COMPETITOR_AUDIT_LOG.ACTOR_USER_ID }, Keys.USERS__PK_USERS, new TableField[] { Users.USERS.ID }, true);
+    public static final ForeignKey<CompetitorAuditLogRecord, CompetitorsRecord> COMPETITOR_AUDIT_LOG__COMPETITOR_AUDIT_LOG_COMPETITOR_ID_FKEY = Internal.createForeignKey(CompetitorAuditLog.COMPETITOR_AUDIT_LOG, DSL.name("competitor_audit_log_competitor_id_fkey"), new TableField[] { CompetitorAuditLog.COMPETITOR_AUDIT_LOG.COMPETITOR_ID }, Keys.COMPETITORS__PK_COMPETITORS, new TableField[] { Competitors.COMPETITORS.ID }, true);
     public static final ForeignKey<ChampionshipClassesRecord, ChampionshipsRecord> CHAMPIONSHIP_CLASSES__CHAMPIONSHIP_CLASSES_CHAMPIONSHIP_ID_FKEY = Internal.createForeignKey(ChampionshipClasses.CHAMPIONSHIP_CLASSES, DSL.name("championship_classes_championship_id_fkey"), new TableField[] { ChampionshipClasses.CHAMPIONSHIP_CLASSES.CHAMPIONSHIP_ID }, Keys.CHAMPIONSHIPS__PK_CHAMPIONSHIPS, new TableField[] { Championships.CHAMPIONSHIPS.ID }, true);
     public static final ForeignKey<ChampionshipClassesRecord, RacingClassesRecord> CHAMPIONSHIP_CLASSES__CHAMPIONSHIP_CLASSES_RACING_CLASS_ID_FKEY = Internal.createForeignKey(ChampionshipClasses.CHAMPIONSHIP_CLASSES, DSL.name("championship_classes_racing_class_id_fkey"), new TableField[] { ChampionshipClasses.CHAMPIONSHIP_CLASSES.RACING_CLASS_ID }, Keys.RACING_CLASSES__PK_RACING_CLASSES, new TableField[] { RacingClasses.RACING_CLASSES.ID }, true);
     public static final ForeignKey<ChampionshipEventLinksRecord, ChampionshipsRecord> CHAMPIONSHIP_EVENT_LINKS__CHAMPIONSHIP_EVENT_LINKS_CHAMPIONSHIP_ID_FKEY = Internal.createForeignKey(ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS, DSL.name("championship_event_links_championship_id_fkey"), new TableField[] { ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID }, Keys.CHAMPIONSHIPS__PK_CHAMPIONSHIPS, new TableField[] { Championships.CHAMPIONSHIPS.ID }, true);

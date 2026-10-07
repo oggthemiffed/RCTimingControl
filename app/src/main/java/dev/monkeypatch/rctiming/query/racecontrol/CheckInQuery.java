@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
 import dev.monkeypatch.rctiming.api.racecontrol.dto.CheckInEntryDto;
+import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record;
@@ -61,6 +62,8 @@ public class CheckInQuery {
                 .select(
                         ENTRIES.ID,
                         DSL.coalesce(COMPETITORS.DISPLAY_NAME, DSL.val("Unknown")).as("competitorName"),
+                        ENTRIES.COMPETITOR_ID,
+                        COMPETITORS.SPOKEN_NAME,
                         RACING_CLASSES.NAME.as("className"),
                         ENTRIES.TRANSPONDER_NUMBER,
                         ENTRIES.SECONDARY_TRANSPONDER_NUMBER,
@@ -85,6 +88,9 @@ public class CheckInQuery {
         return new CheckInEntryDto(
                 r.get(ENTRIES.ID),
                 r.get("competitorName", String.class),
+                r.get(ENTRIES.COMPETITOR_ID),
+                r.get(COMPETITORS.SPOKEN_NAME),
+                SpeechName.of(r.get(COMPETITORS.SPOKEN_NAME), r.get("competitorName", String.class)),
                 r.get("className", String.class),
                 r.get(ENTRIES.TRANSPONDER_NUMBER),
                 r.get(ENTRIES.SECONDARY_TRANSPONDER_NUMBER),
