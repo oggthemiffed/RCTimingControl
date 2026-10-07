@@ -54,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * The live feed (#28) end to end through the test relay: a viewer sees the race live, only display names go
@@ -330,6 +331,18 @@ class LiveFeedIT extends AbstractIntegrationTest {
         assertThat(notSetUp.status().missingSettings())
                 .containsExactly(LiveFeedProperties.URL_SETTING, LiveFeedProperties.TOKEN_SETTING);
         assertThat(relay.publisherCount()).isZero();
+    }
+
+    @Test
+    void closingTheConnectionSendsTheRelayACloseFrame() throws Exception {
+        LiveFeedConnection connection = new LiveFeedConnection();
+        connection.open(URI.create("ws://127.0.0.1:" + relay.port() + "/publish"), RELAY_KEY);
+        int before = relay.closeFrameCount();
+
+        connection.close();
+
+        await().atMost(java.time.Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(relay.closeFrameCount()).isGreaterThan(before));
     }
 
     @Test

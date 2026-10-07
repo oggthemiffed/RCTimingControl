@@ -19,6 +19,7 @@ class LiveFeedConnection {
     private static final Logger log = LoggerFactory.getLogger(LiveFeedConnection.class);
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
     private static final long SEND_TIMEOUT_SECONDS = 5;
+    private static final long CLOSE_TIMEOUT_SECONDS = 1;
 
     private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build();
     private volatile WebSocket webSocket;
@@ -52,17 +53,25 @@ class LiveFeedConnection {
         }
     }
 
+    /**
+     * Says goodbye to the relay and drops the connection. The close frame is given a moment to go out before
+     * the socket is cut: aborting at once, as this once did, meant the relay never saw it and logged a
+     * dropped connection. It waits at most a second, on the live feed's own thread.
+     */
     void close() {
         WebSocket ws = webSocket;
         webSocket = null;
-        if (ws != null) {
-            try {
-                ws.sendClose(WebSocket.NORMAL_CLOSURE, "").orTimeout(1, TimeUnit.SECONDS);
-            } catch (RuntimeException e) {
-                // Already gone
-            }
-            ws.abort();
+        if (ws == null) {
+            return;
         }
+        try {
+            ws.sendClose(WebSocket.NORMAL_CLOSURE, "").get(CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            // Already gone, or the relay did not take it in time: either way the socket is dropped below
+        }
+        ws.abort();
     }
 
     /** The relay sends nothing the feed needs; keep reading so pings are answered, and note a close. */

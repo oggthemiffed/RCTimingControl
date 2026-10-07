@@ -71,6 +71,7 @@ public class LiveFeedTestRelay implements AutoCloseable {
     private final Map<Long, String> latest = new TreeMap<>();
     private final AtomicInteger publishers = new AtomicInteger();
     private final AtomicInteger received = new AtomicInteger();
+    private final AtomicInteger closeFrames = new AtomicInteger();
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
     private Channel serverChannel;
@@ -122,6 +123,11 @@ public class LiveFeedTestRelay implements AutoCloseable {
     /** How many messages publishers have sent since the relay started. */
     public int receivedCount() {
         return received.get();
+    }
+
+    /** How many WebSocket close frames connections have sent since the relay started (a clean goodbye). */
+    public int closeFrameCount() {
+        return closeFrames.get();
     }
 
     @Override
@@ -193,6 +199,7 @@ public class LiveFeedTestRelay implements AutoCloseable {
 
         private void onFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
             if (frame instanceof CloseWebSocketFrame close) {
+                closeFrames.incrementAndGet();
                 ctx.channel().attr(HANDSHAKER).get().close(ctx.channel(), close.retain());
             } else if (frame instanceof PingWebSocketFrame ping) {
                 ctx.writeAndFlush(new PongWebSocketFrame(ping.content().retain()));
