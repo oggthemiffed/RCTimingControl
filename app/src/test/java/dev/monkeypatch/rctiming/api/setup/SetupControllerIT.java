@@ -85,6 +85,48 @@ class SetupControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void bootstrap_recordsTheFirstAdminInTheOfficialsLogWithNoActor() {
+        restTemplate.postForEntity("/api/v1/setup/bootstrap",
+                new BootstrapRequest("Admin", "User", "admin@test.com", "password123"), AuthResponse.class);
+
+        var rows = jdbcTemplate.queryForList(
+                "select a.action, a.actor_user_id from official_audit_log a"
+                        + " join users u on u.id = a.official_user_id where u.email = ?", "admin@test.com");
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)).containsEntry("action", "ADDED");
+        assertThat(rows.get(0).get("actor_user_id")).isNull();
+    }
+
+    @Test
+    void createStaff_isRecordedWithWhoAddedThemAndRefusesADuplicateEmail() {
+        ResponseEntity<AuthResponse> bootstrap = restTemplate.postForEntity("/api/v1/setup/bootstrap",
+                new BootstrapRequest("Admin", "User", "admin@test.com", "password123"), AuthResponse.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(bootstrap.getBody().accessToken());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Long adminId = Long.valueOf(bootstrap.getBody().id());
+        java.util.Map<String, Object> staff = java.util.Map.of(
+                "firstName", "Rae", "lastName", "Feree", "email", "rae@test.com",
+                "password", "password123", "roles", java.util.List.of("REFEREE"));
+
+        ResponseEntity<Void> created = restTemplate.exchange("/api/v1/setup/staff", HttpMethod.POST,
+                new HttpEntity<>(staff, headers), Void.class);
+        ResponseEntity<Void> duplicate = restTemplate.exchange("/api/v1/setup/staff", HttpMethod.POST,
+                new HttpEntity<>(staff, headers), Void.class);
+
+        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(duplicate.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        var rows = jdbcTemplate.queryForList(
+                "select a.action, a.actor_user_id, a.detail from official_audit_log a"
+                        + " join users u on u.id = a.official_user_id where u.email = ?", "rae@test.com");
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)).containsEntry("action", "ADDED");
+        assertThat(((Number) rows.get(0).get("actor_user_id")).longValue()).isEqualTo(adminId);
+        assertThat((String) rows.get(0).get("detail")).contains("REFEREE");
+    }
+
+    @Test
     void bootstrap_returns409_whenUsersExist() {
         BootstrapRequest req = new BootstrapRequest("Admin", "User", "admin@test.com", "password123");
         restTemplate.postForEntity("/api/v1/setup/bootstrap", req, AuthResponse.class);

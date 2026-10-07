@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.CheckInConfirmResponse;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.CheckInEntryDto;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.CheckInResolveRequest;
@@ -78,6 +79,7 @@ public class CheckInController {
         };
     }
 
+    @Audited("entry_audit_log")
     @PostMapping("/entries/{entryId}/transponder-swap")
     public ResponseEntity<?> swapTransponder(@PathVariable long eventId,
                                              @PathVariable long entryId,

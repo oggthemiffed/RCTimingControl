@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api.setup;
 
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.setup.dto.BootstrapRequest;
 import dev.monkeypatch.rctiming.api.setup.dto.DecoderConfigDto;
@@ -16,6 +17,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,6 +54,7 @@ public class SetupController {
         return setupService.getStatus();
     }
 
+    @Audited("official_audit_log")
     @PostMapping("/bootstrap")
     public ResponseEntity<AuthResponse> bootstrap(@RequestBody @Valid BootstrapRequest req) {
         try {
@@ -88,13 +91,15 @@ public class SetupController {
         return setupService.getProgress();
     }
 
+    @Audited("official_audit_log")
     @PostMapping("/staff")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createStaff(@RequestBody @Valid SetupStaffRequest req) {
+    public void createStaff(Authentication auth, @RequestBody @Valid SetupStaffRequest req) {
         Set<Role> roles = req.roles().stream()
                 .map(Role::valueOf)
                 .collect(Collectors.toSet());
-        userService.createStaff(req.email(), req.password(), req.firstName(), req.lastName(), roles);
+        userService.createStaff(req.email(), req.password(), req.firstName(), req.lastName(), roles,
+                Long.parseLong(auth.getName()));
     }
 }

@@ -1,10 +1,8 @@
 package dev.monkeypatch.rctiming.domain.user;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,11 +11,11 @@ import java.util.Set;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final OfficialService officialService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, OfficialService officialService) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
+        this.officialService = officialService;
     }
 
     @Transactional(readOnly = true)
@@ -30,44 +28,26 @@ public class UserService {
         return userRepository.findById(id);
     }
 
+    /**
+     * Adds an official from the setup wizard. Goes through {@link OfficialService#add} like the Officials
+     * screen does, so it is recorded in the officials log with who added them and gets the same checks.
+     */
     @Transactional
-    public User createStaff(String email, String password, String firstName, String lastName, Set<Role> roles) {
-        if (roles == null || roles.isEmpty()) {
-            throw new IllegalArgumentException("At least one role required");
-        }
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("Email already registered");
-        }
-        User user = new User();
-        user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(password));
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setRoles(roles);
-        Instant now = Instant.now();
-        user.setCreatedAt(now);
-        user.setUpdatedAt(now);
-        return userRepository.save(user);
+    public User createStaff(String email, String password, String firstName, String lastName, Set<Role> roles,
+                            long actorId) {
+        return officialService.add(email, firstName, lastName, password, roles, actorId);
     }
 
+    /**
+     * Creates the first admin, before anyone can sign in. Recorded in the officials log with no actor, because
+     * there was no one to do it.
+     */
     @Transactional
     public User createAdmin(String email, String password, String firstName, String lastName) {
         // T-08-01 server-side replay guard (defence-in-depth — SetupService is the first guard)
         if (userRepository.count() > 0) {
             throw new IllegalStateException("Bootstrap already complete - users exist");
         }
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("Email already registered");
-        }
-        User user = new User();
-        user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(password));
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
-        user.setRoles(Set.of(Role.ADMIN));
-        Instant now = Instant.now();
-        user.setCreatedAt(now);
-        user.setUpdatedAt(now);
-        return userRepository.save(user);
+        return officialService.add(email, firstName, lastName, password, Set.of(Role.ADMIN), null);
     }
 }

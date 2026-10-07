@@ -64,7 +64,7 @@ public class OfficialService {
         this.clock = clock;
     }
 
-    public User add(String email, String firstName, String lastName, String password, Set<Role> roles, long actorId) {
+    public User add(String email, String firstName, String lastName, String password, Set<Role> roles, Long actorId) {
         String address = requireText(email, "Email");
         Set<Role> granted = requireRoles(roles);
         requirePassword(password);
