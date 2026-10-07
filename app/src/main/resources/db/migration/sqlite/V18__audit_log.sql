@@ -2,6 +2,8 @@
 -- The older per-subject logs (official_audit_log, entry_audit_log, competitor_audit_log) stay as they are.
 --   occurred_at: UTC microseconds.
 --   actor_user_id: the official, or null for the command line, a background job or someone not signed in.
+--     Set to null if the user row is ever deleted (officials are not deleted in the app); actor_label still
+--     says who it was.
 --   actor_label: who that was, kept as text so the row still reads right if the official is later renamed:
 --     the official's name and email, "cli:<os user>", "system:<job>" or "anonymous:<email tried>".
 --   source: UI (a request through the app), CLI (a command line tool) or SYSTEM (a background job).
@@ -24,7 +26,7 @@ CREATE TABLE audit_log (
     summary VARCHAR(500) NOT NULL,
     before_json TEXT CHECK (before_json IS NULL OR json_valid(before_json)),
     after_json TEXT CHECK (after_json IS NULL OR json_valid(after_json)),
-    CONSTRAINT audit_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES users(id)
+    CONSTRAINT audit_log_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 CREATE INDEX idx_audit_log_occurred_at ON audit_log (occurred_at);
 CREATE INDEX idx_audit_log_entity ON audit_log (entity_type, entity_id);
