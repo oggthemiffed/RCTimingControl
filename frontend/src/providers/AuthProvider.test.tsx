@@ -72,9 +72,9 @@ describe('AuthProvider sign-out', () => {
 
     fireEvent.click(screen.getByText('Sign out'));
 
-    expect(revoke).toHaveBeenCalledWith('/api/v1/auth/refresh');
-    await waitFor(() => expect(screen.getByText('Login page')).toBeInTheDocument());
     expect(getAccessToken()).toBeNull();
+    await waitFor(() => expect(revoke).toHaveBeenCalledWith('/api/v1/auth/refresh'));
+    await waitFor(() => expect(screen.getByText('Login page')).toBeInTheDocument());
   });
 
   it('still signs out here when the server cannot be reached', async () => {

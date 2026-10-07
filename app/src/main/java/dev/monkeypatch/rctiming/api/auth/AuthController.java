@@ -92,9 +92,11 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // Token rotation: revoke old, issue new
-        oldToken.setRevoked(true);
-        refreshTokenRepository.save(oldToken);
+        // Token rotation: revoke old, issue new. Revoking is one compare-and-set, so a token used by two
+        // requests at once (a double click, two tabs) is accepted for only one of them.
+        if (!refreshTokenRepository.revokeIfActive(oldToken.getId())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         User user = userService.findById(oldToken.getUserId()).orElse(null);
         if (user == null) {
@@ -123,18 +125,19 @@ public class AuthController {
      * send the cookie (the access token has usually expired by then) and idempotent: no cookie, an unknown token or an already revoked one all answer 204. Only this
      * browser's token is revoked, so the same official stays signed in elsewhere. The access token already
      * issued stays valid until it expires (15 minutes).
+     *
+     * <p>If a refresh from this browser is still in flight, it rotates the cookie after this call revokes the
+     * old token. The page prevents that by waiting for its own refresh to finish before calling this (see
+     * {@code endSession} in the frontend's {@code lib/auth.ts}); a refresh from another tab at the same
+     * instant is not prevented.
      */
     @DeleteMapping("/refresh")
     public ResponseEntity<Void> logout(
             @CookieValue(name = "refresh_token", required = false) String rawCookieToken,
             HttpServletResponse response) {
         if (rawCookieToken != null) {
-            refreshTokenRepository.findByTokenHash(sha256Hex(rawCookieToken)).ifPresent(token -> {
-                if (!token.isRevoked()) {
-                    token.setRevoked(true);
-                    refreshTokenRepository.save(token);
-                }
-            });
+            refreshTokenRepository.findByTokenHash(sha256Hex(rawCookieToken))
+                    .ifPresent(token -> refreshTokenRepository.revokeIfActive(token.getId()));
         }
         // Same name, path and attributes as the cookie that was set, with no lifetime, so the browser drops it
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie("", Duration.ZERO).toString());

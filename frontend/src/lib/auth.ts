@@ -4,6 +4,9 @@ import axios from 'axios';
 // in across page loads, so a reload gets a new access token from /auth/refresh (see AuthProvider).
 let accessToken: string | null = null;
 
+// The same base the api instance uses, so a refresh goes to the server the rest of the app talks to
+const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL || '';
+
 export function getAccessToken(): string | null {
   return accessToken;
 }
@@ -16,6 +19,10 @@ export function clearAccessToken(): void {
   accessToken = null;
 }
 
+// Bumped by endSession. A refresh started before then must not store its token: it would sign the page
+// back in after the person signed out.
+let sessionGeneration = 0;
+
 // Refreshes in flight share one request: the refresh token rotates, so a second concurrent call would
 // present a token the first has already used up and sign the official out.
 let refreshing: Promise<string> | null = null;
@@ -26,9 +33,11 @@ let refreshing: Promise<string> | null = null;
  * or revoked.
  */
 export function refreshAccessToken(): Promise<string> {
+  const generation = sessionGeneration;
   refreshing ??= axios
-    .post<{ accessToken: string }>('/api/v1/auth/refresh', {}, { withCredentials: true })
+    .post<{ accessToken: string }>(`${API_BASE_URL}/api/v1/auth/refresh`, {}, { withCredentials: true })
     .then(({ data }) => {
+      if (generation !== sessionGeneration) throw new Error('Signed out while refreshing');
       setAccessToken(data.accessToken);
       return data.accessToken;
     })
@@ -36,6 +45,22 @@ export function refreshAccessToken(): Promise<string> {
       refreshing = null;
     });
   return refreshing;
+}
+
+/**
+ * Ends this page's session. Drops the access token at once and makes any refresh still in flight discard
+ * its result. Resolves when no refresh is outstanding: that refresh may already have rotated the refresh
+ * cookie, and the cookie must be final before the server is asked to revoke it, or the revoke would hit
+ * the old token and the new one would keep the browser signed in.
+ */
+export async function endSession(): Promise<void> {
+  sessionGeneration++;
+  accessToken = null;
+  try {
+    await refreshing;
+  } catch {
+    // A refresh that failed (or was discarded) has nothing left to wait for
+  }
 }
 
 /** Seconds since the epoch at which a JWT expires, or null when it cannot be read. */

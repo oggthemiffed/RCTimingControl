@@ -228,6 +228,32 @@ class AuthControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void refresh_theSameCookieUsedAtOnce_isAcceptedOnlyOnce() throws Exception {
+        String cookie = loginCookie(createUser(Set.of(Role.RACE_DIRECTOR)));
+        int callers = 6;
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(callers);
+        java.util.concurrent.CountDownLatch go = new java.util.concurrent.CountDownLatch(1);
+        try {
+            List<java.util.concurrent.Future<HttpStatus>> results = new java.util.ArrayList<>();
+            for (int i = 0; i < callers; i++) {
+                results.add(pool.submit(() -> {
+                    go.await();
+                    return HttpStatus.valueOf(refresh(cookie).getStatusCode().value());
+                }));
+            }
+            go.countDown();
+            long accepted = 0;
+            for (var result : results) {
+                if (result.get(30, java.util.concurrent.TimeUnit.SECONDS) == HttpStatus.OK) accepted++;
+            }
+
+            assertThat(accepted).isEqualTo(1);
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test
     void logout_withNoCookieOrAnUnknownOne_isStillNoContent() {
         assertThat(deleteRefresh(null).getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(deleteRefresh("garbage-token").getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);

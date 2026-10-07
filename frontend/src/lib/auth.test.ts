@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
 
-import { clearAccessToken, currentAccessToken, getAccessToken, refreshAccessToken, setAccessToken } from './auth';
+import {
+  clearAccessToken, currentAccessToken, endSession, getAccessToken, refreshAccessToken, setAccessToken,
+} from './auth';
 
 vi.mock('axios', () => ({ default: { post: vi.fn() } }));
 const post = vi.mocked(axios.post);
@@ -80,3 +82,59 @@ describe('access token renewal', () => {
     expect(await refreshAccessToken()).toBe('two');
   });
 });
+
+describe('ending the session', () => {
+  beforeEach(() => {
+    post.mockReset();
+    clearAccessToken();
+  });
+
+  it('drops the token at once', async () => {
+    setAccessToken('token');
+
+    const ended = endSession();
+
+    expect(getAccessToken()).toBeNull();
+    await ended;
+  });
+
+  it('does not let a refresh already under way sign the page back in', async () => {
+    let resolve!: (v: { data: { accessToken: string } }) => void;
+    post.mockReturnValue(new Promise((r) => (resolve = r)));
+    const inFlight = refreshAccessToken();
+    inFlight.catch(() => {});
+
+    const ended = endSession();
+    resolve({ data: { accessToken: 'late' } });
+    await ended;
+
+    expect(getAccessToken()).toBeNull();
+    await expect(inFlight).rejects.toThrow('Signed out');
+  });
+
+  it('waits for a refresh under way, so the refresh cookie is final before it is revoked', async () => {
+    let resolve!: (v: { data: { accessToken: string } }) => void;
+    post.mockReturnValue(new Promise((r) => (resolve = r)));
+    refreshAccessToken().catch(() => {});
+    let finished = false;
+
+    const ended = endSession().then(() => {
+      finished = true;
+    });
+    await Promise.resolve();
+    expect(finished).toBe(false);
+
+    resolve({ data: { accessToken: 'late' } });
+    await ended;
+    expect(finished).toBe(true);
+  });
+
+  it('lets a later sign-in refresh normally', async () => {
+    await endSession();
+    post.mockResolvedValue({ data: { accessToken: 'fresh' } });
+
+    expect(await refreshAccessToken()).toBe('fresh');
+    expect(getAccessToken()).toBe('fresh');
+  });
+});
+

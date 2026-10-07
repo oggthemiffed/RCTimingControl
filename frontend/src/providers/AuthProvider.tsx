@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import axios from 'axios';
 import api from '@/lib/api';
-import { setAccessToken, clearAccessToken, NotAnOfficialError } from '@/lib/auth';
+import { setAccessToken, endSession, NotAnOfficialError } from '@/lib/auth';
 
 export interface AuthUser {
   id: string;
@@ -84,10 +84,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    // Revoke this browser's refresh token on the server, or the cookie would sign the official straight
-    // back in on the next load. Best effort: signing out here must work even when the server cannot be reached.
-    api.delete('/api/v1/auth/refresh').catch(() => {});
-    clearAccessToken();
+    // The token is dropped at once. Then, once any refresh already under way has finished, this browser's
+    // refresh token is revoked on the server, or the cookie would sign the official straight back in on the
+    // next load. Best effort: signing out here must work even when the server cannot be reached.
+    void endSession()
+      .then(() => api.delete('/api/v1/auth/refresh'))
+      .catch(() => {});
     setAccessTokenState(null);
     setUser(null);
     navigate('/login');

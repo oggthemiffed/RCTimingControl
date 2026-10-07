@@ -27,6 +27,19 @@ public class RefreshTokenRepository extends JooqRepository<RefreshToken, Refresh
         return findWhere(REFRESH_TOKENS.USER_ID.eq(userId).and(REFRESH_TOKENS.REVOKED.isFalse()));
     }
 
+    /**
+     * Revokes one token if it is still active, in a single statement. Returns false when it was already
+     * revoked, so of two requests that present the same token at once, only one gets true. That keeps a
+     * refresh token single-use under concurrency, where a read followed by a save would let both through.
+     */
+    @Transactional
+    public boolean revokeIfActive(Long tokenId) {
+        return dsl.update(REFRESH_TOKENS)
+                .set(REFRESH_TOKENS.REVOKED, true)
+                .where(REFRESH_TOKENS.ID.eq(tokenId).and(REFRESH_TOKENS.REVOKED.isFalse()))
+                .execute() == 1;
+    }
+
     /** Revokes every refresh token the official still holds, signing them out of every browser. */
     @Transactional
     public int revokeAllForUser(Long userId) {
