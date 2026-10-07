@@ -512,7 +512,16 @@ Content-Type: application/json
 { "spokenName": "Shiv-awn Keen" }
 ```
 
-Admin only. Send an empty string to clear it. The text is trimmed and can be at most 100 characters (400 otherwise); an unknown competitor is 404. Returns the competitor. The grid-call audio uses it from the next race to reach the grid (the clips are made then), the running order from its next announcement, and a RaceHub or CSV re-import never changes it.
+Requires `ADMIN`, `RACE_DIRECTOR` or `REFEREE`, so a name can be fixed at the check-in desk on the day. Every real change is recorded with who made it (see below); saving the same value again records nothing. Send an empty string to clear it. The text is trimmed and can be at most 100 characters (400 otherwise); an unknown competitor is 404. Returns the competitor. The grid-call audio uses it from the next race to reach the grid (the clips are made then), the running order from its next announcement, and a RaceHub or CSV re-import never changes it.
+
+### See who changed how a name is said
+
+```http
+GET /admin/competitors/{id}/changes
+Authorization: Bearer <token>
+```
+
+Admin only. Newest first: `[{ "at": "...", "by": "Dana Director", "action": "SPOKEN_NAME_CHANGED", "before": null, "after": "Shiv-awn Keen" }]`. The history follows a competitor through a merge.
 
 ### Hear it in the announcer voice
 
@@ -524,7 +533,7 @@ Content-Type: application/json
 { "text": "Shiv-awn Keen" }
 ```
 
-Admin only. Returns `audio/wav` made with the club's current voice. 503 when the voice service is not running.
+Any official. Returns `audio/wav` made with the club's current voice. 503 when the voice service is not running.
 
 ### List possible duplicates
 

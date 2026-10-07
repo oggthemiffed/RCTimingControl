@@ -33,12 +33,22 @@ vi.mock('barcode-detector/ponyfill', () => {
 });
 
 import { checkInResolve, checkInSearch, checkInConfirm } from '@/lib/raceControlApi';
+import { adminApi } from '@/lib/adminApi';
+
+vi.mock('@/lib/adminApi', () => ({
+  adminApi: { competitors: { setSpokenName: vi.fn(), previewSpeech: vi.fn(), changes: vi.fn() } },
+}));
+const mockUser = vi.fn();
+vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: mockUser() }) }));
 
 const EVENT_ID = 7;
 
 const sampleEntry = {
   entryId: 5,
   competitorName: 'Jane Doe',
+  competitorId: 5,
+  spokenName: null,
+  speechName: 'Jane Doe',
   className: 'Touring Stock',
   transponderNumber: '1234567',
   secondaryTransponderNumber: null,
@@ -66,6 +76,10 @@ function renderDesk(ui: ReactElement = <CheckInDesk eventId={EVENT_ID} />) {
 }
 
 beforeEach(() => {
+  mockUser.mockReturnValue({ roles: ['RACE_DIRECTOR'] });
+  vi.mocked(adminApi.competitors.setSpokenName).mockReset();
+  vi.mocked(adminApi.competitors.changes).mockReset();
+  vi.mocked(adminApi.competitors.changes).mockResolvedValue([]);
   vi.mocked(checkInResolve).mockReset();
   vi.mocked(checkInSearch).mockReset();
   vi.mocked(checkInConfirm).mockReset();
@@ -245,5 +259,39 @@ describe('CheckInDesk: withdrawn entry', () => {
     fireEvent.click(screen.getByRole('button', { name: /confirm check-in/i }));
 
     await screen.findByText(/was withdrawn/i);
+  });
+});
+
+describe('CheckInDesk: how a name is said', () => {
+  it('lets a race director fix how the name is said, and shows the new wording', async () => {
+    vi.mocked(checkInResolve).mockResolvedValue([sampleEntry]);
+    vi.mocked(adminApi.competitors.setSpokenName).mockResolvedValue({
+      id: 5, displayName: 'Jane Doe', brcaNumber: null, homeClub: null,
+      spokenName: 'Jayne Doh', speechName: 'Jayne Doh',
+    });
+
+    renderDesk();
+    scan('1234567');
+    await screen.findByText('Jane Doe');
+    expect(screen.getByText('Announced as “Jane Doe”')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Edit how Jane Doe is said'));
+    fireEvent.change(screen.getByLabelText('Say Jane Doe as'), { target: { value: 'Jayne Doh' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(adminApi.competitors.setSpokenName).toHaveBeenCalledWith(5, 'Jayne Doh'));
+    expect(await screen.findByText('Announced as “Jayne Doh”')).toBeInTheDocument();
+    expect(adminApi.competitors.changes).not.toHaveBeenCalled();
+  });
+
+  it('does not offer it to someone without a race-control role', async () => {
+    mockUser.mockReturnValue({ roles: [] });
+    vi.mocked(checkInResolve).mockResolvedValue([sampleEntry]);
+
+    renderDesk();
+    scan('1234567');
+    await screen.findByText('Jane Doe');
+
+    expect(screen.queryByLabelText('Edit how Jane Doe is said')).not.toBeInTheDocument();
   });
 });

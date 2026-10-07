@@ -49,6 +49,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog.COMPETITOR_AUDIT_LOG;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.ENTRY_AUDIT_LOG;
@@ -61,6 +62,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CompetitorMergeIT extends AbstractIntegrationTest {
 
     @Autowired CompetitorMergeService mergeService;
+    @Autowired CompetitorService competitorService;
+    @Autowired CompetitorAuditLogRepository competitorAuditLogRepository;
     @Autowired CompetitorRepository competitorRepository;
     @Autowired EntryRepository entryRepository;
     @Autowired EntryAuditLogRepository auditLogRepository;
@@ -163,6 +166,22 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         assertThat(audit.get(0).getEntryId()).isEqualTo(dupEntry.getId());
         assertThat(audit.get(0).getAdminUserId()).isEqualTo(adminId);
         assertThat(audit.get(0).getReason()).contains("Alex  Rowe " + run).contains("Alex Rowe " + run);
+    }
+
+    @Test
+    void theDuplicatesChangeHistoryMovesToTheCompetitorKept() {
+        Competitor keep = competitor("History Keep " + run, null, null, null, null, null);
+        Competitor duplicate = competitor("History Dup " + run, null, null, null, null, null);
+        competitorService.setSpokenName(duplicate.getId(), "Dup say-as", adminId);
+
+        mergeService.merge(keep.getId(), duplicate.getId(), adminId);
+
+        List<CompetitorAuditLog> history = competitorAuditLogRepository.findByCompetitorIdOrderByCreatedAtAsc(keep.getId());
+        assertThat(history).singleElement().satisfies(log -> {
+            assertThat(log.getAction()).isEqualTo(CompetitorAuditLog.SPOKEN_NAME_CHANGED);
+            assertThat(log.getAfterValue()).isEqualTo("Dup say-as");
+            assertThat(log.getActorUserId()).isEqualTo(adminId);
+        });
     }
 
     @Test
@@ -323,7 +342,11 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         c.setUpdatedAt(Instant.now());
         Competitor saved = competitorRepository.save(c);
         // The merge deletes the duplicate, so this may find nothing
-        cleanup.add(() -> competitorRepository.deleteById(saved.getId()));
+        cleanup.add(() -> {
+            dsl.transaction(tx -> tx.dsl().deleteFrom(COMPETITOR_AUDIT_LOG)
+                    .where(COMPETITOR_AUDIT_LOG.COMPETITOR_ID.eq(saved.getId())).execute());
+            competitorRepository.deleteById(saved.getId());
+        });
         return saved;
     }
 

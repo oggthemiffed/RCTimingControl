@@ -17,6 +17,9 @@ const EVENT_ID = 7;
 const sampleEntry = {
   entryId: 5,
   competitorName: 'Jane Doe',
+  competitorId: 5,
+  spokenName: null,
+  speechName: 'Jane Doe',
   className: 'Touring Stock',
   transponderNumber: '1234567',
   secondaryTransponderNumber: '2222',

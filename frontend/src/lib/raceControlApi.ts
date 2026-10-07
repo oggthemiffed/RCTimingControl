@@ -328,6 +328,12 @@ export async function setLiveFeedSetting(eventId: number, enabled: boolean): Pro
 export type CheckInEntry = {
   entryId: number;
   competitorName: string;
+  /** For fixing how the name is said at the desk (#119). */
+  competitorId: number | null;
+  /** The override for how the name is said aloud; null means none. */
+  spokenName: string | null;
+  /** What the announcer says for this driver: the spoken name, else the name tidied (#120). */
+  speechName: string;
   className: string | null;
   transponderNumber: string;
   secondaryTransponderNumber: string | null;

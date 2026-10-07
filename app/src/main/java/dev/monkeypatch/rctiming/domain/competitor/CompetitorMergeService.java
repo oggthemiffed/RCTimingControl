@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog.COMPETITOR_AUDIT_LOG;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Events.EVENTS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACING_CLASSES;
@@ -34,7 +35,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACIN
  * merge moves everything onto one record.
  * <p>
  * Only two tables point at a competitor: {@code entries} (results and championship points are derived
- * from entries) and {@code championship_exclusions}. Both move, and the duplicate is then deleted, all
+ * from entries) and {@code championship_exclusions}. Both move, along with the duplicate's change history, and the duplicate is then deleted, all
  * in one transaction. Each moved entry gets an audit row.
  * <p>
  * What the kept competitor ends up with: its own display name; its BRCA number, home club and spoken
@@ -117,6 +118,12 @@ public class CompetitorMergeService {
         int exclusions = dsl.update(CHAMPIONSHIP_EXCLUSIONS)
                 .set(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID, keepId)
                 .where(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID.eq(duplicateId))
+                .execute();
+
+        // The duplicate's change history goes with the competitor that is kept
+        dsl.update(COMPETITOR_AUDIT_LOG)
+                .set(COMPETITOR_AUDIT_LOG.COMPETITOR_ID, keepId)
+                .where(COMPETITOR_AUDIT_LOG.COMPETITOR_ID.eq(duplicateId))
                 .execute();
 
         // The external id is unique, so the duplicate lets go of it before the kept competitor takes it

@@ -108,6 +108,10 @@ class CheckInControllerIT extends AbstractIntegrationTest {
             assertThat(dto.get("className")).isEqualTo(className);
             assertThat(dto.get("checkedIn")).isEqualTo(false);
             assertThat(dto.get("racehubArrival")).isEqualTo("ARRIVED");
+            // So the desk can fix how the name is said (#119)
+            assertThat(dto.get("competitorId")).isNotNull();
+            assertThat(dto.get("spokenName")).isNull();
+            assertThat((String) dto.get("speechName")).startsWith("Jane Doe");
         }
     }
 

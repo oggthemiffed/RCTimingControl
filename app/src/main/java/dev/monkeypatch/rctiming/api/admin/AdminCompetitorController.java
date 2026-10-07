@@ -7,6 +7,7 @@ import dev.monkeypatch.rctiming.domain.competitor.CompetitorMergeService;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
 import dev.monkeypatch.rctiming.infrastructure.tts.PiperTtsClient;
 import dev.monkeypatch.rctiming.infrastructure.tts.TtsUnavailableException;
+import dev.monkeypatch.rctiming.query.competitor.CompetitorChangeDto;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorDuplicateGroupDto;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorQueryService;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorSummaryDto;
@@ -88,6 +89,13 @@ public class AdminCompetitorController {
         return mergeService.merge(body.keepId(), body.duplicateId(), Long.parseLong(auth.getName()));
     }
 
+    /** Who changed how a competitor's name is said aloud, and when (admin only). */
+    @GetMapping("/{id}/changes")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<CompetitorChangeDto> changes(@PathVariable Long id) {
+        return competitorQueryService.listChanges(id);
+    }
+
     /** Body for setting how a name is said aloud. Null or blank clears it. */
     public record SpokenNameRequest(String spokenName) {}
 
@@ -95,11 +103,14 @@ public class AdminCompetitorController {
     public record SpeechPreviewRequest(
             @NotBlank @Size(max = CompetitorService.MAX_SPOKEN_NAME_LENGTH) String text) {}
 
-    /** Set, change or clear how a competitor's name is said aloud (#119). */
+    /**
+     * Set, change or clear how a competitor's name is said aloud (#119). Any official may, since it is
+     * often noticed on the day at the check-in desk; each change is recorded with who made it.
+     */
     @PutMapping("/{id}/spoken-name")
-    @PreAuthorize("hasRole('ADMIN')")
-    public CompetitorSummaryDto setSpokenName(@PathVariable Long id, @RequestBody SpokenNameRequest body) {
-        Competitor c = competitorService.setSpokenName(id, body.spokenName());
+    public CompetitorSummaryDto setSpokenName(Authentication auth, @PathVariable Long id,
+                                              @RequestBody SpokenNameRequest body) {
+        Competitor c = competitorService.setSpokenName(id, body.spokenName(), Long.parseLong(auth.getName()));
         return new CompetitorSummaryDto(c.getId(), c.getDisplayName(), c.getBrcaNumber(), c.getHomeClub(),
                 c.getSpokenName(), c.speechName());
     }
@@ -109,7 +120,6 @@ public class AdminCompetitorController {
      * it (#119). 503 when Piper is not reachable; the page then uses the browser voice.
      */
     @PostMapping("/spoken-name/preview")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<byte[]> previewSpokenName(@Valid @RequestBody SpeechPreviewRequest body) {
         String voice = clubProfileRepository.findAll().stream()
                 .findFirst()

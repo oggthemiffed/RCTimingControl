@@ -61,6 +61,15 @@ class AdminCompetitorControllerIT extends AbstractIntegrationTest {
         assertThat(listed.get("displayName").asText()).isEqualTo(c.getDisplayName());
         assertThat(listed.get("speechName").asText()).isEqualTo("Shiv-awn Keen");
 
+        ResponseEntity<JsonNode> history = restTemplate.exchange("/api/v1/admin/competitors/" + c.getId() + "/changes",
+                HttpMethod.GET, new HttpEntity<>(headers(token)), JsonNode.class);
+        assertThat(history.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(history.getBody()).hasSize(1);
+        assertThat(history.getBody().get(0).get("by").asText()).isEqualTo("Staff User");
+        assertThat(history.getBody().get(0).get("action").asText()).isEqualTo("SPOKEN_NAME_CHANGED");
+        assertThat(history.getBody().get(0).get("before").isNull()).isTrue();
+        assertThat(history.getBody().get(0).get("after").asText()).isEqualTo("Shiv-awn Keen");
+
         ResponseEntity<JsonNode> cleared = put(token, c.getId(), "");
         assertThat(cleared.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(cleared.getBody().get("spokenName").isNull()).isTrue();
@@ -87,12 +96,56 @@ class AdminCompetitorControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void onlyAnAdminCanChangeASpokenName() {
-        Competitor c = competitorService.createWalkIn("Ref Edit " + UUID.randomUUID());
+    void aRaceDirectorOrRefereeCanChangeASpokenNameAndItIsRecordedAgainstThem() {
+        Competitor c = competitorService.createWalkIn("Desk Fix " + UUID.randomUUID());
+        String director = loginAs(Set.of(Role.RACE_DIRECTOR));
+        String referee = loginAs(Set.of(Role.REFEREE));
 
-        ResponseEntity<JsonNode> resp = put(loginAs(Set.of(Role.REFEREE)), c.getId(), "x");
+        assertThat(put(director, c.getId(), "Desk Fix-ed").getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(competitorRepository.findById(c.getId()).orElseThrow().getSpokenName()).isEqualTo("Desk Fix-ed");
+        assertThat(put(referee, c.getId(), "Desk Fix-ed Again").getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        JsonNode history = restTemplate.exchange("/api/v1/admin/competitors/" + c.getId() + "/changes",
+                HttpMethod.GET, new HttpEntity<>(headers(loginAs(Set.of(Role.ADMIN)))), JsonNode.class).getBody();
+        assertThat(history).hasSize(2);
+        // Newest first
+        assertThat(history.get(0).get("before").asText()).isEqualTo("Desk Fix-ed");
+        assertThat(history.get(0).get("after").asText()).isEqualTo("Desk Fix-ed Again");
+        assertThat(history.get(1).get("after").asText()).isEqualTo("Desk Fix-ed");
+    }
+
+    @Test
+    void savingTheSameSpokenNameAgainIsNotRecordedAsAChange() {
+        String admin = loginAs(Set.of(Role.ADMIN));
+        Competitor c = competitorService.createWalkIn("Same Twice " + UUID.randomUUID());
+
+        put(admin, c.getId(), "Same-ee");
+        put(admin, c.getId(), "  Same-ee ");
+
+        JsonNode history = restTemplate.exchange("/api/v1/admin/competitors/" + c.getId() + "/changes",
+                HttpMethod.GET, new HttpEntity<>(headers(admin)), JsonNode.class).getBody();
+        assertThat(history).hasSize(1);
+    }
+
+    @Test
+    void onlyAnAdminSeesTheChangeHistory() {
+        Competitor c = competitorService.createWalkIn("History Private " + UUID.randomUUID());
+
+        ResponseEntity<JsonNode> resp = restTemplate.exchange("/api/v1/admin/competitors/" + c.getId() + "/changes",
+                HttpMethod.GET, new HttpEntity<>(headers(loginAs(Set.of(Role.REFEREE)))), JsonNode.class);
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void anonymousCallersCannotChangeASpokenName() {
+        Competitor c = competitorService.createWalkIn("Anonymous " + UUID.randomUUID());
+
+        ResponseEntity<JsonNode> resp = restTemplate.exchange(
+                "/api/v1/admin/competitors/" + c.getId() + "/spoken-name", HttpMethod.PUT,
+                new HttpEntity<>(Map.of("spokenName", "x")), JsonNode.class);
+
+        assertThat(resp.getStatusCode().value()).isIn(401, 403);
         assertThat(competitorRepository.findById(c.getId()).orElseThrow().getSpokenName()).isNull();
     }
 
@@ -127,7 +180,7 @@ class AdminCompetitorControllerIT extends AbstractIntegrationTest {
         String admin = loginAs(Set.of(Role.ADMIN));
         Competitor keep = competitorService.createWalkIn("Merge Keep " + UUID.randomUUID());
         Competitor duplicate = competitorService.createWalkIn("Merge Dup " + UUID.randomUUID());
-        duplicate = competitorService.setSpokenName(duplicate.getId(), "Dup-ee");
+        put(admin, duplicate.getId(), "Dup-ee");
 
         ResponseEntity<JsonNode> preview = restTemplate.exchange(
                 "/api/v1/admin/competitors/merge-preview?keepId=" + keep.getId() + "&duplicateId=" + duplicate.getId(),

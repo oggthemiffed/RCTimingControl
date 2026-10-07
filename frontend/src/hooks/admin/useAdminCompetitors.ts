@@ -19,6 +19,15 @@ export function useSetSpokenName() {
   });
 }
 
+/** Who changed how a competitor's name is said (admin only), newest first (#119). */
+export function useCompetitorChanges(id: number, enabled: boolean) {
+  return useQuery({
+    queryKey: adminQueryKeys.competitors.changes(id),
+    queryFn: () => adminApi.competitors.changes(id),
+    enabled,
+  });
+}
+
 /** Competitors that may be one person entered twice, for an admin to review (#123). */
 export function usePossibleDuplicates(enabled: boolean) {
   return useQuery({
