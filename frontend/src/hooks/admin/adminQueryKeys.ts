@@ -30,6 +30,9 @@ export const adminQueryKeys = {
   },
   competitors: {
     all: () => ['admin', 'competitors'] as const,
+    possibleDuplicates: () => ['admin', 'competitors', 'possible-duplicates'] as const,
+    mergePreview: (keepId: number, duplicateId: number) =>
+      ['admin', 'competitors', 'merge-preview', keepId, duplicateId] as const,
   },
   backups: {
     all: () => ['admin', 'backups'] as const,

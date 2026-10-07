@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses.CHAMPIONSHIP_CLASSES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS;
@@ -417,9 +418,14 @@ public class ChampionshipStandingsQuery {
             byClass.computeIfAbsent(rcId, k -> new ArrayList<>()).add(row);
         }
 
-        // Step 10: Sort each class by totalPoints DESC, display name as tiebreak
+        // Step 10: Sort each class by totalPoints DESC, display name as tiebreak. Classes come out in
+        // racing class order: the order the rows were first seen in follows hash-map iteration, which
+        // changes with the ids and made the output order depend on how many classes existed before.
         List<StandingsRowDto> result = new ArrayList<>();
-        for (var classRows2 : byClass.values()) {
+        // (nullsLast: a class can have no racing class assigned)
+        Map<Long, List<StandingsRowDto>> inClassOrder = new TreeMap<>(Comparator.nullsLast(Comparator.<Long>naturalOrder()));
+        inClassOrder.putAll(byClass);
+        for (var classRows2 : inClassOrder.values()) {
             classRows2.sort(Comparator.comparingInt(StandingsRowDto::totalPoints).reversed()
                     .thenComparing(StandingsRowDto::displayName));
             result.addAll(classRows2);

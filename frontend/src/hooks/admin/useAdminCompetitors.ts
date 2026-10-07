@@ -18,3 +18,36 @@ export function useSetSpokenName() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: adminQueryKeys.competitors.all() }),
   });
 }
+
+/** Competitors that may be one person entered twice, for an admin to review (#123). */
+export function usePossibleDuplicates(enabled: boolean) {
+  return useQuery({
+    queryKey: adminQueryKeys.competitors.possibleDuplicates(),
+    queryFn: adminApi.competitors.possibleDuplicates,
+    enabled,
+  });
+}
+
+/** What merging would move, once both competitors are chosen (#123). */
+export function useMergePreview(keepId: number | null, duplicateId: number | null) {
+  return useQuery({
+    queryKey: adminQueryKeys.competitors.mergePreview(keepId ?? 0, duplicateId ?? 0),
+    queryFn: () => adminApi.competitors.mergePreview(keepId!, duplicateId!),
+    enabled: keepId != null && duplicateId != null,
+    // A preview is only true at the moment it is read
+    gcTime: 0,
+  });
+}
+
+/**
+ * Merges a duplicate into the competitor to keep, then refreshes every admin list: the entries of
+ * every event now point at the competitor that was kept (#123).
+ */
+export function useMergeCompetitors() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ keepId, duplicateId }: { keepId: number; duplicateId: number }) =>
+      adminApi.competitors.merge(keepId, duplicateId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
+  });
+}

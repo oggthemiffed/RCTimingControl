@@ -526,6 +526,34 @@ Content-Type: application/json
 
 Admin only. Returns `audio/wav` made with the club's current voice. 503 when the voice service is not running.
 
+### List possible duplicates
+
+```http
+GET /admin/competitors/possible-duplicates
+Authorization: Bearer <token>
+```
+
+Admin only. Groups of competitors that may be one person entered twice: `[{ "reason": "Same name", "competitors": [ ... ] }]`. The reason is `Same name`, `Same BRCA number` or `Same name and BRCA number`. A name matches ignoring case and spacing.
+
+### Merge a duplicate into the competitor to keep
+
+```http
+GET /admin/competitors/merge-preview?keepId=7&duplicateId=12
+Authorization: Bearer <token>
+```
+
+Admin only. Shows what the merge would do and changes nothing: `keep` and `duplicate` (each with `entries`), `entriesToMove`, `eventsAffected`, `exclusionsToMove`, `resultingSpokenName`, `resultingExternalSource`, `warnings`, `blockers` and `canMerge`. `blockers` list why it can't go ahead: both are linked to different RaceHub drivers, or both have an active entry in the same class of an event.
+
+```http
+POST /admin/competitors/merge
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{ "keepId": 7, "duplicateId": 12 }
+```
+
+Admin only. Moves the duplicate's entries and championship exclusions to `keepId` and deletes the duplicate, in one transaction, and returns `{ "keptCompetitorId": 7, "entriesMoved": 3, "exclusionsMoved": 0 }`. Each moved entry gets an audit row with the action `COMPETITOR_MERGED`. The kept competitor keeps its own name and fills a missing BRCA number, home club and spoken name from the duplicate. A RaceHub id moves to the kept competitor when it has none, so the next import still finds them. **409** with `{ "code": "COMPETITOR_MERGE_REFUSED", "blockers": [...] }` when it can't go ahead; **400** for the same competitor twice; **404** for an unknown one.
+
 ---
 
 ## Admin — Entry management
