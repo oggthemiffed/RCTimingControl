@@ -1,9 +1,17 @@
 package dev.monkeypatch.rctiming.timing;
 
 /**
- * Pure data record published via ApplicationEventPublisher when a transponder passing is received.
- * The rtcTimeMicros is from the RTC_TIME field of the AMB P3 PASSING record (hardware clock, not server receipt).
- * Published by DecoderListener for each decoder passing, and by SyntheticTimingService in tests.
+ * Published for each transponder passing the decoder reports.
+ *
+ * <p>{@code rtcTimeMicros} is UTC epoch microseconds. The RC-4 text protocol carries no absolute time, so
+ * the decoder listener anchors it to the server clock (see {@code EpochAnchor}).
+ * {@code raceId} is {@link #NO_RACE} when no race is running; practice sessions still use those passings.
+ *
+ * <p>Published by {@code DecoderListener} on the single timing thread (see {@code AsyncConfig}), so
+ * listeners run in decoder order, and by the dev-profile synthetic timing service.
  */
 public record LapPassingEvent(long raceId, String transponderNumber, long rtcTimeMicros) {
+
+    /** The race id used when no race is running. */
+    public static final long NO_RACE = 0L;
 }

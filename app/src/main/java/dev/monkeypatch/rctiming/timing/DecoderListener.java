@@ -11,6 +11,7 @@ import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.SmartLifecycle;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 /**
@@ -30,7 +32,10 @@ import java.util.function.Consumer;
  * starts a new one against the new address.
  *
  * <p>Each passing is published as a {@link LapPassingEvent}, using the active-race lookup
- * (0 when no race is running). {@link LapTimingService} and the practice timing service consume it. Disable with {@code app.decoder.listener.enabled=false}.
+ * ({@link LapPassingEvent#NO_RACE} when no race is running). {@link LapTimingService} and the practice
+ * timing service consume it. The Netty thread only hands the passing to the single timing thread
+ * ({@code timingExecutor}); the race lookup, the publish and every listener run there, in decoder order.
+ * Disable with {@code app.decoder.listener.enabled=false}.
  *
  * <p>Only the RC-4 text protocol is supported. A P3 binary configuration leaves the listener
  * idle and reports the decoder as disconnected (see O5 in the local-timing plan).
@@ -59,6 +64,7 @@ public class DecoderListener implements SmartLifecycle {
     private final ApplicationEventPublisher eventPublisher;
     private final DecoderStatusPublisher statusPublisher;
     private final SourceFactory sourceFactory;
+    private final Executor timingExecutor;
 
     // Guarded by this. Settings changes and lifecycle calls both take the lock.
     private AmbRc4TimingSource source;
@@ -71,19 +77,23 @@ public class DecoderListener implements SmartLifecycle {
     public DecoderListener(ClubProfileService clubProfileService,
                            RaceRepository raceRepository,
                            ApplicationEventPublisher eventPublisher,
-                           DecoderStatusPublisher statusPublisher) {
-        this(clubProfileService, raceRepository, eventPublisher, statusPublisher, AmbRc4TimingSource::new);
+                           DecoderStatusPublisher statusPublisher,
+                           @Qualifier("timingExecutor") Executor timingExecutor) {
+        this(clubProfileService, raceRepository, eventPublisher, statusPublisher, timingExecutor,
+                AmbRc4TimingSource::new);
     }
 
     DecoderListener(ClubProfileService clubProfileService,
                     RaceRepository raceRepository,
                     ApplicationEventPublisher eventPublisher,
                     DecoderStatusPublisher statusPublisher,
+                    Executor timingExecutor,
                     SourceFactory sourceFactory) {
         this.clubProfileService = clubProfileService;
         this.raceRepository = raceRepository;
         this.eventPublisher = eventPublisher;
         this.statusPublisher = statusPublisher;
+        this.timingExecutor = timingExecutor;
         this.sourceFactory = sourceFactory;
     }
 
@@ -160,11 +170,7 @@ public class DecoderListener implements SmartLifecycle {
         log.info("Direct decoder listener starting — decoder={}:{}", settings.host(), settings.port());
         int current = generation;
         source = sourceFactory.create(settings.host(), settings.port(),
-                passing -> {
-                    if (current == generation) {
-                        onPassing(passing);
-                    }
-                },
+                passing -> onPassing(current, passing),
                 state -> onStatus(current, state));
         source.start();
     }
@@ -190,15 +196,37 @@ public class DecoderListener implements SmartLifecycle {
         }
     }
 
-    /**
-     * Publishes one decoded passing. Runs on the Netty event-loop thread. Package-private so it
-     * can be exercised without a socket.
-     */
+    /** As {@link #onPassing(int, EpochCorrectedPassing)}, for the source that is current right now. */
     void onPassing(EpochCorrectedPassing passing) {
-        long raceId = raceRepository.findFirstByStatus(RaceStatus.RUNNING)
-                .map(Race::getId)
-                .orElse(0L);
-        eventPublisher.publishEvent(
-                new LapPassingEvent(raceId, passing.transponderNumber(), passing.rtcTimeMicros()));
+        onPassing(generation, passing);
+    }
+
+    /**
+     * Hands one decoded passing to the timing thread. Runs on the Netty event-loop thread, which must
+     * not touch the database, so the race lookup happens in {@link #publishPassing}. The generation is
+     * checked again when the timing thread gets to it, not only here: the passing may wait behind others,
+     * and the source can be retired in the meantime. Package-private so it can be exercised without a
+     * socket.
+     */
+    void onPassing(int sourceGeneration, EpochCorrectedPassing passing) {
+        timingExecutor.execute(() -> {
+            if (sourceGeneration == generation) {
+                publishPassing(passing);
+            }
+        });
+    }
+
+    /** Runs on the timing thread: finds the running race and publishes the passing to its listeners. */
+    private void publishPassing(EpochCorrectedPassing passing) {
+        try {
+            long raceId = raceRepository.findFirstByStatus(RaceStatus.RUNNING)
+                    .map(Race::getId)
+                    .orElse(LapPassingEvent.NO_RACE);
+            eventPublisher.publishEvent(
+                    new LapPassingEvent(raceId, passing.transponderNumber(), passing.rtcTimeMicros()));
+        } catch (RuntimeException e) {
+            // One bad passing must not stop the ones behind it
+            log.error("Could not handle passing from transponder {}", passing.transponderNumber(), e);
+        }
     }
 }

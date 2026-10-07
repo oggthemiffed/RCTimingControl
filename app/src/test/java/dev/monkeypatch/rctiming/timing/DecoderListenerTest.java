@@ -16,6 +16,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -40,6 +41,8 @@ class DecoderListenerTest {
     private ApplicationEventPublisher eventPublisher;
     private DecoderStatusPublisher statusPublisher;
     private DecoderListener listener;
+    /** Runs on the calling thread by default; the hand-off test swaps in one that queues the work. */
+    private Executor timingExecutor = Runnable::run;
 
     /** Callbacks for each source the listener creates, in creation order. */
     private final List<Consumer<EpochCorrectedPassing>> passingCallbacks = new ArrayList<>();
@@ -52,7 +55,12 @@ class DecoderListenerTest {
         eventPublisher = mock(ApplicationEventPublisher.class);
         statusPublisher = mock(DecoderStatusPublisher.class);
         when(clubProfileService.getDecoderSettings()).thenReturn(new DecoderSettings(null, null, null));
-        listener = new DecoderListener(clubProfileService, raceRepository, eventPublisher, statusPublisher,
+        listener = newListener();
+    }
+
+    private DecoderListener newListener() {
+        return new DecoderListener(clubProfileService, raceRepository, eventPublisher, statusPublisher,
+                command -> timingExecutor.execute(command),
                 (host, port, onPassing, onStatus) -> {
                     passingCallbacks.add(onPassing);
                     statusCallbacks.add(onStatus);
@@ -83,6 +91,53 @@ class DecoderListenerTest {
         ArgumentCaptor<LapPassingEvent> captor = ArgumentCaptor.forClass(LapPassingEvent.class);
         verify(eventPublisher).publishEvent(captor.capture());
         assertThat(captor.getValue().raceId()).isZero();
+    }
+
+    @Test
+    void onPassing_doesNoWorkOnTheCallingThread_untilTheTimingThreadRunsIt() {
+        List<Runnable> queued = new ArrayList<>();
+        timingExecutor = queued::add;
+        when(raceRepository.findFirstByStatus(RaceStatus.RUNNING)).thenReturn(Optional.empty());
+
+        listener.onPassing(new EpochCorrectedPassing("1234567", 1_000_000L, 1, 1, 63, 1));
+
+        // The Netty thread has only queued the passing: no database lookup, nothing published
+        assertThat(queued).hasSize(1);
+        verify(raceRepository, never()).findFirstByStatus(any());
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
+
+        queued.get(0).run();
+
+        verify(eventPublisher).publishEvent(new LapPassingEvent(LapPassingEvent.NO_RACE, "1234567", 1_000_000L));
+    }
+
+    @Test
+    void onPassing_aFailedLookupDoesNotStopTheNextPassing() {
+        when(raceRepository.findFirstByStatus(RaceStatus.RUNNING))
+                .thenThrow(new IllegalStateException("database busy"))
+                .thenReturn(Optional.empty());
+
+        listener.onPassing(new EpochCorrectedPassing("1", 1_000_000L, 1, 1, 63, 1));
+        listener.onPassing(new EpochCorrectedPassing("2", 2_000_000L, 1, 1, 63, 1));
+
+        verify(eventPublisher).publishEvent(new LapPassingEvent(LapPassingEvent.NO_RACE, "2", 2_000_000L));
+    }
+
+    @Test
+    void aPassingQueuedBeforeTheSourceWasRetired_isNotPublishedWhenItsTurnComes() {
+        List<Runnable> queued = new ArrayList<>();
+        timingExecutor = queued::add;
+        when(raceRepository.findFirstByStatus(RaceStatus.RUNNING)).thenReturn(Optional.empty());
+        listener.start();
+        configure("localhost", 5100, "RC4");
+
+        passingCallbacks.get(0).accept(new EpochCorrectedPassing("1234567", 1_000_000L, 1, 1, 63, 1));
+        assertThat(queued).hasSize(1);
+        configure("localhost", 5200, "RC4");   // retires the first source while its passing waits
+        queued.get(0).run();
+
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
+        verify(raceRepository, never()).findFirstByStatus(any());
     }
 
     @Test
