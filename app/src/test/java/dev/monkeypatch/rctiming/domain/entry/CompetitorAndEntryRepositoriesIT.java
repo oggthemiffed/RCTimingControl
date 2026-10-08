@@ -101,6 +101,20 @@ class CompetitorAndEntryRepositoriesIT extends AbstractIntegrationTest {
                 .extracting(Competitor::getId).containsExactly(tabbed.getId());
     }
 
+    @Test
+    void findWithoutBrcaNumberByNameUsesTheSameRuleAndSkipsBrcaHolders() {
+        String n = String.valueOf(System.nanoTime());
+        Competitor plain = competitors.save(named("Ren\u00e9 M\u00fcller " + n));
+        cleanup.add(() -> competitors.deleteById(plain.getId()));
+        Competitor numbered = named("Ren\u00e9 M\u00fcller " + n);
+        numbered.setBrcaNumber("B" + n);
+        Competitor withBrca = competitors.save(numbered);
+        cleanup.add(() -> competitors.deleteById(withBrca.getId()));
+
+        assertThat(competitors.findWithoutBrcaNumberByName("REN\u00c9   M\u00dcLLER " + n))
+                .extracting(Competitor::getId).containsExactly(plain.getId());
+    }
+
     private static Competitor named(String displayName) {
         Competitor c = new Competitor();
         c.setDisplayName(displayName);

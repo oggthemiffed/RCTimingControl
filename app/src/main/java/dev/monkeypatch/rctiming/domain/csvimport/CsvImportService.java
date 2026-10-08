@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.domain.csvimport;
 
 import dev.monkeypatch.rctiming.domain.ExternalSources;
+import dev.monkeypatch.rctiming.domain.Names;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
@@ -236,7 +237,7 @@ public class CsvImportService {
     }
 
     static String competitorKey(RcTimingCsvParser.Row row) {
-        return row.brcaNumber() != null ? "brca:" + row.brcaNumber() : "name:" + normalise(row.name());
+        return row.brcaNumber() != null ? "brca:" + row.brcaNumber() : "name:" + storedKey(row.name());
     }
 
     /**
@@ -425,7 +426,12 @@ public class CsvImportService {
         return s == null || s.isBlank() ? null : s.trim();
     }
 
-    static String normalise(String s) {
+    /**
+     * The form a name takes in the keys this import stores (competitor, entry and class mapping), so a later
+     * import finds what an earlier one made. Stored, so it must not change; names are compared by
+     * {@link Names#matchKey}.
+     */
+    static String storedKey(String s) {
         return s.trim().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
     }
 
@@ -469,13 +475,13 @@ public class CsvImportService {
             eventClasses.forEach(ec -> names.put(ec.getId(), racingClassNames.get(ec.getRacingClassId())));
             byName = eventClasses.stream()
                     .filter(ec -> racingClassNames.containsKey(ec.getRacingClassId()))
-                    .collect(Collectors.groupingBy(ec -> normalise(racingClassNames.get(ec.getRacingClassId())),
+                    .collect(Collectors.groupingBy(ec -> Names.matchKey(racingClassNames.get(ec.getRacingClassId())),
                             Collectors.mapping(EventClassRef::getId, Collectors.toList())));
         }
 
         String mappingKey(RcTimingCsvParser.Row row) {
             String prefix = ExternalSources.CSV + ":";
-            return row.className() != null ? prefix + normalise(row.className()) : prefix + "#" + row.classNumber();
+            return row.className() != null ? prefix + storedKey(row.className()) : prefix + "#" + row.classNumber();
         }
 
         /**
@@ -489,7 +495,7 @@ public class CsvImportService {
                 return Optional.of(id);
             }
             if (row.className() != null) {
-                List<Long> matches = byName.getOrDefault(normalise(row.className()), List.of());
+                List<Long> matches = byName.getOrDefault(Names.matchKey(row.className()), List.of());
                 return matches.size() == 1 ? Optional.of(matches.get(0)) : Optional.empty();
             }
             int position = row.classNumber();

@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.domain.racehub;
 
 import dev.monkeypatch.rctiming.domain.ExternalSources;
+import dev.monkeypatch.rctiming.domain.Names;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.checkin.TransponderSlot;
@@ -31,7 +32,6 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -605,7 +605,7 @@ public class RaceHubImportService {
                     .stream().collect(Collectors.toMap(RacingClass::getId, RacingClass::getName));
             byName = eventClasses.stream()
                     .filter(ec -> racingClassNames.containsKey(ec.getRacingClassId()))
-                    .collect(Collectors.groupingBy(ec -> normalise(racingClassNames.get(ec.getRacingClassId())),
+                    .collect(Collectors.groupingBy(ec -> Names.matchKey(racingClassNames.get(ec.getRacingClassId())),
                             Collectors.mapping(EventClassRef::getId, Collectors.toList())));
         }
 
@@ -621,12 +621,8 @@ public class RaceHubImportService {
             if (row.rcClassName() == null) {
                 return Optional.empty();
             }
-            List<Long> matches = byName.getOrDefault(normalise(row.rcClassName()), List.of());
+            List<Long> matches = byName.getOrDefault(Names.matchKey(row.rcClassName()), List.of());
             return matches.size() == 1 ? Optional.of(matches.get(0)) : Optional.empty();
-        }
-
-        private static String normalise(String name) {
-            return name.trim().toLowerCase(Locale.ROOT);
         }
     }
 }
