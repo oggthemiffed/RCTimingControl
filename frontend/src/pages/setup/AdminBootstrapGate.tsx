@@ -71,7 +71,7 @@ export default function AdminBootstrapGate() {
         email: response.email,
         firstName: response.firstName,
         lastName: response.lastName,
-        roles: response.roles as AuthUser['roles'],
+        roles: response.roles,
       };
       setAuthFromToken(response.accessToken, authUser);
 

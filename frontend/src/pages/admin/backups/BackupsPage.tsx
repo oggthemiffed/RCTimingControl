@@ -1,10 +1,9 @@
-import { useEffect } from 'react';
 import { DatabaseBackup, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { useAdminBackups, useBackupNow } from '@/hooks/admin/useAdminBackups';
-import { useHelp } from '@/context/HelpContext';
+import { useHelpContent } from '@/context/HelpContext';
 import { BackupsHelp } from '@/help/BackupsHelp';
 import { getApiErrorMessage } from '@/lib/errors';
 
@@ -24,11 +23,7 @@ function formatSize(bytes: number) {
  * can take one now. Restoring is done with the app stopped, using the restore command.
  */
 export default function BackupsPage() {
-  const { setHelpContent } = useHelp();
-  useEffect(() => {
-    setHelpContent(<BackupsHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(BackupsHelp);
   const { data, isLoading, isError } = useAdminBackups();
   const backupNow = useBackupNow();
 

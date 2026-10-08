@@ -1,8 +1,7 @@
 // Race control's check-in page (L11): the check-in desk, plus the transponder swap tool.
-import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
-import { useHelp } from '@/context/HelpContext';
+import { useHelpContent } from '@/context/HelpContext';
 import { CheckInHelp } from '@/help/CheckInHelp';
 import CheckInDesk from './CheckInDesk';
 import TransponderSwap from './TransponderSwap';
@@ -10,12 +9,8 @@ import TransponderSwap from './TransponderSwap';
 export default function CheckInPage() {
   const { eventId } = useParams<{ eventId: string }>();
   const id = Number(eventId);
-  const { setHelpContent } = useHelp();
 
-  useEffect(() => {
-    setHelpContent(<CheckInHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(CheckInHelp);
 
   return (
     <div className="h-full overflow-y-auto">

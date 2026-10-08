@@ -4,13 +4,14 @@ import { Loader2 } from 'lucide-react';
 import axios from 'axios';
 import api from '@/lib/api';
 import { setAccessToken, endSession, NotAnOfficialError } from '@/lib/auth';
+import type { OfficialRole } from '@/lib/adminApi';
 
 export interface AuthUser {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  roles: Array<'ADMIN' | 'RACE_DIRECTOR' | 'REFEREE'>;
+  roles: OfficialRole[];
 }
 
 export interface AuthContextValue {
@@ -31,7 +32,7 @@ interface AuthResponse {
   roles: AuthUser['roles'];
 }
 
-const OFFICIAL_ROLES: AuthUser['roles'][number][] = ['ADMIN', 'RACE_DIRECTOR', 'REFEREE'];
+const OFFICIAL_ROLES: OfficialRole[] = ['ADMIN', 'RACE_DIRECTOR', 'REFEREE'];
 
 function isOfficial(roles: AuthUser['roles']): boolean {
   return roles.some((r) => OFFICIAL_ROLES.includes(r));

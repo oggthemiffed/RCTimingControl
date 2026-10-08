@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { KeyRound, Loader2, Plus, ShieldCheck, UserCheck, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useHelp } from '@/context/HelpContext';
+import { useHelpContent } from '@/context/HelpContext';
 import { OfficialsHelp } from '@/help/OfficialsHelp';
 import {
   useAddOfficial,
@@ -283,7 +283,6 @@ function DisableDialog({ official, onClose }: { official: OfficialDto; onClose: 
  * their roles, set a new password and disable or re-enable them. Every change is logged.
  */
 export default function OfficialsPage() {
-  const { setHelpContent } = useHelp();
   const { user } = useAuth();
   const { data: officials, isLoading, isError } = useOfficials();
   const { data: changes, hasNextPage, fetchNextPage, isFetchingNextPage } = useOfficialChanges();
@@ -294,10 +293,7 @@ export default function OfficialsPage() {
   const [settingPassword, setSettingPassword] = useState<OfficialDto | null>(null);
   const [disabling, setDisabling] = useState<OfficialDto | null>(null);
 
-  useEffect(() => {
-    setHelpContent(<OfficialsHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(OfficialsHelp);
 
   function enable(official: OfficialDto) {
     setEnabled.mutate({ id: official.id, enabled: true }, {
