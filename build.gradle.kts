@@ -10,3 +10,13 @@ allprojects {
     version = "0.0.1-SNAPSHOT"
     repositories { mavenCentral() }
 }
+
+subprojects {
+    // Print a failed assertion's message, not just its class and line, so a failure seen only in CI can
+    // be read from the build log (#117)
+    tasks.withType<Test>().configureEach {
+        testLogging {
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        }
+    }
+}
