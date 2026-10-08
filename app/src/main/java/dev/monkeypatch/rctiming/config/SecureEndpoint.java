@@ -17,6 +17,8 @@ public final class SecureEndpoint {
     /**
      * The address in {@code setting}, or null when it is unset.
      *
+     * @param url          the configured address, null or blank when unset
+     * @param setting      the property it comes from, named in the error
      * @param secureScheme the scheme it must use, such as https
      * @param plainScheme  the unencrypted scheme allowed only to this machine, such as http
      * @throws IllegalArgumentException when it would send the key in the clear to another machine
@@ -25,11 +27,17 @@ public final class SecureEndpoint {
         if (url == null || url.toString().isBlank()) {
             return null;
         }
+        if (url.getHost() == null) {
+            throw new IllegalArgumentException(setting + " needs to be a full address, such as " + secureScheme
+                    + "://example.org/");
+        }
+        // Only the scheme and host are echoed: the address may carry a user name and password
+        String given = url.getScheme() + "://" + url.getHost();
         if (!secureScheme.equalsIgnoreCase(url.getScheme())
                 && !(plainScheme.equalsIgnoreCase(url.getScheme()) && LoopbackHosts.isLoopback(url.getHost()))) {
             throw new IllegalArgumentException(setting + " must be a secure " + secureScheme + " address, so the "
                     + "club's key isn't sent in the clear (plain " + plainScheme + " works only to this machine), "
-                    + "not " + url);
+                    + "not " + given);
         }
         return url;
     }
