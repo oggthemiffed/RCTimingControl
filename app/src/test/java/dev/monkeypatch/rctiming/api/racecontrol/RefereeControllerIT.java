@@ -289,16 +289,22 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
         RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
         Long eventId = resolveEventId(re.race());
         Map<String, Object> body = Map.of("entryId", re.entry().getId(), "eventId", eventId);
-        restTemplate.exchange("/api/v1/race-control/referee/race/" + re.race().getId() + "/marshal-absent",
-                org.springframework.http.HttpMethod.POST, new HttpEntity<>(body, refereeHeaders()), Void.class);
-        Long absenceId = marshalAbsenceRepository.findByEventId(eventId).get(0).getId();
-
-        restTemplate.exchange("/api/v1/race-control/referee/race/" + re.race().getId() + "/apply-marshal-penalty",
+        ResponseEntity<Map> absent = restTemplate.exchange(
+                "/api/v1/race-control/referee/race/" + re.race().getId() + "/marshal-absent",
                 org.springframework.http.HttpMethod.POST, new HttpEntity<>(body, refereeHeaders()), Map.class);
-        restTemplate.exchange("/api/v1/race-control/referee/race/" + re.race().getId() + "/apply-marshal-penalty",
+        Long absenceId = ((Number) absent.getBody().get("id")).longValue();
+
+        ResponseEntity<Map> byDefault = restTemplate.exchange(
+                "/api/v1/race-control/referee/race/" + re.race().getId() + "/apply-marshal-penalty",
+                org.springframework.http.HttpMethod.POST, new HttpEntity<>(body, refereeHeaders()), Map.class);
+        ResponseEntity<Map> byName = restTemplate.exchange(
+                "/api/v1/race-control/referee/race/" + re.race().getId() + "/apply-marshal-penalty",
                 org.springframework.http.HttpMethod.POST,
                 new HttpEntity<>(Map.of("entryId", re.entry().getId(), "eventId", eventId, "absenceId", absenceId),
                         refereeHeaders()), Map.class);
+
+        assertThat(byDefault.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(byName.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         assertThat(marshalPenaltyRepository.findByEntryIdAndEventId(re.entry().getId(), eventId))
                 .hasSize(2).allSatisfy(p -> assertThat(p.getAbsenceId()).isEqualTo(absenceId));

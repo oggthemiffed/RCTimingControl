@@ -40,6 +40,7 @@ public class OfficialController {
 
     /** How many changes a page of the history holds unless the request asks for fewer or more. */
     static final int CHANGES_PAGE = 50;
+    /** The most a page may hold, whatever the request asks for. */
     static final int CHANGES_PAGE_MAX = 200;
 
     private final OfficialService officialService;

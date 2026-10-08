@@ -170,7 +170,7 @@ public class RefereeController {
     @Audited("audit_log")
     @PostMapping("/race/{raceId}/marshal-absent")
     @Transactional
-    public ResponseEntity<Void> recordMarshalAbsent(@PathVariable long raceId,
+    public ResponseEntity<MarshalAbsence> recordMarshalAbsent(@PathVariable long raceId,
                                                      @Valid @RequestBody MarshalAbsenceRequest req) {
         long userId = resolveUserId();
         MarshalAbsence absence = new MarshalAbsence();
@@ -184,12 +184,13 @@ public class RefereeController {
                 .race(raceId).event(req.eventId())
                 .summary("Recorded that " + labels.driver(req.entryId()) + " missed their marshal duty")
                 .after(Map.of("entryId", req.entryId())).record();
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(saved);
     }
 
     /**
      * Apply a marshal penalty for a recorded absence (D-22 — separate action from recording). The request can
-     * name the absence; otherwise the entry's most recent absence in the event is used, if there is one.
+     * name the absence (its id comes back from {@code marshal-absent}); otherwise the entry's most recent
+     * absence in the event is used, if there is one.
      */
     @Audited("audit_log")
     @PostMapping("/race/{raceId}/apply-marshal-penalty")
@@ -230,7 +231,7 @@ public class RefereeController {
         }
         return marshalAbsenceRepository.findByEventId(req.eventId()).stream()
                 .filter(a -> a.getEntryId().equals(req.entryId()))
-                .max(Comparator.comparing(MarshalAbsence::getRecordedAt).thenComparing(MarshalAbsence::getId))
+                .max(Comparator.comparing(MarshalAbsence::getId))
                 .map(MarshalAbsence::getId)
                 .orElse(null);
     }

@@ -118,6 +118,17 @@ class OfficialControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void changesPageSizeIsClampedAndABadCursorFindsNothing() {
+        assertThat(rest.exchange(BASE + "/changes?size=0", HttpMethod.GET, auth(), LIST).getBody())
+                .hasSizeLessThanOrEqualTo(1);
+        assertThat(rest.exchange(BASE + "/changes?size=100000", HttpMethod.GET, auth(), LIST).getBody())
+                .hasSizeLessThanOrEqualTo(OfficialController.CHANGES_PAGE_MAX);
+        assertThat(rest.exchange(BASE + "/changes?before=0", HttpMethod.GET, auth(), LIST).getBody()).isEmpty();
+        assertThat(rest.exchange(BASE + "/changes?before=abc", HttpMethod.GET, auth(), MAP).getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void anEmailAlreadyInUseIsRefused() {
         String email = createUser(Set.of(Role.REFEREE), "password123");
 

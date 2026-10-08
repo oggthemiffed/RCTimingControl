@@ -9,6 +9,7 @@ import { HelpProvider } from '@/context/HelpContext';
 import { toast } from 'sonner';
 
 vi.mock('@/lib/adminApi', () => ({
+  OFFICIAL_CHANGES_PAGE_SIZE: 50,
   adminApi: {
     officials: {
       list: vi.fn(),
@@ -166,6 +167,7 @@ describe('OfficialsPage', () => {
     renderPage();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Show older changes' }));
+    expect(api.officials.changes).toHaveBeenNthCalledWith(1, undefined);
 
     await waitFor(() => expect(api.officials.changes).toHaveBeenLastCalledWith(51));
     await waitFor(() =>
