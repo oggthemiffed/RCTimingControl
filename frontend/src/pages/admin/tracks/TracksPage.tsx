@@ -29,9 +29,13 @@ import type { TrackDto } from '@/lib/adminApi';
 const trackSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   venueNotes: z.string().nullable().or(z.literal('')),
-  trackLength: z.coerce.number().positive().nullable(),
+  // Left blank, the length is simply not set. Coercing the blank string made it 0, which failed with no message.
+  trackLength: z
+    .union([z.literal(''), z.null(), z.coerce.number().positive('Track length must be more than 0')])
+    .transform((v) => (v === '' || v === null ? null : v)),
 });
-type TrackFormValues = z.infer<typeof trackSchema>;
+type TrackFormInput = z.input<typeof trackSchema>;
+type TrackFormValues = z.output<typeof trackSchema>;
 
 function TrackFormDialog({
   open,
@@ -51,7 +55,7 @@ function TrackFormDialog({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<TrackFormValues>({
+  } = useForm<TrackFormInput, unknown, TrackFormValues>({
     resolver: zodResolver(trackSchema),
     values: {
       name: initialValue?.name ?? '',
@@ -78,6 +82,7 @@ function TrackFormDialog({
           <div className="space-y-1.5">
             <Label htmlFor="track-length">Track Length (m)</Label>
             <Input id="track-length" type="number" step="0.01" {...register('trackLength')} />
+            {errors.trackLength && <p className="text-xs text-destructive">{errors.trackLength.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="venue-notes">Venue Notes</Label>

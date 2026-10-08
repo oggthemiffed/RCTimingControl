@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -53,8 +54,14 @@ export function PenaltyDialog({ open, onOpenChange, onSubmit, isPending, drivers
 
   function handleSubmit(values: FormValues) {
     onSubmit({ entryId: values.entryId, penaltyType: values.penaltyType, value: values.value, reason: values.reason });
-    form.reset();
   }
+
+  // The form is cleared when the dialog closes, which the page does once the request has gone through. It
+  // was cleared as soon as it was sent, so a request that failed lost what had been typed.
+  const { reset } = form;
+  useEffect(() => {
+    if (!open) reset();
+  }, [open, reset]);
 
   const penaltyType = useWatch({ control: form.control, name: 'penaltyType' });
 
