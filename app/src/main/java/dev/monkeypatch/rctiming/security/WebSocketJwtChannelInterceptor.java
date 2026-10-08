@@ -12,11 +12,8 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -92,12 +89,8 @@ public class WebSocketJwtChannelInterceptor implements ChannelInterceptor {
                 log.warn("STOMP CONNECT rejected: official {} was signed out after this token was issued", officialId);
                 return null;
             }
-            List<String> roles = claims.get("roles", List.class);
-            List<GrantedAuthority> authorities = (roles != null ? roles : List.<String>of()).stream()
-                    .map(r -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + r))
-                    .toList();
             var auth = new UsernamePasswordAuthenticationToken(
-                    claims.getSubject(), null, authorities);
+                    claims.getSubject(), null, JwtTokenService.authorities(claims));
             accessor.setUser(auth);
             sessionRegistry.signedIn(accessor.getSessionId(), officialId);
         } catch (JwtException | IllegalArgumentException e) {

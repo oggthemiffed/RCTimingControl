@@ -195,7 +195,7 @@ public class AuditLog extends TableImpl<AuditLogRecord> {
 
     @Override
     public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.IDX_AUDIT_LOG_ENTITY, Indexes.IDX_AUDIT_LOG_EVENT, Indexes.IDX_AUDIT_LOG_OCCURRED_AT);
+        return Arrays.asList(Indexes.IDX_AUDIT_LOG_ENTITY, Indexes.IDX_AUDIT_LOG_EVENT, Indexes.IDX_AUDIT_LOG_OCCURRED_AT, Indexes.IDX_AUDIT_LOG_RACE);
     }
 
     @Override
@@ -213,17 +213,16 @@ public class AuditLog extends TableImpl<AuditLogRecord> {
         return Arrays.asList(Keys.AUDIT_LOG__AUDIT_LOG_ACTOR_USER_ID_FKEY);
     }
 
-    private transient UsersPath _auditLogActorUserIdFkey;
+    private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>users</code> table, via the
-     * <code>audit_log_actor_user_id_fkey</code> key.
+     * Get the implicit join path to the <code>users</code> table.
      */
-    public UsersPath auditLogActorUserIdFkey() {
-        if (_auditLogActorUserIdFkey == null)
-            _auditLogActorUserIdFkey = new UsersPath(this, Keys.AUDIT_LOG__AUDIT_LOG_ACTOR_USER_ID_FKEY, null);
+    public UsersPath users() {
+        if (_users == null)
+            _users = new UsersPath(this, Keys.AUDIT_LOG__AUDIT_LOG_ACTOR_USER_ID_FKEY, null);
 
-        return _auditLogActorUserIdFkey;
+        return _users;
     }
 
     @Override

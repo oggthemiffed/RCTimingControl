@@ -6,7 +6,9 @@ package dev.monkeypatch.rctiming.jooq.generated.tables;
 
 import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
+import dev.monkeypatch.rctiming.jooq.generated.tables.AuditLog.AuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog.CompetitorAuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.EntryAuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.OfficialAuditLog.OfficialAuditLogPath;
@@ -189,6 +191,18 @@ public class Users extends TableImpl<UsersRecord> {
         return Arrays.asList(Keys.USERS__USERS_EMAIL_KEY);
     }
 
+    private transient AuditLogPath _auditLog;
+
+    /**
+     * Get the implicit to-many join path to the <code>audit_log</code> table
+     */
+    public AuditLogPath auditLog() {
+        if (_auditLog == null)
+            _auditLog = new AuditLogPath(this, null, Keys.AUDIT_LOG__AUDIT_LOG_ACTOR_USER_ID_FKEY.getInverseKey());
+
+        return _auditLog;
+    }
+
     private transient ChampionshipExclusionsPath _championshipExclusions;
 
     /**
@@ -200,6 +214,19 @@ public class Users extends TableImpl<UsersRecord> {
             _championshipExclusions = new ChampionshipExclusionsPath(this, null, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_CREATED_BY_FKEY.getInverseKey());
 
         return _championshipExclusions;
+    }
+
+    private transient CompetitorAuditLogPath _competitorAuditLog;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>competitor_audit_log</code> table
+     */
+    public CompetitorAuditLogPath competitorAuditLog() {
+        if (_competitorAuditLog == null)
+            _competitorAuditLog = new CompetitorAuditLogPath(this, null, Keys.COMPETITOR_AUDIT_LOG__COMPETITOR_AUDIT_LOG_ACTOR_USER_ID_FKEY.getInverseKey());
+
+        return _competitorAuditLog;
     }
 
     private transient EntriesPath _entriesCheckedInByUserIdFkey;

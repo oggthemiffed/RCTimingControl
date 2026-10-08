@@ -4,13 +4,13 @@
 package dev.monkeypatch.rctiming.jooq.generated;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.tables.AuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipPointsScale;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Championships;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles;
-import dev.monkeypatch.rctiming.jooq.generated.tables.AuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Competitors;
 import dev.monkeypatch.rctiming.jooq.generated.tables.DecoderLoops;
@@ -52,6 +52,11 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Users;
 public class Tables {
 
     /**
+     * The table <code>audit_log</code>.
+     */
+    public static final AuditLog AUDIT_LOG = AuditLog.AUDIT_LOG;
+
+    /**
      * The table <code>championship_classes</code>.
      */
     public static final ChampionshipClasses CHAMPIONSHIP_CLASSES = ChampionshipClasses.CHAMPIONSHIP_CLASSES;
@@ -80,11 +85,6 @@ public class Tables {
      * The table <code>club_profiles</code>.
      */
     public static final ClubProfiles CLUB_PROFILES = ClubProfiles.CLUB_PROFILES;
-
-    /**
-     * The table <code>audit_log</code>.
-     */
-    public static final AuditLog AUDIT_LOG = AuditLog.AUDIT_LOG;
 
     /**
      * The table <code>competitor_audit_log</code>.

@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.security;
 
+import dev.monkeypatch.rctiming.config.SpaConfig;
+import dev.monkeypatch.rctiming.domain.user.Role;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +24,8 @@ import org.springframework.web.util.UrlPathHelper;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private static final String[] OFFICIAL_ROLES = Role.OFFICIAL_ROLES.stream().map(Role::name).toArray(String[]::new);
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtAuthenticationFilter jwtFilter) throws Exception {
@@ -43,13 +47,12 @@ public class SecurityConfig {
                         // Club logos and TTS clips are public content served from local disk —
                         // see FilesystemObjectStorageService / StaticStorageConfig.
                         .requestMatchers(HttpMethod.GET, "/storage/**").permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "RACE_DIRECTOR", "REFEREE")
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole(OFFICIAL_ROLES)
                         .requestMatchers("/ws/timing", "/ws/timing/**").permitAll()
                         // The bundled frontend (SpaConfig): the pages and their assets are public,
                         // the data behind them is not
                         .requestMatchers(SecurityConfig::isFrontendRequest).permitAll()
-                        // Only officials sign in (L10, #18)
-                        .anyRequest().hasAnyRole("ADMIN", "RACE_DIRECTOR", "REFEREE")
+                        .anyRequest().hasAnyRole(OFFICIAL_ROLES)
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
@@ -61,9 +64,7 @@ public class SecurityConfig {
         // Decoded, as Spring MVC routes it, so an encoded /api path is not taken for a page
         String path = UrlPathHelper.defaultInstance.getPathWithinApplication(request);
         return (HttpMethod.GET.matches(request.getMethod()) || HttpMethod.HEAD.matches(request.getMethod()))
-                && !path.startsWith("/api/")
-                && !path.startsWith("/actuator")
-                && !path.startsWith("/ws/");
+                && !SpaConfig.isServerPath(path);
     }
 
     @Bean
