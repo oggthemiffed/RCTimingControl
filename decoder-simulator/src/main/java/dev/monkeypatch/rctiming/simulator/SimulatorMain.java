@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * Entry point for the standalone AMB RC-4 TCP decoder simulator.
@@ -41,10 +42,10 @@ public class SimulatorMain {
             printUsageAndExit("--mode is required");
         }
 
-        int    port       = parseInt(flags, "--port",         5100);
-        double speed      = parseDouble(flags, "--speed",     1.0);
-        long   intervalMs = parseLong(flags, "--interval-ms", 12_500L);
-        long   jitterMs   = parseLong(flags, "--jitter-ms",   2_500L);
+        int    port       = number(flags, "--port",        5100,    Integer::parseInt,  "an integer");
+        double speed      = number(flags, "--speed",       1.0,     Double::parseDouble, "a number");
+        long   intervalMs = number(flags, "--interval-ms", 12_500L, Long::parseLong,   "a long integer");
+        long   jitterMs   = number(flags, "--jitter-ms",   2_500L,  Long::parseLong,   "a long integer");
 
         List<String> transponders = new ArrayList<>();
         String txpRaw = flags.getOrDefault("--transponders", "11111,22222");
@@ -88,19 +89,11 @@ public class SimulatorMain {
         return map;
     }
 
-    private static int parseInt(Map<String, String> flags, String key, int def) {
-        try { return flags.containsKey(key) ? Integer.parseInt(flags.get(key)) : def; }
-        catch (NumberFormatException e) { printUsageAndExit(key + " must be an integer"); return def; }
-    }
-
-    private static long parseLong(Map<String, String> flags, String key, long def) {
-        try { return flags.containsKey(key) ? Long.parseLong(flags.get(key)) : def; }
-        catch (NumberFormatException e) { printUsageAndExit(key + " must be a long integer"); return def; }
-    }
-
-    private static double parseDouble(Map<String, String> flags, String key, double def) {
-        try { return flags.containsKey(key) ? Double.parseDouble(flags.get(key)) : def; }
-        catch (NumberFormatException e) { printUsageAndExit(key + " must be a number"); return def; }
+    /** The flag's value read by {@code parse}, or {@code def} when it isn't given; exits with usage if unreadable. */
+    private static <T> T number(Map<String, String> flags, String key, T def, Function<String, T> parse,
+                                String what) {
+        try { return flags.containsKey(key) ? parse.apply(flags.get(key)) : def; }
+        catch (NumberFormatException e) { printUsageAndExit(key + " must be " + what); return def; }
     }
 
     private static void printUsageAndExit(String error) {
