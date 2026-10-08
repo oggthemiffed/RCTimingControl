@@ -66,6 +66,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
     @Autowired PenaltyRepository penaltyRepository;
     @Autowired MarshalAbsenceRepository marshalAbsenceRepository;
     @Autowired MarshalPenaltyRepository marshalPenaltyRepository;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     private String refereeToken;
 
@@ -109,6 +110,12 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(incidentReportRepository.findByRaceIdOrderByRaisedAt(re.race().getId())).hasSize(1);
+
+        Map<String, Object> row = onlyAuditRow(re.race().getId(), "INCIDENT_RAISED");
+        assertThat(row.get("summary").toString()).contains("Contact").contains("race " + re.race().getId());
+        assertThat(row.get("after_json").toString()).contains("Cars made contact at turn 3");
+        assertThat(row.get("actor_user_id")).isNotNull();
+        assertThat(((Number) row.get("event_id")).longValue()).isEqualTo(resolveEventId(re.race()));
     }
 
     @Test
@@ -131,6 +138,11 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(penaltyRepository.findByRaceId(re.race().getId())).hasSize(1);
         assertThat(penaltyRepository.findByRaceId(re.race().getId()).get(0).getPenaltyType()).isEqualTo("LAP");
+
+        Map<String, Object> row = onlyAuditRow(re.race().getId(), "PENALTY_APPLIED");
+        assertThat(row.get("summary").toString()).contains("LAP penalty of 1");
+        assertThat(row.get("after_json").toString()).contains("Jumped start");
+        assertThat(row.get("entity_id")).isEqualTo(String.valueOf(penaltyRepository.findByRaceId(re.race().getId()).get(0).getId()));
     }
 
     @Test
@@ -246,6 +258,29 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
 
         assertThat(penaltyResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(marshalPenaltyRepository.findByEntryIdAndEventId(re.entry().getId(), eventId)).hasSize(1);
+
+        assertThat(onlyAuditRow(re.race().getId(), "MARSHAL_ABSENCE_RECORDED").get("summary").toString())
+                .contains("missed their marshal duty");
+        assertThat(onlyAuditRow(re.race().getId(), "MARSHAL_PENALTY_APPLIED").get("summary").toString())
+                .contains("marshal penalty");
+    }
+
+    @Test
+    void linkingAnUnknownTransponderIsRecordedWithTheDriverAndLapsCredited() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+        String number = "UNK" + UUID.randomUUID().toString().substring(0, 8);
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/race-control/races/" + re.race().getId() + "/transponders/link",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("transponderNumber", number, "entryId", re.entry().getId()), adminHeaders()),
+                Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Map<String, Object> row = onlyAuditRow(re.race().getId(), "UNKNOWN_TRANSPONDER_LINKED");
+        assertThat(row.get("summary").toString()).contains(number).contains("crediting 0 laps");
+        assertThat(row.get("actor_user_id")).isNotNull();
+        assertThat(row.get("after_json").toString()).contains("\"lapsCredited\":0");
     }
 
     // --- Helpers ---
@@ -258,6 +293,32 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
     }
 
     private record RaceAndEntry(Race race, Entry entry) {}
+
+    private Map<String, Object> onlyAuditRow(long raceId, String action) {
+        var rows = jdbc.queryForList("select * from audit_log where race_id = ? and action = ?", raceId, action);
+        assertThat(rows).as(action).hasSize(1);
+        return rows.get(0);
+    }
+
+    private HttpHeaders adminHeaders() {
+        String email = "referee-admin-" + UUID.randomUUID() + "@test.com";
+        User user = new User();
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode("pass123"));
+        user.setFirstName("Race");
+        user.setLastName("Admin");
+        user.setRoles(Set.of(Role.ADMIN));
+        Instant now = Instant.now();
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
+        userRepository.save(user);
+        ResponseEntity<AuthResponse> login = restTemplate.postForEntity("/api/v1/auth/login",
+                new LoginRequest(email, "pass123"), AuthResponse.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(login.getBody().accessToken());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
 
     private RaceAndEntry seedRaceAndEntry(RaceStatus status) {
         Instant now = Instant.now();
