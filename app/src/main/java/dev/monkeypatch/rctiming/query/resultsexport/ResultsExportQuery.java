@@ -1,9 +1,8 @@
 package dev.monkeypatch.rctiming.query.resultsexport;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.ExternalSources;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotJson;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import dev.monkeypatch.rctiming.query.championship.ChampionshipStandingsQuery;
 import dev.monkeypatch.rctiming.query.championship.RoundResultDto;
@@ -49,12 +48,13 @@ public class ResultsExportQuery {
     static final String SYSTEM = "RCTimingControl";
 
     private final DSLContext dsl;
-    private final ObjectMapper objectMapper;
+    private final ResultSnapshotJson snapshotJson;
     private final ChampionshipStandingsQuery standingsQuery;
 
-    public ResultsExportQuery(DSLContext dsl, ObjectMapper objectMapper, ChampionshipStandingsQuery standingsQuery) {
+    public ResultsExportQuery(DSLContext dsl, ResultSnapshotJson snapshotJson,
+                              ChampionshipStandingsQuery standingsQuery) {
         this.dsl = dsl;
-        this.objectMapper = objectMapper;
+        this.snapshotJson = snapshotJson;
         this.standingsQuery = standingsQuery;
     }
 
@@ -108,7 +108,8 @@ public class ResultsExportQuery {
                     penaltiesByEntry(penalties.getOrDefault(raceId, List.of()), r.get(RACES.STARTED_AT), finishedAt,
                             r.get(RESULT_SNAPSHOTS.TIMED_POSITIONS_JSON) != null);
             List<ResultsExportV1.Row> results = new ArrayList<>();
-            for (ResultSnapshotDto.ResultRow p : positions(raceId, r.get(RESULT_SNAPSHOTS.POSITIONS_JSON))) {
+            String positionsJson = r.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
+            for (ResultSnapshotDto.ResultRow p : snapshotJson.positions(raceId, positionsJson)) {
                 EntryRef entry = entries.get(p.entryId());
                 results.add(new ResultsExportV1.Row(
                         p.position(),
@@ -140,17 +141,6 @@ public class ResultsExportQuery {
                     results));
         }
         return races;
-    }
-
-    private List<ResultSnapshotDto.ResultRow> positions(long raceId, String json) {
-        if (json == null) {
-            return List.of();
-        }
-        try {
-            return objectMapper.readValue(json, new TypeReference<List<ResultSnapshotDto.ResultRow>>() {});
-        } catch (Exception e) {
-            throw new IllegalStateException("Unreadable result snapshot for race " + raceId, e);
-        }
     }
 
     /** Penalties per race, in the order they were given. */

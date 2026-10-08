@@ -1,10 +1,9 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.race.RaceLabel;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotJson;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Component;
@@ -24,11 +23,11 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
 public class ResultSnapshotQuery {
 
     private final DSLContext dsl;
-    private final ObjectMapper objectMapper;
+    private final ResultSnapshotJson snapshotJson;
 
-    public ResultSnapshotQuery(DSLContext dsl, ObjectMapper objectMapper) {
+    public ResultSnapshotQuery(DSLContext dsl, ResultSnapshotJson snapshotJson) {
         this.dsl = dsl;
-        this.objectMapper = objectMapper;
+        this.snapshotJson = snapshotJson;
     }
 
     public ResultSnapshotDto load(long raceId) {
@@ -64,23 +63,13 @@ public class ResultSnapshotQuery {
 
         Instant finishedAt = row.get(RESULT_SNAPSHOTS.FINISHED_AT);
 
-        String positionsJson = row.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
-        String lapHistoryJson = row.get(RESULT_SNAPSHOTS.LAP_HISTORY_JSON);
+        List<ResultSnapshotDto.ResultRow> positions =
+                snapshotJson.positions(raceId, row.get(RESULT_SNAPSHOTS.POSITIONS_JSON));
+        List<ResultSnapshotDto.PositionAtLap> lapHistory =
+                snapshotJson.lapHistory(raceId, row.get(RESULT_SNAPSHOTS.LAP_HISTORY_JSON));
+        ResultSnapshotDto.ClubBrandingDto branding = fetchClubBranding();
 
-        try {
-            List<ResultSnapshotDto.ResultRow> positions = objectMapper.readValue(
-                    positionsJson,
-                    new TypeReference<List<ResultSnapshotDto.ResultRow>>() {});
-            List<ResultSnapshotDto.PositionAtLap> lapHistory = objectMapper.readValue(
-                    lapHistoryJson,
-                    new TypeReference<List<ResultSnapshotDto.PositionAtLap>>() {});
-
-            ResultSnapshotDto.ClubBrandingDto branding = fetchClubBranding();
-
-            return new ResultSnapshotDto(raceId, raceLabel, finishedAt, positions, lapHistory, branding);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to deserialize result snapshot for race " + raceId, e);
-        }
+        return new ResultSnapshotDto(raceId, raceLabel, finishedAt, positions, lapHistory, branding);
     }
 
     private ResultSnapshotDto.ClubBrandingDto fetchClubBranding() {

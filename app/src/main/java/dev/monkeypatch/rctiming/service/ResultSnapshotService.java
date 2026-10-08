@@ -1,9 +1,6 @@
 package dev.monkeypatch.rctiming.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
-import com.fasterxml.jackson.core.type.TypeReference;
 import dev.monkeypatch.rctiming.domain.race.MarshalAdjustment;
 import dev.monkeypatch.rctiming.domain.race.MarshalAdjustmentRepository;
 import dev.monkeypatch.rctiming.domain.race.Penalty;
@@ -14,6 +11,7 @@ import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshot;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotJson;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotRepository;
 import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
@@ -52,7 +50,7 @@ public class ResultSnapshotService {
     private final RoundRepository roundRepository;
     private final LapTimingService lapTimingService;
     private final ResultSnapshotRepository resultSnapshotRepository;
-    private final ObjectMapper objectMapper;
+    private final ResultSnapshotJson snapshotJson;
     private final RaceEntryRepository raceEntryRepository;
     private final EntryRepository entryRepository;
     private final CompetitorRepository competitorRepository;
@@ -63,7 +61,7 @@ public class ResultSnapshotService {
                                   RoundRepository roundRepository,
                                   LapTimingService lapTimingService,
                                   ResultSnapshotRepository resultSnapshotRepository,
-                                  ObjectMapper objectMapper,
+                                  ResultSnapshotJson snapshotJson,
                                   RaceEntryRepository raceEntryRepository,
                                   EntryRepository entryRepository,
                                   CompetitorRepository competitorRepository,
@@ -73,7 +71,7 @@ public class ResultSnapshotService {
         this.roundRepository = roundRepository;
         this.lapTimingService = lapTimingService;
         this.resultSnapshotRepository = resultSnapshotRepository;
-        this.objectMapper = objectMapper;
+        this.snapshotJson = snapshotJson;
         this.raceEntryRepository = raceEntryRepository;
         this.entryRepository = entryRepository;
         this.competitorRepository = competitorRepository;
@@ -139,9 +137,9 @@ public class ResultSnapshotService {
         snapshot.setFinishedAt(race.getFinishedAt() != null ? race.getFinishedAt() : Instant.now());
         snapshot.setCreatedAt(Instant.now());
 
-        snapshot.setTimedPositionsJson(toJson(positions, raceId));
-        snapshot.setPositionsJson(toJson(corrected(race, snapshot.getFinishedAt(), positions), raceId));
-        snapshot.setLapHistoryJson(toJson(lapHistory, raceId));
+        snapshot.setTimedPositionsJson(snapshotJson.write(raceId, positions));
+        snapshot.setPositionsJson(snapshotJson.write(raceId, corrected(race, snapshot.getFinishedAt(), positions)));
+        snapshot.setLapHistoryJson(snapshotJson.write(raceId, lapHistory));
 
         resultSnapshotRepository.save(snapshot);
         lapTimingService.releaseState(raceId);
@@ -169,14 +167,9 @@ public class ResultSnapshotService {
         ResultSnapshot snapshot = found.get();
         String timedJson = snapshot.getTimedPositionsJson() != null
                 ? snapshot.getTimedPositionsJson() : snapshot.getPositionsJson();
-        List<ResultSnapshotDto.ResultRow> timed;
-        try {
-            timed = objectMapper.readValue(timedJson, new TypeReference<>() {});
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to read result snapshot for race " + raceId, e);
-        }
+        List<ResultSnapshotDto.ResultRow> timed = snapshotJson.positions(raceId, timedJson);
         snapshot.setTimedPositionsJson(timedJson);
-        snapshot.setPositionsJson(toJson(corrected(race, snapshot.getFinishedAt(), timed), raceId));
+        snapshot.setPositionsJson(snapshotJson.write(raceId, corrected(race, snapshot.getFinishedAt(), timed)));
         resultSnapshotRepository.save(snapshot);
         log.info("Recalculated the result of race {} after a correction", raceId);
     }
@@ -225,14 +218,6 @@ public class ResultSnapshotService {
             }
         }
         return ResultCorrections.apply(rows, lapDeltas, addedTimeMs);
-    }
-
-    private String toJson(Object value, long raceId) {
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize result snapshot for race " + raceId, e);
-        }
     }
 
     public void deleteByRaceId(long raceId) {
