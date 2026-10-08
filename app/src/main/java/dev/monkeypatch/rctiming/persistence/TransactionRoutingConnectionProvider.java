@@ -19,10 +19,16 @@ class TransactionRoutingConnectionProvider implements ConnectionProvider {
 
     private final DataSource writeDataSource;
     private final DataSource readDataSource;
+    private final DataSource readTransactionDataSource;
 
-    TransactionRoutingConnectionProvider(DataSource writeDataSource, DataSource readDataSource) {
+    /**
+     * @param readTransactionDataSource the read pool as the {@link ReadTransaction} manager binds it
+     */
+    TransactionRoutingConnectionProvider(DataSource writeDataSource, DataSource readDataSource,
+                                         DataSource readTransactionDataSource) {
         this.writeDataSource = writeDataSource;
         this.readDataSource = readDataSource;
+        this.readTransactionDataSource = readTransactionDataSource;
     }
 
     @Override
@@ -60,9 +66,10 @@ class TransactionRoutingConnectionProvider implements ConnectionProvider {
         if (TransactionSynchronizationManager.hasResource(writeDataSource)) {
             return writeDataSource;
         }
-        if (TransactionSynchronizationManager.hasResource(readDataSource)) {
-            return readDataSource;
+        if (TransactionSynchronizationManager.hasResource(readTransactionDataSource)) {
+            return readTransactionDataSource;
         }
-        return null;
+        // A transaction manager over neither pool: refuse rather than guess which one it meant
+        throw new IllegalStateException("A transaction is open on neither the write nor the read pool");
     }
 }

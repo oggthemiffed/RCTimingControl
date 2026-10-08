@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.query.audit;
 
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +16,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.AuditLog.AUDIT_LOG;
 
 /** Reads the audit log (#138). Rows are only ever added, so this is the whole of what can be done with them. */
 @Service
+@ReadTransaction
 public class AuditQueryService {
 
     /** The most rows one page may hold. */

@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
 import org.springframework.jdbc.support.JdbcTransactionManager;
 import org.springframework.jdbc.support.SQLExceptionSubclassTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
@@ -45,6 +46,7 @@ public class DatabaseConfig {
     private final DatabaseProperties properties;
     private final DatabaseVendor vendor;
     private final String jdbcUrl;
+    private LazyConnectionDataSourceProxy readTransactionDataSource;
 
     public DatabaseConfig(DatabaseProperties properties) {
         this.properties = properties;
@@ -85,12 +87,25 @@ public class DatabaseConfig {
 
     @Bean(READ_TRANSACTION_MANAGER)
     PlatformTransactionManager readTransactionManager(@Qualifier("read") DataSource readDataSource) {
-        return new JdbcTransactionManager(readDataSource);
+        return new JdbcTransactionManager(readTransactionDataSource(readDataSource));
     }
 
     @Bean
     ConnectionProvider jooqConnectionProvider(DataSource dataSource, @Qualifier("read") DataSource readDataSource) {
-        return new TransactionRoutingConnectionProvider(dataSource, readDataSource);
+        return new TransactionRoutingConnectionProvider(
+                dataSource, readDataSource, readTransactionDataSource(readDataSource));
+    }
+
+    /**
+     * The read pool as the read transaction manager sees it. Lazy, so a {@link ReadTransaction} only takes a
+     * read connection when a query runs on it: one nested in a write transaction runs on the write connection
+     * and must not hold a read connection, or wait for one, while it does.
+     */
+    private synchronized LazyConnectionDataSourceProxy readTransactionDataSource(DataSource readDataSource) {
+        if (readTransactionDataSource == null) {
+            readTransactionDataSource = new LazyConnectionDataSourceProxy(readDataSource);
+        }
+        return readTransactionDataSource;
     }
 
     @Bean

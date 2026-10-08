@@ -13,6 +13,8 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +34,8 @@ class ReadTransactionIT extends AbstractIntegrationTest {
         String name = "Uncommitted " + UUID.randomUUID();
         CountDownLatch written = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
+        // Its own threads: the writer blocks one for the whole test, which could starve the common pool
+        ExecutorService threads = Executors.newFixedThreadPool(2);
         CompletableFuture<Void> writer = CompletableFuture.runAsync(() ->
                 transactionTemplate.executeWithoutResult(status -> {
                     competitorRepository.save(competitor(name));
@@ -41,16 +45,17 @@ class ReadTransactionIT extends AbstractIntegrationTest {
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
-                }));
+                }), threads);
         try {
             assertThat(written.await(10, TimeUnit.SECONDS)).isTrue();
 
             // The write connection is held by the open transaction; on it this would block until released
-            CompletableFuture<Boolean> sawIt = CompletableFuture.supplyAsync(() -> listsCompetitor(name));
+            CompletableFuture<Boolean> sawIt = CompletableFuture.supplyAsync(() -> listsCompetitor(name), threads);
             assertThat(sawIt.get(5, TimeUnit.SECONDS)).isFalse();
         } finally {
             release.countDown();
             writer.get(10, TimeUnit.SECONDS);
+            threads.shutdownNow();
         }
         assertThat(listsCompetitor(name)).isTrue();
     }

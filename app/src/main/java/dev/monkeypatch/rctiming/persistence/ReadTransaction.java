@@ -13,9 +13,12 @@ import java.lang.annotation.Target;
  * never waits for the single write connection. Use it for read-side queries that run several statements.
  *
  * <p>Called inside a write transaction, the queries still use that transaction's connection and see its
- * uncommitted writes ({@link TransactionRoutingConnectionProvider}). A read that must wait for a write
- * in progress on another thread needs plain {@code @Transactional(readOnly = true)} instead, which runs
- * on the write connection.
+ * uncommitted writes ({@link TransactionRoutingConnectionProvider}); no read connection is taken. A read
+ * that must wait for a write in progress on another thread needs plain {@code @Transactional(readOnly = true)}
+ * instead, which runs on the write connection.
+ *
+ * <p>The read pool's connections refuse writes with {@code PRAGMA query_only}; sqlite-jdbc ignores the JDBC
+ * read-only flag the transaction sets, which is only a hint.
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
