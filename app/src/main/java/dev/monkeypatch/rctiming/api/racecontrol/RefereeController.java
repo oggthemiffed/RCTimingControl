@@ -1,5 +1,8 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.IncidentReportRequest;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalAbsenceRequest;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.PenaltyRequest;
@@ -29,7 +32,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST endpoints for referee actions: incident reports, penalties, marshal absence recording (OFFICIAL-03, OFFICIAL-04, D-22).
@@ -48,6 +53,8 @@ public class RefereeController {
     private final LiveTimingHub liveTimingHub;
     private final RaceRepository raceRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final AuditService audit;
+    private final RaceAuditLabels labels;
 
     public RefereeController(IncidentReportRepository incidentReportRepository,
                               PenaltyRepository penaltyRepository,
@@ -56,7 +63,9 @@ public class RefereeController {
                               LapTimingService lapTimingService,
                               LiveTimingHub liveTimingHub,
                               RaceRepository raceRepository,
-                              ApplicationEventPublisher eventPublisher) {
+                              ApplicationEventPublisher eventPublisher,
+                              AuditService audit,
+                              RaceAuditLabels labels) {
         this.incidentReportRepository = incidentReportRepository;
         this.penaltyRepository = penaltyRepository;
         this.marshalAbsenceRepository = marshalAbsenceRepository;
@@ -65,8 +74,11 @@ public class RefereeController {
         this.liveTimingHub = liveTimingHub;
         this.raceRepository = raceRepository;
         this.eventPublisher = eventPublisher;
+        this.audit = audit;
+        this.labels = labels;
     }
 
+    @Audited("audit_log")
     @PostMapping("/race/{raceId}/incident-report")
     @Transactional
     public ResponseEntity<IncidentReport> raiseIncident(@PathVariable long raceId,
@@ -79,7 +91,17 @@ public class RefereeController {
         report.setDescription(req.description());
         report.setRaisedBy(userId);
         report.setRaisedAt(Instant.now());
-        return ResponseEntity.ok(incidentReportRepository.save(report));
+        IncidentReport saved = incidentReportRepository.save(report);
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put("entryId", saved.getEntryId());
+        after.put("incidentType", saved.getIncidentType());
+        after.put("description", saved.getDescription());
+        audit.entry(Actor.official(userId), "INCIDENT_RAISED").entity("incident_report", saved.getId())
+                .race(raceId).event(labels.eventOf(raceId))
+                .summary("Raised an incident (" + saved.getIncidentType() + ") against "
+                        + labels.driver(saved.getEntryId()) + " in " + labels.race(raceId))
+                .after(after).record();
+        return ResponseEntity.ok(saved);
     }
 
     /**
@@ -87,6 +109,7 @@ public class RefereeController {
      * LAP penalty: immediately decrements in-memory lapsCompleted and rebroadcasts positions.
      * TIME penalty: recorded only — applied to totalTime at result-snapshot computation.
      */
+    @Audited("audit_log")
     @PostMapping("/race/{raceId}/penalty")
     @Transactional
     public ResponseEntity<Penalty> applyPenalty(@PathVariable long raceId,
@@ -107,7 +130,18 @@ public class RefereeController {
         penalty.setReason(req.reason());
         penalty.setAppliedBy(userId);
         penalty.setAppliedAt(Instant.now());
-        penaltyRepository.save(penalty);
+        Penalty saved = penaltyRepository.save(penalty);
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put("entryId", penalty.getEntryId());
+        after.put("penaltyType", penalty.getPenaltyType());
+        after.put("value", penalty.getValue());
+        after.put("reason", penalty.getReason());
+        audit.entry(Actor.official(userId), "PENALTY_APPLIED").entity("penalty", saved.getId())
+                .race(raceId).event(labels.eventOf(raceId))
+                .summary("Gave " + labels.driver(penalty.getEntryId()) + " a " + penalty.getPenaltyType()
+                        + " penalty of " + penalty.getValue().stripTrailingZeros().toPlainString() + " in "
+                        + labels.race(raceId))
+                .after(after).record();
 
         if (raceRepository.findById(raceId).map(r -> r.getStatus() == RaceStatus.FINISHED).orElse(false)) {
             // The race's results have gone out already; send them again with the penalty (#27)
@@ -130,6 +164,7 @@ public class RefereeController {
      * Record that an entry missed their marshal duty (D-22).
      * Does NOT auto-create a penalty — use /apply-marshal-penalty for that.
      */
+    @Audited("audit_log")
     @PostMapping("/race/{raceId}/marshal-absent")
     @Transactional
     public ResponseEntity<Void> recordMarshalAbsent(@PathVariable long raceId,
@@ -141,13 +176,18 @@ public class RefereeController {
         absence.setEventId(req.eventId());
         absence.setRecordedBy(userId);
         absence.setRecordedAt(Instant.now());
-        marshalAbsenceRepository.save(absence);
+        MarshalAbsence saved = marshalAbsenceRepository.save(absence);
+        audit.entry(Actor.official(userId), "MARSHAL_ABSENCE_RECORDED").entity("marshal_absence", saved.getId())
+                .race(raceId).event(req.eventId())
+                .summary("Recorded that " + labels.driver(req.entryId()) + " missed their marshal duty")
+                .after(Map.of("entryId", req.entryId())).record();
         return ResponseEntity.ok().build();
     }
 
     /**
      * Apply a marshal penalty for a recorded absence (D-22 — separate action from recording).
      */
+    @Audited("audit_log")
     @PostMapping("/race/{raceId}/apply-marshal-penalty")
     @Transactional
     public ResponseEntity<MarshalPenalty> applyMarshalPenalty(@PathVariable long raceId,
@@ -168,7 +208,16 @@ public class RefereeController {
         mp.setAppliedBy(userId);
         mp.setAppliedAt(Instant.now());
         mp.setNotes(req.notes());
-        return ResponseEntity.ok(marshalPenaltyRepository.save(mp));
+        MarshalPenalty saved = marshalPenaltyRepository.save(mp);
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put("entryId", saved.getEntryId());
+        after.put("absenceId", saved.getAbsenceId());
+        after.put("notes", saved.getNotes());
+        audit.entry(Actor.official(userId), "MARSHAL_PENALTY_APPLIED").entity("marshal_penalty", saved.getId())
+                .race(raceId).event(req.eventId())
+                .summary("Gave " + labels.driver(req.entryId()) + " a marshal penalty")
+                .after(after).record();
+        return ResponseEntity.ok(saved);
     }
 
     private long resolveUserId() {

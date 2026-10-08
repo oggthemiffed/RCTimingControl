@@ -2,7 +2,6 @@
 # AuditCoverageIT fails if a mutating endpoint is in neither place, and also if an entry here is stale (the
 # endpoint is gone or is now @Audited), so this list only shrinks. Format: METHOD /pattern | reason
 #   GAP      nothing records who did it. Fixed under #139.
-#   PARTIAL  something records who, but without what changed. See #139 and #140.
 #   READ-ONLY  a POST that changes nothing.
 #   EXEMPT   changes only bookkeeping, no data an official relies on; the reason says why.
 POST /api/v1/admin/competitors/spoken-name/preview | READ-ONLY: plays the text, stores nothing
@@ -10,9 +9,4 @@ POST /api/v1/admin/events/{eventId}/entry-feed/fetch | EXEMPT: downloads the fil
 POST /api/v1/admin/events/{eventId}/entry-feed/preview | READ-ONLY: previews the held file, applies nothing
 POST /api/v1/race-control/events/{eventId}/check-in/resolve | READ-ONLY: looks up an entry from a scan
 POST /api/v1/race-control/race/{raceId}/skip-to | READ-ONLY: checks the run order, stores nothing
-POST /api/v1/race-control/races/{raceId}/transponders/link | PARTIAL: unknown_transponder_link row (#139)
-POST /api/v1/race-control/referee/race/{raceId}/apply-marshal-penalty | PARTIAL: applied_by/raised_by on the row only (#140)
-POST /api/v1/race-control/referee/race/{raceId}/incident-report | PARTIAL: applied_by/raised_by on the row only (#140)
-POST /api/v1/race-control/referee/race/{raceId}/marshal-absent | PARTIAL: applied_by/raised_by on the row only (#140)
-POST /api/v1/race-control/referee/race/{raceId}/penalty | PARTIAL: applied_by/raised_by on the row only (#140)
 POST /api/v1/setup/decoder-config/test | READ-ONLY: tries a decoder address, saves nothing
