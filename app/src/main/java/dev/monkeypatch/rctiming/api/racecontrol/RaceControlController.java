@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalAdjustmentRequest;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.RunOrderItemDto;
@@ -10,6 +12,7 @@ import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStateMachineService;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotRepository;
 import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.user.User;
@@ -35,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +46,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Race control REST API (CTRL-01, CTRL-03, CTRL-06, CTRL-08, CTRL-09, D-04).
  * All endpoints require RACE_DIRECTOR or ADMIN role.
+ *
+ * <p>Every change to a race's lifecycle (call grid, start, stop, finish, abandon, restart) is recorded in the audit
+ * log with who did it, in the same transaction as the change (#139).
  */
 @RestController
 @RequestMapping("/api/v1/race-control")
@@ -57,6 +64,8 @@ public class RaceControlController {
     private final UserRepository userRepository;
     private final RoundRepository roundRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final AuditService audit;
+    private final ResultSnapshotRepository resultSnapshotRepository;
 
     /**
      * Process-local active-race override for CTRL-09 skip-to.
@@ -73,7 +82,9 @@ public class RaceControlController {
                                   LiveTimingHub liveTimingHub,
                                   UserRepository userRepository,
                                   RoundRepository roundRepository,
-                                  ApplicationEventPublisher eventPublisher) {
+                                  ApplicationEventPublisher eventPublisher,
+                                  AuditService audit,
+                                  ResultSnapshotRepository resultSnapshotRepository) {
         this.runOrderQuery = runOrderQuery;
         this.raceRepository = raceRepository;
         this.stateMachine = stateMachine;
@@ -83,6 +94,8 @@ public class RaceControlController {
         this.userRepository = userRepository;
         this.roundRepository = roundRepository;
         this.eventPublisher = eventPublisher;
+        this.audit = audit;
+        this.resultSnapshotRepository = resultSnapshotRepository;
     }
 
     // --- D-04: Run order ---
@@ -96,69 +109,94 @@ public class RaceControlController {
 
     // --- CTRL-01: Race lifecycle ---
 
+    @Audited("audit_log")
     @PostMapping("/race/{raceId}/call-grid")
     @Transactional
     public ResponseEntity<Void> callGrid(@PathVariable long raceId) {
         Race race = loadRace(raceId);
+        RaceStatus before = race.getStatus();
         stateMachine.transition(race, RaceStatus.GRID);
         raceRepository.save(race);
+        recordLifecycle(race, "RACE_GRID_CALLED", "Called the grid for", before);
         return ResponseEntity.ok().build();
     }
 
+    @Audited("audit_log")
     @PostMapping("/race/{raceId}/start")
     @Transactional
     public ResponseEntity<Void> startRace(@PathVariable long raceId) {
         Race race = loadRace(raceId);
+        RaceStatus before = race.getStatus();
         stateMachine.transition(race, RaceStatus.RUNNING);
         if (race.getStartedAt() == null) {
             race.setStartedAt(Instant.now());
         }
         raceRepository.save(race);
+        // A start from STOPPED is a resume: say so, since the clock carries on
+        recordLifecycle(race, before == RaceStatus.STOPPED ? "RACE_RESUMED" : "RACE_STARTED",
+                before == RaceStatus.STOPPED ? "Resumed" : "Started", before);
         return ResponseEntity.ok().build();
     }
 
+    @Audited("audit_log")
     @PostMapping("/race/{raceId}/stop")
     @Transactional
     public ResponseEntity<Void> stopRace(@PathVariable long raceId) {
         Race race = loadRace(raceId);
+        RaceStatus before = race.getStatus();
         stateMachine.transition(race, RaceStatus.STOPPED);
         raceRepository.save(race);
+        recordLifecycle(race, "RACE_STOPPED", "Stopped", before);
         return ResponseEntity.ok().build();
     }
 
     // --- Restart (reset to PENDING from any active state) ---
 
+    @Audited("audit_log")
     @PostMapping("/race/{raceId}/restart")
     @Transactional
     public ResponseEntity<Void> restartRace(@PathVariable long raceId) {
         Race race = loadRace(raceId);
+        // Restart throws away the result snapshot and the live timing, so what is lost is written down first
+        Map<String, Object> lost = whatARestartDiscards(race);
         stateMachine.restart(race);
         raceRepository.save(race);
+        audit.entry(actor(), "RACE_RESTARTED")
+                .entity("race", race.getId()).race(race.getId()).event(resolveEventId(race))
+                .summary("Restarted " + describe(race) + ", discarding its timing and any result")
+                .before(lost).after(Map.of("status", RaceStatus.PENDING))
+                .record();
         return ResponseEntity.ok().build();
     }
 
+    @Audited("audit_log")
     @PostMapping("/race/{raceId}/finish")
     @Transactional
     public ResponseEntity<Void> finishRace(@PathVariable long raceId) {
         Race race = loadRace(raceId);
+        RaceStatus before = race.getStatus();
         // Set before the transition, which saves the race before the result snapshot reads it
         race.setFinishedAt(Instant.now());
         stateMachine.transition(race, RaceStatus.FINISHED);
         raceRepository.save(race);
+        recordLifecycle(race, "RACE_FINISHED", "Finished", before);
         return ResponseEntity.ok().build();
     }
 
     // --- CTRL-08: Abandon ---
 
+    @Audited("audit_log")
     @PostMapping("/race/{raceId}/abandon")
     @Transactional
     public ResponseEntity<Void> abandonRace(@PathVariable long raceId) {
         Race race = loadRace(raceId);
+        RaceStatus before = race.getStatus();
         Instant now = Instant.now();
         race.setFinishedAt(now);
         race.setAbandonedAt(now);
         stateMachine.transition(race, RaceStatus.FINISHED);
         raceRepository.save(race);
+        recordLifecycle(race, "RACE_ABANDONED", "Abandoned", before);
         return ResponseEntity.ok().build();
     }
 
@@ -225,6 +263,47 @@ public class RaceControlController {
     }
 
     // --- Helpers ---
+
+    /** Writes the audit row for a state change, in the transaction of the change. */
+    private void recordLifecycle(Race race, String action, String verb, RaceStatus before) {
+        audit.entry(actor(), action)
+                .entity("race", race.getId()).race(race.getId()).event(resolveEventId(race))
+                .summary(verb + " " + describe(race))
+                .before(before).after(race.getStatus())
+                .record();
+    }
+
+    /** What a restart takes away: the race's times, its stored result, and the timing held in memory. */
+    private Map<String, Object> whatARestartDiscards(Race race) {
+        Map<String, Object> lost = new LinkedHashMap<>();
+        lost.put("status", race.getStatus());
+        lost.put("startedAt", race.getStartedAt());
+        lost.put("finishedAt", race.getFinishedAt());
+        lost.put("abandonedAt", race.getAbandonedAt());
+        resultSnapshotRepository.findByRaceId(race.getId()).ifPresent(snapshot -> {
+            Map<String, Object> result = new LinkedHashMap<>();
+            result.put("id", snapshot.getId());
+            result.put("finishedAt", snapshot.getFinishedAt());
+            result.put("positions", snapshot.getPositionsJson());
+            lost.put("resultSnapshot", result);
+        });
+        lapTimingService.peek(race.getId()).ifPresent(state -> lost.put("livePositions", state.calculatePositions()));
+        return lost;
+    }
+
+    /** The race as an official knows it, such as {@code A final (race 42)} or {@code heat 2 (race 42)}. */
+    private static String describe(Race race) {
+        String what = race.getFinalLetter() != null
+                ? race.getFinalLetter() + " final"
+                : "heat " + race.getHeatNumber();
+        return what + " (race " + race.getId() + ")";
+    }
+
+    /** The signed-in official; every endpoint here needs a role, so there is always one. */
+    private static Actor actor() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return Actor.official(Long.parseLong(auth.getName()));
+    }
 
     private Race loadRace(long raceId) {
         return raceRepository.findById(raceId)
