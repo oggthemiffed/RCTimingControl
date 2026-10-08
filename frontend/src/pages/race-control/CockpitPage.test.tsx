@@ -6,7 +6,7 @@ import CockpitPage from './CockpitPage';
 
 const mockUser = vi.fn();
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: mockUser() }) }));
-vi.mock('@/context/HelpContext', () => ({ useHelp: () => ({ setHelpContent: vi.fn() }) }));
+vi.mock('@/context/HelpContext', () => ({ useHelpContent: vi.fn() }));
 
 const mockRunOrder = vi.fn();
 vi.mock('@/hooks/race-control/useRunOrder', () => ({ useRunOrder: () => mockRunOrder() }));
