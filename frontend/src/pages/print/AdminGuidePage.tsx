@@ -391,11 +391,15 @@ export default function AdminGuidePage() {
           </li>
           <li>
             <span className="font-semibold">Step 2 — Track:</span> Create at least one
-            track with a name and minimum lap time threshold.
+            track with a name and minimum lap time threshold. Coming back to this step
+            lists the tracks you already have, with an "Add another track" button, so a
+            second visit does not create a copy.
           </li>
           <li>
             <span className="font-semibold">Step 3 — Race Format:</span> Create at least
             one race format template. You can add more formats later from the Formats page.
+            Like the Track step, it lists the formats you already have when you come back
+            to it, with an "Add another format" button.
           </li>
           <li>
             <span className="font-semibold">Step 4 — Staff Account:</span> Create the

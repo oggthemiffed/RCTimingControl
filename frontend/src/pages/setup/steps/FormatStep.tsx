@@ -1,7 +1,9 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +23,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { adminApi } from '@/lib/adminApi';
+import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
+import { useFormatsList } from '@/hooks/admin/useAdminFormats';
 
 const schema = z.object({
   name: z.string().min(1, 'Format name is required').max(200),
@@ -35,8 +39,18 @@ interface Props {
   onBack?: () => void;
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  TIMED: 'Timed',
+  BUMP_UP: 'Bump Up',
+  POINTS_FINALS: 'Points Finals',
+};
+
 export default function FormatStep({ onNext, onBack }: Props) {
   const queryClient = useQueryClient();
+  // Going back to this step must not invite a second copy of what is already set up
+  const { data, isPending, isError, refetch } = useFormatsList();
+  const existing = data ?? [];
+  const [adding, setAdding] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -92,6 +106,7 @@ export default function FormatStep({ onNext, onBack }: Props) {
               };
 
       await adminApi.formats.create({ name: values.name, config });
+      queryClient.invalidateQueries({ queryKey: adminQueryKeys.formats.all() });
       queryClient.invalidateQueries({ queryKey: ['setup-status'] });
       queryClient.invalidateQueries({ queryKey: ['setup-progress'] });
       toast.success('Race format saved');
@@ -103,6 +118,74 @@ export default function FormatStep({ onNext, onBack }: Props) {
 
   function onSkip() {
     onNext();
+  }
+
+  function onCancelAdding() {
+    form.reset();
+    setAdding(false);
+  }
+
+  if (isPending) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" role="status" aria-label="Loading race formats" />
+      </div>
+    );
+  }
+
+  // Without the list we can't tell what is already set up, so no form: it would invite a duplicate
+  if (isError) {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold mb-2">Race Format</h1>
+        <p className="text-sm text-destructive mb-6" role="alert">
+          Could not load the race formats that are already set up.
+        </p>
+        <div className="flex justify-between gap-2 pt-4">
+          <Button type="button" variant="ghost" onClick={onBack}>
+            Back
+          </Button>
+          <Button type="button" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (existing.length > 0 && !adding) {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold mb-2">Race Format</h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          These race formats are already set up. You can add another, or carry on. More can be created from the
+          Admin panel later.
+        </p>
+        <ul className="mb-6 divide-y rounded-md border" aria-label="Race formats already set up">
+          {existing.map(format => (
+            <li key={format.id} className="flex items-baseline justify-between px-4 py-3">
+              <span className="font-medium">{format.name}</span>
+              <span className="text-sm text-muted-foreground">
+                {TYPE_LABELS[format.config.type] ?? format.config.type}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="flex justify-between gap-2 pt-4">
+          <Button type="button" variant="ghost" onClick={onBack}>
+            Back
+          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={() => setAdding(true)}>
+              Add another format
+            </Button>
+            <Button type="button" onClick={onNext}>
+              Continue
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -176,9 +259,15 @@ export default function FormatStep({ onNext, onBack }: Props) {
               Back
             </Button>
             <div className="flex gap-2">
-              <Button type="button" variant="ghost" onClick={onSkip}>
-                Skip for now
-              </Button>
+              {existing.length > 0 ? (
+                <Button type="button" variant="ghost" onClick={onCancelAdding}>
+                  Cancel
+                </Button>
+              ) : (
+                <Button type="button" variant="ghost" onClick={onSkip}>
+                  Skip for now
+                </Button>
+              )}
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 Save and Continue
               </Button>
