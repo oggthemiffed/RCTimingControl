@@ -42,6 +42,9 @@ class ResetAdminPasswordCommandIT extends AbstractIntegrationTest {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Autowired
+    org.springframework.jdbc.core.JdbcTemplate jdbc;
+
     @Value("${rctiming.database.data-directory}")
     String dataDirectory;
 
@@ -65,6 +68,17 @@ class ResetAdminPasswordCommandIT extends AbstractIntegrationTest {
         assertThat(log).extracting(OfficialAuditLog::getAction)
                 .containsExactlyInAnyOrder("PASSWORD_SET", "ROLES_CHANGED", "ENABLED");
         assertThat(log).allSatisfy(entry -> assertThat(entry.getActorUserId()).isNull());
+
+        // One row in the audit log too, from the command line user, naming the official and what else changed
+        List<java.util.Map<String, Object>> rows = jdbc.queryForList(
+                "select * from audit_log where entity_type = 'official' and entity_id = ? and action = 'ADMIN_PASSWORD_RESET'",
+                String.valueOf(reset.getId()));
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)).containsEntry("source", "CLI").containsEntry("actor_user_id", null);
+        assertThat(rows.get(0).get("actor_label").toString()).startsWith("cli:");
+        assertThat(rows.get(0).get("summary").toString())
+                .contains("from the command line").contains("made them an admin").contains("enabled their account");
+        assertThat(rows.get(0).get("after_json").toString()).contains("\"madeAdmin\":true").contains("\"reEnabled\":true");
     }
 
     @Test
