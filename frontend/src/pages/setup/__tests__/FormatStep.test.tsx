@@ -30,7 +30,7 @@ function renderStep() {
       <FormatStep onNext={onNext} onBack={vi.fn()} />
     </QueryClientProvider>,
   );
-  return { onNext };
+  return { onNext, client };
 }
 
 beforeEach(() => {
@@ -86,5 +86,54 @@ describe('FormatStep', () => {
     await waitFor(() => expect(adminApi.formats.create).toHaveBeenCalledTimes(1));
     expect(adminApi.formats.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Ten minute final' }));
     await waitFor(() => expect(onNext).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows a spinner, not the form, while the list is loading', async () => {
+    vi.mocked(adminApi.formats.list).mockReturnValue(new Promise(() => undefined) as never);
+    renderStep();
+
+    expect(await screen.findByRole('status', { name: 'Loading race formats' })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('e.g. Standard 5-minute Timed')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Skip for now' })).not.toBeInTheDocument();
+  });
+
+  it('offers a retry, and no form, when the list cannot be loaded', async () => {
+    vi.mocked(adminApi.formats.list).mockRejectedValueOnce(new Error('network down'));
+    renderStep();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load');
+    expect(screen.queryByPlaceholderText('e.g. Standard 5-minute Timed')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Skip for now' })).not.toBeInTheDocument();
+
+    vi.mocked(adminApi.formats.list).mockResolvedValue([timed]);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('Standard 5-minute Timed')).toBeInTheDocument();
+  });
+
+  it('clears what was typed when Cancel is pressed', async () => {
+    vi.mocked(adminApi.formats.list).mockResolvedValue([timed]);
+    renderStep();
+    await screen.findByText('Standard 5-minute Timed');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add another format' }));
+    fireEvent.change(await screen.findByPlaceholderText('e.g. Standard 5-minute Timed'), { target: { value: 'Half typed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add another format' }));
+
+    expect(await screen.findByPlaceholderText('e.g. Standard 5-minute Timed')).toHaveValue('');
+  });
+
+  it('refreshes the shared admin list after saving', async () => {
+    vi.mocked(adminApi.formats.list).mockResolvedValue([timed]);
+    const { client } = renderStep();
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    await screen.findByText('Standard 5-minute Timed');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add another format' }));
+    fireEvent.change(await screen.findByPlaceholderText('e.g. Standard 5-minute Timed'), { target: { value: 'Another one' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save and Continue' }));
+
+    await waitFor(() => expect(adminApi.formats.create).toHaveBeenCalledTimes(1));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['admin', 'formats'] });
   });
 });

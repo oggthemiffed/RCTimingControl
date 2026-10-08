@@ -17,7 +17,7 @@ function renderStep() {
       <TrackStep onNext={onNext} onBack={vi.fn()} />
     </QueryClientProvider>,
   );
-  return { onNext };
+  return { onNext, client };
 }
 
 beforeEach(() => {
@@ -79,5 +79,54 @@ describe('TrackStep', () => {
     await waitFor(() => expect(adminApi.tracks.create).toHaveBeenCalledTimes(1));
     expect(adminApi.tracks.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Indoor carpet' }));
     await waitFor(() => expect(onNext).toHaveBeenCalledTimes(1));
+  });
+
+  it('shows a spinner, not the form, while the list is loading', async () => {
+    vi.mocked(adminApi.tracks.list).mockReturnValue(new Promise(() => undefined) as never);
+    renderStep();
+
+    expect(await screen.findByRole('status', { name: 'Loading tracks' })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('e.g. Club Track A')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Skip for now' })).not.toBeInTheDocument();
+  });
+
+  it('offers a retry, and no form, when the list cannot be loaded', async () => {
+    vi.mocked(adminApi.tracks.list).mockRejectedValueOnce(new Error('network down'));
+    renderStep();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not load');
+    expect(screen.queryByPlaceholderText('e.g. Club Track A')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Skip for now' })).not.toBeInTheDocument();
+
+    vi.mocked(adminApi.tracks.list).mockResolvedValue([{ id: 1, name: 'Club Track A', venueNotes: null, trackLength: null }]);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('Club Track A')).toBeInTheDocument();
+  });
+
+  it('clears what was typed when Cancel is pressed', async () => {
+    vi.mocked(adminApi.tracks.list).mockResolvedValue([{ id: 1, name: 'Club Track A', venueNotes: null, trackLength: null }]);
+    renderStep();
+    await screen.findByText('Club Track A');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add another track' }));
+    fireEvent.change(await screen.findByPlaceholderText('e.g. Club Track A'), { target: { value: 'Half typed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add another track' }));
+
+    expect(await screen.findByPlaceholderText('e.g. Club Track A')).toHaveValue('');
+  });
+
+  it('refreshes the shared admin list after saving', async () => {
+    vi.mocked(adminApi.tracks.list).mockResolvedValue([{ id: 1, name: 'Club Track A', venueNotes: null, trackLength: null }]);
+    const { client } = renderStep();
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    await screen.findByText('Club Track A');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add another track' }));
+    fireEvent.change(await screen.findByPlaceholderText('e.g. Club Track A'), { target: { value: 'Another one' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save and Continue' }));
+
+    await waitFor(() => expect(adminApi.tracks.create).toHaveBeenCalledTimes(1));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['admin', 'tracks'] });
   });
 });

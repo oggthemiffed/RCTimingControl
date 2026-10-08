@@ -2,7 +2,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { adminApi } from '@/lib/adminApi';
+import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
+import { useFormatsList } from '@/hooks/admin/useAdminFormats';
 
 const schema = z.object({
   name: z.string().min(1, 'Format name is required').max(200),
@@ -45,8 +48,8 @@ const TYPE_LABELS: Record<string, string> = {
 export default function FormatStep({ onNext, onBack }: Props) {
   const queryClient = useQueryClient();
   // Going back to this step must not invite a second copy of what is already set up
-  const formatsQuery = useQuery({ queryKey: ['setup-formats'], queryFn: () => adminApi.formats.list() });
-  const existing = formatsQuery.data ?? [];
+  const { data, isPending, isError, refetch } = useFormatsList();
+  const existing = data ?? [];
   const [adding, setAdding] = useState(false);
 
   const form = useForm<FormValues>({
@@ -103,7 +106,7 @@ export default function FormatStep({ onNext, onBack }: Props) {
               };
 
       await adminApi.formats.create({ name: values.name, config });
-      queryClient.invalidateQueries({ queryKey: ['setup-formats'] });
+      queryClient.invalidateQueries({ queryKey: adminQueryKeys.formats.all() });
       queryClient.invalidateQueries({ queryKey: ['setup-status'] });
       queryClient.invalidateQueries({ queryKey: ['setup-progress'] });
       toast.success('Race format saved');
@@ -122,8 +125,32 @@ export default function FormatStep({ onNext, onBack }: Props) {
     setAdding(false);
   }
 
-  if (formatsQuery.isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading…</p>;
+  if (isPending) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" role="status" aria-label="Loading race formats" />
+      </div>
+    );
+  }
+
+  // Without the list we can't tell what is already set up, so no form: it would invite a duplicate
+  if (isError) {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold mb-2">Race Format</h1>
+        <p className="text-sm text-destructive mb-6" role="alert">
+          Could not load the race formats that are already set up.
+        </p>
+        <div className="flex justify-between gap-2 pt-4">
+          <Button type="button" variant="ghost" onClick={onBack}>
+            Back
+          </Button>
+          <Button type="button" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   if (existing.length > 0 && !adding) {
