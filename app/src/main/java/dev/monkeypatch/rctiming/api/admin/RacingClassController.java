@@ -1,11 +1,14 @@
 package dev.monkeypatch.rctiming.api.admin;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateRacingClassRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.RacingClassDto;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,24 +42,32 @@ public class RacingClassController {
         return racingClassService.findById(id);
     }
 
+    @Audited("audit_log")
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public RacingClassDto createRacingClass(@RequestBody @Valid CreateRacingClassRequest request) {
-        return racingClassService.create(request);
+    public RacingClassDto createRacingClass(Authentication auth, @RequestBody @Valid CreateRacingClassRequest request) {
+        return racingClassService.create(actor(auth), request);
     }
 
+    @Audited("audit_log")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public RacingClassDto updateRacingClass(@PathVariable Long id,
+    public RacingClassDto updateRacingClass(Authentication auth, @PathVariable Long id,
                                              @RequestBody @Valid CreateRacingClassRequest request) {
-        return racingClassService.update(id, request);
+        return racingClassService.update(actor(auth), id, request);
     }
 
+    @Audited("audit_log")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteRacingClass(@PathVariable Long id) {
-        racingClassService.delete(id);
+    public void deleteRacingClass(Authentication auth, @PathVariable Long id) {
+        racingClassService.delete(actor(auth), id);
+    }
+
+    /** The signed-in official, taken from the token and never from the request body. */
+    private static Actor actor(Authentication auth) {
+        return Actor.official(Long.parseLong(auth.getName()));
     }
 }

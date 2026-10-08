@@ -282,7 +282,7 @@ class FormatControllerIT extends AbstractIntegrationTest {
     void snapshotImmutability_templateEditDoesNotAffectEventClass() {
         // Create template with 5-minute timed config
         TimedRaceConfig originalConfig = new TimedRaceConfig(5, StartType.STAGGER, QualifyingType.FTQ, 2, 3);
-        RaceFormatTemplate template = raceFormatService.create("Snapshot Test Template", originalConfig);
+        RaceFormatTemplate template = raceFormatService.create(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), "Snapshot Test Template", originalConfig);
 
         // Assign template to EventClass — creates a snapshot
         EventClass eventClass = raceFormatService.assignTemplateToEventClass(template);

@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.api.admin;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateRaceFormatTemplateRequest;
@@ -11,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,27 +57,30 @@ public class RaceFormatController {
         return RaceFormatTemplateDto.from(raceFormatService.findById(id));
     }
 
+    @Audited("audit_log")
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public RaceFormatTemplateDto createFormat(@RequestBody @Valid CreateRaceFormatTemplateRequest request) {
+    public RaceFormatTemplateDto createFormat(Authentication auth, @RequestBody @Valid CreateRaceFormatTemplateRequest request) {
         return RaceFormatTemplateDto.from(
-                raceFormatService.create(request.name(), request.config()));
+                raceFormatService.create(actor(auth), request.name(), request.config()));
     }
 
+    @Audited("audit_log")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public RaceFormatTemplateDto updateFormat(@PathVariable Long id,
+    public RaceFormatTemplateDto updateFormat(Authentication auth, @PathVariable Long id,
                                                @RequestBody @Valid CreateRaceFormatTemplateRequest request) {
         return RaceFormatTemplateDto.from(
-                raceFormatService.update(id, request.name(), request.config()));
+                raceFormatService.update(actor(auth), id, request.name(), request.config()));
     }
 
+    @Audited("audit_log")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteFormat(@PathVariable Long id) {
-        raceFormatService.delete(id);
+    public void deleteFormat(Authentication auth, @PathVariable Long id) {
+        raceFormatService.delete(actor(auth), id);
     }
 
     @GetMapping(value = "/{id}/export",
@@ -95,20 +101,27 @@ public class RaceFormatController {
         }
     }
 
+    @Audited("audit_log")
     @PostMapping(value = "/import",
                  consumes = {MediaType.APPLICATION_JSON_VALUE, "application/yaml"})
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public RaceFormatTemplateDto importFormat(
+            Authentication auth,
             @RequestParam(defaultValue = "Imported template") String name,
             @RequestBody String body,
             @RequestHeader("Content-Type") String contentType) {
         try {
             ObjectMapper mapper = contentType.contains("yaml") ? YAML_MAPPER : jsonObjectMapper;
             RaceFormatConfig config = mapper.readValue(body, RaceFormatConfig.class);
-            return RaceFormatTemplateDto.from(raceFormatService.importConfig(name, config));
+            return RaceFormatTemplateDto.from(raceFormatService.importConfig(actor(auth), name, config));
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to parse format config: " + e.getMessage(), e);
         }
+    }
+
+    /** The signed-in official, taken from the token and never from the request body. */
+    private static Actor actor(Authentication auth) {
+        return Actor.official(Long.parseLong(auth.getName()));
     }
 }
