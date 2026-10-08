@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -153,7 +154,7 @@ class AdminCompetitorControllerIT extends AbstractIntegrationTest {
     void previewReturnsTheSpokenAudio() {
         String token = loginAs(Set.of(Role.ADMIN));
         byte[] wav = {0x52, 0x49, 0x46, 0x46};
-        when(piperClient.synthesize(eq("Shiv-awn Keen"), anyString())).thenReturn(wav);
+        when(piperClient.synthesize(eq("Shiv-awn Keen"), any())).thenReturn(wav);
 
         ResponseEntity<byte[]> resp = restTemplate.exchange("/api/v1/admin/competitors/spoken-name/preview",
                 HttpMethod.POST, new HttpEntity<>(Map.of("text", " Shiv-awn Keen "), headers(token)), byte[].class);
@@ -161,13 +162,13 @@ class AdminCompetitorControllerIT extends AbstractIntegrationTest {
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resp.getHeaders().getContentType()).isEqualTo(MediaType.parseMediaType("audio/wav"));
         assertThat(resp.getBody()).isEqualTo(wav);
-        verify(piperClient).synthesize(eq("Shiv-awn Keen"), anyString());
+        verify(piperClient).synthesize(eq("Shiv-awn Keen"), any());
     }
 
     @Test
     void previewIs503WhenThePiperVoiceIsDown() {
         String token = loginAs(Set.of(Role.ADMIN));
-        when(piperClient.synthesize(anyString(), anyString())).thenThrow(new TtsUnavailableException("down"));
+        when(piperClient.synthesize(anyString(), any())).thenThrow(new TtsUnavailableException("down"));
 
         ResponseEntity<JsonNode> resp = restTemplate.exchange("/api/v1/admin/competitors/spoken-name/preview",
                 HttpMethod.POST, new HttpEntity<>(Map.of("text", "x"), headers(token)), JsonNode.class);

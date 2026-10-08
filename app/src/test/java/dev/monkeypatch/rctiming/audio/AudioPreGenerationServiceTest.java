@@ -2,7 +2,7 @@ package dev.monkeypatch.rctiming.audio;
 
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
-import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
@@ -45,7 +45,7 @@ class AudioPreGenerationServiceTest {
     @Mock RaceEntryRepository raceEntryRepository;
     @Mock EntryRepository entryRepository;
     @Mock CompetitorRepository competitorRepository;
-    @Mock ClubProfileRepository clubProfileRepository;
+    @Mock ClubProfileService clubProfileService;
 
     @InjectMocks AudioPreGenerationService service;
 
@@ -69,7 +69,7 @@ class AudioPreGenerationServiceTest {
     void onRaceGridTransition_generatesCountdownClips() {
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(Collections.emptyList());
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileService.defaultVoiceId()).thenReturn(Optional.of(clubProfile.getDefaultVoiceId()));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString()))
                 .thenReturn("http://localhost:8080/storage/clip.wav");
 
@@ -99,7 +99,7 @@ class AudioPreGenerationServiceTest {
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileService.defaultVoiceId()).thenReturn(Optional.of(clubProfile.getDefaultVoiceId()));
         when(entryRepository.findById(100L)).thenReturn(Optional.of(entry));
         when(competitorRepository.findById(200L)).thenReturn(Optional.of(competitor));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
@@ -132,7 +132,7 @@ class AudioPreGenerationServiceTest {
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileService.defaultVoiceId()).thenReturn(Optional.of(clubProfile.getDefaultVoiceId()));
         when(entryRepository.findById(100L)).thenReturn(Optional.of(entry));
         when(competitorRepository.findById(200L)).thenReturn(Optional.of(competitor));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
@@ -162,7 +162,7 @@ class AudioPreGenerationServiceTest {
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileService.defaultVoiceId()).thenReturn(Optional.of(clubProfile.getDefaultVoiceId()));
         when(entryRepository.findById(100L)).thenReturn(Optional.of(entry));
         when(competitorRepository.findById(200L)).thenReturn(Optional.of(competitor));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
@@ -184,7 +184,7 @@ class AudioPreGenerationServiceTest {
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileService.defaultVoiceId()).thenReturn(Optional.of(clubProfile.getDefaultVoiceId()));
         when(entryRepository.findById(100L)).thenReturn(Optional.empty());
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
         when(clipService.generateRaceFinishedClip(anyLong(), anyString(), anyString())).thenReturn(null);
@@ -198,7 +198,7 @@ class AudioPreGenerationServiceTest {
     void onRaceGridTransition_generatesOneRaceFinishedClip() {
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(Collections.emptyList());
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileService.defaultVoiceId()).thenReturn(Optional.of(clubProfile.getDefaultVoiceId()));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
         when(clipService.generateRaceFinishedClip(anyLong(), anyString(), anyString()))
                 .thenReturn("http://localhost:8080/storage/finish.wav");
@@ -213,7 +213,7 @@ class AudioPreGenerationServiceTest {
     void getClipMap_returnsAllGeneratedUrls() {
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(Collections.emptyList());
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileService.defaultVoiceId()).thenReturn(Optional.of(clubProfile.getDefaultVoiceId()));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString()))
                 .thenReturn("http://localhost:8080/storage/clip.wav");
 

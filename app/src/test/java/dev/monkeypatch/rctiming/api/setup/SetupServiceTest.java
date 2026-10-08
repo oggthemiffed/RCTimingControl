@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,7 +86,7 @@ class SetupServiceTest {
         when(trackRepository.count()).thenReturn(0L);
         when(raceFormatTemplateRepository.count()).thenReturn(0L);
         when(userRepository.findAll()).thenReturn(List.of());
-        when(clubProfileRepository.findAll()).thenReturn(List.of());
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.empty());
 
         SetupProgressDto result = setupService.getProgress();
 
@@ -104,7 +105,7 @@ class SetupServiceTest {
         when(userRepository.findAll()).thenReturn(List.of());
         // Club profile without decoder fields — decoder=false
         ClubProfile profile = new ClubProfile();
-        when(clubProfileRepository.findAll()).thenReturn(List.of(profile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(profile));
 
         SetupProgressDto result = setupService.getProgress();
 

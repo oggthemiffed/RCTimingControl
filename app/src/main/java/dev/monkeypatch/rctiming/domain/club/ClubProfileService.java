@@ -16,6 +16,7 @@ import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 @Service
@@ -39,8 +40,7 @@ public class ClubProfileService {
 
     @Transactional(readOnly = true)
     public DecoderSettings getDecoderSettings() {
-        return clubProfileRepository.findAll().stream()
-                .findFirst()
+        return clubProfileRepository.findCurrent()
                 .map(profile -> new DecoderSettings(
                         profile.getDecoderHost(), profile.getDecoderPort(), profile.getDecoderProtocol()))
                 .orElseGet(() -> new DecoderSettings(null, null, null));
@@ -48,15 +48,33 @@ public class ClubProfileService {
 
     @Transactional(readOnly = true)
     public ClubProfileDto getProfile() {
-        return clubProfileRepository.findAll().stream()
-                .findFirst()
+        return clubProfileRepository.findCurrent()
                 .map(ClubProfileDto::from)
                 .orElseGet(() -> new ClubProfileDto(null, "", null, null, null, null, null, "UTC", null, null));
     }
 
+    /** The announcer settings, or the defaults before a club profile exists. */
+    @Transactional(readOnly = true)
+    public ClubAudioSettings audioSettings() {
+        return clubProfileRepository.findCurrent()
+                .map(ClubProfile::getAudioSettings)
+                .orElseGet(ClubAudioSettings::defaults);
+    }
+
+    /** The club's chosen announcer voice, or empty to use the Piper default. */
+    @Transactional(readOnly = true)
+    public Optional<String> defaultVoiceId() {
+        return clubProfileRepository.findCurrent()
+                .map(ClubProfile::getDefaultVoiceId)
+                .filter(v -> !v.isBlank());
+    }
+
+    /**
+     * The profile's id for a write, creating a blank profile first if the setup wizard has not saved one,
+     * so the announcer settings or a logo can be stored before the club's details.
+     */
     public Long getSingletonProfileId() {
-        return clubProfileRepository.findAll().stream()
-                .findFirst()
+        return clubProfileRepository.findCurrent()
                 .map(ClubProfile::getId)
                 .orElseGet(() -> {
                     Instant now = Instant.now();
@@ -73,9 +91,7 @@ public class ClubProfileService {
         // Validate timezone — throws DateTimeException on invalid
         ZoneId.of(request.timezone());
 
-        ClubProfile profile = clubProfileRepository.findAll().stream()
-                .findFirst()
-                .orElseGet(ClubProfile::new);
+        ClubProfile profile = clubProfileRepository.findCurrent().orElseGet(ClubProfile::new);
 
         boolean isNew = profile.getId() == null;
         Map<String, Object> before = isNew ? null : profileValues(profile);
@@ -164,7 +180,7 @@ public class ClubProfileService {
 
     @Transactional
     public ClubProfile updateDecoderConfig(Actor actor, String host, Integer port, String protocol) {
-        ClubProfile profile = clubProfileRepository.findAll().stream().findFirst()
+        ClubProfile profile = clubProfileRepository.findCurrent()
                 .orElseThrow(() -> new IllegalStateException("No club profile — complete club step first"));
         Map<String, Object> before = decoderValues(profile);
         profile.setDecoderHost(host);
