@@ -40,7 +40,6 @@ public class QualifyingStandingsService {
     /** The best lap of a driver with no timed lap, which sorts behind every real one. */
     private static final long NO_LAP = Long.MAX_VALUE;
 
-
     private final RaceRepository raceRepository;
     private final RaceEntryRepository raceEntryRepository;
     private final ResultSnapshotRepository resultSnapshotRepository;
