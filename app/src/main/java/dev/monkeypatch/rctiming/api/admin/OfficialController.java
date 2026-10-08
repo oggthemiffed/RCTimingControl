@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,8 +38,9 @@ import java.util.Set;
 @PreAuthorize("hasRole('ADMIN')")
 public class OfficialController {
 
-    /** How many recent changes the page shows. */
-    static final int RECENT_CHANGES = 50;
+    /** How many changes a page of the history holds unless the request asks for fewer or more. */
+    static final int CHANGES_PAGE = 50;
+    static final int CHANGES_PAGE_MAX = 200;
 
     private final OfficialService officialService;
     private final OfficialQueryService officialQueryService;
@@ -65,9 +67,11 @@ public class OfficialController {
         return officialQueryService.listAll();
     }
 
+    /** Newest first. Pass the id of the oldest change shown as {@code before} to get the page after it. */
     @GetMapping("/changes")
-    public List<OfficialChangeDto> changes() {
-        return officialQueryService.recentChanges(RECENT_CHANGES);
+    public List<OfficialChangeDto> changes(@RequestParam(required = false) Long before,
+                                           @RequestParam(defaultValue = "" + CHANGES_PAGE) int size) {
+        return officialQueryService.changes(before, Math.min(Math.max(size, 1), CHANGES_PAGE_MAX));
     }
 
     @Audited("official_audit_log")

@@ -807,8 +807,10 @@ export const adminApi = {
   officials: {
     list: () =>
       api.get<OfficialDto[]>('/api/v1/admin/officials').then(r => r.data),
-    changes: () =>
-      api.get<OfficialChangeDto[]>('/api/v1/admin/officials/changes').then(r => r.data),
+    /** Newest first, one page at a time; `before` is the id of the oldest change already shown. */
+    changes: (before?: number) =>
+      api.get<OfficialChangeDto[]>('/api/v1/admin/officials/changes', { params: { before } })
+        .then(r => r.data),
     add: (body: AddOfficialRequest) =>
       api.post<OfficialDto>('/api/v1/admin/officials', body).then(r => r.data),
     changeRoles: (id: number, roles: OfficialRole[]) =>

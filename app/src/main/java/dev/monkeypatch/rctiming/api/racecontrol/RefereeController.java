@@ -1,10 +1,13 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.IncidentReportRequest;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalAbsenceRequest;
+import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalPenaltyRequest;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.PenaltyRequest;
 import dev.monkeypatch.rctiming.domain.race.IncidentReport;
 import dev.monkeypatch.rctiming.domain.race.IncidentReportRepository;
@@ -32,8 +35,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -185,21 +188,16 @@ public class RefereeController {
     }
 
     /**
-     * Apply a marshal penalty for a recorded absence (D-22 — separate action from recording).
+     * Apply a marshal penalty for a recorded absence (D-22 — separate action from recording). The request can
+     * name the absence; otherwise the entry's most recent absence in the event is used, if there is one.
      */
     @Audited("audit_log")
     @PostMapping("/race/{raceId}/apply-marshal-penalty")
     @Transactional
     public ResponseEntity<MarshalPenalty> applyMarshalPenalty(@PathVariable long raceId,
-                                                               @Valid @RequestBody MarshalAbsenceRequest req) {
+                                                               @Valid @RequestBody MarshalPenaltyRequest req) {
         long userId = resolveUserId();
-
-        // Link to most recent absence for this entry+event if available
-        List<MarshalAbsence> absences = marshalAbsenceRepository.findByEventId(req.eventId())
-                .stream()
-                .filter(a -> a.getEntryId().equals(req.entryId()))
-                .toList();
-        Long absenceId = absences.isEmpty() ? null : absences.get(absences.size() - 1).getId();
+        Long absenceId = absenceFor(req);
 
         MarshalPenalty mp = new MarshalPenalty();
         mp.setAbsenceId(absenceId);
@@ -218,6 +216,23 @@ public class RefereeController {
                 .summary("Gave " + labels.driver(req.entryId()) + " a marshal penalty")
                 .after(after).record();
         return ResponseEntity.ok(saved);
+    }
+
+    /** The absence a marshal penalty is for: the one named, which must be this entry's in this event, or the latest. */
+    private Long absenceFor(MarshalPenaltyRequest req) {
+        if (req.absenceId() != null) {
+            MarshalAbsence named = marshalAbsenceRepository.findById(req.absenceId())
+                    .orElseThrow(() -> new EntityNotFoundException("Marshal absence not found: " + req.absenceId()));
+            if (!named.getEntryId().equals(req.entryId()) || !named.getEventId().equals(req.eventId())) {
+                throw new StateConflictException("That absence was recorded for a different entry or event");
+            }
+            return named.getId();
+        }
+        return marshalAbsenceRepository.findByEventId(req.eventId()).stream()
+                .filter(a -> a.getEntryId().equals(req.entryId()))
+                .max(Comparator.comparing(MarshalAbsence::getRecordedAt).thenComparing(MarshalAbsence::getId))
+                .map(MarshalAbsence::getId)
+                .orElse(null);
     }
 
     private long resolveUserId() {

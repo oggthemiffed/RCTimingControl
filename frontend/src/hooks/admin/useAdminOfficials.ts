@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { adminApi, type AddOfficialRequest, type OfficialRole } from '@/lib/adminApi';
 import { adminQueryKeys } from './adminQueryKeys';
 
@@ -9,10 +9,19 @@ export function useOfficials() {
   });
 }
 
+/** How many changes the server sends a page at a time (its default). */
+const CHANGES_PAGE_SIZE = 50;
+
+/** The changes made to officials, newest first, a page at a time. */
 export function useOfficialChanges() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: adminQueryKeys.officials.changes(),
-    queryFn: adminApi.officials.changes,
+    queryFn: ({ pageParam }) => adminApi.officials.changes(pageParam),
+    initialPageParam: undefined as number | undefined,
+    // A short page is the last one; otherwise the next starts after the oldest change shown
+    getNextPageParam: lastPage =>
+      lastPage.length < CHANGES_PAGE_SIZE ? undefined : lastPage[lastPage.length - 1].id,
+    select: data => data.pages.flat(),
   });
 }
 

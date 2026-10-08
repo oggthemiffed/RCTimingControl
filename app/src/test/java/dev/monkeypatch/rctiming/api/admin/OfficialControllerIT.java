@@ -94,6 +94,30 @@ class OfficialControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void changesComePageByPageNewestFirstWithNoneSkippedOrRepeated() {
+        String email = createUser(Set.of(Role.REFEREE), "password123");
+        long id = idOf(email);
+        rest.exchange(BASE + "/" + id + "/roles", HttpMethod.PUT, json(Map.of("roles", List.of("RACE_DIRECTOR"))), MAP);
+        rest.exchange(BASE + "/" + id + "/roles", HttpMethod.PUT, json(Map.of("roles", List.of("REFEREE"))), MAP);
+        rest.exchange(BASE + "/" + id + "/password", HttpMethod.PUT, json(Map.of("password", "newPassword1")),
+                Void.class);
+
+        List<Map<String, Object>> first = rest.exchange(BASE + "/changes?size=2", HttpMethod.GET, auth(), LIST)
+                .getBody();
+        long oldestShown = ((Number) first.get(first.size() - 1).get("id")).longValue();
+        List<Map<String, Object>> next = rest.exchange(BASE + "/changes?size=2&before=" + oldestShown,
+                HttpMethod.GET, auth(), LIST).getBody();
+
+        assertThat(first).hasSize(2);
+        assertThat(first.get(0)).containsEntry("action", "PASSWORD_SET");
+        assertThat(first.get(1)).containsEntry("action", "ROLES_CHANGED");
+        assertThat(next).isNotEmpty().hasSizeLessThanOrEqualTo(2);
+        assertThat(next).allSatisfy(c -> assertThat(((Number) c.get("id")).longValue()).isLessThan(oldestShown));
+        assertThat(next.get(0)).containsEntry("action", "ROLES_CHANGED")
+                .containsEntry("detail", "REFEREE → RACE_DIRECTOR");
+    }
+
+    @Test
     void anEmailAlreadyInUseIsRefused() {
         String email = createUser(Set.of(Role.REFEREE), "password123");
 

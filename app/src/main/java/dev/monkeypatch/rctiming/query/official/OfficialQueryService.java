@@ -48,8 +48,12 @@ public class OfficialQueryService {
                         r.get(USERS.CREATED_AT)));
     }
 
-    /** The newest changes to officials, newest first. */
-    public List<OfficialChangeDto> recentChanges(int limit) {
+    /**
+     * Changes to officials, newest first, {@code limit} at a time. {@code beforeId} is the id of the oldest
+     * change already shown, so the next page starts after it; null starts at the newest. Rows are only ever
+     * added and ids count up, so the id orders them and no change is skipped or shown twice between pages.
+     */
+    public List<OfficialChangeDto> changes(Long beforeId, int limit) {
         Users official = USERS.as("official");
         Users actor = USERS.as("actor");
         return dsl.select(OFFICIAL_AUDIT_LOG.ID, OFFICIAL_AUDIT_LOG.CREATED_AT, OFFICIAL_AUDIT_LOG.OFFICIAL_USER_ID,
@@ -58,7 +62,8 @@ public class OfficialQueryService {
                 .from(OFFICIAL_AUDIT_LOG)
                 .join(official).on(official.ID.eq(OFFICIAL_AUDIT_LOG.OFFICIAL_USER_ID))
                 .leftJoin(actor).on(actor.ID.eq(OFFICIAL_AUDIT_LOG.ACTOR_USER_ID))
-                .orderBy(OFFICIAL_AUDIT_LOG.CREATED_AT.desc(), OFFICIAL_AUDIT_LOG.ID.desc())
+                .where(beforeId == null ? DSL.noCondition() : OFFICIAL_AUDIT_LOG.ID.lt(beforeId))
+                .orderBy(OFFICIAL_AUDIT_LOG.ID.desc())
                 .limit(limit)
                 .fetch(r -> new OfficialChangeDto(
                         r.get(OFFICIAL_AUDIT_LOG.ID),

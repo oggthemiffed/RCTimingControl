@@ -285,6 +285,49 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void marshalPenalty_isLinkedToTheNamedAbsenceOrElseTheLatestOne() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+        Long eventId = resolveEventId(re.race());
+        Map<String, Object> body = Map.of("entryId", re.entry().getId(), "eventId", eventId);
+        restTemplate.exchange("/api/v1/race-control/referee/race/" + re.race().getId() + "/marshal-absent",
+                org.springframework.http.HttpMethod.POST, new HttpEntity<>(body, refereeHeaders()), Void.class);
+        Long absenceId = marshalAbsenceRepository.findByEventId(eventId).get(0).getId();
+
+        restTemplate.exchange("/api/v1/race-control/referee/race/" + re.race().getId() + "/apply-marshal-penalty",
+                org.springframework.http.HttpMethod.POST, new HttpEntity<>(body, refereeHeaders()), Map.class);
+        restTemplate.exchange("/api/v1/race-control/referee/race/" + re.race().getId() + "/apply-marshal-penalty",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("entryId", re.entry().getId(), "eventId", eventId, "absenceId", absenceId),
+                        refereeHeaders()), Map.class);
+
+        assertThat(marshalPenaltyRepository.findByEntryIdAndEventId(re.entry().getId(), eventId))
+                .hasSize(2).allSatisfy(p -> assertThat(p.getAbsenceId()).isEqualTo(absenceId));
+    }
+
+    @Test
+    void marshalPenalty_forAnAbsenceThatIsNotTheEntrysInThatEvent_isRefused() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+        Long eventId = resolveEventId(re.race());
+        restTemplate.exchange("/api/v1/race-control/referee/race/" + re.race().getId() + "/marshal-absent",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("entryId", re.entry().getId(), "eventId", eventId), refereeHeaders()),
+                Void.class);
+        Long absenceId = marshalAbsenceRepository.findByEventId(eventId).get(0).getId();
+        String url = "/api/v1/race-control/referee/race/" + re.race().getId() + "/apply-marshal-penalty";
+
+        ResponseEntity<Map> otherEvent = restTemplate.exchange(url, org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("entryId", re.entry().getId(), "eventId", eventId + 1, "absenceId", absenceId),
+                        refereeHeaders()), Map.class);
+        ResponseEntity<Map> missing = restTemplate.exchange(url, org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("entryId", re.entry().getId(), "eventId", eventId, "absenceId", 999_999_999L),
+                        refereeHeaders()), Map.class);
+
+        assertThat(otherEvent.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(missing.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(marshalPenaltyRepository.findByEntryIdAndEventId(re.entry().getId(), eventId)).isEmpty();
+    }
+
+    @Test
     void history_listsIncidentsAndPenaltiesOldestFirstWithNames() {
         RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
         long raceId = re.race().getId();
