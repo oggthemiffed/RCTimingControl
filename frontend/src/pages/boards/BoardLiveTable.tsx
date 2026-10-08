@@ -1,5 +1,5 @@
 import type { LiveTimingRowDto } from '@/lib/raceControlApi';
-import { fmtMs } from './boardFormat';
+import { fmtMs } from '@/lib/format';
 
 function gap(row: LiveTimingRowDto): string {
   if (row.position === 1) return '—';

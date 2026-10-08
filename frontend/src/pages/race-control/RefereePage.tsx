@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { useProximityAlerts } from './referee/useProximityAlerts';
 import { getRaceEntries } from '@/lib/raceControlApi';
 import type { IncidentReportRequest, PenaltyRequest } from '@/lib/raceControlApi';
+import { getApiErrorMessage } from '@/lib/errors';
 
 export default function RefereePage() {
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
@@ -63,7 +64,7 @@ export default function RefereePage() {
   function onIncident(req: IncidentReportRequest) {
     mutations.incident.mutate(req, {
       onSuccess: () => { toast.success('Incident report raised'); setIncidentOpen(false); },
-      onError: (e) => toast.error(`Failed: ${(e as Error).message}`),
+      onError: (e) => toast.error(getApiErrorMessage(e, 'The incident report could not be raised. Try again.')),
     });
   }
 
@@ -77,7 +78,7 @@ export default function RefereePage() {
         );
         setPenaltyOpen(false);
       },
-      onError: (e) => toast.error(`Failed: ${(e as Error).message}`),
+      onError: (e) => toast.error(getApiErrorMessage(e, 'The penalty could not be applied. Try again.')),
     });
   }
 
