@@ -8,6 +8,7 @@ import { useAdminCompetitorsList, usePossibleDuplicates } from '@/hooks/admin/us
 import { useHelpContent } from '@/context/HelpContext';
 import { CompetitorsHelp } from '@/help/CompetitorsHelp';
 import type { CompetitorSummaryDto } from '@/lib/adminApi';
+import { formatCompetitorMeta, matchesCompetitor } from '@/lib/competitors';
 import MergeCompetitorDialog from './MergeCompetitorDialog';
 import { useRoles } from '@/hooks/useRoles';
 
@@ -22,8 +23,7 @@ function CompetitorRow({ competitor, canSetSpokenName, isAdmin, onMerge }: {
 }) {
   const [editing, setEditing] = useState(false);
 
-  const meta = [competitor.brcaNumber && `BRCA ${competitor.brcaNumber}`, competitor.homeClub]
-    .filter(Boolean).join(' · ');
+  const meta = formatCompetitorMeta(competitor);
 
   return (
     <li className="px-4 py-3 space-y-2">
@@ -83,12 +83,7 @@ export default function CompetitorsPage() {
   const { data: duplicateGroups = [] } = usePossibleDuplicates(isAdmin);
   const [merging, setMerging] = useState<{ duplicate: CompetitorSummaryDto; suggested: CompetitorSummaryDto[] } | null>(null);
 
-  const query = search.trim().toLowerCase();
-  const shown = (competitors ?? []).filter(c =>
-    !query
-    || c.displayName.toLowerCase().includes(query)
-    || (c.brcaNumber ?? '').toLowerCase().includes(query)
-    || (c.homeClub ?? '').toLowerCase().includes(query));
+  const shown = (competitors ?? []).filter(c => matchesCompetitor(c, search));
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -134,10 +129,9 @@ export default function CompetitorsPage() {
                     <li key={c.id} className="flex items-center justify-between gap-3 px-3 py-1.5 text-sm">
                       <span>
                         {c.displayName}
-                        <span className="text-muted-foreground">
-                          {[c.brcaNumber && ` · BRCA ${c.brcaNumber}`, c.homeClub && ` · ${c.homeClub}`]
-                            .filter(Boolean).join('')}
-                        </span>
+                        {formatCompetitorMeta(c) && (
+                          <span className="text-muted-foreground"> · {formatCompetitorMeta(c)}</span>
+                        )}
                       </span>
                       <Button type="button" variant="outline" size="sm"
                         aria-label={`Merge ${c.displayName} into another competitor (from possible duplicates)`}

@@ -17,6 +17,8 @@ import {
 import { useAdminCompetitorsList } from '@/hooks/admin/useAdminCompetitors';
 import { useCreateWalkInEntry } from '@/hooks/admin/useAdminEntries';
 import type { CompetitorSummaryDto } from '@/lib/adminApi';
+import { matchesCompetitor } from '@/lib/competitors';
+import { ChosenCompetitor, CompetitorChoices } from '@/components/CompetitorPicker';
 import { getApiErrorMessage } from '@/lib/errors';
 
 interface AddWalkInEntryDialogProps {
@@ -59,7 +61,7 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
   const query = driverText.trim().toLowerCase();
   const matches = selected || !query
     ? []
-    : competitors.filter(c => c.displayName.toLowerCase().includes(query)).slice(0, MAX_MATCHES);
+    : competitors.filter(c => matchesCompetitor(c, query)).slice(0, MAX_MATCHES);
   const exactMatch = query
     ? competitors.find(c => sameNameKey(c.displayName) === sameNameKey(driverText))
     : undefined;
@@ -122,13 +124,7 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
           <div className="space-y-1.5">
             <Label htmlFor="walkin-driver">Driver</Label>
             {selected ? (
-              <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                <span className="flex-1 font-medium">{selected.displayName}</span>
-                {selected.homeClub && <span className="text-muted-foreground">{selected.homeClub}</span>}
-                <Button type="button" size="sm" variant="ghost" onClick={() => setSelected(null)}>
-                  Change
-                </Button>
-              </div>
+              <ChosenCompetitor competitor={selected} onChange={() => setSelected(null)} />
             ) : (
               <>
                 <Input
@@ -141,22 +137,7 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
                   placeholder="Search drivers or type a new name"
                   autoComplete="off"
                 />
-                {matches.length > 0 && (
-                  <ul className="rounded-md border divide-y" aria-label="Matching drivers">
-                    {matches.map(c => (
-                      <li key={c.id}>
-                        <button
-                          type="button"
-                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted"
-                          onClick={() => setSelected(c)}
-                        >
-                          {c.displayName}
-                          {c.homeClub && <span className="text-muted-foreground"> · {c.homeClub}</span>}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <CompetitorChoices choices={matches} onPick={setSelected} label="Matching drivers" />
                 {query && !exactMatch && (
                   <p className="text-xs text-muted-foreground">
                     “{driverText.trim()}” will be added as a new driver.

@@ -16,6 +16,8 @@ import {
 import { useAdminCompetitorsList, useMergeCompetitors, useMergePreview } from '@/hooks/admin/useAdminCompetitors';
 import type { CompetitorSummaryDto } from '@/lib/adminApi';
 import { getApiErrorMessage } from '@/lib/errors';
+import { matchesCompetitor } from '@/lib/competitors';
+import { ChosenCompetitor, CompetitorChoices } from '@/components/CompetitorPicker';
 
 const MAX_CHOICES = 8;
 
@@ -52,7 +54,7 @@ export default function MergeCompetitorDialog({ duplicate, suggested = [], onOpe
   const query = search.trim().toLowerCase();
   const pool = competitors.filter(c => c.id !== duplicate?.id);
   const choices = (query
-    ? pool.filter(c => c.displayName.toLowerCase().includes(query) || (c.brcaNumber ?? '').toLowerCase().includes(query))
+    ? pool.filter(c => matchesCompetitor(c, query))
     : [...suggested.filter(c => c.id !== duplicate?.id), ...pool.filter(c => !suggested.some(s => s.id === c.id))]
   ).slice(0, MAX_CHOICES);
   const keeping = keepId == null ? null : competitors.find(c => c.id === keepId) ?? null;
@@ -87,14 +89,7 @@ export default function MergeCompetitorDialog({ duplicate, suggested = [], onOpe
         </DialogHeader>
 
         {keeping ? (
-          <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-            <span className="text-muted-foreground">Keep</span>
-            <span className="flex-1 font-medium">{keeping.displayName}</span>
-            {keeping.homeClub && <span className="text-muted-foreground">{keeping.homeClub}</span>}
-            <Button type="button" size="sm" variant="ghost" onClick={() => setKeepId(null)}>
-              Change
-            </Button>
-          </div>
+          <ChosenCompetitor competitor={keeping} prefix="Keep" onChange={() => setKeepId(null)} />
         ) : (
           <div className="space-y-2">
             <Input
@@ -104,24 +99,12 @@ export default function MergeCompetitorDialog({ duplicate, suggested = [], onOpe
               aria-label="Search for the competitor to keep"
               autoComplete="off"
             />
-            <ul className="rounded-md border divide-y" aria-label="Competitors to keep">
-              {choices.map(c => (
-                <li key={c.id}>
-                  <button
-                    type="button"
-                    className="w-full px-3 py-1.5 text-left text-sm hover:bg-muted"
-                    onClick={() => setKeepId(c.id)}
-                  >
-                    {c.displayName}
-                    <span className="text-muted-foreground">
-                      {[c.brcaNumber && ` · BRCA ${c.brcaNumber}`, c.homeClub && ` · ${c.homeClub}`]
-                        .filter(Boolean).join('')}
-                    </span>
-                  </button>
-                </li>
-              ))}
-              {choices.length === 0 && <li className="px-3 py-2 text-sm text-muted-foreground">No one matches.</li>}
-            </ul>
+            <CompetitorChoices
+              choices={choices}
+              onPick={c => setKeepId(c.id)}
+              label="Competitors to keep"
+              emptyText="No one matches."
+            />
           </div>
         )}
 

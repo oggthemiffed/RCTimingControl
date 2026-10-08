@@ -1,5 +1,5 @@
 import { useRoles } from '@/hooks/useRoles';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
@@ -50,7 +50,9 @@ import {
 } from '@/hooks/admin/useAdminChampionships';
 import { useAdminEventsList } from '@/hooks/admin/useAdminEvents';
 import { useAdminCompetitorsList } from '@/hooks/admin/useAdminCompetitors';
-import type { ChampionshipDto, CompetitorSummaryDto } from '@/lib/adminApi';
+import type { ChampionshipDto } from '@/lib/adminApi';
+import { matchesCompetitor } from '@/lib/competitors';
+import { ChosenCompetitor, CompetitorChoices } from '@/components/CompetitorPicker';
 import { adminApi } from '@/lib/adminApi';
 import { useQuery } from '@tanstack/react-query';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
@@ -60,62 +62,37 @@ import { useConfirm } from '@/components/ConfirmDialog';
 import { formatDate } from '@/lib/dates';
 import { optionalPositiveInt, refineBestXFromY } from './bestXFromY';
 
-// ── Driver combobox ────────────────────────────────────────────────────────
+// ── Driver picker ──────────────────────────────────────────────────────────
 
-function DriverCombobox({
+function DriverPicker({
   value,
   onChange,
 }: {
-  value: number | '';
-  onChange: (id: number) => void;
+  value: number | undefined;
+  onChange: (id: number | undefined) => void;
 }) {
   const { data: competitors = [] } = useAdminCompetitorsList();
-  const [search, setSearch] = useState(() => {
-    const c = competitors.find(c => c.id === Number(value));
-    return c ? c.displayName : '';
-  });
-  const [open, setOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [search, setSearch] = useState('');
+  const chosen = value == null ? undefined : competitors.find(c => c.id === value);
 
-  const filtered = search.length >= 1
-    ? competitors.filter(c => {
-        const q = search.toLowerCase();
-        return c.displayName.toLowerCase().includes(q)
-          || (c.brcaNumber ?? '').toLowerCase().includes(q);
-      })
-    : competitors;
-
-  function handleSelect(c: CompetitorSummaryDto) {
-    onChange(c.id);
-    setSearch(c.displayName);
-    setOpen(false);
+  if (chosen) {
+    return <ChosenCompetitor competitor={chosen} onChange={() => onChange(undefined)} />;
   }
-
   return (
-    <div className="relative">
+    <div className="space-y-2">
       <Input
-        ref={inputRef}
         value={search}
-        onChange={e => { setSearch(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onChange={e => setSearch(e.target.value)}
         placeholder="Search driver name…"
+        aria-label="Search drivers"
+        autoComplete="off"
       />
-      {open && filtered.length > 0 && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
-          {filtered.slice(0, 30).map(c => (
-            <button
-              key={c.id}
-              type="button"
-              className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-baseline gap-2"
-              onMouseDown={e => { e.preventDefault(); handleSelect(c); }}
-            >
-              <span>{c.displayName}</span>
-              {c.brcaNumber && <span className="text-xs text-muted-foreground">BRCA: {c.brcaNumber}</span>}
-            </button>
-          ))}
-        </div>
-      )}
+      <CompetitorChoices
+        choices={competitors.filter(c => matchesCompetitor(c, search)).slice(0, 30)}
+        onPick={c => { onChange(c.id); setSearch(''); }}
+        label="Drivers"
+        emptyText="No one matches."
+      />
     </div>
   );
 }
@@ -338,10 +315,7 @@ function CreateExclusionDialog({
               name="driverId"
               control={control}
               render={({ field }) => (
-                <DriverCombobox
-                  value={field.value ?? ''}
-                  onChange={id => field.onChange(id)}
-                />
+                <DriverPicker value={field.value} onChange={id => field.onChange(id)} />
               )}
             />
             {errors.driverId && <p className="text-xs text-destructive">{errors.driverId.message}</p>}
