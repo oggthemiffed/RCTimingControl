@@ -184,17 +184,16 @@ public class CompetitorAuditLog extends TableImpl<CompetitorAuditLogRecord> {
         return Arrays.asList(Keys.COMPETITOR_AUDIT_LOG__COMPETITOR_AUDIT_LOG_ACTOR_USER_ID_FKEY, Keys.COMPETITOR_AUDIT_LOG__COMPETITOR_AUDIT_LOG_COMPETITOR_ID_FKEY);
     }
 
-    private transient UsersPath _competitorAuditLogActorUserIdFkey;
+    private transient UsersPath _users;
 
     /**
-     * Get the implicit join path to the <code>users</code> table, via the
-     * <code>competitor_audit_log_actor_user_id_fkey</code> key.
+     * Get the implicit join path to the <code>users</code> table.
      */
-    public UsersPath competitorAuditLogActorUserIdFkey() {
-        if (_competitorAuditLogActorUserIdFkey == null)
-            _competitorAuditLogActorUserIdFkey = new UsersPath(this, Keys.COMPETITOR_AUDIT_LOG__COMPETITOR_AUDIT_LOG_ACTOR_USER_ID_FKEY, null);
+    public UsersPath users() {
+        if (_users == null)
+            _users = new UsersPath(this, Keys.COMPETITOR_AUDIT_LOG__COMPETITOR_AUDIT_LOG_ACTOR_USER_ID_FKEY, null);
 
-        return _competitorAuditLogActorUserIdFkey;
+        return _users;
     }
 
     private transient CompetitorsPath _competitors;

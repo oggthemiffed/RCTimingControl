@@ -7,6 +7,7 @@ package dev.monkeypatch.rctiming.jooq.generated.tables;
 import dev.monkeypatch.rctiming.jooq.generated.DefaultSchema;
 import dev.monkeypatch.rctiming.jooq.generated.Keys;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.ChampionshipExclusionsPath;
+import dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog.CompetitorAuditLogPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries.EntriesPath;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.CompetitorsRecord;
 import dev.monkeypatch.rctiming.persistence.convert.InstantMicrosConverter;
@@ -198,6 +199,19 @@ public class Competitors extends TableImpl<CompetitorsRecord> {
             _championshipExclusions = new ChampionshipExclusionsPath(this, null, Keys.CHAMPIONSHIP_EXCLUSIONS__CHAMPIONSHIP_EXCLUSIONS_DRIVER_ID_FKEY.getInverseKey());
 
         return _championshipExclusions;
+    }
+
+    private transient CompetitorAuditLogPath _competitorAuditLog;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>competitor_audit_log</code> table
+     */
+    public CompetitorAuditLogPath competitorAuditLog() {
+        if (_competitorAuditLog == null)
+            _competitorAuditLog = new CompetitorAuditLogPath(this, null, Keys.COMPETITOR_AUDIT_LOG__COMPETITOR_AUDIT_LOG_COMPETITOR_ID_FKEY.getInverseKey());
+
+        return _competitorAuditLog;
     }
 
     private transient EntriesPath _entries;

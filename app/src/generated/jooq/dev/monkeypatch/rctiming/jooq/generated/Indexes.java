@@ -4,9 +4,11 @@
 package dev.monkeypatch.rctiming.jooq.generated;
 
 
+import dev.monkeypatch.rctiming.jooq.generated.tables.AuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipClasses;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks;
 import dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions;
+import dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Entries;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses;
@@ -14,8 +16,6 @@ import dev.monkeypatch.rctiming.jooq.generated.tables.Events;
 import dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences;
 import dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments;
-import dev.monkeypatch.rctiming.jooq.generated.tables.AuditLog;
-import dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.OfficialAuditLog;
 import dev.monkeypatch.rctiming.jooq.generated.tables.Penalties;
 import dev.monkeypatch.rctiming.jooq.generated.tables.PracticeLaps;
@@ -45,10 +45,15 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index IDX_AUDIT_LOG_ENTITY = Internal.createIndex(DSL.name("idx_audit_log_entity"), AuditLog.AUDIT_LOG, new OrderField[] { AuditLog.AUDIT_LOG.ENTITY_TYPE, AuditLog.AUDIT_LOG.ENTITY_ID }, false);
+    public static final Index IDX_AUDIT_LOG_EVENT = Internal.createIndex(DSL.name("idx_audit_log_event"), AuditLog.AUDIT_LOG, new OrderField[] { AuditLog.AUDIT_LOG.EVENT_ID }, false);
+    public static final Index IDX_AUDIT_LOG_OCCURRED_AT = Internal.createIndex(DSL.name("idx_audit_log_occurred_at"), AuditLog.AUDIT_LOG, new OrderField[] { AuditLog.AUDIT_LOG.OCCURRED_AT }, false);
+    public static final Index IDX_AUDIT_LOG_RACE = Internal.createIndex(DSL.name("idx_audit_log_race"), AuditLog.AUDIT_LOG, new OrderField[] { AuditLog.AUDIT_LOG.RACE_ID }, false);
     public static final Index IDX_CHAMPIONSHIP_CLASSES_CHAMPIONSHIP_ID = Internal.createIndex(DSL.name("idx_championship_classes_championship_id"), ChampionshipClasses.CHAMPIONSHIP_CLASSES, new OrderField[] { ChampionshipClasses.CHAMPIONSHIP_CLASSES.CHAMPIONSHIP_ID }, false);
     public static final Index IDX_CHAMPIONSHIP_EVENT_LINKS_CHAMPIONSHIP_ID = Internal.createIndex(DSL.name("idx_championship_event_links_championship_id"), ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS, new OrderField[] { ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID }, false);
     public static final Index IDX_CHAMPIONSHIP_EXCLUSIONS_CHAMPIONSHIP_ID = Internal.createIndex(DSL.name("idx_championship_exclusions_championship_id"), ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS, new OrderField[] { ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS.CHAMPIONSHIP_ID }, false);
     public static final Index IDX_CHAMPIONSHIP_EXCLUSIONS_DRIVER_ID = Internal.createIndex(DSL.name("idx_championship_exclusions_driver_id"), ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS, new OrderField[] { ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID }, false);
+    public static final Index IDX_COMPETITOR_AUDIT_LOG_COMPETITOR_ID = Internal.createIndex(DSL.name("idx_competitor_audit_log_competitor_id"), CompetitorAuditLog.COMPETITOR_AUDIT_LOG, new OrderField[] { CompetitorAuditLog.COMPETITOR_AUDIT_LOG.COMPETITOR_ID }, false);
     public static final Index IDX_ENTRIES_COMPETITOR_ID = Internal.createIndex(DSL.name("idx_entries_competitor_id"), Entries.ENTRIES, new OrderField[] { Entries.ENTRIES.COMPETITOR_ID }, false);
     public static final Index IDX_ENTRIES_EVENT_ID = Internal.createIndex(DSL.name("idx_entries_event_id"), Entries.ENTRIES, new OrderField[] { Entries.ENTRIES.EVENT_ID }, false);
     public static final Index IDX_ENTRIES_EXTERNAL = Internal.createIndex(DSL.name("idx_entries_external"), Entries.ENTRIES, new OrderField[] { Entries.ENTRIES.EXTERNAL_SOURCE, Entries.ENTRIES.EXTERNAL_ENTRY_ID }, true);
@@ -63,10 +68,6 @@ public class Indexes {
     public static final Index IDX_INCIDENT_REPORTS_RACE_ID = Internal.createIndex(DSL.name("idx_incident_reports_race_id"), IncidentReports.INCIDENT_REPORTS, new OrderField[] { IncidentReports.INCIDENT_REPORTS.RACE_ID }, false);
     public static final Index IDX_MARSHAL_ABSENCES_EVENT_ID = Internal.createIndex(DSL.name("idx_marshal_absences_event_id"), MarshalAbsences.MARSHAL_ABSENCES, new OrderField[] { MarshalAbsences.MARSHAL_ABSENCES.EVENT_ID }, false);
     public static final Index IDX_MARSHAL_ADJUSTMENTS_RACE_ID = Internal.createIndex(DSL.name("idx_marshal_adjustments_race_id"), MarshalAdjustments.MARSHAL_ADJUSTMENTS, new OrderField[] { MarshalAdjustments.MARSHAL_ADJUSTMENTS.RACE_ID }, false);
-    public static final Index IDX_AUDIT_LOG_ENTITY = Internal.createIndex(DSL.name("idx_audit_log_entity"), AuditLog.AUDIT_LOG, new OrderField[] { AuditLog.AUDIT_LOG.ENTITY_TYPE, AuditLog.AUDIT_LOG.ENTITY_ID }, false);
-    public static final Index IDX_AUDIT_LOG_EVENT = Internal.createIndex(DSL.name("idx_audit_log_event"), AuditLog.AUDIT_LOG, new OrderField[] { AuditLog.AUDIT_LOG.EVENT_ID }, false);
-    public static final Index IDX_AUDIT_LOG_OCCURRED_AT = Internal.createIndex(DSL.name("idx_audit_log_occurred_at"), AuditLog.AUDIT_LOG, new OrderField[] { AuditLog.AUDIT_LOG.OCCURRED_AT }, false);
-    public static final Index IDX_COMPETITOR_AUDIT_LOG_COMPETITOR_ID = Internal.createIndex(DSL.name("idx_competitor_audit_log_competitor_id"), CompetitorAuditLog.COMPETITOR_AUDIT_LOG, new OrderField[] { CompetitorAuditLog.COMPETITOR_AUDIT_LOG.COMPETITOR_ID }, false);
     public static final Index IDX_OFFICIAL_AUDIT_LOG_CREATED_AT = Internal.createIndex(DSL.name("idx_official_audit_log_created_at"), OfficialAuditLog.OFFICIAL_AUDIT_LOG, new OrderField[] { OfficialAuditLog.OFFICIAL_AUDIT_LOG.CREATED_AT }, false);
     public static final Index IDX_PENALTIES_RACE_ID = Internal.createIndex(DSL.name("idx_penalties_race_id"), Penalties.PENALTIES, new OrderField[] { Penalties.PENALTIES.RACE_ID }, false);
     public static final Index IDX_PRACTICE_LAPS_SESSION = Internal.createIndex(DSL.name("idx_practice_laps_session"), PracticeLaps.PRACTICE_LAPS, new OrderField[] { PracticeLaps.PRACTICE_LAPS.PRACTICE_SESSION_ID }, false);
