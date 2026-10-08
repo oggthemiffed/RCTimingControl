@@ -148,24 +148,14 @@ public class TransponderSwapService {
 
     private void writeAudit(Long entryId, long actingUserId, TransponderSlot slot,
                             String oldNumber, String newNumber, Instant at) {
-        EntryAuditLog log = new EntryAuditLog();
-        log.setEntryId(entryId);
-        log.setAdminUserId(actingUserId);
-        log.setAction(AUDIT_ACTION);
-        log.setBeforeSnapshot(json(slot, oldNumber));
-        log.setAfterSnapshot(json(slot, newNumber));
-        log.setCreatedAt(at);
-        auditLogRepository.save(log);
+        auditLogRepository.save(EntryAuditLog.of(entryId, actingUserId, AUDIT_ACTION, null,
+                json(slot, oldNumber), json(slot, newNumber), at));
     }
 
     private String json(TransponderSlot slot, String number) {
         Map<String, String> m = new LinkedHashMap<>();
         m.put("slot", slot.name());
         m.put("transponderNumber", number);
-        try {
-            return objectMapper.writeValueAsString(m);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to serialize audit snapshot", e);
-        }
+        return EntryAuditLog.snapshot(objectMapper, m);
     }
 }

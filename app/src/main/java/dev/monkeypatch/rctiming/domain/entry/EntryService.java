@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -131,11 +132,13 @@ public class EntryService {
             }
         }
 
-        writeAudit(persisted.getId(), adminUserId, "ADMIN_CREATE", null, null, writeJson(Map.of(
-                "competitorId", String.valueOf(competitor.getId()),
-                "eventClassId", String.valueOf(req.eventClassId()),
-                "transponderNumberSnapshot", primary,
-                "secondaryTransponderNumber", String.valueOf(secondary))));
+        Map<String, Object> created = new LinkedHashMap<>();
+        created.put("competitorId", String.valueOf(competitor.getId()));
+        created.put("eventClassId", String.valueOf(req.eventClassId()));
+        created.put("transponderNumberSnapshot", primary);
+        created.put("secondaryTransponderNumber", secondary);
+        auditLogRepository.save(EntryAuditLog.of(persisted.getId(), adminUserId, "ADMIN_CREATE", null,
+                null, EntryAuditLog.snapshot(objectMapper, created), now));
         return new EntryResult(EntryDto.from(persisted), warnings);
     }
 
@@ -145,35 +148,15 @@ public class EntryService {
         if (entry.getStatus() == EntryStatus.WITHDRAWN) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Entry already withdrawn");
         }
-        String beforeJson = writeJson(java.util.Map.of("status", entry.getStatus().name()));
+        String beforeJson = EntryAuditLog.snapshot(objectMapper, Map.of("status", entry.getStatus().name()));
         Instant now = Instant.now();
         entry.setStatus(EntryStatus.WITHDRAWN);
         entry.setWithdrawnAt(now);
         entry.setUpdatedAt(now);
         entryRepository.save(entry);
-        String afterJson = writeJson(java.util.Map.of("status", EntryStatus.WITHDRAWN.name()));
-        writeAudit(entry.getId(), adminUserId, "ADMIN_WITHDRAW", reason, beforeJson, afterJson);
+        String afterJson = EntryAuditLog.snapshot(objectMapper, Map.of("status", EntryStatus.WITHDRAWN.name()));
+        auditLogRepository.save(EntryAuditLog.of(entry.getId(), adminUserId, "ADMIN_WITHDRAW", reason,
+                beforeJson, afterJson, now));
         return EntryDto.from(entry);
-    }
-
-    private void writeAudit(Long entryId, Long adminId, String action, String reason,
-                            String beforeJson, String afterJson) {
-        EntryAuditLog log = new EntryAuditLog();
-        log.setEntryId(entryId);
-        log.setAdminUserId(adminId);
-        log.setAction(action);
-        log.setReason(reason);
-        log.setBeforeSnapshot(beforeJson);
-        log.setAfterSnapshot(afterJson);
-        log.setCreatedAt(Instant.now());
-        auditLogRepository.save(log);
-    }
-
-    private String writeJson(Map<String, ?> m) {
-        try {
-            return objectMapper.writeValueAsString(m);
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to serialize audit snapshot", e);
-        }
     }
 }

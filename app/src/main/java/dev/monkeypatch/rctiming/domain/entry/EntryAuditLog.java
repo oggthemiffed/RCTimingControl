@@ -1,7 +1,15 @@
 package dev.monkeypatch.rctiming.domain.entry;
 
-import java.time.Instant;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.Instant;
+import java.util.Map;
+
+/**
+ * One change to an entry, by an official, with what it was before and after as JSON. The entry history
+ * ({@code EntryHistoryQuery}) reads these rows back.
+ */
 public class EntryAuditLog {
 
     private Long id;
@@ -37,4 +45,32 @@ public class EntryAuditLog {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    /**
+     * A row ready to save.
+     *
+     * @param beforeJson the values before the change, from {@link #snapshot}, or null
+     * @param afterJson  the values after it, or null
+     */
+    public static EntryAuditLog of(Long entryId, Long officialId, String action, String reason,
+                                   String beforeJson, String afterJson, Instant at) {
+        EntryAuditLog log = new EntryAuditLog();
+        log.setEntryId(entryId);
+        log.setAdminUserId(officialId);
+        log.setAction(action);
+        log.setReason(reason);
+        log.setBeforeSnapshot(beforeJson);
+        log.setAfterSnapshot(afterJson);
+        log.setCreatedAt(at);
+        return log;
+    }
+
+    /** The values as a JSON snapshot. A null value is written as JSON null. */
+    public static String snapshot(ObjectMapper objectMapper, Map<String, ?> values) {
+        try {
+            return objectMapper.writeValueAsString(values);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize audit snapshot", e);
+        }
+    }
 }

@@ -287,23 +287,11 @@ public class CompetitorMergeService {
     }
 
     private String snapshot(Competitor c) {
-        try {
-            return objectMapper.writeValueAsString(Map.of("competitorId", String.valueOf(c.getId()),
-                    "displayName", c.getDisplayName()));
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to serialize audit snapshot", e);
-        }
+        return EntryAuditLog.snapshot(objectMapper,
+                Map.of("competitorId", String.valueOf(c.getId()), "displayName", c.getDisplayName()));
     }
 
     private void writeAudit(Long entryId, Long adminId, String reason, String before, String after, Instant now) {
-        EntryAuditLog audit = new EntryAuditLog();
-        audit.setEntryId(entryId);
-        audit.setAdminUserId(adminId);
-        audit.setAction(AUDIT_ACTION);
-        audit.setReason(reason);
-        audit.setBeforeSnapshot(before);
-        audit.setAfterSnapshot(after);
-        audit.setCreatedAt(now);
-        auditLogRepository.save(audit);
+        auditLogRepository.save(EntryAuditLog.of(entryId, adminId, AUDIT_ACTION, reason, before, after, now));
     }
 }
