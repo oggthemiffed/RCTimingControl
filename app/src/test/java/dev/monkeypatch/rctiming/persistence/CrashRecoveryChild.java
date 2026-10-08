@@ -39,7 +39,7 @@ public final class CrashRecoveryChild {
 
         PracticeSessionService sessions = context.getBean(PracticeSessionService.class);
         long sessionId = sessions.create(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), new PracticeSessionService.CreateRequest("Crash", null, 3)).id();
-        sessions.start(sessionId);
+        sessions.start(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), sessionId);
         for (long lap = 0; ; lap++) {
             // The listener's transaction has committed by the time publishEvent returns
             context.publishEvent(new LapPassingEvent(0, "777", lap * 20_000_000L));
