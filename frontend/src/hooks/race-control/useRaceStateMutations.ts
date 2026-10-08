@@ -24,52 +24,59 @@ export function useRaceStateMutations(raceId: number, eventId: number) {
   const invalidateRunOrder = () =>
     queryClient.invalidateQueries({ queryKey: raceControlQueryKeys.runOrder(eventId) });
 
+  // Every command leaves a row in the race's history
+  const invalidateHistory = () =>
+    queryClient.invalidateQueries({ queryKey: raceControlQueryKeys.raceHistory(raceId) });
+
   const invalidateSnapshot = () =>
     queryClient.invalidateQueries({ queryKey: raceControlQueryKeys.resultSnapshot(raceId) });
 
   return {
     callGrid: useMutation({
       mutationFn: () => callGrid(raceId),
-      onSuccess: invalidateRunOrder,
+      onSuccess: () => { invalidateRunOrder(); invalidateHistory(); },
     }),
     start: useMutation({
       mutationFn: () => startRace(raceId),
-      onSuccess: invalidateRunOrder,
+      onSuccess: () => { invalidateRunOrder(); invalidateHistory(); },
     }),
     stop: useMutation({
       mutationFn: () => stopRace(raceId),
-      onSuccess: invalidateRunOrder,
+      onSuccess: () => { invalidateRunOrder(); invalidateHistory(); },
     }),
     finish: useMutation({
       mutationFn: () => finishRace(raceId),
-      onSuccess: () => { invalidateRunOrder(); invalidateSnapshot(); },
+      onSuccess: () => { invalidateRunOrder(); invalidateSnapshot(); invalidateHistory(); },
     }),
     abandon: useMutation({
       mutationFn: () => abandonRace(raceId),
-      onSuccess: () => { invalidateRunOrder(); invalidateSnapshot(); },
+      onSuccess: () => { invalidateRunOrder(); invalidateSnapshot(); invalidateHistory(); },
     }),
     restart: useMutation({
       mutationFn: () => restartRace(raceId),
-      onSuccess: () => { invalidateRunOrder(); invalidateSnapshot(); },
+      onSuccess: () => { invalidateRunOrder(); invalidateSnapshot(); invalidateHistory(); },
     }),
     marshalAdj: useMutation({
       mutationFn: (req: MarshalAdjustmentRequest) => marshalAdjustment(raceId, req),
+      onSuccess: invalidateHistory,
     }),
     incident: useMutation({
       mutationFn: (req: IncidentReportRequest) => raiseIncident(raceId, req),
+      onSuccess: invalidateHistory,
     }),
     // After the finish a penalty changes the stored result, so a cached copy is stale (#107)
     penalty: useMutation({
       mutationFn: (req: PenaltyRequest) => applyPenalty(raceId, req),
-      onSuccess: invalidateSnapshot,
+      onSuccess: () => { invalidateSnapshot(); invalidateHistory(); },
     }),
     marshalAbsent: useMutation({
       mutationFn: (req: MarshalAbsenceRequest) => recordMarshalAbsent(raceId, req),
+      onSuccess: invalidateHistory,
     }),
     skipTo: useMutation({
       mutationFn: ({ sourceRaceId, targetRaceId }: { sourceRaceId: number; targetRaceId: number }) =>
         skipToRace(sourceRaceId, targetRaceId),
-      onSuccess: invalidateRunOrder,
+      onSuccess: () => { invalidateRunOrder(); invalidateHistory(); },
     }),
   };
 }

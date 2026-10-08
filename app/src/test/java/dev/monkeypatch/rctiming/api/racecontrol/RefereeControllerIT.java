@@ -44,6 +44,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -281,6 +282,72 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
         assertThat(row.get("summary").toString()).contains(number).contains("crediting 0 laps");
         assertThat(row.get("actor_user_id")).isNotNull();
         assertThat(row.get("after_json").toString()).contains("\"lapsCredited\":0");
+    }
+
+    @Test
+    void history_listsIncidentsAndPenaltiesOldestFirstWithNames() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+        long raceId = re.race().getId();
+        restTemplate.exchange("/api/v1/race-control/referee/race/" + raceId + "/incident-report",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("entryId", re.entry().getId(), "incidentType", "Contact",
+                        "description", "Turn 3"), refereeHeaders()), Map.class);
+        restTemplate.exchange("/api/v1/race-control/referee/race/" + raceId + "/penalty",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("entryId", re.entry().getId(), "penaltyType", "LAP", "value", 1,
+                        "reason", "Jumped start"), refereeHeaders()), Map.class);
+
+        ResponseEntity<List<Map<String, Object>>> resp = restTemplate.exchange(
+                "/api/v1/race-control/races/" + raceId + "/history",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(refereeHeaders()),
+                new org.springframework.core.ParameterizedTypeReference<>() {});
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<Map<String, Object>> rows = resp.getBody();
+        assertThat(rows).extracting(r -> r.get("kind")).containsExactly("INCIDENT", "PENALTY");
+        assertThat(rows.get(0).get("actor")).isEqualTo("Race Referee");
+        assertThat(rows.get(0).get("summary").toString()).contains("Contact").contains("Turn 3");
+        assertThat(rows.get(1).get("summary").toString()).contains("1 lap penalty").contains("Jumped start");
+    }
+
+    @Test
+    void history_ofAnUnknownRaceIsNotFound() {
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/race-control/races/999999/history",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(refereeHeaders()), Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void history_needsASignedInOfficial() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+
+        ResponseEntity<Map> resp = restTemplate.getForEntity(
+                "/api/v1/race-control/races/" + re.race().getId() + "/history", Map.class);
+
+        assertThat(resp.getStatusCode()).isIn(HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void history_showsAMarshalPenaltyGivenWithoutAnAbsenceOnTheRaceItWasGivenIn() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+        long raceId = re.race().getId();
+        restTemplate.exchange("/api/v1/race-control/referee/race/" + raceId + "/apply-marshal-penalty",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("entryId", re.entry().getId(), "eventId", resolveEventId(re.race())),
+                        refereeHeaders()), Map.class);
+
+        ResponseEntity<List<Map<String, Object>>> resp = restTemplate.exchange(
+                "/api/v1/race-control/races/" + raceId + "/history",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(refereeHeaders()),
+                new org.springframework.core.ParameterizedTypeReference<>() {});
+
+        assertThat(resp.getBody()).extracting(r -> r.get("kind")).containsExactly("MARSHAL_PENALTY");
+        assertThat(resp.getBody().get(0).get("actor")).isEqualTo("Race Referee");
     }
 
     // --- Helpers ---
