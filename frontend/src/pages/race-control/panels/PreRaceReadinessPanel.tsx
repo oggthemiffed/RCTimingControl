@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getApiErrorMessage } from '@/lib/errors';
 
 type Props = { raceId: number };
 
@@ -35,7 +36,7 @@ export function PreRaceReadinessPanel({ raceId }: Props) {
     return (
       <Card className="p-6">
         <p className="text-destructive text-sm">
-          Could not load pre-race readiness: {(error as Error).message}
+          Could not load pre-race readiness: {getApiErrorMessage(error, 'try again, and check the connection if it keeps failing.')}
         </p>
       </Card>
     );

@@ -1,11 +1,9 @@
 package dev.monkeypatch.rctiming.api.admin;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
-import dev.monkeypatch.rctiming.domain.club.ClubProfile;
-import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -27,12 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/admin/audio")
 public class AdminAudioController {
 
-    private final ClubProfileRepository clubProfileRepository;
     private final ClubProfileService clubProfileService;
 
-    public AdminAudioController(ClubProfileRepository clubProfileRepository,
-                                ClubProfileService clubProfileService) {
-        this.clubProfileRepository = clubProfileRepository;
+    public AdminAudioController(ClubProfileService clubProfileService) {
         this.clubProfileService = clubProfileService;
     }
 
@@ -47,23 +42,19 @@ public class AdminAudioController {
             boolean announceRunningOrder,
             @Min(1) @Max(20) int runningOrderDepth,
             String defaultVoiceId
-    ) {}
+    ) {
+        static AudioSettingsDto of(ClubAudioSettings s, String defaultVoiceId) {
+            return new AudioSettingsDto(s.announceCountdown(), s.announceStagger(), s.announceLapBeep(),
+                    s.announceFinish(), s.announceRunningOrder(), s.runningOrderDepth(), defaultVoiceId);
+        }
+    }
 
     @GetMapping("/settings")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<AudioSettingsDto> getAudioSettings() {
-        Long profileId = clubProfileService.getSingletonProfileId();
-        ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
-        ClubAudioSettings s = profile.getAudioSettings();
-        return ResponseEntity.ok(new AudioSettingsDto(
-                s.announceCountdown(),
-                s.announceStagger(),
-                s.announceLapBeep(),
-                s.announceFinish(),
-                s.announceRunningOrder(),
-                s.runningOrderDepth(),
-                profile.getDefaultVoiceId()
-        ));
+        // "" until a voice is chosen, so the page's select shows its placeholder
+        return ResponseEntity.ok(AudioSettingsDto.of(
+                clubProfileService.audioSettings(), clubProfileService.defaultVoiceId().orElse("")));
     }
 
     @Audited("audit_log")
@@ -71,7 +62,7 @@ public class AdminAudioController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<AudioSettingsDto> saveAudioSettings(Authentication auth,
                                                               @RequestBody @Valid AudioSettingsDto dto) {
-        clubProfileService.changeAudioSettings(Actor.official(Long.parseLong(auth.getName())), profile -> {
+        clubProfileService.changeAudioSettings(CurrentOfficial.actor(auth), profile -> {
             profile.setAudioSettings(new ClubAudioSettings(
                     dto.announceCountdown(),
                     dto.announceStagger(),
@@ -81,7 +72,10 @@ public class AdminAudioController {
                     dto.runningOrderDepth(),
                     profile.getAudioSettings().countdownIntervals()  // not part of this form: keep them
             ));
-            profile.setDefaultVoiceId(dto.defaultVoiceId());
+            // No voice chosen on the page: keep the one stored (the column is NOT NULL)
+            if (dto.defaultVoiceId() != null && !dto.defaultVoiceId().isBlank()) {
+                profile.setDefaultVoiceId(dto.defaultVoiceId());
+            }
         });
         return ResponseEntity.ok(dto);
     }

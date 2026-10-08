@@ -1,10 +1,10 @@
 package dev.monkeypatch.rctiming.api.admin;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.backup.BackupFile;
 import dev.monkeypatch.rctiming.backup.BackupService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -47,14 +47,9 @@ public class BackupController {
     @ResponseStatus(HttpStatus.CREATED)
     public BackupFile backupNow(Authentication auth) {
         BackupFile file = backupService.backup("manual");
-        audit.entry(actor(auth), "BACKUP_TAKEN").entity("backup", file.name())
+        audit.entry(CurrentOfficial.actor(auth), "BACKUP_TAKEN").entity("backup", file.name())
                 .summary("Took a backup now: " + file.name())
                 .after(file).recordStandalone();
         return file;
-    }
-
-    /** The signed-in official, taken from the token and never from the request body. */
-    private static Actor actor(Authentication auth) {
-        return Actor.official(Long.parseLong(auth.getName()));
     }
 }

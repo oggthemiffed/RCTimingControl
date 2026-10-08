@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.api.setup;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.setup.dto.BootstrapRequest;
@@ -13,6 +12,7 @@ import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.domain.club.DecoderSettings;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.UserService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.timing.DecoderProbe;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -86,7 +86,8 @@ public class SetupController {
     @PatchMapping("/decoder-config")
     @PreAuthorize("hasRole('ADMIN')")
     public SetupProgressDto updateDecoderConfig(Authentication auth, @RequestBody @Valid DecoderConfigUpdateRequest req) {
-        clubProfileService.updateDecoderConfig(Actor.official(Long.parseLong(auth.getName())), req.decoderHost(), req.decoderPort(), req.decoderProtocol());
+        clubProfileService.updateDecoderConfig(CurrentOfficial.actor(auth),
+                req.decoderHost(), req.decoderPort(), req.decoderProtocol());
         return setupService.getProgress();
     }
 
@@ -99,6 +100,6 @@ public class SetupController {
                 .map(Role::valueOf)
                 .collect(Collectors.toSet());
         userService.createStaff(req.email(), req.password(), req.firstName(), req.lastName(), roles,
-                Long.parseLong(auth.getName()));
+                CurrentOfficial.id(auth));
     }
 }

@@ -1,11 +1,11 @@
 package dev.monkeypatch.rctiming.api.admin;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.query.resultsexport.ResultsOutboxQuery;
 import dev.monkeypatch.rctiming.resultsexport.RaceHubResultsProperties;
 import dev.monkeypatch.rctiming.resultsexport.ResultsExportService;
 import dev.monkeypatch.rctiming.resultsexport.ResultsExportV1;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +59,7 @@ public class ResultsExportController {
     @Audited("audit_log")
     @PostMapping("/results-exports/{id}/retry")
     public ResponseEntity<Void> retry(Authentication auth, @PathVariable long id) {
-        exportService.retryNow(actor(auth), id);
+        exportService.retryNow(CurrentOfficial.actor(auth), id);
         return ResponseEntity.noContent().build();
     }
 
@@ -71,10 +71,5 @@ public class ResultsExportController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment().filename(filename).build().toString())
                 .body(export);
-    }
-
-    /** The signed-in official, taken from the token and never from the request body. */
-    private static Actor actor(Authentication auth) {
-        return Actor.official(Long.parseLong(auth.getName()));
     }
 }

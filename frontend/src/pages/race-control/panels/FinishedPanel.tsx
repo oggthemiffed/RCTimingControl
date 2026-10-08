@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Printer } from 'lucide-react';
+import { fmtMs } from '@/lib/format';
 
 type Props = {
   raceId: number;
@@ -18,16 +19,6 @@ type Props = {
   onRestart?: () => void;
   isRestarting?: boolean;
 };
-
-function fmtMs(ms: number | null): string {
-  if (ms === null || ms <= 0) return '—';
-  const totalSecs = Math.floor(ms / 1000);
-  const m = Math.floor(totalSecs / 60);
-  const s = totalSecs % 60;
-  const millis = ms % 1000;
-  if (m > 0) return `${m}:${String(s).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
-  return `${s}.${String(millis).padStart(3, '0')}`;
-}
 
 export function FinishedPanel({ raceId, eventId, onRestart, isRestarting }: Props) {
   const { data, isLoading, error } = useResultSnapshot(raceId);

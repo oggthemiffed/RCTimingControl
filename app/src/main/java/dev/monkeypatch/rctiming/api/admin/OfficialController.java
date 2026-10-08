@@ -7,6 +7,7 @@ import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.query.official.OfficialChangeDto;
 import dev.monkeypatch.rctiming.query.official.OfficialDto;
 import dev.monkeypatch.rctiming.query.official.OfficialQueryService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -80,37 +81,33 @@ public class OfficialController {
     @ResponseStatus(HttpStatus.CREATED)
     public OfficialDto add(@RequestBody @Valid AddOfficialRequest request, Authentication auth) {
         User user = officialService.add(request.email(), request.firstName(), request.lastName(),
-                request.password(), request.roles(), actorId(auth));
+                request.password(), request.roles(), CurrentOfficial.id(auth));
         return toDto(user);
     }
 
     @Audited("official_audit_log")
     @PutMapping("/{id}/roles")
     public OfficialDto changeRoles(@PathVariable long id, @RequestBody @Valid RolesRequest request, Authentication auth) {
-        return toDto(officialService.changeRoles(id, request.roles(), actorId(auth)));
+        return toDto(officialService.changeRoles(id, request.roles(), CurrentOfficial.id(auth)));
     }
 
     @Audited("official_audit_log")
     @PutMapping("/{id}/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void setPassword(@PathVariable long id, @RequestBody @Valid PasswordRequest request, Authentication auth) {
-        officialService.setPassword(id, request.password(), actorId(auth));
+        officialService.setPassword(id, request.password(), CurrentOfficial.id(auth));
     }
 
     @Audited("official_audit_log")
     @PostMapping("/{id}/disable")
     public OfficialDto disable(@PathVariable long id, Authentication auth) {
-        return toDto(officialService.disable(id, actorId(auth)));
+        return toDto(officialService.disable(id, CurrentOfficial.id(auth)));
     }
 
     @Audited("official_audit_log")
     @PostMapping("/{id}/enable")
     public OfficialDto enable(@PathVariable long id, Authentication auth) {
-        return toDto(officialService.enable(id, actorId(auth)));
-    }
-
-    private static long actorId(Authentication auth) {
-        return Long.parseLong(auth.getName());
+        return toDto(officialService.enable(id, CurrentOfficial.id(auth)));
     }
 
     private static OfficialDto toDto(User user) {

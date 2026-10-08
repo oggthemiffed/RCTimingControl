@@ -12,6 +12,7 @@ import dev.monkeypatch.rctiming.query.entry.AdminEntryDto;
 import dev.monkeypatch.rctiming.query.entry.AdminEntryQueryService;
 import dev.monkeypatch.rctiming.query.entry.EntryHistoryDto;
 import dev.monkeypatch.rctiming.query.entry.EntryHistoryQuery;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -68,8 +69,7 @@ public class AdminEntryController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public EntryResult createEntry(Authentication auth, @RequestBody @Valid AdminCreateEntryRequest req) {
-        Long adminId = Long.parseLong(auth.getName());
-        return entryService.adminCreateEntry(adminId, req);
+        return entryService.adminCreateEntry(CurrentOfficial.id(auth), req);
     }
 
     @Audited("entry_audit_log")
@@ -78,7 +78,6 @@ public class AdminEntryController {
     public EntryDto withdrawEntry(@PathVariable Long id,
                                   Authentication auth,
                                   @RequestBody @Valid AdminWithdrawRequest req) {
-        Long adminId = Long.parseLong(auth.getName());
-        return entryService.adminWithdraw(id, adminId, req.reason());
+        return entryService.adminWithdraw(id, CurrentOfficial.id(auth), req.reason());
     }
 }

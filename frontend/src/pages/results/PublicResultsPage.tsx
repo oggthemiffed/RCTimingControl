@@ -2,16 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { usePublicResultSnapshot } from '@/hooks/race-control/usePublicResultSnapshot';
 import type { PositionAtLap } from '@/lib/raceControlApi';
-
-function fmtMs(ms: number | null): string {
-  if (ms === null || ms <= 0) return '—';
-  const totalSecs = Math.floor(ms / 1000);
-  const m = Math.floor(totalSecs / 60);
-  const s = totalSecs % 60;
-  const millis = ms % 1000;
-  if (m > 0) return `${m}:${String(s).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
-  return `${s}.${String(millis).padStart(3, '0')}`;
-}
+import { fmtMs } from '@/lib/format';
 
 function LapTimesPanel({ entryId, lapHistory }: { entryId: number; lapHistory: PositionAtLap[] }) {
   const laps = lapHistory.filter(l => l.entryId === entryId);

@@ -7,12 +7,12 @@ import dev.monkeypatch.rctiming.api.admin.dto.GenerateRoundsRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.SeedFinalsRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.TransitionEventRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.UpdateEventRequest;
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.event.EventService;
 import dev.monkeypatch.rctiming.domain.format.EventClassService;
 import dev.monkeypatch.rctiming.query.event.AdminEventListDto;
 import dev.monkeypatch.rctiming.query.event.AdminEventQueryService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.service.EventRunOrderService;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest;
 import jakarta.validation.Valid;
@@ -69,7 +69,7 @@ public class EventController {
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public EventDto createEvent(Authentication auth, @RequestBody @Valid CreateEventRequest request) {
-        return eventService.create(actor(auth), request);
+        return eventService.create(CurrentOfficial.actor(auth), request);
     }
 
     @Audited("audit_log")
@@ -77,7 +77,7 @@ public class EventController {
     @PreAuthorize("hasRole('ADMIN')")
     public EventDto updateEvent(Authentication auth, @PathVariable Long id,
                                  @RequestBody @Valid UpdateEventRequest request) {
-        return eventService.update(actor(auth), id, request);
+        return eventService.update(CurrentOfficial.actor(auth), id, request);
     }
 
     @Audited("audit_log")
@@ -85,7 +85,7 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public EventDto transitionEvent(Authentication auth, @PathVariable Long id,
                                      @RequestBody @Valid TransitionEventRequest request) {
-        return eventService.transition(actor(auth), id, request.targetStatus());
+        return eventService.transition(CurrentOfficial.actor(auth), id, request.targetStatus());
     }
 
     @Audited("audit_log")
@@ -103,7 +103,7 @@ public class EventController {
                            c.eventClassId(), c.finalsCount(), c.carsPerFinal(), c.bumpCount()))
                    .toList()
         );
-        runOrderService.generateRounds(actor(auth), serviceReq);
+        runOrderService.generateRounds(CurrentOfficial.actor(auth), serviceReq);
         return ResponseEntity.noContent().build();
     }
 
@@ -112,13 +112,8 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<Void> seedFinals(Authentication auth, @PathVariable Long id,
                                            @Valid @RequestBody SeedFinalsRequest req) {
-        runOrderService.seedFinals(actor(auth), id, req.eventClassId(),
+        runOrderService.seedFinals(CurrentOfficial.actor(auth), id, req.eventClassId(),
                 req.finalsCount(), req.carsPerFinal(), req.bumpCount());
         return ResponseEntity.noContent().build();
-    }
-
-    /** The signed-in official, taken from the token and never from the request body. */
-    private static Actor actor(Authentication auth) {
-        return Actor.official(Long.parseLong(auth.getName()));
     }
 }

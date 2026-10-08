@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import type { RunOrderItemDto } from '@/lib/raceControlApi';
+import { roundName } from '@/lib/format';
 
 type Props = {
   items: RunOrderItemDto[];
@@ -24,12 +25,7 @@ function statusBadge(status: RunOrderItemDto['status']) {
 }
 
 function raceLabel(item: RunOrderItemDto) {
-  const type = item.roundType === 'FINAL'
-    ? `Final${item.finalLetter ? ` ${item.finalLetter}` : ''}`
-    : item.roundType === 'QUALIFIER'
-    ? `Q${item.roundNumber}`
-    : `Practice`;
-  return `${type} • ${item.className}`;
+  return `${roundName(item, true)} • ${item.className}`;
 }
 
 export function RunOrderPanel({ items, selectedRaceId, onSelect }: Props) {

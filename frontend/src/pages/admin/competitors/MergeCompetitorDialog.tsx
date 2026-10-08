@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAdminCompetitorsList, useMergeCompetitors, useMergePreview } from '@/hooks/admin/useAdminCompetitors';
 import type { CompetitorSummaryDto } from '@/lib/adminApi';
+import { getApiErrorMessage } from '@/lib/errors';
 
 const MAX_CHOICES = 8;
 
@@ -68,7 +69,7 @@ export default function MergeCompetitorDialog({ duplicate, suggested = [], onOpe
       close(false);
     } catch (err) {
       const data = axios.isAxiosError(err) ? err.response?.data : undefined;
-      setError(data?.blockers?.[0] ?? data?.detail ?? 'Could not merge. Try again.');
+      setError(data?.blockers?.[0] ?? getApiErrorMessage(err, 'Could not merge. Try again.'));
     }
   }
 

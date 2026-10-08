@@ -4,9 +4,9 @@ import dev.monkeypatch.rctiming.api.admin.dto.AddEventClassRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.CombineClassesRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.EventClassDto;
 import dev.monkeypatch.rctiming.api.admin.dto.UpdateEventClassOverrideRequest;
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.format.EventClassService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,7 +38,7 @@ public class EventClassController {
     @ResponseStatus(HttpStatus.CREATED)
     public EventClassDto addClassToEvent(Authentication auth, @PathVariable Long eventId,
                                           @RequestBody @Valid AddEventClassRequest request) {
-        return eventClassService.addClassToEvent(actor(auth), eventId, request);
+        return eventClassService.addClassToEvent(CurrentOfficial.actor(auth), eventId, request);
     }
 
     @Audited("audit_log")
@@ -47,7 +47,7 @@ public class EventClassController {
     public EventClassDto updateOverrides(Authentication auth, @PathVariable Long eventId,
                                           @PathVariable Long classId,
                                           @RequestBody @Valid UpdateEventClassOverrideRequest request) {
-        return eventClassService.updateOverrides(actor(auth), classId, request);
+        return eventClassService.updateOverrides(CurrentOfficial.actor(auth), classId, request);
     }
 
     @Audited("audit_log")
@@ -55,11 +55,6 @@ public class EventClassController {
     @PreAuthorize("hasRole('ADMIN')")
     public List<EventClassDto> combineClasses(Authentication auth, @PathVariable Long eventId,
                                                @RequestBody @Valid CombineClassesRequest request) {
-        return eventClassService.combineClasses(actor(auth), eventId, request.eventClassIds());
-    }
-
-    /** The signed-in official, taken from the token and never from the request body. */
-    private static Actor actor(Authentication auth) {
-        return Actor.official(Long.parseLong(auth.getName()));
+        return eventClassService.combineClasses(CurrentOfficial.actor(auth), eventId, request.eventClassIds());
     }
 }

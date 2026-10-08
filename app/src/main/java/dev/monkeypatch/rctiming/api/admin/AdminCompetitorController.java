@@ -1,8 +1,7 @@
 package dev.monkeypatch.rctiming.api.admin;
 
 import dev.monkeypatch.rctiming.domain.audit.Audited;
-import dev.monkeypatch.rctiming.domain.club.ClubProfile;
-import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorMergeService;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
@@ -12,6 +11,7 @@ import dev.monkeypatch.rctiming.query.competitor.CompetitorChangeDto;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorDuplicateGroupDto;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorQueryService;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorSummaryDto;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -38,23 +38,21 @@ import java.util.List;
 @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR', 'REFEREE')")
 public class AdminCompetitorController {
 
-    private static final String FALLBACK_VOICE = "en_GB-alan-medium";
-
     private final CompetitorQueryService competitorQueryService;
     private final CompetitorService competitorService;
     private final CompetitorMergeService mergeService;
-    private final ClubProfileRepository clubProfileRepository;
+    private final ClubProfileService clubProfileService;
     private final PiperTtsClient piperClient;
 
     public AdminCompetitorController(CompetitorQueryService competitorQueryService,
                                      CompetitorService competitorService,
                                      CompetitorMergeService mergeService,
-                                     ClubProfileRepository clubProfileRepository,
+                                     ClubProfileService clubProfileService,
                                      PiperTtsClient piperClient) {
         this.competitorQueryService = competitorQueryService;
         this.competitorService = competitorService;
         this.mergeService = mergeService;
-        this.clubProfileRepository = clubProfileRepository;
+        this.clubProfileService = clubProfileService;
         this.piperClient = piperClient;
     }
 
@@ -88,7 +86,7 @@ public class AdminCompetitorController {
     @PostMapping("/merge")
     @PreAuthorize("hasRole('ADMIN')")
     public CompetitorMergeService.Result merge(Authentication auth, @Valid @RequestBody MergeRequest body) {
-        return mergeService.merge(body.keepId(), body.duplicateId(), Long.parseLong(auth.getName()));
+        return mergeService.merge(body.keepId(), body.duplicateId(), CurrentOfficial.id(auth));
     }
 
     /** Who changed how a competitor's name is said aloud, and when (admin only). */
@@ -113,7 +111,7 @@ public class AdminCompetitorController {
     @PutMapping("/{id}/spoken-name")
     public CompetitorSummaryDto setSpokenName(Authentication auth, @PathVariable Long id,
                                               @RequestBody SpokenNameRequest body) {
-        Competitor c = competitorService.setSpokenName(id, body.spokenName(), Long.parseLong(auth.getName()));
+        Competitor c = competitorService.setSpokenName(id, body.spokenName(), CurrentOfficial.id(auth));
         return new CompetitorSummaryDto(c.getId(), c.getDisplayName(), c.getBrcaNumber(), c.getHomeClub(),
                 c.getSpokenName(), c.speechName());
     }
@@ -124,13 +122,9 @@ public class AdminCompetitorController {
      */
     @PostMapping("/spoken-name/preview")
     public ResponseEntity<byte[]> previewSpokenName(@Valid @RequestBody SpeechPreviewRequest body) {
-        String voice = clubProfileRepository.findAll().stream()
-                .findFirst()
-                .map(ClubProfile::getDefaultVoiceId)
-                .filter(v -> !v.isBlank())
-                .orElse(FALLBACK_VOICE);
         try {
-            byte[] wav = piperClient.synthesize(body.text().trim(), voice);
+            // No club voice: null leaves it to Piper's configured default
+            byte[] wav = piperClient.synthesize(body.text().trim(), clubProfileService.defaultVoiceId().orElse(null));
             return ResponseEntity.ok().contentType(MediaType.parseMediaType("audio/wav")).body(wav);
         } catch (TtsUnavailableException e) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "The announcer voice is not available");

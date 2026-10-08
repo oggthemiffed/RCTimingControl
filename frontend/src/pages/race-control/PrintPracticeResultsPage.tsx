@@ -3,18 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getResults, getSession } from '@/lib/practiceApi';
 import type { PracticeTimingRowDto } from '@/lib/practiceApi';
-
-function fmtMs(ms: number | null): string {
-  if (ms === null || ms <= 0) return '—';
-  const totalMs = Math.floor(ms);
-  const m = Math.floor(totalMs / 60000);
-  const s = Math.floor((totalMs % 60000) / 1000);
-  const millis = totalMs % 1000;
-  if (m > 0) {
-    return `${m}:${String(s).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
-  }
-  return `${s}.${String(millis).padStart(3, '0')}`;
-}
+import { fmtMs } from '@/lib/format';
 
 export default function PrintPracticeResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
