@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.domain.practice;
 
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import java.time.Instant;
 
 public class PracticeSession {
@@ -58,7 +59,7 @@ public class PracticeSession {
     // State machine transitions
     public void start() {
         if (this.status != PracticeStatus.IDLE) {
-            throw new IllegalStateException("Cannot start session in " + this.status + " state");
+            throw new StateConflictException("Cannot start session in " + this.status + " state");
         }
         this.status = PracticeStatus.RUNNING;
         this.startedAt = Instant.now();
@@ -67,7 +68,7 @@ public class PracticeSession {
 
     public void stop() {
         if (this.status != PracticeStatus.RUNNING) {
-            throw new IllegalStateException("Cannot stop session in " + this.status + " state");
+            throw new StateConflictException("Cannot stop session in " + this.status + " state");
         }
         this.status = PracticeStatus.STOPPED;
         this.stoppedAt = Instant.now();

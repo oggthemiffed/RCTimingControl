@@ -94,11 +94,16 @@ public class RaceStateMachineService {
      * Restart a race — resets it to PENDING regardless of current state, clears
      * in-memory timing state, and deletes any persisted result snapshot.
      * Intended for false starts or technical issues requiring a full re-run.
+     *
+     * <p>Unlike {@link #transition}, this does not go through the transition table, so it works from any
+     * state, including FINISHED. The start, finish and abandon times are cleared, so a race that was
+     * abandoned and is restarted is no longer marked abandoned.
      */
     public void restart(Race race) {
         race.setStatus(RaceStatus.PENDING);
         race.setStartedAt(null);
         race.setFinishedAt(null);
+        race.setAbandonedAt(null);
 
         if (lapTimingService != null) {
             lapTimingService.releaseState(race.getId());

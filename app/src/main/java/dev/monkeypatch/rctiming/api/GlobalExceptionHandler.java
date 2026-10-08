@@ -6,6 +6,7 @@ import dev.monkeypatch.rctiming.domain.user.OfficialChangeRefusedException;
 import dev.monkeypatch.rctiming.backup.BackupFailedException;
 import dev.monkeypatch.rctiming.domain.event.IllegalStateTransitionException;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -83,6 +84,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateTransitionException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ProblemDetail handleStateTransition(IllegalStateTransitionException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    /** The thing is in the wrong state for the request, such as a practice session that is already running. */
+    @ExceptionHandler(StateConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handleStateConflict(StateConflictException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 

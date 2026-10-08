@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.service;
 
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -22,6 +23,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,6 +45,15 @@ class RoundGeneratorServiceTest {
 
     @InjectMocks
     private RoundGeneratorService service;
+
+    @Test
+    void generate_whenTheEventAlreadyHasARunOrder_isAConflictNotAServerError() {
+        when(roundRepository.existsByEventId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.generate(new RoundGenerationRequest(1L, 0, 1, 8, List.of())))
+                .isInstanceOf(StateConflictException.class)
+                .hasMessageContaining("Run order already generated");
+    }
 
     @Test
     void heatSplit_fifteenDriversMaxEightPerHeat_createsTwoHeats() {

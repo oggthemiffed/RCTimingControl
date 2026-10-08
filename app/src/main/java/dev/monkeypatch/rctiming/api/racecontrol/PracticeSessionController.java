@@ -69,24 +69,14 @@ public class PracticeSessionController {
     @PostMapping("/{id}/start")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<PracticeSessionDto> start(@PathVariable Long id) {
-        try {
-            PracticeSessionDto session = sessionService.start(id);
-            return ResponseEntity.ok(session);
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        return ResponseEntity.ok(sessionService.start(id));
     }
 
     /** Stop a practice session (RUNNING → STOPPED). Returns 409 on invalid state. */
     @PostMapping("/{id}/stop")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<PracticeSessionDto> stop(@PathVariable Long id) {
-        try {
-            PracticeSessionDto session = sessionService.stop(id);
-            return ResponseEntity.ok(session);
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        return ResponseEntity.ok(sessionService.stop(id));
     }
 
     /** Get live timing snapshot (rows sorted by position). */

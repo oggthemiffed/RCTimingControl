@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api.setup;
 
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.setup.dto.BootstrapRequest;
 import dev.monkeypatch.rctiming.api.setup.dto.SetupProgressDto;
@@ -63,7 +64,7 @@ public class SetupService {
 
     public AuthResponse bootstrap(BootstrapRequest req) {
         if (userRepository.count() > 0) {
-            throw new IllegalStateException("Bootstrap already complete");
+            throw new StateConflictException("Bootstrap already complete");
         }
         User user = userService.createAdmin(req.email(), req.password(), req.firstName(), req.lastName());
         String token = jwtTokenService.generateAccessToken(user);
