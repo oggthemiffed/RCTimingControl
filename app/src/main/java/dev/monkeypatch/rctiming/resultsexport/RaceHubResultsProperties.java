@@ -1,10 +1,9 @@
 package dev.monkeypatch.rctiming.resultsexport;
 
-import dev.monkeypatch.rctiming.config.LoopbackHosts;
+import dev.monkeypatch.rctiming.config.SecureEndpoint;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,17 +21,8 @@ public record RaceHubResultsProperties(URI resultsUrl, String token) {
     static final String TOKEN_SETTING = "rctiming.racehub.token";
 
     public RaceHubResultsProperties {
-        if (resultsUrl != null && resultsUrl.toString().isBlank()) {
-            resultsUrl = null;
-        }
-        if (resultsUrl != null && !"https".equalsIgnoreCase(resultsUrl.getScheme())
-                && !("http".equalsIgnoreCase(resultsUrl.getScheme()) && LoopbackHosts.isLoopback(resultsUrl.getHost()))) {
-            throw new IllegalArgumentException(URL_SETTING + " must be an https address, so the club's key "
-                    + "isn't sent in the clear (plain http works only to this machine), not " + resultsUrl);
-        }
-        if (token != null && token.isBlank()) {
-            token = null;
-        }
+        resultsUrl = SecureEndpoint.url(resultsUrl, URL_SETTING, "https", "http");
+        token = SecureEndpoint.token(token);
     }
 
     /** Whether exports are sent: both the address and the key are set. */
@@ -42,13 +32,6 @@ public record RaceHubResultsProperties(URI resultsUrl, String token) {
 
     /** The settings still needed before anything is sent, empty when sending is on. */
     public List<String> missingSettings() {
-        List<String> missing = new ArrayList<>();
-        if (resultsUrl == null) {
-            missing.add(URL_SETTING);
-        }
-        if (token == null) {
-            missing.add(TOKEN_SETTING);
-        }
-        return missing;
+        return SecureEndpoint.missingSettings(resultsUrl, URL_SETTING, token, TOKEN_SETTING);
     }
 }
