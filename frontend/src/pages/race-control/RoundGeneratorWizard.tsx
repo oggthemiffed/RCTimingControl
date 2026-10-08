@@ -195,7 +195,14 @@ export function RoundGeneratorWizard({ open, onOpenChange, eventId }: Props) {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              onOpenChange(false);
+              // Start again from the event's classes next time, not from the rows as they were edited
+              setInitialised(false);
+            }}
+          >
             Cancel
           </Button>
           <Button onClick={() => generate.mutate()} disabled={generate.isPending}>

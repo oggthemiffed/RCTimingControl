@@ -130,3 +130,35 @@ describe('useAnnouncements finish', () => {
     expect(speak).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('useAnnouncements countdown', () => {
+  const countdownSettings = { ...settings, countdownIntervals: [10] } as AudioSettingsDto;
+
+  it('says how long is left at the set interval before the race ends', () => {
+    renderHook(() =>
+      useAnnouncements({
+        raceId: 5,
+        settings: countdownSettings,
+        raceState: 'RUNNING',
+        raceEndsAt: Date.now() + 15_000,
+      }),
+    );
+
+    act(() => { vi.advanceTimersByTime(4_900); });
+    expect(speak).not.toHaveBeenCalled();
+
+    act(() => { vi.advanceTimersByTime(200); });
+    expect(speak).toHaveBeenCalledTimes(1);
+    expect(speak.mock.calls[0][0].text).toBe('10 seconds remaining.');
+  });
+
+  it('stays silent when the race has no end to count down to', () => {
+    renderHook(() =>
+      useAnnouncements({ raceId: 5, settings: countdownSettings, raceState: 'RUNNING', raceEndsAt: null }),
+    );
+
+    act(() => { vi.advanceTimersByTime(60_000); });
+
+    expect(speak).not.toHaveBeenCalled();
+  });
+});

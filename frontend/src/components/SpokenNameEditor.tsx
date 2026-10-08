@@ -10,14 +10,18 @@ const MAX_SPOKEN_NAME = 100;
 
 /** Plays the text in the club's Piper voice, or the browser's voice when Piper is not reachable. */
 async function speak(text: string): Promise<'piper' | 'browser'> {
+  let url: string | null = null;
   try {
     const wav = await adminApi.competitors.previewSpeech(text);
-    const url = URL.createObjectURL(wav);
-    const audio = new Audio(url);
-    audio.addEventListener('ended', () => URL.revokeObjectURL(url));
+    const objectUrl = URL.createObjectURL(wav);
+    url = objectUrl;
+    const audio = new Audio(objectUrl);
+    audio.addEventListener('ended', () => URL.revokeObjectURL(objectUrl));
     await audio.play();
     return 'piper';
   } catch {
+    // The clip never started, so nothing will fire 'ended' to release it
+    if (url) URL.revokeObjectURL(url);
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
     }

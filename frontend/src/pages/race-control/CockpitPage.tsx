@@ -11,6 +11,8 @@ import { useLiveTiming } from '@/hooks/race-control/useLiveTiming';
 import { useAnnouncements } from '@/hooks/race-control/useAnnouncements';
 import { usePreRaceReadiness } from '@/hooks/race-control/usePreRaceReadiness';
 import { usePregeneratedClips } from '@/hooks/race-control/usePregeneratedClips';
+import { isImprovingLap, raceEndsAt } from '@/hooks/race-control/raceAudioCues';
+import { getRaceClock } from '@/lib/boardsApi';
 import { getAudioSettings } from '@/lib/audioApi';
 import { RunOrderPanel } from './panels/RunOrderPanel';
 import { GridEditorPanel } from './panels/GridEditorPanel';
@@ -92,13 +94,20 @@ export default function CockpitPage() {
   );
   const gridEntries = preRaceReadiness?.gridCall;
 
+  // The race clock tells the countdown announcements when the race ends. It is read again when the race
+  // starts or resumes (the status is part of the key), since a stoppage moves the end.
+  const { data: raceClock, dataUpdatedAt: raceClockReadAt } = useQuery({
+    queryKey: ['race-clock', selectedRaceId, selectedRace?.status],
+    queryFn: () => getRaceClock(selectedRaceId!),
+    enabled: selectedRaceId != null && selectedRace?.status === 'RUNNING',
+  });
+
   const { playBeep, setClipMap } = useAnnouncements({
     raceId: selectedRaceId,
     settings: audioSettings ?? null,
     volume: audioVolume,
     raceState: selectedRace?.status,
-    raceStartedAt: selectedRace?.startedAt?.toString() ?? null,
-    raceDurationSecs: null, // race duration comes from format config — not yet in RunOrderItemDto
+    raceEndsAt: raceEndsAt(raceClock, raceClockReadAt),
     gridEntries,
   });
 
@@ -111,24 +120,26 @@ export default function CockpitPage() {
 
   // Track previous last-lap timestamps to detect new laps (AUDIO-04 beep wiring)
   const prevPassingRef = useRef<Map<number, number>>(new Map());
+  // Each driver's best lap before the latest passing, to tell whether a lap improved on it
+  const prevBestRef = useRef<Map<number, number>>(new Map());
 
   useEffect(() => {
     if (selectedRace?.status !== 'RUNNING') return;
     const prev = prevPassingRef.current;
+    const prevBest = prevBestRef.current;
     liveRows.forEach((row) => {
       const prevTime = prev.get(row.entryId);
       if (
         row.lastPassingTimeMs &&
         row.lastPassingTimeMs !== prevTime
       ) {
-        const improving =
-          row.lastLapMs !== null &&
-          row.bestLapMs !== null &&
-          row.lastLapMs < row.bestLapMs;
-        playBeep(improving);
+        playBeep(isImprovingLap(prevBest.get(row.entryId), row));
       }
       if (row.lastPassingTimeMs) {
         prev.set(row.entryId, row.lastPassingTimeMs);
+      }
+      if (row.bestLapMs !== null) {
+        prevBest.set(row.entryId, row.bestLapMs);
       }
     });
   }, [liveRows, playBeep, selectedRace?.status]);

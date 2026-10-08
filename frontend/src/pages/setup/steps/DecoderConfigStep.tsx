@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { DecoderSettingsForm } from '@/components/decoder/DecoderSettingsForm';
 
 interface Props {
@@ -20,9 +21,9 @@ export default function DecoderConfigStep({ onNext, onBack }: Props) {
         saveLabel="Save and Finish"
       />
 
-      <a href="/admin/decoder" className="text-sm text-muted-foreground underline mt-4 inline-block">
+      <Link to="/admin/decoder" className="text-sm text-muted-foreground underline mt-4 inline-block">
         Manage more in Admin →
-      </a>
+      </Link>
     </div>
   );
 }

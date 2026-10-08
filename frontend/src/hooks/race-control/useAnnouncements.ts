@@ -36,8 +36,12 @@ interface UseAnnouncementsOptions {
   settings: AudioSettingsDto | null;
   volume?: number;
   raceState?: string | null;
-  raceStartedAt?: string | null;
-  raceDurationSecs?: number | null;
+  /**
+   * When the race clock reaches zero, as epoch milliseconds, worked out from the server's race clock so that
+   * stoppages are allowed for. Null when the race is not running or has no set length (the countdown is
+   * silent then).
+   */
+  raceEndsAt?: number | null;
   gridEntries?: GridEntry[];
 }
 
@@ -53,8 +57,7 @@ export function useAnnouncements({
   settings,
   volume = 0.8,
   raceState,
-  raceStartedAt,
-  raceDurationSecs,
+  raceEndsAt,
   gridEntries,
 }: UseAnnouncementsOptions) {
   // Refs so closures inside timeouts always read latest values without stale captures
@@ -134,17 +137,13 @@ export function useAnnouncements({
     if (raceState !== 'RUNNING') return;
     const s = settingsRef.current;
     if (!s?.announceCountdown) return;
-    if (!raceDurationSecs) return;
-
-    const raceEndMs = raceStartedAt
-      ? new Date(raceStartedAt).getTime() + raceDurationSecs * 1000
-      : Date.now() + raceDurationSecs * 1000;
+    if (!raceEndsAt) return;
 
     const intervals = s.countdownIntervals ?? DEFAULT_COUNTDOWN_INTERVALS;
     const now = Date.now();
 
     intervals.forEach((secsBeforeEnd) => {
-      const delay = raceEndMs - secsBeforeEnd * 1000 - now;
+      const delay = raceEndsAt - secsBeforeEnd * 1000 - now;
       if (delay <= 0) return;
 
       const mins = Math.floor(secsBeforeEnd / 60);
@@ -168,7 +167,7 @@ export function useAnnouncements({
       countdownTimeoutsRef.current.forEach(clearTimeout);
       countdownTimeoutsRef.current = [];
     };
-  }, [raceState, raceStartedAt, raceDurationSecs, playClip]);
+  }, [raceState, raceEndsAt, playClip]);
 
   // Finish announcement: fire when race transitions to FINISHED (AUDIO-05)
   useEffect(() => {

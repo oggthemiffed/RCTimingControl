@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 import DecoderConfigStep from '../steps/DecoderConfigStep';
 import * as setupApi from '@/lib/setupApi';
 
@@ -13,9 +14,11 @@ vi.mock('@/lib/setupApi', () => ({
 function renderStep() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <QueryClientProvider client={client}>
-      <DecoderConfigStep onNext={vi.fn()} onBack={vi.fn()} />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={client}>
+        <DecoderConfigStep onNext={vi.fn()} onBack={vi.fn()} />
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
 }
 
