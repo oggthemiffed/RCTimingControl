@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useHelp } from '@/context/HelpContext';
+import { HelpSidebarButton } from '@/components/HelpSidebarButton';
 import { SetupWizardHelp } from '@/help/SetupWizardHelp';
 import { Loader2, Menu } from 'lucide-react';
 import { RiCheckboxCircleFill, RiRecordCircleLine, RiCheckboxBlankCircleLine } from '@remixicon/react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useSetupStatus, useSetupProgress } from '@/hooks/setup/useSetupProgress';
 import { useAuth } from '@/hooks/useAuth';
 import AdminBootstrapGate from './AdminBootstrapGate';
@@ -114,6 +115,10 @@ function SidebarContent({
 
       <Separator />
 
+      <div className="px-3 pt-3">
+        <HelpSidebarButton onOpen={onNavClick} />
+      </div>
+
       {/* Skip wizard link — only shown in re-entry mode (setup already complete) */}
       {clickable && (
         <div className="px-4 py-4">
@@ -133,7 +138,7 @@ export default function SetupLayout() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const { data: statusData, isLoading: statusLoading } = useSetupStatus();
   const { user } = useAuth();
-  const { setHelpContent } = useHelp();
+  const { helpContent, isOpen, setIsOpen, setHelpContent } = useHelp();
 
   useEffect(() => {
     setHelpContent(<SetupWizardHelp />);
@@ -246,6 +251,19 @@ export default function SetupLayout() {
               setSheetOpen(false);
             }}
           />
+        </SheetContent>
+      </Sheet>
+
+      {/* Help Sheet: the wizard registered its help but nothing showed it */}
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetContent side="right" className="w-96" showCloseButton>
+          <SheetHeader>
+            <SheetTitle>Help</SheetTitle>
+            <SheetDescription>Page guide</SheetDescription>
+          </SheetHeader>
+          <div className="overflow-y-auto flex-1 px-6 pb-6">
+            {helpContent}
+          </div>
         </SheetContent>
       </Sheet>
 

@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useHelp } from '@/context/HelpContext';
+import { HelpSidebarButton } from '@/components/HelpSidebarButton';
 
 // ── Nav definition ─────────────────────────────────────────────────────────
 
@@ -152,6 +153,10 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
       </nav>
 
       <Separator />
+
+      <div className="px-3 pt-3">
+        <HelpSidebarButton onOpen={onNavClick} />
+      </div>
 
       {/* User + logout */}
       <div className="px-4 py-4 flex items-center justify-between">
