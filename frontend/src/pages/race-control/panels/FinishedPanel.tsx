@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Printer } from 'lucide-react';
 import { fmtMs } from '@/lib/format';
+import { formatTime } from '@/lib/dates';
 
 type Props = {
   raceId: number;
@@ -51,7 +52,7 @@ export function FinishedPanel({ raceId, eventId, onRestart, isRestarting }: Prop
         <div>
           <h2 className="text-lg font-semibold">Results — {data.raceLabel}</h2>
           <p className="text-xs text-muted-foreground">
-            Finished {new Date(data.finishedAt).toLocaleTimeString()}
+            Finished {formatTime(data.finishedAt, true)}
           </p>
         </div>
         <div className="flex gap-2">

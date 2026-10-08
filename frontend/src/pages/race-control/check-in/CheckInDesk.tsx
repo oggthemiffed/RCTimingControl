@@ -20,6 +20,7 @@ import { transponderLabel } from './transponderLabel';
 import KeyboardWedgeInput from './KeyboardWedgeInput';
 import RosterSearch from './RosterSearch';
 import { useRoles } from '@/hooks/useRoles';
+import { formatTime } from '@/lib/dates';
 
 type ResolveState =
   | { kind: 'idle' }
@@ -235,7 +236,8 @@ function ResolvedEntryPanel({
       {confirmResult ? (
         confirmResult.alreadyCheckedIn ? (
           <p className="text-sm font-medium text-amber-700">
-            Already checked in at {formatTime(confirmResult.entry.checkedInAt)}
+            Already checked in
+            {confirmResult.entry.checkedInAt && ` at ${formatTime(confirmResult.entry.checkedInAt)}`}
           </p>
         ) : (
           <p className="text-sm font-medium text-green-700">Checked in!</p>
@@ -247,12 +249,4 @@ function ResolvedEntryPanel({
       )}
     </Card>
   );
-}
-
-function formatTime(iso: string | null): string {
-  if (!iso) return '';
-  return new Date(iso).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 }

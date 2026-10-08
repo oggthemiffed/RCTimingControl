@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCompetitorChanges, useSetSpokenName } from '@/hooks/admin/useAdminCompetitors';
 import { adminApi, type CompetitorSummaryDto } from '@/lib/adminApi';
+import { formatDate } from '@/lib/dates';
 
 const MAX_SPOKEN_NAME = 100;
 
@@ -94,7 +95,7 @@ export default function SpokenNameEditor({
       {save.isError && <p className="text-xs text-destructive">Could not save. Try again.</p>}
       {last && (
         <p className="text-xs text-muted-foreground">
-          Last changed by {last.by} on {new Date(last.at).toLocaleDateString()}
+          Last changed by {last.by} on {formatDate(last.at)}
         </p>
       )}
     </div>

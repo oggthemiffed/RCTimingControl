@@ -4,7 +4,7 @@ import { getEventSchedule } from '@/lib/raceControlApi';
 import type { EventScheduleDto } from '@/lib/raceControlApi';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { parseLocalDate } from '@/lib/utils';
+import { formatEventDate } from '@/lib/dates';
 
 function entryAvailabilityBadge(availability: EventScheduleDto['entryAvailability']) {
   switch (availability) {
@@ -63,9 +63,7 @@ export default function EventSchedulePage() {
               <div className="flex-1 min-w-0">
                 <h2 className="font-semibold text-base">{event.name}</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(
-                    parseLocalDate(event.eventDate),
-                  )}
+                  {formatEventDate(event.eventDate, 'long')}
                 </p>
               </div>
               <div className="flex-shrink-0">

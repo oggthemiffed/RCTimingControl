@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getAboutInfo } from '@/lib/api';
 import { Link } from 'react-router-dom';
+import { formatDate } from '@/lib/dates';
 
 export default function AboutPage() {
   const { data, isLoading, isError } = useQuery({
@@ -34,11 +35,7 @@ export default function AboutPage() {
             {isError && <span className="text-muted-foreground">—</span>}
             {data && (
               <span className="text-right">
-                {new Date(data.buildTime).toLocaleDateString('en-GB', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                {formatDate(data.buildTime, 'long')}
               </span>
             )}
           </div>

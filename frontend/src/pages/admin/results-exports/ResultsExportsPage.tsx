@@ -7,6 +7,7 @@ import { useResultsExports, useRetryResultsExport } from '@/hooks/admin/useResul
 import { useHelpContent } from '@/context/HelpContext';
 import { ResultsExportsHelp } from '@/help/ResultsExportsHelp';
 import type { ResultsExportReason, ResultsExportRowDto, ResultsExportStatus } from '@/lib/adminApi';
+import { formatDateTime } from '@/lib/dates';
 
 const REASONS: Record<ResultsExportReason, string> = {
   RACE_FINISHED: 'Race finished',
@@ -28,12 +29,10 @@ const STATUS_COLOR: Record<ResultsExportStatus, string> = {
   SUPERSEDED: 'bg-muted text-muted-foreground',
 };
 
-const dateTime = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
-
 function detail(row: ResultsExportRowDto) {
-  const parts = [REASONS[row.reason] ?? row.reason, `revision ${row.revision}`, dateTime.format(new Date(row.createdAt))];
-  if (row.status === 'SENT' && row.sentAt) parts.push(`sent ${dateTime.format(new Date(row.sentAt))}`);
-  if (row.status === 'FAILED') parts.push(`next try ${dateTime.format(new Date(row.nextAttemptAt))}`);
+  const parts = [REASONS[row.reason] ?? row.reason, `revision ${row.revision}`, formatDateTime(row.createdAt)];
+  if (row.status === 'SENT' && row.sentAt) parts.push(`sent ${formatDateTime(row.sentAt)}`);
+  if (row.status === 'FAILED') parts.push(`next try ${formatDateTime(row.nextAttemptAt)}`);
   if (row.attempts > 0 && row.status !== 'SENT') parts.push(row.attempts === 1 ? '1 attempt' : `${row.attempts} attempts`);
   return parts.join(' · ');
 }

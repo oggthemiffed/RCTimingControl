@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { usePublicResultSnapshot } from '@/hooks/race-control/usePublicResultSnapshot';
 import type { PositionAtLap } from '@/lib/raceControlApi';
 import { fmtMs } from '@/lib/format';
+import { formatDateTime } from '@/lib/dates';
 
 function LapTimesPanel({ entryId, lapHistory }: { entryId: number; lapHistory: PositionAtLap[] }) {
   const laps = lapHistory.filter(l => l.entryId === entryId);
@@ -75,7 +76,7 @@ export default function PublicResultsPage() {
             <h1 className="text-2xl font-bold">{data.raceLabel}</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {data.clubBranding?.clubName ?? ''}{data.clubBranding ? ' • ' : ''}Finished{' '}
-              {new Date(data.finishedAt).toLocaleString()}
+              {formatDateTime(data.finishedAt)}
             </p>
           </div>
           {data.clubBranding?.logoUrl && (
