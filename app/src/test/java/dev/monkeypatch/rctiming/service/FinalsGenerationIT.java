@@ -112,6 +112,16 @@ class FinalsGenerationIT extends AbstractIntegrationTest {
         assertThat(bumpUpSeedingService.applyBumpUpResults(bFinal.getId(), bFinishingOrder)).isEmpty();
         assertThat(gridOf(aFinal)).hasSize(10);
 
+        // The promotion is in the audit log as the system's, once: the repeat promoted nobody
+        List<java.util.Map<String, Object>> audited = jdbc.queryForList(
+                "select * from audit_log where event_id = ? and action = 'BUMP_UP_APPLIED'", eventId);
+        assertThat(audited).hasSize(1);
+        assertThat(audited.get(0).get("actor_user_id")).isNull();
+        assertThat(audited.get(0).get("actor_label")).isEqualTo("system:bump-up");
+        assertThat(audited.get(0).get("summary").toString()).contains("Moved 2 up").contains("B final");
+        assertThat(((Number) audited.get(0).get("race_id")).longValue()).isEqualTo(aFinal.getId());
+        jdbc.update("delete from audit_log where event_id = ?", eventId);
+
         // Every race_entries row for this event points at a real entry
         Integer orphans = jdbc.queryForObject("""
                 select count(*) from race_entries re

@@ -1,16 +1,22 @@
 package dev.monkeypatch.rctiming.service;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
+import dev.monkeypatch.rctiming.domain.race.Round;
+import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,11 +36,17 @@ public class BumpUpSeedingService {
 
     private final RaceRepository raceRepository;
     private final RaceEntryRepository raceEntryRepository;
+    private final RoundRepository roundRepository;
+    private final AuditService audit;
 
     public BumpUpSeedingService(RaceRepository raceRepository,
-                                 RaceEntryRepository raceEntryRepository) {
+                                 RaceEntryRepository raceEntryRepository,
+                                 RoundRepository roundRepository,
+                                 AuditService audit) {
         this.raceRepository = raceRepository;
         this.raceEntryRepository = raceEntryRepository;
+        this.roundRepository = roundRepository;
+        this.audit = audit;
     }
 
     /**
@@ -203,6 +215,19 @@ public class BumpUpSeedingService {
             bumpedEntry.setBumped(true);
             raceEntryRepository.save(bumpedEntry);
             promoted.add(entryId);
+        }
+        if (!promoted.isEmpty()) {
+            // Nobody asked for this: it follows a final finishing, so the system is the actor
+            Long eventId = roundRepository.findById(nextFinal.getRoundId()).map(Round::getEventId).orElse(null);
+            Map<String, Object> after = new LinkedHashMap<>();
+            after.put("fromRaceId", finishedFinalRaceId);
+            after.put("promotedEntryIds", promoted);
+            audit.entry(Actor.system("bump-up"), "BUMP_UP_APPLIED").entity("race", nextFinal.getId())
+                    .race(nextFinal.getId()).event(eventId)
+                    .summary("Moved " + promoted.size() + " up from the " + currentLetter + " final (race "
+                            + finishedFinalRaceId + ") into the " + nextFinalLetter + " final (race "
+                            + nextFinal.getId() + ")")
+                    .after(after).record();
         }
         return promoted;
     }

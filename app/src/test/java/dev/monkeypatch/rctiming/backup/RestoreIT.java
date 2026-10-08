@@ -57,6 +57,8 @@ class RestoreIT extends AbstractIntegrationTest {
                 backup.toString(), "--rctiming.database.data-directory=" + newInstall});
 
         assertThat(exit).isZero();
+        // The restore leaves a note for the app's next start to put in the audit log
+        assertThat(newInstall.resolve("restore-pending.properties")).exists();
         try (Stream<Path> files = Files.list(newInstall)) {
             assertThat(files.map(f -> f.getFileName().toString())).anyMatch(n -> n.startsWith("rctiming.db.before-restore-"));
         }
@@ -70,7 +72,16 @@ class RestoreIT extends AbstractIntegrationTest {
                     .map(e -> e.getId() + " " + e.getName()).sorted().toList()).isEqualTo(events);
             assertThat(restored.getBean(ChampionshipRepository.class).findAll().stream()
                     .map(Championship::getName).sorted().toList()).isEqualTo(championships);
+            // The restored database says it was restored, by whom, from which backup; the note is used up
+            List<java.util.Map<String, Object>> rows = restored.getBean(org.jooq.DSLContext.class)
+                    .fetch("select * from audit_log where action = 'DATABASE_RESTORED'").intoMaps();
+            assertThat(rows).hasSize(1);
+            assertThat(rows.get(0).get("source")).isEqualTo("CLI");
+            assertThat(rows.get(0).get("actor_label").toString())
+                    .isEqualTo("cli:" + System.getProperty("user.name"));
+            assertThat(rows.get(0).get("summary").toString()).contains(backup.toString());
         }
+        assertThat(newInstall.resolve("restore-pending.properties")).doesNotExist();
     }
 
     @Test

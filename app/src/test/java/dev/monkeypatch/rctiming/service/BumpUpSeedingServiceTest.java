@@ -40,7 +40,10 @@ class BumpUpSeedingServiceTest {
     private RaceEntryRepository raceEntryRepository;
 
     private BumpUpSeedingService service() {
-        return new BumpUpSeedingService(raceRepository, raceEntryRepository);
+        return new BumpUpSeedingService(raceRepository, raceEntryRepository,
+                org.mockito.Mockito.mock(dev.monkeypatch.rctiming.domain.race.RoundRepository.class),
+                org.mockito.Mockito.mock(dev.monkeypatch.rctiming.domain.audit.AuditService.class,
+                        org.mockito.Mockito.RETURNS_DEEP_STUBS));
     }
 
     @Test

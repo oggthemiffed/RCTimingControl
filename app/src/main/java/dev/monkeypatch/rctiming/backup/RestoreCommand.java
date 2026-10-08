@@ -49,6 +49,12 @@ public final class RestoreCommand {
             Path dataDirectory = database.effectiveDataDirectory().toAbsolutePath();
             database.vendor().restore(backup, dataDirectory);
             System.out.println("Restored " + backup + " into " + dataDirectory);
+            try {
+                RestoreNote.write(dataDirectory, backup);
+            } catch (Exception e) {
+                // The restore itself worked; only its line in the audit log is lost
+                System.err.println("Could not leave a note for the audit log: " + e.getMessage());
+            }
             return 0;
         } catch (Exception e) {
             System.err.println("Restore failed: " + e.getMessage());
