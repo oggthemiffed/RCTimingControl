@@ -114,7 +114,7 @@ export default function TracksPage() {
         name: values.name,
         venueNotes: values.venueNotes || null,
         trackLength: values.trackLength,
-      } as Parameters<typeof createMutation.mutateAsync>[0]);
+      });
       toast.success('Track created');
       setCreateOpen(false);
     } catch {
@@ -131,7 +131,7 @@ export default function TracksPage() {
           name: values.name,
           venueNotes: values.venueNotes || null,
           trackLength: values.trackLength,
-        } as Parameters<typeof updateMutation.mutateAsync>[0]['body'],
+        },
       });
       toast.success('Track updated');
       setEditTarget(null);

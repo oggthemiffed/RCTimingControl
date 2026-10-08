@@ -33,12 +33,6 @@ export interface CreateSessionRequest {
   bestLapN?: number;
 }
 
-export interface LinkTransponderRequest {
-  transponderNumber: string;
-  userId: number;
-  racerName: string;
-}
-
 // ── API client ─────────────────────────────────────────────────────────────
 
 /** Create a new practice session. */

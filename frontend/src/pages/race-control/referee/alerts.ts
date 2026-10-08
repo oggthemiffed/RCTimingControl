@@ -33,4 +33,3 @@ export function computeProximityAlerts(
 
   return result;
 }
-
