@@ -140,7 +140,7 @@ class EventAuditIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void generatingTheRunOrderIsRecordedAndSeedingFinalsBeforeAnyQualifyingResultIsRefusedWithNoRow() {
+    void generatingTheRunOrderIsRecordedAndSeedingWithoutResultsIsRefused() {
         long eventId = createEvent("Run order " + run);
         long eventClassId = addClass(eventId, racingClassId);
 

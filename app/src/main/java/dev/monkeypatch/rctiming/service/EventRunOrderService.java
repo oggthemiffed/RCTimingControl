@@ -69,10 +69,13 @@ public class EventRunOrderService {
 
     /**
      * Seeds the class's finals from its qualifying results as stored when the heats finished. Refused while no
-     * qualifying heat has finished, because seeding replaces the finals' grids.
+     * qualifying heat has finished and once a final has started, because seeding replaces the finals' grids.
      */
     public void seedFinals(Actor actor, Long eventId, Long eventClassId,
                            int finalsCount, int carsPerFinal, int bumpCount) {
+        if (bumpCount > carsPerFinal) {
+            throw new IllegalArgumentException("bumpCount can't be more than carsPerFinal");
+        }
         EventClass eventClass = eventClassRepository.findById(eventClassId)
                 .filter(c -> c.getEventId().equals(eventId))
                 .orElseThrow(() -> new EntityNotFoundException(

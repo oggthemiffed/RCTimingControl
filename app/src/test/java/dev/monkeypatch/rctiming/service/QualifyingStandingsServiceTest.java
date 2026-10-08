@@ -35,4 +35,14 @@ class QualifyingStandingsServiceTest {
 
         assertThat(total).isEqualTo(new QualifyingResult(7L, 52_000, 21));
     }
+
+    @Test
+    void rank_breaksAnExactTieByEntryIdSoTheOrderNeverChanges() {
+        List<Long> order = QualifyingStandingsService.rank(List.of(
+                new QualifyingResult(9L, 50_000, 20),
+                new QualifyingResult(3L, 50_000, 20),
+                new QualifyingResult(5L, 50_000, 20)));
+
+        assertThat(order).containsExactly(3L, 5L, 9L);
+    }
 }
