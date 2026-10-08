@@ -12,22 +12,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 import { useRacingClasses } from '@/hooks/admin/useAdminEventClasses';
-import {
-  useRaceHubClassMappings,
-  useRaceHubImport,
-  useReplaceRaceHubClassMappings,
-} from '@/hooks/admin/useRaceHubImport';
+import { useImportClassMappings, useRaceHubImport } from '@/hooks/admin/useRaceHubImport';
 import { useEntryFeedImport } from '@/hooks/admin/useEntryFeed';
 import type { EventClassDto, RaceHubImportResult } from '@/lib/adminApi';
+import { ClassMappingPanel, ImportProblems, ImportWarnings } from './ImportPanels';
 
 interface RaceHubImportDialogProps {
   eventId: number;
@@ -66,8 +56,7 @@ export default function RaceHubImportDialog({
   const fileImport = useRaceHubImport(eventId);
   const feedImport = useEntryFeedImport(eventId);
   const importMutation = feed ? feedImport : fileImport;
-  const replaceMappings = useReplaceRaceHubClassMappings(eventId);
-  const mappingsQuery = useRaceHubClassMappings(eventId, open);
+  const classMappings = useImportClassMappings(eventId, open);
   // Each file choice (and closing the dialog) starts a new request generation. A preview
   // response from an older generation is ignored, so the preview on screen always belongs to
   // the file that "Import entries" will send.
@@ -147,19 +136,15 @@ export default function RaceHubImportDialog({
   }
 
   async function saveMappingsAndRecheck() {
-    // The PUT replaces every mapping, so never send it without the saved ones loaded
-    if (!mappingsQuery.isSuccess) return;
-    const mappings = mappingsQuery.data;
-    const chosen = Object.entries(classChoices).filter(([, eventClassId]) => eventClassId);
-    const byRaceHubId = new Map(mappings.map(m => [m.racehubEventClassId, m.eventClassId]));
-    chosen.forEach(([racehubId, eventClassId]) => byRaceHubId.set(racehubId, Number(eventClassId)));
+    const requestGeneration = generation.current;
     try {
-      await replaceMappings.mutateAsync(
-        [...byRaceHubId].map(([racehubEventClassId, eventClassId]) => ({ racehubEventClassId, eventClassId })),
-      );
+      if (!(await classMappings.save(classChoices))) return;
+      // The dialog was closed or another file chosen while the mappings saved
+      if (requestGeneration !== generation.current) return;
       setClassChoices({});
       await runPreview(exportDocument);
     } catch {
+      if (requestGeneration !== generation.current) return;
       toast.error('Could not save the class mappings. Try again.');
     }
   }
@@ -184,10 +169,12 @@ export default function RaceHubImportDialog({
     }
   }
 
-  const unmapped = preview?.unmappedClasses ?? [];
-  const allUnmappedChosen = unmapped.length > 0 && unmapped.every(u => classChoices[u.racehubEventClassId]);
-  const busy = importMutation.isPending || replaceMappings.isPending;
-  const mappingsReady = mappingsQuery.isSuccess;
+  const unmapped = (preview?.unmappedClasses ?? []).map(u => ({
+    key: u.racehubEventClassId,
+    name: u.rcClassName ?? u.className ?? u.racehubEventClassId,
+    entryCount: u.entryCount,
+  }));
+  const busy = importMutation.isPending || classMappings.isSaving;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -241,75 +228,21 @@ export default function RaceHubImportDialog({
               ))}
             </dl>
 
-            {preview.errors.length > 0 && (
-              <div className="rounded-md border border-destructive/50 p-3">
-                <h3 className="text-sm font-semibold text-destructive mb-1">Problems that block the import</h3>
-                <ul className="list-disc pl-5 text-sm space-y-0.5">
-                  {preview.errors.map(e => <li key={e}>{e}</li>)}
-                </ul>
-              </div>
-            )}
+            <ImportProblems errors={preview.errors} />
 
-            {unmapped.length > 0 && (
-              <div className="rounded-md border border-amber-500/50 p-3 space-y-3">
-                <div>
-                  <h3 className="text-sm font-semibold">Classes to map</h3>
-                  <p className="text-xs text-muted-foreground">
-                    These RaceHub classes do not match a class in this event. Choose one for each.
-                  </p>
-                </div>
-                {unmapped.map(u => (
-                  <div key={u.racehubEventClassId} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <div className="flex-1 text-sm">
-                      <span className="font-medium">{u.rcClassName ?? u.className ?? u.racehubEventClassId}</span>
-                      <span className="text-muted-foreground">
-                        {' '}· {u.entryCount} {u.entryCount === 1 ? 'entry' : 'entries'}
-                      </span>
-                    </div>
-                    <Select
-                      value={classChoices[u.racehubEventClassId] ?? ''}
-                      onValueChange={v => setClassChoices(c => ({ ...c, [u.racehubEventClassId]: v }))}
-                    >
-                      <SelectTrigger
-                        className="sm:w-56"
-                        aria-label={`Event class for ${u.rcClassName ?? u.racehubEventClassId}`}
-                      >
-                        <SelectValue placeholder="Choose a class" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {classes.map(cls => (
-                          <SelectItem key={cls.id} value={String(cls.id)}>
-                            {classLabel(cls)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-                {mappingsQuery.isError && (
-                  <p className="text-xs text-destructive">
-                    Could not load this event&apos;s saved class mappings, so new ones cannot be saved yet. Close and
-                    try again.
-                  </p>
-                )}
-                <Button
-                  size="sm"
-                  onClick={() => void saveMappingsAndRecheck()}
-                  disabled={!allUnmappedChosen || !mappingsReady || busy}
-                >
-                  Save mappings and check again
-                </Button>
-              </div>
-            )}
+            <ClassMappingPanel
+              unmapped={unmapped}
+              intro="These RaceHub classes do not match a class in this event. Choose one for each."
+              classes={classes}
+              classLabel={classLabel}
+              choices={classChoices}
+              onChoose={(key, value) => setClassChoices(c => ({ ...c, [key]: value }))}
+              mappingsLoadFailed={classMappings.loadFailed}
+              canSave={classMappings.ready && !busy}
+              onSave={() => void saveMappingsAndRecheck()}
+            />
 
-            {preview.warnings.length > 0 && (
-              <div className="rounded-md border p-3">
-                <h3 className="text-sm font-semibold mb-1">Warnings</h3>
-                <ul className="list-disc pl-5 text-sm space-y-0.5">
-                  {preview.warnings.map(w => <li key={w}>{w}</li>)}
-                </ul>
-              </div>
-            )}
+            <ImportWarnings warnings={preview.warnings} />
           </div>
         )}
 

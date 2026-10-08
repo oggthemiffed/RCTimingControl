@@ -52,3 +52,33 @@ export function useCsvImport(eventId: number) {
     },
   });
 }
+
+/**
+ * The event's class mappings for an import dialog: whether the saved ones loaded, and {@code save}, which adds
+ * the official's choices (import class key to event class id) to them. The PUT replaces every mapping, so
+ * {@code save} sends nothing until the saved ones have loaded and resolves to false then. It throws if the
+ * save fails.
+ */
+export function useImportClassMappings(eventId: number, open: boolean) {
+  const mappingsQuery = useRaceHubClassMappings(eventId, open);
+  const replaceMappings = useReplaceRaceHubClassMappings(eventId);
+
+  async function save(choices: Record<string, string>): Promise<boolean> {
+    if (!mappingsQuery.isSuccess) return false;
+    const byKey = new Map(mappingsQuery.data.map(m => [m.racehubEventClassId, m.eventClassId]));
+    Object.entries(choices)
+      .filter(([, eventClassId]) => eventClassId)
+      .forEach(([key, eventClassId]) => byKey.set(key, Number(eventClassId)));
+    await replaceMappings.mutateAsync(
+      [...byKey].map(([racehubEventClassId, eventClassId]) => ({ racehubEventClassId, eventClassId })),
+    );
+    return true;
+  }
+
+  return {
+    ready: mappingsQuery.isSuccess,
+    loadFailed: mappingsQuery.isError,
+    isSaving: replaceMappings.isPending,
+    save,
+  };
+}
