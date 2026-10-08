@@ -309,6 +309,26 @@ class EntryFeedIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void aFeedMovedToAnotherAddressWhileItIsFetched_keepsNoOutcomeFromTheOldOne() {
+        feedBody = fixture("entries-v1-initial.json");
+        saveFeed(feedUrl(), TOKEN, false);
+        String otherAddress = feedUrl() + "?moved";
+        // An official points the feed somewhere else while the first fetch is still in flight
+        duringFetch = () -> jdbc.update("update entry_feeds set url = ? where event_id = ?", otherAddress, eventId);
+
+        JsonNode fetched = post("/fetch").getBody();
+
+        // The file came from the old address, so nothing is held or recorded against the new one
+        assertThat(fetched.get("waiting").asBoolean()).isFalse();
+        assertThat(jdbc.queryForObject("select url from entry_feeds where event_id = ?", String.class, eventId))
+                .isEqualTo(otherAddress);
+        assertThat(jdbc.queryForObject("select held_document from entry_feeds where event_id = ?", String.class, eventId))
+                .isNull();
+        assertThat(jdbc.queryForObject("select last_status from entry_feeds where event_id = ?", String.class, eventId))
+                .isNull();
+    }
+
+    @Test
     void anEventWithoutAFeed_hasNoContent() {
         assertThat(getFeed().getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     }
