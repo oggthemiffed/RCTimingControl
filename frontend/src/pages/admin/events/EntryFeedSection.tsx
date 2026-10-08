@@ -16,6 +16,7 @@ import {
 import type { EntryFeedDto, EventClassDto, SaveEntryFeedRequest } from '@/lib/adminApi';
 import { getApiErrorMessage } from '@/lib/errors';
 import RaceHubImportDialog from './RaceHubImportDialog';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 interface EntryFeedSectionProps {
   eventId: number;
@@ -43,6 +44,7 @@ export default function EntryFeedSection({ eventId, classes }: EntryFeedSectionP
   const saveFeed = useSaveEntryFeed(eventId);
   const deleteFeed = useDeleteEntryFeed(eventId);
   const fetchFeed = useFetchEntryFeed(eventId);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [url, setUrl] = useState('');
   const [token, setToken] = useState('');
@@ -90,7 +92,14 @@ export default function EntryFeedSection({ eventId, classes }: EntryFeedSectionP
     );
   }
 
-  function handleDelete() {
+  async function handleDelete() {
+    const confirmed = await confirm({
+      title: 'Remove the entry feed?',
+      description: 'Its URL, token and any fetched file waiting for review are forgotten. Entries already imported stay.',
+      confirmLabel: 'Remove',
+      destructive: true,
+    });
+    if (!confirmed) return;
     deleteFeed.mutate(undefined, {
       onSuccess: () => toast.success('Entry feed removed'),
       onError: error => toast.error(getApiErrorMessage(error, 'Could not remove the entry feed')),
@@ -222,6 +231,7 @@ export default function EntryFeedSection({ eventId, classes }: EntryFeedSectionP
           feed
         />
       )}
+      {confirmDialog}
     </section>
   );
 }

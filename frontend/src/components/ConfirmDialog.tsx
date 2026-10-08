@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,7 +11,7 @@ import {
 
 export interface ConfirmOptions {
   title: string;
-  description?: ReactNode;
+  description?: string;
   /** The confirm button's label, such as "Delete". */
   confirmLabel?: string;
   /** Red confirm button, for a step that deletes or can't be undone. */
@@ -23,6 +23,8 @@ export interface ConfirmOptions {
  * Render `dialog` once in the component, then `if (!(await confirm({ title: 'Delete track?' }))) return;`.
  */
 export function useConfirm() {
+  const [open, setOpen] = useState(false);
+  // Kept after closing, so the dialog doesn't go blank while it fades out
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const resolveRef = useRef<((confirmed: boolean) => void) | null>(null);
 
@@ -30,6 +32,7 @@ export function useConfirm() {
     // A second ask while one is open answers the first with no
     resolveRef.current?.(false);
     setOptions(next);
+    setOpen(true);
     return new Promise<boolean>(resolve => {
       resolveRef.current = resolve;
     });
@@ -38,12 +41,12 @@ export function useConfirm() {
   function settle(confirmed: boolean) {
     resolveRef.current?.(confirmed);
     resolveRef.current = null;
-    setOptions(null);
+    setOpen(false);
   }
 
   const dialog = (
-    <Dialog open={options !== null} onOpenChange={open => { if (!open) settle(false); }}>
-      <DialogContent showCloseButton={false}>
+    <Dialog open={open} onOpenChange={next => { if (!next) settle(false); }}>
+      <DialogContent showCloseButton={false} {...(options?.description ? {} : { 'aria-describedby': undefined })}>
         <DialogHeader>
           <DialogTitle>{options?.title}</DialogTitle>
           {options?.description && <DialogDescription>{options.description}</DialogDescription>}

@@ -231,7 +231,7 @@ export default function CockpitPage() {
   async function onAbandon() {
     const confirmed = await confirm({
       title: 'Abandon this race?',
-      description: 'This cannot be undone.',
+      description: 'The race ends now and its result is saved as it stands.',
       confirmLabel: 'Abandon',
       destructive: true,
     });
@@ -244,7 +244,7 @@ export default function CockpitPage() {
   async function onRestart() {
     const confirmed = await confirm({
       title: 'Restart this race from scratch?',
-      description: 'All its timing data will be cleared.',
+      description: 'Its timing and any saved result will be cleared.',
       confirmLabel: 'Restart',
       destructive: true,
     });

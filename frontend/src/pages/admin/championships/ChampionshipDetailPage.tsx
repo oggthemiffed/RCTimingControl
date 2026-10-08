@@ -560,7 +560,7 @@ export default function ChampionshipDetailPage() {
                             onClick={async () => {
                               const confirmed = await confirm({
                                 title: `Remove ${rcName} from this championship?`,
-                                description: 'Its standings stop showing here. You can add the class again later.',
+                                description: 'Its standings and best-X-from-Y setting go. You can add the class again later.',
                                 confirmLabel: 'Remove',
                                 destructive: true,
                               });

@@ -145,7 +145,7 @@ export default function TracksPage() {
   async function handleDelete(id: number, name: string) {
     const confirmed = await confirm({
       title: `Delete ${name}?`,
-      description: 'This track will be removed. This cannot be undone.',
+      description: 'Its decoder loops and lap thresholds go with it, and events at this track lose it. This cannot be undone.',
       confirmLabel: 'Delete',
       destructive: true,
     });
