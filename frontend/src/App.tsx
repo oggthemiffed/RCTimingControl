@@ -1,53 +1,64 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import SetupGuard from '@/pages/setup/SetupGuard';
-import SetupLayout from '@/pages/setup/SetupLayout';
 import LoginPage from '@/pages/auth/LoginPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import { Toaster } from '@/components/ui/sonner';
-import EventSchedulePage from '@/pages/events/EventSchedulePage';
-import AdminPanelLayout from '@/pages/admin/AdminPanelLayout';
-import EventListPage from '@/pages/admin/events/EventListPage';
-import EventDetailPage from '@/pages/admin/events/EventDetailPage';
-import ChampionshipListPage from '@/pages/admin/championships/ChampionshipListPage';
-import ChampionshipDetailPage from '@/pages/admin/championships/ChampionshipDetailPage';
-import ClubProfilePage from '@/pages/admin/club/ClubProfilePage';
-import AdminAudioSettingsPage from '@/pages/admin/club/AdminAudioSettingsPage';
-import OfficialsPage from '@/pages/admin/officials/OfficialsPage';
-import TracksPage from '@/pages/admin/tracks/TracksPage';
-import FormatsPage from '@/pages/admin/formats/FormatsPage';
-import RaceControlSelectPage from '@/pages/admin/race-control/RaceControlSelectPage';
-import DecoderSettingsPage from '@/pages/admin/decoder/DecoderSettingsPage';
-import BackupsPage from '@/pages/admin/backups/BackupsPage';
-import ResultsExportsPage from '@/pages/admin/results-exports/ResultsExportsPage';
-import CompetitorsPage from '@/pages/admin/competitors/CompetitorsPage';
-import CheckInPage from '@/pages/race-control/check-in/CheckInPage';
-import RaceControlLayout from '@/pages/race-control/RaceControlLayout';
-import CockpitPage from '@/pages/race-control/CockpitPage';
-import RefereePage from '@/pages/race-control/RefereePage';
-import PrintResultsPage from '@/pages/race-control/PrintResultsPage';
-import { PracticeSessionPage } from '@/pages/race-control/PracticeSessionPage';
-import { PracticeLandingPage } from '@/pages/race-control/PracticeLandingPage';
-import PrintPracticeResultsPage from '@/pages/race-control/PrintPracticeResultsPage';
-import PublicResultsPage from '@/pages/results/PublicResultsPage';
-import PublicChampionshipPage from '@/pages/championships/PublicChampionshipPage';
 import { HelpProvider } from '@/context/HelpContext';
-import MeetingGuidePage from '@/pages/print/MeetingGuidePage';
-import AdminGuidePage from '@/pages/print/AdminGuidePage';
-import AboutPage from '@/pages/AboutPage';
-import NowNextBoard from '@/pages/boards/NowNextBoard';
-import ResultsBoard from '@/pages/boards/ResultsBoard';
-import OverlayBoard from '@/pages/boards/OverlayBoard';
+import PageLoading from '@/components/PageLoading';
+
+// Every page but sign-in and the error pages loads on demand, so a board or the overlay doesn't download
+// the admin panel and the print guides. The layouts wrap their outlets in Suspense to keep their chrome.
+const SetupLayout = lazy(() => import('@/pages/setup/SetupLayout'));
+const EventSchedulePage = lazy(() => import('@/pages/events/EventSchedulePage'));
+const AdminPanelLayout = lazy(() => import('@/pages/admin/AdminPanelLayout'));
+const EventListPage = lazy(() => import('@/pages/admin/events/EventListPage'));
+const EventDetailPage = lazy(() => import('@/pages/admin/events/EventDetailPage'));
+const ChampionshipListPage = lazy(() => import('@/pages/admin/championships/ChampionshipListPage'));
+const ChampionshipDetailPage = lazy(() => import('@/pages/admin/championships/ChampionshipDetailPage'));
+const ClubProfilePage = lazy(() => import('@/pages/admin/club/ClubProfilePage'));
+const AdminAudioSettingsPage = lazy(() => import('@/pages/admin/club/AdminAudioSettingsPage'));
+const OfficialsPage = lazy(() => import('@/pages/admin/officials/OfficialsPage'));
+const TracksPage = lazy(() => import('@/pages/admin/tracks/TracksPage'));
+const FormatsPage = lazy(() => import('@/pages/admin/formats/FormatsPage'));
+const RaceControlSelectPage = lazy(() => import('@/pages/admin/race-control/RaceControlSelectPage'));
+const DecoderSettingsPage = lazy(() => import('@/pages/admin/decoder/DecoderSettingsPage'));
+const BackupsPage = lazy(() => import('@/pages/admin/backups/BackupsPage'));
+const ResultsExportsPage = lazy(() => import('@/pages/admin/results-exports/ResultsExportsPage'));
+const CompetitorsPage = lazy(() => import('@/pages/admin/competitors/CompetitorsPage'));
+const CheckInPage = lazy(() => import('@/pages/race-control/check-in/CheckInPage'));
+const RaceControlLayout = lazy(() => import('@/pages/race-control/RaceControlLayout'));
+const CockpitPage = lazy(() => import('@/pages/race-control/CockpitPage'));
+const RefereePage = lazy(() => import('@/pages/race-control/RefereePage'));
+const PrintResultsPage = lazy(() => import('@/pages/race-control/PrintResultsPage'));
+const PracticeSessionPage = lazy(() =>
+  import('@/pages/race-control/PracticeSessionPage').then(m => ({ default: m.PracticeSessionPage })),
+);
+const PracticeLandingPage = lazy(() =>
+  import('@/pages/race-control/PracticeLandingPage').then(m => ({ default: m.PracticeLandingPage })),
+);
+const PrintPracticeResultsPage = lazy(() => import('@/pages/race-control/PrintPracticeResultsPage'));
+const PublicResultsPage = lazy(() => import('@/pages/results/PublicResultsPage'));
+const PublicChampionshipPage = lazy(() => import('@/pages/championships/PublicChampionshipPage'));
+const MeetingGuidePage = lazy(() => import('@/pages/print/MeetingGuidePage'));
+const AdminGuidePage = lazy(() => import('@/pages/print/AdminGuidePage'));
+const AboutPage = lazy(() => import('@/pages/AboutPage'));
+const NowNextBoard = lazy(() => import('@/pages/boards/NowNextBoard'));
+const ResultsBoard = lazy(() => import('@/pages/boards/ResultsBoard'));
+const OverlayBoard = lazy(() => import('@/pages/boards/OverlayBoard'));
 
 function RootLayout() {
   return (
     <AuthProvider>
       <HelpProvider>
         <SetupGuard>
-          <Outlet />
+          <Suspense fallback={<PageLoading />}>
+            <Outlet />
+          </Suspense>
         </SetupGuard>
       </HelpProvider>
       <Toaster />

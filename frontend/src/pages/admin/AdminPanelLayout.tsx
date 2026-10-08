@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import {
   Calendar,
@@ -25,6 +25,7 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useHelp } from '@/context/HelpContext';
 import { HelpSidebarButton } from '@/components/HelpSidebarButton';
+import PageLoading from '@/components/PageLoading';
 
 // ── Nav definition ─────────────────────────────────────────────────────────
 
@@ -245,7 +246,9 @@ export default function AdminPanelLayout() {
       {/* Main content */}
       <main className="md:pl-60">
         <div className="px-6 pt-6 pb-10 min-h-screen">
-          <Outlet />
+          <Suspense fallback={<PageLoading />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
 
