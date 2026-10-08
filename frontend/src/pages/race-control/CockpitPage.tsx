@@ -27,6 +27,7 @@ import { Separator } from '@/components/ui/separator';
 import type { RunOrderItemDto } from '@/lib/raceControlApi';
 import { roundName } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/errors';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 function raceTitle(item: RunOrderItemDto | undefined) {
   if (!item) return 'No race selected';
@@ -40,6 +41,7 @@ function commandFailed(command: string) {
 }
 
 export default function CockpitPage() {
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
   const eventId = Number(eventIdStr);
 
@@ -214,22 +216,39 @@ export default function CockpitPage() {
     });
   }
 
-  function onFinish() {
-    if (!confirm('Finish this race and save its result?')) return;
+  async function onFinish() {
+    const confirmed = await confirm({
+      title: 'Finish this race?',
+      description: 'Its result is saved and the next race can be called.',
+      confirmLabel: 'Finish',
+    });
+    if (!confirmed) return;
     mutations.finish.mutate(undefined, {
       onError: commandFailed('Finish'),
     });
   }
 
-  function onAbandon() {
-    if (!confirm('Abandon this race? This cannot be undone.')) return;
+  async function onAbandon() {
+    const confirmed = await confirm({
+      title: 'Abandon this race?',
+      description: 'This cannot be undone.',
+      confirmLabel: 'Abandon',
+      destructive: true,
+    });
+    if (!confirmed) return;
     mutations.abandon.mutate(undefined, {
       onError: commandFailed('Abandon'),
     });
   }
 
-  function onRestart() {
-    if (!confirm('Restart this race from scratch? All timing data will be cleared.')) return;
+  async function onRestart() {
+    const confirmed = await confirm({
+      title: 'Restart this race from scratch?',
+      description: 'All its timing data will be cleared.',
+      confirmLabel: 'Restart',
+      destructive: true,
+    });
+    if (!confirmed) return;
     mutations.restart.mutate(undefined, {
       onError: commandFailed('Restart'),
     });
@@ -447,6 +466,7 @@ export default function CockpitPage() {
         onOpenChange={setLinkDialogOpen}
         onLinked={handleLinked}
       />
+      {confirmDialog}
     </div>
   );
 }

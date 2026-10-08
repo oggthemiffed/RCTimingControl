@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/table';
 import { useTracksList, useCreateTrack, useUpdateTrack, useDeleteTrack } from '@/hooks/admin/useAdminTracks';
 import type { TrackDto } from '@/lib/adminApi';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const trackSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -104,6 +105,7 @@ export default function TracksPage() {
   const createMutation = useCreateTrack();
   const updateMutation = useUpdateTrack();
   const deleteMutation = useDeleteTrack();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<TrackDto | null>(null);
@@ -140,7 +142,14 @@ export default function TracksPage() {
     }
   }
 
-  async function handleDelete(id: number) {
+  async function handleDelete(id: number, name: string) {
+    const confirmed = await confirm({
+      title: `Delete ${name}?`,
+      description: 'This track will be removed. This cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!confirmed) return;
     try {
       await deleteMutation.mutateAsync(id);
       toast.success('Track deleted');
@@ -212,7 +221,7 @@ export default function TracksPage() {
                         variant="ghost"
                         size="icon-sm"
                         disabled={deleteMutation.isPending}
-                        onClick={() => handleDelete(track.id)}
+                        onClick={() => handleDelete(track.id, track.name)}
                         aria-label="Delete track"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -239,6 +248,7 @@ export default function TracksPage() {
         onSubmit={handleUpdate}
         title="Edit Track"
       />
+      {confirmDialog}
     </div>
   );
 }
