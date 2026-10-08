@@ -17,6 +17,11 @@ public class RaceHubClassMappingRepository extends JooqRepository<RaceHubClassMa
         super(dsl, RACEHUB_CLASS_MAPPINGS, RACEHUB_CLASS_MAPPINGS.ID);
     }
 
+    @Override
+    protected String entityName() {
+        return "RaceHub class mapping";
+    }
+
     public List<RaceHubClassMapping> findByEventIdOrderByRacehubEventClassId(Long eventId) {
         return findWhere(RACEHUB_CLASS_MAPPINGS.EVENT_ID.eq(eventId),
                 RACEHUB_CLASS_MAPPINGS.RACEHUB_EVENT_CLASS_ID.asc());

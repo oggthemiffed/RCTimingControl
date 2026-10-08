@@ -10,13 +10,11 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,7 +34,6 @@ class OfficialServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(users.getOrThrow(anyLong())).thenCallRealMethod();
         service = new OfficialService(users, auditLog, refreshTokens, NoOpPasswordEncoder.getInstance(), events,
                 Clock.fixed(NOW, ZoneOffset.UTC));
     }
@@ -145,7 +142,7 @@ class OfficialServiceTest {
         user.setRoles(new HashSet<>(Set.of(roles)));
         user.setCreatedAt(NOW.minusSeconds(3600));
         user.setUpdatedAt(NOW.minusSeconds(3600));
-        when(users.findById(id)).thenReturn(Optional.of(user));
+        when(users.getOrThrow(id)).thenReturn(user);
         return user;
     }
 }

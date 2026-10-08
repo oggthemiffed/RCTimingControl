@@ -24,6 +24,9 @@ import java.util.Optional;
  * it is passed to {@link #save}. Writes run in a transaction, joining the caller's if there is
  * one, so they use the write connection. Reads outside a transaction use the read pool.
  *
+ * <p>{@link #getOrThrow} and {@link #requireExists} raise the domain's {@link EntityNotFoundException},
+ * which the API answers with 404, so callers need not repeat the lookup.
+ *
  * @param <E> the entity
  * @param <R> the table's generated record
  */

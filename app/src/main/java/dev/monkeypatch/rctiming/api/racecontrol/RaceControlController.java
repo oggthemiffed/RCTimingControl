@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalAdjustmentRequest;
@@ -231,7 +232,9 @@ public class RaceControlController {
     public ResponseEntity<Map<String, Long>> skipTo(@PathVariable long raceId,
                                                      @Valid @RequestBody SkipToRaceRequest req) {
         Race sourceRace = loadRace(raceId);
-        Race targetRace = raceRepository.getOrThrow(req.targetRaceId());
+        // Named apart from the race in the path, so a bad target in the body is clear
+        Race targetRace = raceRepository.findById(req.targetRaceId())
+                .orElseThrow(() -> new EntityNotFoundException("Target race not found: " + req.targetRaceId()));
 
         // Validate both races belong to the same event (via their rounds)
         long sourceEventId = resolveEventId(sourceRace);
