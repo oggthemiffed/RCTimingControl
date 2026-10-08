@@ -3,8 +3,7 @@ import { Navigate, Link } from 'react-router-dom';
 import { useHelp } from '@/context/HelpContext';
 import { HelpSidebarButton } from '@/components/HelpSidebarButton';
 import { SetupWizardHelp } from '@/help/SetupWizardHelp';
-import { Loader2, Menu } from 'lucide-react';
-import { CircleCheckIcon, CircleDotIcon, CircleIcon } from 'lucide-react';
+import { Circle, CircleCheck, CircleDot, Loader2, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -47,12 +46,16 @@ function StepItem({
             : 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground w-full text-left'
       }
     >
+      {/* Done: a solid green disc with the tick knocked out in the background colour */}
       {state === 'complete' ? (
-        <CircleCheckIcon className="h-4 w-4 shrink-0 text-[var(--flag-green)]" aria-hidden="true" />
+        <CircleCheck
+          className="h-4 w-4 shrink-0 fill-[var(--flag-green)] text-background"
+          aria-hidden="true"
+        />
       ) : state === 'current' ? (
-        <CircleDotIcon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+        <CircleDot className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
       ) : (
-        <CircleIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <Circle className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       )}
       <span className="text-xs text-muted-foreground mr-1">{number}.</span>
       {label}
