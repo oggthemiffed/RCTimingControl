@@ -15,12 +15,23 @@ import org.springframework.web.client.RestClientResponseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Sends queued results exports to RaceHub (#27). Runs on the scheduler thread, so race control never waits on
+ * Sends queued results exports to RaceHub (#27). Runs on a scheduler thread, so race control never waits on
  * the network. A failed send is tried again with a growing delay, up to {@link #MAX_BACKOFF}; exports of one
  * event go in revision order, and a newer one replaces any that have not gone yet.
+ *
+ * <p>A failed export holds back only its own event: the rest of the pass carries on, so one event RaceHub
+ * refuses does not stop the others reaching it. Whatever the answer, the export is tried again later; a
+ * refusal is never given up on, and its reason stays on the export for the admin to read.
+ *
+ * <p>The scheduler has several threads ({@code spring.task.scheduling.pool.size}), so a slow RaceHub (5 s to
+ * connect, 20 s to read) does not delay the decoder check, the announcements or the backup. This job and the
+ * queuing in {@code ResultsExportTriggers} may therefore run together; the outbox's updates are guarded to
+ * allow for it.
  *
  * <p>Each request carries an {@code Idempotency-Key} made from the event and revision, and the body carries the
  * revision, so sending the same export twice is safe.
@@ -58,10 +69,22 @@ public class ResultsSender {
         }
         List<ResultsOutboxItem> due = outboxRepository.findByStatusInAndNextAttemptAtLessThanEqualOrderByIdAsc(
                 EnumSet.of(OutboxStatus.QUEUED, OutboxStatus.FAILED), Instant.now());
+        // Events whose export failed in this pass: their later exports wait, so an event's exports never go
+        // out of order, but other events carry on
+        Set<Long> heldBack = new HashSet<>();
         for (ResultsOutboxItem item : due) {
-            if (!send(item)) {
-                // RaceHub is unreachable or refusing; leave the rest for the next pass
-                return;
+            if (heldBack.contains(item.getEventId())) {
+                continue;
+            }
+            try {
+                if (!send(item)) {
+                    heldBack.add(item.getEventId());
+                }
+            } catch (RuntimeException e) {
+                // Recording the outcome failed (the database); the next pass sends it again, which is safe
+                log.error("Could not record the send of results export revision {} of event {}",
+                        item.getRevision(), item.getEventId(), e);
+                heldBack.add(item.getEventId());
             }
         }
     }

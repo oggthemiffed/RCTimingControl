@@ -27,6 +27,7 @@ public class BackupScheduler {
         run("day-close");
     }
 
+    /** 02:00 server time unless {@code rctiming.backup.nightly-cron} says otherwise; {@code -} turns it off. */
     @Scheduled(cron = "${rctiming.backup.nightly-cron:0 0 2 * * *}")
     public void nightly() {
         run("nightly");
