@@ -4,6 +4,9 @@ import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Club-wide announcer settings (AUDIO-07), for admins and race directors.
+ * Club-wide announcer settings (AUDIO-07), for admins and race directors. The PUT here replaces the toggles and
+ * the default voice; the countdown intervals are not part of it and are left as they are. Race control's
+ * {@code AudioSettingsController} updates any of the settings, intervals included.
  */
 @RestController
 @RequestMapping("/api/v1/admin/audio")
@@ -37,7 +42,7 @@ public class AdminAudioController {
             boolean announceLapBeep,
             boolean announceFinish,
             boolean announceRunningOrder,
-            int runningOrderDepth,
+            @Min(1) @Max(20) int runningOrderDepth,
             String defaultVoiceId
     ) {}
 
@@ -60,7 +65,7 @@ public class AdminAudioController {
 
     @PutMapping("/settings")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
-    public ResponseEntity<AudioSettingsDto> saveAudioSettings(@RequestBody AudioSettingsDto dto) {
+    public ResponseEntity<AudioSettingsDto> saveAudioSettings(@RequestBody @Valid AudioSettingsDto dto) {
         Long profileId = clubProfileService.getSingletonProfileId();
         ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
         ClubAudioSettings newSettings = new ClubAudioSettings(
@@ -70,7 +75,7 @@ public class AdminAudioController {
                 dto.announceFinish(),
                 dto.announceRunningOrder(),
                 dto.runningOrderDepth(),
-                null  // preserve default intervals
+                profile.getAudioSettings().countdownIntervals()  // not part of this form: keep them
         );
         profile.setAudioSettings(newSettings);
         profile.setDefaultVoiceId(dto.defaultVoiceId());
