@@ -66,6 +66,8 @@ class EntryFeedIT extends AbstractIntegrationTest {
     private HttpServer feedServer;
     private volatile String feedBody;
     private volatile int feedStatus = 200;
+    /** Run by the stand-in feed while it answers a request, to change things mid-fetch. */
+    private volatile Runnable duringFetch;
     private final List<String> authorizations = new CopyOnWriteArrayList<>();
 
     @BeforeEach
@@ -82,6 +84,10 @@ class EntryFeedIT extends AbstractIntegrationTest {
         feedServer = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         feedServer.createContext("/entries", exchange -> {
             authorizations.add(String.valueOf(exchange.getRequestHeaders().getFirst("Authorization")));
+            Runnable midFetch = duringFetch;
+            if (midFetch != null) {
+                midFetch.run();
+            }
             byte[] body = feedBody == null ? new byte[0] : feedBody.getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             exchange.sendResponseHeaders(feedStatus, body.length == 0 ? -1 : body.length);
@@ -287,6 +293,39 @@ class EntryFeedIT extends AbstractIntegrationTest {
     void plainHttpToAnotherComputer_isRefused() {
         ResponseEntity<JsonNode> resp = saveFeed("http://booking.example.com/entries", TOKEN, false);
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void aFeedRemovedWhileItIsFetched_staysRemovedAndFetchNowIsA404() {
+        feedBody = fixture("entries-v1-initial.json");
+        saveFeed(feedUrl(), TOKEN, false);
+        duringFetch = () -> jdbc.update("delete from entry_feeds where event_id = ?", eventId);
+
+        ResponseEntity<JsonNode> fetched = post("/fetch");
+
+        assertThat(fetched.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(jdbc.queryForObject("select count(*) from entry_feeds where event_id = ?", Integer.class, eventId))
+                .isZero();
+    }
+
+    @Test
+    void aFeedMovedToAnotherAddressWhileItIsFetched_keepsNoOutcomeFromTheOldOne() {
+        feedBody = fixture("entries-v1-initial.json");
+        saveFeed(feedUrl(), TOKEN, false);
+        String otherAddress = feedUrl() + "?moved";
+        // An official points the feed somewhere else while the first fetch is still in flight
+        duringFetch = () -> jdbc.update("update entry_feeds set url = ? where event_id = ?", otherAddress, eventId);
+
+        JsonNode fetched = post("/fetch").getBody();
+
+        // The file came from the old address, so nothing is held or recorded against the new one
+        assertThat(fetched.get("waiting").asBoolean()).isFalse();
+        assertThat(jdbc.queryForObject("select url from entry_feeds where event_id = ?", String.class, eventId))
+                .isEqualTo(otherAddress);
+        assertThat(jdbc.queryForObject("select held_document from entry_feeds where event_id = ?", String.class, eventId))
+                .isNull();
+        assertThat(jdbc.queryForObject("select last_status from entry_feeds where event_id = ?", String.class, eventId))
+                .isNull();
     }
 
     @Test

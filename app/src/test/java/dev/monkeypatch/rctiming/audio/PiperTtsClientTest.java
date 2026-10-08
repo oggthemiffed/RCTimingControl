@@ -13,6 +13,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -112,6 +113,32 @@ class PiperTtsClientTest {
         try { serverSocket.close(); } catch (IOException ignored) {}
         PiperTtsClient client = clientFor(true);
         assertThrows(TtsUnavailableException.class, () -> client.synthesize("Hello", null));
+    }
+
+    /** A Piper that accepts the connection (the server socket is open) but never answers. */
+    private PiperTtsClient silentPiper() {
+        TtsProperties props = new TtsProperties("localhost:" + port, "en_GB-alan-medium", true, List.of("en_GB"));
+        Duration shortWait = Duration.ofMillis(300);
+        return new PiperTtsClient(props, objectMapper, shortWait, shortWait, shortWait);
+    }
+
+    @Test
+    void synthesize_piperStopsAnswering_givesUpInsteadOfHanging() {
+        PiperTtsClient client = silentPiper();
+
+        assertTimeoutPreemptively(Duration.ofSeconds(5), () -> {
+            assertThrows(TtsUnavailableException.class, () -> client.synthesize("Hello", null));
+        });
+    }
+
+    @Test
+    void describe_piperStopsAnswering_givesUpAndFallsBackToTheDefaultVoice() {
+        PiperTtsClient client = silentPiper();
+
+        List<VoiceInfo> voices = assertTimeoutPreemptively(Duration.ofSeconds(5), client::listVoices);
+
+        assertEquals(1, voices.size());
+        assertEquals("en_GB-alan-medium", voices.get(0).voiceId());
     }
 
     @Test

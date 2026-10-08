@@ -333,6 +333,17 @@ class LiveFeedIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void closingTheConnectionSendsTheRelayACloseFrame() throws Exception {
+        LiveFeedConnection connection = new LiveFeedConnection();
+        connection.open(URI.create("ws://127.0.0.1:" + relay.port() + "/publish"), RELAY_KEY);
+        int before = relay.closeFrameCount();
+
+        connection.close();
+
+        await(() -> relay.closeFrameCount() > before);
+    }
+
+    @Test
     void raceDirectorsTurnTheFeedOnAndOffForAnEvent() {
         HttpHeaders director = headers(Set.of(Role.RACE_DIRECTOR));
         HttpHeaders referee = headers(Set.of(Role.REFEREE));

@@ -4,13 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.*;
 
 /**
@@ -24,18 +27,56 @@ import java.util.*;
  *   ← ... (repeated)
  *   ← {"type":"audio-stop"}\n
  * </pre>
+ *
+ * <p>Called from HTTP threads (the voice list, a spoken-name preview), so no call waits for ever on a Piper
+ * that is not there or has stopped answering: connecting is given {@link #CONNECT_TIMEOUT}, and each wait for
+ * Piper's next bytes is given a read timeout (longer for synthesis, which can take a few seconds to start).
  */
 @Component
 public class PiperTtsClient {
 
     private static final Logger log = LoggerFactory.getLogger(PiperTtsClient.class);
 
+    static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
+    /** Longest wait for any one reply while listing voices. */
+    static final Duration DESCRIBE_READ_TIMEOUT = Duration.ofSeconds(5);
+    /** Longest wait for any one piece of audio while synthesizing. */
+    static final Duration SYNTHESIZE_READ_TIMEOUT = Duration.ofSeconds(30);
+
     private final TtsProperties properties;
     private final ObjectMapper objectMapper;
+    private final Duration connectTimeout;
+    private final Duration describeReadTimeout;
+    private final Duration synthesizeReadTimeout;
 
+    @Autowired
     public PiperTtsClient(TtsProperties properties, ObjectMapper objectMapper) {
+        this(properties, objectMapper, CONNECT_TIMEOUT, DESCRIBE_READ_TIMEOUT, SYNTHESIZE_READ_TIMEOUT);
+    }
+
+    /** With the waits chosen, so a test need not wait the real ones out. */
+    public PiperTtsClient(TtsProperties properties, ObjectMapper objectMapper, Duration connectTimeout,
+                   Duration describeReadTimeout, Duration synthesizeReadTimeout) {
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.connectTimeout = connectTimeout;
+        this.describeReadTimeout = describeReadTimeout;
+        this.synthesizeReadTimeout = synthesizeReadTimeout;
+    }
+
+    /** Connects to the configured Piper; waits for each reply at most {@code readTimeout}. */
+    private Socket connect(Duration readTimeout) throws IOException {
+        String[] hostPort = splitHostPort(properties.endpoint());
+        Socket socket = new Socket();
+        try {
+            socket.connect(new InetSocketAddress(hostPort[0], Integer.parseInt(hostPort[1])),
+                    (int) connectTimeout.toMillis());
+            socket.setSoTimeout((int) readTimeout.toMillis());
+            return socket;
+        } catch (IOException | RuntimeException e) {
+            socket.close();
+            throw e;
+        }
     }
 
     /**
@@ -55,17 +96,14 @@ public class PiperTtsClient {
             throw new IllegalArgumentException("Text cannot be empty");
         }
 
-        String[] hostPort = splitHostPort(properties.endpoint());
-        String host = hostPort[0];
-        int port = Integer.parseInt(hostPort[1]);
-
         String effectiveVoice = (voiceName != null && !voiceName.isBlank())
                 ? voiceName
                 : properties.defaultVoice();
 
-        try (Socket socket = new Socket(host, port)) {
+        try (Socket socket = connect(synthesizeReadTimeout)) {
             OutputStream rawOut = socket.getOutputStream();
-            InputStream rawIn = socket.getInputStream();
+            // Buffered: the reply is read a byte at a time looking for the end of each line
+            InputStream rawIn = new BufferedInputStream(socket.getInputStream());
 
             // Send synthesize event as JSONL
             Map<String, Object> event = Map.of(
@@ -127,8 +165,8 @@ public class PiperTtsClient {
             return assembleWav(pcmBuffer.toByteArray(), sampleRate, sampleWidth, channels);
 
         } catch (IOException e) {
-            throw new TtsUnavailableException("Failed to connect to Piper TTS at " + properties.endpoint()
-                    + ": " + e.getMessage(), e);
+            throw new TtsUnavailableException("Piper TTS at " + properties.endpoint()
+                    + " could not be reached or stopped answering: " + e.getMessage(), e);
         }
     }
 
@@ -142,13 +180,9 @@ public class PiperTtsClient {
             return Collections.emptyList();
         }
 
-        String[] hostPort = splitHostPort(properties.endpoint());
-        String host = hostPort[0];
-        int port = Integer.parseInt(hostPort[1]);
-
-        try (Socket socket = new Socket(host, port)) {
+        try (Socket socket = connect(describeReadTimeout)) {
             OutputStream rawOut = socket.getOutputStream();
-            InputStream rawIn = socket.getInputStream();
+            InputStream rawIn = new BufferedInputStream(socket.getInputStream());
 
             // Send describe event
             String json = objectMapper.writeValueAsString(Map.of("type", "describe")) + "\n";

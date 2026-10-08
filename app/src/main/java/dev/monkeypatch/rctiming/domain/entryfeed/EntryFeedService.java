@@ -12,6 +12,7 @@ import dev.monkeypatch.rctiming.security.TokenCipher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,7 +30,8 @@ import java.util.Optional;
  * (an unmapped class, an invalid row) would block it. A revision already applied is a no-op.
  *
  * <p>The network call never runs inside a database transaction, and no failure is thrown to the caller: it is
- * recorded on the feed and shown on the event.
+ * recorded on the feed and shown on the event. Recording an outcome reads the feed again and saves it in one
+ * transaction ({@link #update}), so it cannot overwrite a change an official made during the fetch.
  */
 @Service
 public class EntryFeedService {
@@ -43,16 +45,18 @@ public class EntryFeedService {
     private final RaceHubImportService importService;
     private final TokenCipher tokenCipher;
     private final ObjectMapper objectMapper;
+    private final TransactionTemplate transactions;
 
     public EntryFeedService(EntryFeedRepository feedRepository, EventRepository eventRepository,
                             EntryFeedClient client, RaceHubImportService importService, TokenCipher tokenCipher,
-                            ObjectMapper objectMapper) {
+                            ObjectMapper objectMapper, TransactionTemplate transactions) {
         this.feedRepository = feedRepository;
         this.eventRepository = eventRepository;
         this.client = client;
         this.importService = importService;
         this.tokenCipher = tokenCipher;
         this.objectMapper = objectMapper;
+        this.transactions = transactions;
     }
 
     public Optional<EntryFeed> find(long eventId) {
@@ -108,19 +112,20 @@ public class EntryFeedService {
         EntryFeed feed = requireFeed(eventId);
         Download download = download(feed);
         if (download.problem != null) {
-            return recordFailure(feed, download.problem);
+            return removedWhileFetching(recordFailure(feed, download.problem));
         }
         RaceHubEntryExport export = download.export;
         if (Objects.equals(export.revision(), feed.getAppliedRevision())) {
-            return recordUnchanged(feed);
+            return removedWhileFetching(recordUnchanged(feed));
         }
         try {
             // Checks the file can be imported at all (schema version, source) before holding it
             importService.importEntries(eventId, export, true);
         } catch (IllegalArgumentException e) {
-            return recordFailure(feed, new Problem(EntryFeedStatus.FAILED, e.getMessage()));
+            return removedWhileFetching(recordFailure(feed, new Problem(EntryFeedStatus.FAILED, e.getMessage())));
         }
-        return hold(feed, export, "Fetched revision " + export.revision() + ". Check it and confirm the import.");
+        return removedWhileFetching(
+                hold(feed, export, "Fetched revision " + export.revision() + ". Check it and confirm the import."));
     }
 
     /** The import the held file would make, without saving anything. */
@@ -215,7 +220,7 @@ public class EntryFeedService {
 
     // ── Recording outcomes ─────────────────────────────────────────────────────────
 
-    private EntryFeed hold(EntryFeed feed, RaceHubEntryExport export, String message) {
+    private Optional<EntryFeed> hold(EntryFeed feed, RaceHubEntryExport export, String message) {
         String document;
         try {
             // Only the fields the import reads are kept, so nothing personal the file carried is stored
@@ -241,7 +246,7 @@ public class EntryFeedService {
         });
     }
 
-    private EntryFeed recordUnchanged(EntryFeed feed) {
+    private Optional<EntryFeed> recordUnchanged(EntryFeed feed) {
         return update(feed, f -> {
             // A file waiting for an official stays waiting; there's just nothing newer
             if (f.getHeldDocument() == null) {
@@ -251,7 +256,7 @@ public class EntryFeedService {
         });
     }
 
-    private EntryFeed recordFailure(EntryFeed feed, Problem problem) {
+    private Optional<EntryFeed> recordFailure(EntryFeed feed, Problem problem) {
         String message = problem.message() == null ? "The fetch failed" : problem.message();
         return update(feed, f -> {
             f.setLastStatus(problem.status());
@@ -261,23 +266,32 @@ public class EntryFeedService {
 
     /**
      * Applies a change to the feed as it is now, since an official may have changed its settings during the
-     * fetch. A feed removed meanwhile stays removed, and one moved to another URL keeps no outcome from the old one.
+     * fetch. The read and the save are one transaction, so a change made in between is never overwritten.
+     * A feed removed meanwhile stays removed (empty result), and one moved to another URL keeps no outcome
+     * from the old one (it is returned as it is).
      */
-    private EntryFeed update(EntryFeed fetched, java.util.function.Consumer<EntryFeed> change) {
-        Optional<EntryFeed> current = feedRepository.findByEventId(fetched.getEventId());
-        if (current.isEmpty()) {
-            return null;
-        }
-        EntryFeed feed = current.get();
-        if (!Objects.equals(feed.getUrl(), fetched.getUrl())) {
-            // The URL changed during the fetch, so the outcome belongs to the old address
-            return feed;
-        }
-        Instant now = Instant.now();
-        change.accept(feed);
-        feed.setLastFetchAt(now);
-        feed.setUpdatedAt(now);
-        return feedRepository.save(feed);
+    private Optional<EntryFeed> update(EntryFeed fetched, java.util.function.Consumer<EntryFeed> change) {
+        return transactions.execute(status -> {
+            Optional<EntryFeed> current = feedRepository.findByEventId(fetched.getEventId());
+            if (current.isEmpty()) {
+                return Optional.empty();
+            }
+            EntryFeed feed = current.get();
+            if (!Objects.equals(feed.getUrl(), fetched.getUrl())) {
+                // The URL changed during the fetch, so the outcome belongs to the old address
+                return Optional.of(feed);
+            }
+            Instant now = Instant.now();
+            change.accept(feed);
+            feed.setLastFetchAt(now);
+            feed.setUpdatedAt(now);
+            return Optional.of(feedRepository.save(feed));
+        });
+    }
+
+    /** "Fetch now" answers with the feed's new state; a feed deleted during the fetch is a 404, not a null. */
+    private EntryFeed removedWhileFetching(Optional<EntryFeed> recorded) {
+        return recorded.orElseThrow(() -> new EntityNotFoundException("The entry feed was removed while it was fetched"));
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────────
