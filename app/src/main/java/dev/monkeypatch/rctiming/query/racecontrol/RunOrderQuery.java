@@ -28,7 +28,9 @@ public class RunOrderQuery {
     }
 
     /**
-     * Returns all races for the given event in run order (sequenceInEvent ASC, heatNumber ASC).
+     * Returns all races for the given event in run order: round by round, and within a round in the order
+     * the generator numbered them ({@code sequence_in_round}). The heat number is not enough, since each class
+     * in a round starts again at heat 1. The boards and the pre-race check use the same order.
      *
      * @param eventId the event to load the run order for
      * @return ordered list of RunOrderItemDto
@@ -51,7 +53,8 @@ public class RunOrderQuery {
                 .join(EVENT_CLASSES).on(EVENT_CLASSES.ID.eq(RACES.EVENT_CLASS_ID))
                 .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
                 .where(ROUNDS.EVENT_ID.eq(eventId))
-                .orderBy(ROUNDS.SEQUENCE_IN_EVENT.asc(), RACES.HEAT_NUMBER.asc())
+                .orderBy(ROUNDS.SEQUENCE_IN_EVENT.asc(), RACES.SEQUENCE_IN_ROUND.asc(),
+                        RACES.HEAT_NUMBER.asc(), RACES.ID.asc())
                 .fetch(r -> new RunOrderItemDto(
                         r.get(RACES.ID),
                         r.get(ROUNDS.SEQUENCE_IN_EVENT),
