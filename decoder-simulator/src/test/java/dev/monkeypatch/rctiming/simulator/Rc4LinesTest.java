@@ -18,4 +18,13 @@ class Rc4LinesTest {
 
         assertThat(out.toString(StandardCharsets.US_ASCII)).isEqualTo("\u0001#\t20\t1\t72\t0\txDEAD\r\n");
     }
+
+    @Test
+    void anInterruptedPauseKeepsTheInterruptSoTheModeStops() {
+        Thread.currentThread().interrupt();
+
+        Rc4Lines.pause(10);
+
+        assertThat(Thread.interrupted()).isTrue();
+    }
 }

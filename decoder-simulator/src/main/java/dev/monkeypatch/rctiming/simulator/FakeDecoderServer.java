@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>Supports two operating modes:
  * <ul>
  *   <li>{@link #playback(int, String, double)} — replays a {@code .dump} file at configurable speed</li>
- *   <li>{@link #generative(int, List, long)} — emits synthetic PASSING records for a list of transponders</li>
+ *   <li>{@link #generative(int, List, long, long)} — emits synthetic PASSING records for a list of transponders</li>
  * </ul>
  *
  * <p>Each accepted TCP connection is handled on a separate daemon thread.
@@ -56,13 +56,13 @@ public class FakeDecoderServer {
 
     /** Create a playback-mode server that replays a {@code .dump} file. */
     public static FakeDecoderServer playback(int port, String dumpFilePath, double speed) {
-        return new FakeDecoderServer(port, "playback", out -> PlaybackMode.replay(out, dumpFilePath, speed));
+        return new FakeDecoderServer(port, "PLAYBACK", out -> PlaybackMode.replay(out, dumpFilePath, speed));
     }
 
     /** Create a generative-mode server emitting synthetic PASSING records with lap-time variation. */
     public static FakeDecoderServer generative(int port, List<String> transponders,
                                                long intervalMs, long jitterMs) {
-        return new FakeDecoderServer(port, "generative",
+        return new FakeDecoderServer(port, "GENERATIVE",
                 out -> GenerativeMode.run(out, transponders, intervalMs, jitterMs));
     }
 

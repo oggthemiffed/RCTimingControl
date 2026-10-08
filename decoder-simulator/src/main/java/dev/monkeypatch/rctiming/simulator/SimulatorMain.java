@@ -42,10 +42,10 @@ public class SimulatorMain {
             printUsageAndExit("--mode is required");
         }
 
-        int    port       = number(flags, "--port",        5100,    Integer::parseInt,  "an integer");
-        double speed      = number(flags, "--speed",       1.0,     Double::parseDouble, "a number");
-        long   intervalMs = number(flags, "--interval-ms", 12_500L, Long::parseLong,   "a long integer");
-        long   jitterMs   = number(flags, "--jitter-ms",   2_500L,  Long::parseLong,   "a long integer");
+        int    port       = parseFlag(flags, "--port",        5100,    Integer::parseInt,   "an integer");
+        double speed      = parseFlag(flags, "--speed",       1.0,     Double::parseDouble, "a number");
+        long   intervalMs = parseFlag(flags, "--interval-ms", 12_500L, Long::parseLong,     "a long integer");
+        long   jitterMs   = parseFlag(flags, "--jitter-ms",   2_500L,  Long::parseLong,     "a long integer");
 
         List<String> transponders = new ArrayList<>();
         String txpRaw = flags.getOrDefault("--transponders", "11111,22222");
@@ -90,8 +90,8 @@ public class SimulatorMain {
     }
 
     /** The flag's value read by {@code parse}, or {@code def} when it isn't given; exits with usage if unreadable. */
-    private static <T> T number(Map<String, String> flags, String key, T def, Function<String, T> parse,
-                                String what) {
+    private static <T> T parseFlag(Map<String, String> flags, String key, T def, Function<String, T> parse,
+                                   String what) {
         try { return flags.containsKey(key) ? parse.apply(flags.get(key)) : def; }
         catch (NumberFormatException e) { printUsageAndExit(key + " must be " + what); return def; }
     }
