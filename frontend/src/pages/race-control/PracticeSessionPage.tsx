@@ -14,8 +14,8 @@ import {
   stopSession,
   type PracticeSessionDto,
 } from '@/lib/practiceApi';
-import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/errors';
 
 function statusBadgeVariant(
   status: PracticeSessionDto['status'],
@@ -55,8 +55,7 @@ export function PracticeSessionPage() {
     },
     onError: (err) => {
       // The server says why, such as a race running (practice and a race share the decoder)
-      const detail = isAxiosError(err) ? err.response?.data?.detail : undefined;
-      toast.error(detail ?? 'Failed to start session.');
+      toast.error(getApiErrorMessage(err, 'Failed to start session.'));
     },
   });
 
@@ -68,8 +67,7 @@ export function PracticeSessionPage() {
     },
     onError: (err) => {
       // A race may have stopped it already, and the server says so
-      const detail = isAxiosError(err) ? err.response?.data?.detail : undefined;
-      toast.error(detail ?? 'Failed to stop session.');
+      toast.error(getApiErrorMessage(err, 'Failed to stop session.'));
     },
   });
 

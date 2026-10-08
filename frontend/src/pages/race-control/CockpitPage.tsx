@@ -25,16 +25,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { RunOrderItemDto } from '@/lib/raceControlApi';
+import { roundName } from '@/lib/format';
+import { getApiErrorMessage } from '@/lib/errors';
 
 function raceTitle(item: RunOrderItemDto | undefined) {
   if (!item) return 'No race selected';
-  const type =
-    item.roundType === 'FINAL'
-      ? `Final${item.finalLetter ? ` ${item.finalLetter}` : ''}`
-      : item.roundType === 'QUALIFIER'
-      ? `Qualifier ${item.roundNumber}`
-      : `Practice`;
-  return `${type} — ${item.className} — Heat ${item.heatNumber}`;
+  return `${roundName(item)} — ${item.className} — Heat ${item.heatNumber}`;
+}
+
+/** A toast for a race command the server refused, with its reason (such as a race already running). */
+function commandFailed(command: string) {
+  return (err: unknown) =>
+    toast.error(`${command} failed: ${getApiErrorMessage(err, 'try again, and check the connection if it keeps failing.')}`);
 }
 
 export default function CockpitPage() {
@@ -196,40 +198,40 @@ export default function CockpitPage() {
 
   function onCallGrid() {
     mutations.callGrid.mutate(undefined, {
-      onError: (e) => toast.error(`Call grid failed: ${(e as Error).message}`),
+      onError: commandFailed('Call grid'),
     });
   }
 
   function onStart() {
     mutations.start.mutate(undefined, {
-      onError: (e) => toast.error(`Start failed: ${(e as Error).message}`),
+      onError: commandFailed('Start'),
     });
   }
 
   function onStop() {
     mutations.stop.mutate(undefined, {
-      onError: (e) => toast.error(`Stop failed: ${(e as Error).message}`),
+      onError: commandFailed('Stop'),
     });
   }
 
   function onFinish() {
     if (!confirm('Finish this race and save its result?')) return;
     mutations.finish.mutate(undefined, {
-      onError: (e) => toast.error(`Finish failed: ${(e as Error).message}`),
+      onError: commandFailed('Finish'),
     });
   }
 
   function onAbandon() {
     if (!confirm('Abandon this race? This cannot be undone.')) return;
     mutations.abandon.mutate(undefined, {
-      onError: (e) => toast.error(`Abandon failed: ${(e as Error).message}`),
+      onError: commandFailed('Abandon'),
     });
   }
 
   function onRestart() {
     if (!confirm('Restart this race from scratch? All timing data will be cleared.')) return;
     mutations.restart.mutate(undefined, {
-      onError: (e) => toast.error(`Restart failed: ${(e as Error).message}`),
+      onError: commandFailed('Restart'),
     });
   }
 

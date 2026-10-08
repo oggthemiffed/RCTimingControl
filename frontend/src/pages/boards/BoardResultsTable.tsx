@@ -1,5 +1,5 @@
 import type { ResultRow } from '@/lib/raceControlApi';
-import { fmtMs } from './boardFormat';
+import { fmtMs } from '@/lib/format';
 
 function gap(row: ResultRow, leaderLaps: number): string {
   if (row.position === 1) return '—';

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import axios from 'axios';
 import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ import {
   useSaveEntryFeed,
 } from '@/hooks/admin/useEntryFeed';
 import type { EntryFeedDto, EventClassDto, SaveEntryFeedRequest } from '@/lib/adminApi';
+import { getApiErrorMessage } from '@/lib/errors';
 import RaceHubImportDialog from './RaceHubImportDialog';
 
 interface EntryFeedSectionProps {
@@ -32,14 +32,6 @@ const STATUS_TEXT: Record<NonNullable<EntryFeedDto['lastStatus']>, string> = {
 
 function formatTime(iso: string) {
   return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
-}
-
-function errorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError(error)) {
-    const data = error.response?.data as { detail?: string; message?: string } | undefined;
-    return data?.detail ?? data?.message ?? fallback;
-  }
-  return fallback;
 }
 
 /**
@@ -84,7 +76,7 @@ export default function EntryFeedSection({ eventId, classes }: EntryFeedSectionP
         setToken('');
         toast.success('Entry feed saved');
       },
-      onError: error => toast.error(errorMessage(error, 'Could not save the entry feed')),
+      onError: error => toast.error(getApiErrorMessage(error, 'Could not save the entry feed')),
     });
   }
 
@@ -93,7 +85,7 @@ export default function EntryFeedSection({ eventId, classes }: EntryFeedSectionP
       { url: feed?.url ?? url.trim(), token: '', autoFetch: feed?.autoFetch ?? autoFetch },
       {
         onSuccess: () => toast.success('Token removed'),
-        onError: error => toast.error(errorMessage(error, 'Could not remove the token')),
+        onError: error => toast.error(getApiErrorMessage(error, 'Could not remove the token')),
       }
     );
   }
@@ -101,7 +93,7 @@ export default function EntryFeedSection({ eventId, classes }: EntryFeedSectionP
   function handleDelete() {
     deleteFeed.mutate(undefined, {
       onSuccess: () => toast.success('Entry feed removed'),
-      onError: error => toast.error(errorMessage(error, 'Could not remove the entry feed')),
+      onError: error => toast.error(getApiErrorMessage(error, 'Could not remove the entry feed')),
     });
   }
 
@@ -116,7 +108,7 @@ export default function EntryFeedSection({ eventId, classes }: EntryFeedSectionP
           toast.error(result.lastMessage ?? 'The fetch failed');
         }
       },
-      onError: error => toast.error(errorMessage(error, 'Could not fetch the entry feed')),
+      onError: error => toast.error(getApiErrorMessage(error, 'Could not fetch the entry feed')),
     });
   }
 

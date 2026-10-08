@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { isAxiosError } from 'axios';
 import { DatabaseBackup, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -7,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAdminBackups, useBackupNow } from '@/hooks/admin/useAdminBackups';
 import { useHelp } from '@/context/HelpContext';
 import { BackupsHelp } from '@/help/BackupsHelp';
+import { getApiErrorMessage } from '@/lib/errors';
 
 const REASONS: Record<string, string> = {
   manual: 'Taken by hand',
@@ -35,10 +35,8 @@ export default function BackupsPage() {
   function onBackupNow() {
     backupNow.mutate(undefined, {
       onSuccess: backup => toast.success(`Backed up to ${backup.name}`),
-      onError: err => {
-        const detail = isAxiosError(err) ? err.response?.data?.detail : undefined;
-        toast.error(detail ?? 'The backup failed. Check the backup folder is there and has space.');
-      },
+      onError: err =>
+        toast.error(getApiErrorMessage(err, 'The backup failed. Check the backup folder is there and has space.')),
     });
   }
 

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { fmtMs } from '@/lib/format';
 
 type Props = {
   raceId: number;
@@ -19,15 +20,6 @@ type Props = {
   /** Entry IDs to highlight (e.g. proximity alerts from referee view). */
   highlightEntryIds?: Set<number>;
 };
-
-function fmtMs(ms: number | null): string {
-  if (ms === null || ms <= 0) return '—';
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  const rem = ms % 60000;
-  if (m > 0) return `${m}:${String(Math.floor(rem / 1000)).padStart(2, '0')}.${String(rem % 1000).padStart(3, '0')}`;
-  return `${Math.floor(ms / 1000)}.${String(ms % 1000).padStart(3, '0')}`;
-}
 
 export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
   const { rows: sorted, wsStatus } = useLiveTiming(raceId);

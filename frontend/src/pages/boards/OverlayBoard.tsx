@@ -8,7 +8,8 @@ import { useStomp } from '@/hooks/race-control/useStomp';
 import { cn } from '@/lib/utils';
 import type { LiveTimingRowDto, RaceStateChangeDto } from '@/lib/raceControlApi';
 import { getBoardLiveTiming, getNowNext, getRaceClock } from '@/lib/boardsApi';
-import { BOARD_POLL_MS, fmtClock, fmtMs, parseOverlayOptions } from './boardFormat';
+import { fmtMs } from '@/lib/format';
+import { BOARD_POLL_MS, fmtClock, parseOverlayOptions } from './boardFormat';
 
 const THEMES = {
   dark: {

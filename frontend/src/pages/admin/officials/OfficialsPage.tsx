@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { isAxiosError } from 'axios';
 import { KeyRound, Loader2, Plus, ShieldCheck, UserCheck, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -22,6 +21,7 @@ import {
 } from '@/hooks/admin/useAdminOfficials';
 import { useAuth } from '@/hooks/useAuth';
 import type { OfficialAction, OfficialDto, OfficialRole } from '@/lib/adminApi';
+import { getApiErrorMessage } from '@/lib/errors';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -44,12 +44,6 @@ const ACTION_LABEL: Record<OfficialAction, string> = {
   DISABLED: 'Disabled',
   ENABLED: 'Enabled',
 };
-
-/** The server's reason for refusing a change, such as removing the last admin. */
-function refusal(err: unknown, fallback: string): string {
-  const detail = isAxiosError(err) ? err.response?.data?.detail : undefined;
-  return typeof detail === 'string' && detail ? detail : fallback;
-}
 
 function RoleCheckboxes({
   idPrefix,
@@ -114,7 +108,7 @@ function AddOfficialDialog({ open, onOpenChange }: { open: boolean; onOpenChange
           toast.success(`Added ${official.firstName} ${official.lastName}`);
           close(false);
         },
-        onError: err => toast.error(refusal(err, 'Could not add the official. Try again.')),
+        onError: err => toast.error(getApiErrorMessage(err, 'Could not add the official. Try again.')),
       },
     );
   }
@@ -171,7 +165,7 @@ function RolesDialog({ official, onClose }: { official: OfficialDto; onClose: ()
         toast.success(`Roles saved for ${official.firstName} ${official.lastName}`);
         onClose();
       },
-      onError: err => toast.error(refusal(err, 'Could not change the roles. Try again.')),
+      onError: err => toast.error(getApiErrorMessage(err, 'Could not change the roles. Try again.')),
     });
   }
 
@@ -211,7 +205,7 @@ function PasswordDialog({ official, onClose }: { official: OfficialDto; onClose:
         toast.success(`New password set for ${official.firstName} ${official.lastName}`);
         onClose();
       },
-      onError: err => toast.error(refusal(err, 'Could not set the password. Try again.')),
+      onError: err => toast.error(getApiErrorMessage(err, 'Could not set the password. Try again.')),
     });
   }
 
@@ -258,7 +252,7 @@ function DisableDialog({ official, onClose }: { official: OfficialDto; onClose: 
         toast.success(`${official.firstName} ${official.lastName} can no longer sign in`);
         onClose();
       },
-      onError: err => toast.error(refusal(err, 'Could not disable the official. Try again.')),
+      onError: err => toast.error(getApiErrorMessage(err, 'Could not disable the official. Try again.')),
     });
   }
 
@@ -308,7 +302,7 @@ export default function OfficialsPage() {
   function enable(official: OfficialDto) {
     setEnabled.mutate({ id: official.id, enabled: true }, {
       onSuccess: () => toast.success(`${official.firstName} ${official.lastName} can sign in again`),
-      onError: err => toast.error(refusal(err, 'Could not enable the official. Try again.')),
+      onError: err => toast.error(getApiErrorMessage(err, 'Could not enable the official. Try again.')),
     });
   }
 
