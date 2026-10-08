@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +31,10 @@ interface Props {
 
 export default function TrackStep({ onNext, onBack }: Props) {
   const queryClient = useQueryClient();
+  // Going back to this step must not invite a second copy of what is already set up
+  const tracksQuery = useQuery({ queryKey: ['setup-tracks'], queryFn: () => adminApi.tracks.list() });
+  const existing = tracksQuery.data ?? [];
+  const [adding, setAdding] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -48,6 +53,7 @@ export default function TrackStep({ onNext, onBack }: Props) {
         venueNotes: values.notes || null,
         trackLength: values.lengthMeters ?? null,
       });
+      queryClient.invalidateQueries({ queryKey: ['setup-tracks'] });
       queryClient.invalidateQueries({ queryKey: ['setup-status'] });
       queryClient.invalidateQueries({ queryKey: ['setup-progress'] });
       toast.success('Track saved');
@@ -59,6 +65,49 @@ export default function TrackStep({ onNext, onBack }: Props) {
 
   function onSkip() {
     onNext();
+  }
+
+  function onCancelAdding() {
+    form.reset();
+    setAdding(false);
+  }
+
+  if (tracksQuery.isLoading) {
+    return <p className="text-sm text-muted-foreground">Loading…</p>;
+  }
+
+  if (existing.length > 0 && !adding) {
+    return (
+      <div>
+        <h1 className="text-2xl font-semibold mb-2">Track</h1>
+        <p className="text-sm text-muted-foreground mb-6">
+          These tracks are already set up. You can add another, or carry on.
+        </p>
+        <ul className="mb-6 divide-y rounded-md border" aria-label="Tracks already set up">
+          {existing.map(track => (
+            <li key={track.id} className="flex items-baseline justify-between px-4 py-3">
+              <span className="font-medium">{track.name}</span>
+              {track.trackLength != null && (
+                <span className="text-sm text-muted-foreground">{track.trackLength} m</span>
+              )}
+            </li>
+          ))}
+        </ul>
+        <div className="flex justify-between gap-2 pt-4">
+          <Button type="button" variant="ghost" onClick={onBack}>
+            Back
+          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={() => setAdding(true)}>
+              Add another track
+            </Button>
+            <Button type="button" onClick={onNext}>
+              Continue
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -125,9 +174,15 @@ export default function TrackStep({ onNext, onBack }: Props) {
               Back
             </Button>
             <div className="flex gap-2">
-              <Button type="button" variant="ghost" onClick={onSkip}>
-                Skip for now
-              </Button>
+              {existing.length > 0 ? (
+                <Button type="button" variant="ghost" onClick={onCancelAdding}>
+                  Cancel
+                </Button>
+              ) : (
+                <Button type="button" variant="ghost" onClick={onSkip}>
+                  Skip for now
+                </Button>
+              )}
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 Save and Continue
               </Button>
