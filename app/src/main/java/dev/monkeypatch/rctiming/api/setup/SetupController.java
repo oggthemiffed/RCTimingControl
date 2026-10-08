@@ -57,11 +57,8 @@ public class SetupController {
     @Audited("official_audit_log")
     @PostMapping("/bootstrap")
     public ResponseEntity<AuthResponse> bootstrap(@RequestBody @Valid BootstrapRequest req) {
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED).body(setupService.bootstrap(req));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
+        // Already set up: StateConflictException, answered 409 by GlobalExceptionHandler
+        return ResponseEntity.status(HttpStatus.CREATED).body(setupService.bootstrap(req));
     }
 
     @GetMapping("/progress")

@@ -142,6 +142,15 @@ class PracticeSessionControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void startSession_unknownSession_returns404() {
+        ResponseEntity<Void> response = restTemplate.exchange(
+                "/api/v1/practice-sessions/987654321/start", HttpMethod.POST,
+                new HttpEntity<>(rdHeaders()), Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     void getResults_stoppedSession_returnsFinalSnapshot() {
         Long id = createSession("Results Test Session");
         restTemplate.exchange("/api/v1/practice-sessions/" + id + "/start",

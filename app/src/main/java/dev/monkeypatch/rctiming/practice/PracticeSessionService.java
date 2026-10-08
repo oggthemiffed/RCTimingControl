@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.practice;
 
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.practice.PracticeSession;
@@ -82,10 +84,10 @@ public class PracticeSessionService {
     @Transactional
     public PracticeSessionDto start(Long sessionId) {
         PracticeSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Session not found: " + sessionId));
+                .orElseThrow(() -> new EntityNotFoundException("Session not found: " + sessionId));
 
         if (session.getStatus() != PracticeStatus.IDLE) {
-            throw new IllegalStateException("Session must be IDLE to start; current: " + session.getStatus());
+            throw new StateConflictException("Session must be IDLE to start; current: " + session.getStatus());
         }
 
         session.start();
@@ -97,10 +99,10 @@ public class PracticeSessionService {
     @Transactional
     public PracticeSessionDto stop(Long sessionId) {
         PracticeSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Session not found: " + sessionId));
+                .orElseThrow(() -> new EntityNotFoundException("Session not found: " + sessionId));
 
         if (session.getStatus() != PracticeStatus.RUNNING) {
-            throw new IllegalStateException("Session must be RUNNING to stop; current: " + session.getStatus());
+            throw new StateConflictException("Session must be RUNNING to stop; current: " + session.getStatus());
         }
 
         session.stop();

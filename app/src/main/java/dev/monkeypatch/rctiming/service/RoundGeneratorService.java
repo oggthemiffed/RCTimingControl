@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.service;
 
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -79,11 +80,11 @@ public class RoundGeneratorService {
      * Persists all Round, Race, and RaceEntry records in a single transaction.
      *
      * @param request generation parameters
-     * @throws IllegalStateException if run order already exists for the event
+     * @throws StateConflictException if run order already exists for the event
      */
     public void generate(RoundGenerationRequest request) {
         if (roundRepository.existsByEventId(request.eventId())) {
-            throw new IllegalStateException(
+            throw new StateConflictException(
                     "Run order already generated for event " + request.eventId());
         }
         GenerationPlan plan = buildPlan(request);

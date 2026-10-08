@@ -4,6 +4,9 @@ import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +36,7 @@ public class AudioSettingsController {
         this.clubProfileService = clubProfileService;
     }
 
-    /** DTO for race-control audio settings view/update */
+    /** The settings as they are now. */
     public record AudioSettingsDto(
             boolean announceCountdown,
             boolean announceStagger,
@@ -41,6 +44,20 @@ public class AudioSettingsController {
             boolean announceFinish,
             boolean announceRunningOrder,
             int runningOrderDepth,
+            int[] countdownIntervals
+    ) {}
+
+    /**
+     * A change to the settings. A field left out (null) keeps its saved value, so a client can send just the
+     * toggle it changed.
+     */
+    public record AudioSettingsPatch(
+            Boolean announceCountdown,
+            Boolean announceStagger,
+            Boolean announceLapBeep,
+            Boolean announceFinish,
+            Boolean announceRunningOrder,
+            @Min(1) @Max(20) Integer runningOrderDepth,
             int[] countdownIntervals
     ) {}
 
@@ -65,23 +82,32 @@ public class AudioSettingsController {
 
     /**
      * Updates and persists audio settings to the club profile.
-     * Only fields included in the request body are applied.
+     * Only fields included in the request body are applied; the answer is the settings as saved.
      */
     @PatchMapping
-    public ResponseEntity<AudioSettingsDto> updateSettings(@RequestBody AudioSettingsDto dto) {
+    public ResponseEntity<AudioSettingsDto> updateSettings(@RequestBody @Valid AudioSettingsPatch patch) {
         Long profileId = clubProfileService.getSingletonProfileId();
         ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
+        ClubAudioSettings s = profile.getAudioSettings();
         ClubAudioSettings newSettings = new ClubAudioSettings(
-                dto.announceCountdown(),
-                dto.announceStagger(),
-                dto.announceLapBeep(),
-                dto.announceFinish(),
-                dto.announceRunningOrder(),
-                dto.runningOrderDepth(),
-                dto.countdownIntervals()
+                patch.announceCountdown() != null ? patch.announceCountdown() : s.announceCountdown(),
+                patch.announceStagger() != null ? patch.announceStagger() : s.announceStagger(),
+                patch.announceLapBeep() != null ? patch.announceLapBeep() : s.announceLapBeep(),
+                patch.announceFinish() != null ? patch.announceFinish() : s.announceFinish(),
+                patch.announceRunningOrder() != null ? patch.announceRunningOrder() : s.announceRunningOrder(),
+                patch.runningOrderDepth() != null ? patch.runningOrderDepth() : s.runningOrderDepth(),
+                patch.countdownIntervals() != null ? patch.countdownIntervals() : s.countdownIntervals()
         );
         profile.setAudioSettings(newSettings);
         clubProfileRepository.save(profile);
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(new AudioSettingsDto(
+                newSettings.announceCountdown(),
+                newSettings.announceStagger(),
+                newSettings.announceLapBeep(),
+                newSettings.announceFinish(),
+                newSettings.announceRunningOrder(),
+                newSettings.runningOrderDepth(),
+                newSettings.countdownIntervals()
+        ));
     }
 }

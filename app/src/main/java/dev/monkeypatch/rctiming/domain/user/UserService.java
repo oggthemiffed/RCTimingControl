@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.domain.user;
 
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +47,7 @@ public class UserService {
     public User createAdmin(String email, String password, String firstName, String lastName) {
         // T-08-01 server-side replay guard (defence-in-depth — SetupService is the first guard)
         if (userRepository.count() > 0) {
-            throw new IllegalStateException("Bootstrap already complete - users exist");
+            throw new StateConflictException("Bootstrap already complete - users exist");
         }
         return officialService.add(email, firstName, lastName, password, Set.of(Role.ADMIN), null);
     }

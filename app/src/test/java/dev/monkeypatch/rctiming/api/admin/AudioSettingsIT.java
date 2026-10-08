@@ -1,0 +1,152 @@
+package dev.monkeypatch.rctiming.api.admin;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import dev.monkeypatch.rctiming.AbstractIntegrationTest;
+import dev.monkeypatch.rctiming.api.auth.AuthResponse;
+import dev.monkeypatch.rctiming.api.auth.LoginRequest;
+import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
+import dev.monkeypatch.rctiming.domain.club.ClubProfile;
+import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
+import dev.monkeypatch.rctiming.domain.user.Role;
+import dev.monkeypatch.rctiming.domain.user.User;
+import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.Instant;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * The two audio settings endpoints (AUDIO-07): the admin form's PUT keeps the countdown intervals it does not
+ * carry, race control's PATCH changes only the fields it is sent, and both refuse an out-of-range depth (#137).
+ */
+class AudioSettingsIT extends AbstractIntegrationTest {
+
+    private static final String ADMIN_SETTINGS = "/api/v1/admin/audio/settings";
+    private static final String RACE_CONTROL_SETTINGS = "/api/v1/race-control/settings/audio";
+
+    @Autowired TestRestTemplate restTemplate;
+    @Autowired UserRepository userRepository;
+    @Autowired PasswordEncoder passwordEncoder;
+    @Autowired ClubProfileRepository clubProfileRepository;
+    @Autowired ClubProfileService clubProfileService;
+
+    private ClubAudioSettings originalSettings;
+    private String originalVoice;
+    private Long userId;
+    private String token;
+
+    @BeforeEach
+    void setUp() {
+        // The club profile is shared by every test: remember it, and put it back afterwards
+        ClubProfile profile = clubProfileRepository.findById(clubProfileService.getSingletonProfileId()).orElseThrow();
+        originalSettings = profile.getAudioSettings();
+        originalVoice = profile.getDefaultVoiceId();
+        profile.setAudioSettings(new ClubAudioSettings(true, true, true, true, true, 3, new int[]{900, 120}));
+        clubProfileRepository.save(profile);
+        token = loginAsAdmin();
+    }
+
+    @AfterEach
+    void tearDown() {
+        ClubProfile profile = clubProfileRepository.findById(clubProfileService.getSingletonProfileId()).orElseThrow();
+        profile.setAudioSettings(originalSettings);
+        profile.setDefaultVoiceId(originalVoice);
+        clubProfileRepository.save(profile);
+        userRepository.deleteById(userId);
+    }
+
+    @Test
+    void theAdminFormKeepsTheCountdownIntervalsItDoesNotCarry() {
+        Map<String, Object> form = Map.of(
+                "announceCountdown", false, "announceStagger", true, "announceLapBeep", true,
+                "announceFinish", true, "announceRunningOrder", true, "runningOrderDepth", 5,
+                "defaultVoiceId", "en_GB-alan-medium");
+
+        ResponseEntity<JsonNode> saved = call(HttpMethod.PUT, ADMIN_SETTINGS, form);
+
+        assertThat(saved.getStatusCode()).isEqualTo(HttpStatus.OK);
+        ClubAudioSettings now = clubProfileRepository
+                .findById(clubProfileService.getSingletonProfileId()).orElseThrow().getAudioSettings();
+        assertThat(now.announceCountdown()).isFalse();
+        assertThat(now.runningOrderDepth()).isEqualTo(5);
+        assertThat(now.countdownIntervals()).containsExactly(900, 120);
+    }
+
+    @Test
+    void raceControlChangesOnlyTheFieldsItIsSent() {
+        ResponseEntity<JsonNode> patched = call(HttpMethod.PATCH, RACE_CONTROL_SETTINGS,
+                Map.of("announceLapBeep", false));
+
+        assertThat(patched.getStatusCode()).isEqualTo(HttpStatus.OK);
+        // The answer is the settings as saved: the one change, everything else as it was
+        JsonNode saved = patched.getBody();
+        assertThat(saved.get("announceLapBeep").asBoolean()).isFalse();
+        assertThat(saved.get("announceCountdown").asBoolean()).isTrue();
+        assertThat(saved.get("runningOrderDepth").asInt()).isEqualTo(3);
+        assertThat(saved.get("countdownIntervals")).hasSize(2);
+        ClubAudioSettings now = clubProfileRepository
+                .findById(clubProfileService.getSingletonProfileId()).orElseThrow().getAudioSettings();
+        assertThat(now.announceLapBeep()).isFalse();
+        assertThat(now.announceFinish()).isTrue();
+        assertThat(now.countdownIntervals()).containsExactly(900, 120);
+    }
+
+    @Test
+    void aDepthOutsideOneToTwentyIsRefused() {
+        assertThat(call(HttpMethod.PATCH, RACE_CONTROL_SETTINGS, Map.of("runningOrderDepth", 0)).getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(call(HttpMethod.PATCH, RACE_CONTROL_SETTINGS, Map.of("runningOrderDepth", 21)).getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
+        Map<String, Object> form = Map.of(
+                "announceCountdown", true, "announceStagger", true, "announceLapBeep", true,
+                "announceFinish", true, "announceRunningOrder", true, "runningOrderDepth", 500,
+                "defaultVoiceId", "en_GB-alan-medium");
+        assertThat(call(HttpMethod.PUT, ADMIN_SETTINGS, form).getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        ClubAudioSettings now = clubProfileRepository
+                .findById(clubProfileService.getSingletonProfileId()).orElseThrow().getAudioSettings();
+        assertThat(now.runningOrderDepth()).isEqualTo(3);
+    }
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    private ResponseEntity<JsonNode> call(HttpMethod method, String path, Object body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return restTemplate.exchange(path, method, new HttpEntity<>(body, headers), JsonNode.class);
+    }
+
+    private String loginAsAdmin() {
+        User user = new User();
+        user.setEmail("audio-" + UUID.randomUUID() + "@example.com");
+        user.setPasswordHash(passwordEncoder.encode("password123"));
+        user.setFirstName("Audio");
+        user.setLastName("Admin");
+        user.setRoles(Set.of(Role.ADMIN));
+        user.setCreatedAt(Instant.now());
+        user.setUpdatedAt(Instant.now());
+        userRepository.save(user);
+        userId = user.getId();
+        ResponseEntity<AuthResponse> login = restTemplate.postForEntity("/api/v1/auth/login",
+                new LoginRequest(user.getEmail(), "password123"), AuthResponse.class);
+        assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
+        return login.getBody().accessToken();
+    }
+}
