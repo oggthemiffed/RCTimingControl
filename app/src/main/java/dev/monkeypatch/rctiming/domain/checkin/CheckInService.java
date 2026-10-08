@@ -37,7 +37,7 @@ public class CheckInService {
      * once cannot both record a first check-in.
      */
     @Transactional
-    public CheckInResult confirm(long eventId, long entryId, Long actingUserId) {
+    public CheckInResult confirm(long eventId, long entryId, long actingUserId) {
         Entry entry = entryRepository.findByIdForUpdate(entryId).orElse(null);
         if (entry == null || !Objects.equals(entry.getEventId(), eventId)) {
             return new CheckInResult.NotFound();
@@ -56,7 +56,7 @@ public class CheckInService {
         // Only the first check-in is a change; a repeat confirm keeps it and records nothing
         String name = entry.getCompetitorId() == null ? null
                 : competitorRepository.findById(entry.getCompetitorId()).map(Competitor::getDisplayName).orElse(null);
-        audit.entry(actingUserId == null ? Actor.system("check-in") : Actor.official(actingUserId), "ENTRY_CHECKED_IN")
+        audit.entry(Actor.official(actingUserId), "ENTRY_CHECKED_IN")
                 .entity("entry", entryId).event(eventId)
                 .summary("Checked in " + (name == null ? "entry " + entryId : name))
                 .after(now.toString()).record();

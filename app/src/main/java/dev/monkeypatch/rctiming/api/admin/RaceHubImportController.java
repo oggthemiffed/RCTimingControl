@@ -1,11 +1,11 @@
 package dev.monkeypatch.rctiming.api.admin;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubClassMapping;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubEntryExport;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,7 +44,7 @@ public class RaceHubImportController {
     public ResponseEntity<RaceHubImportResult> importEntries(Authentication auth, @PathVariable Long eventId,
                                                              @RequestParam(defaultValue = "false") boolean dryRun,
                                                              @RequestBody RaceHubEntryExport export) {
-        RaceHubImportResult result = importService.importEntries(actor(auth), eventId, export, dryRun);
+        RaceHubImportResult result = importService.importEntries(CurrentOfficial.actor(auth), eventId, export, dryRun);
         HttpStatus status = !dryRun && result.blocked() ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.OK;
         return ResponseEntity.status(status).body(result);
     }
@@ -65,12 +65,8 @@ public class RaceHubImportController {
                 throw new IllegalArgumentException("RaceHub event class " + m.racehubEventClassId() + " is mapped twice");
             }
         }
-        return importService.replaceMappings(actor(auth), eventId, byRaceHubId).stream().map(ClassMappingDto::of).toList();
-    }
-
-    /** The signed-in official, taken from the token and never from the request body. */
-    private static Actor actor(Authentication auth) {
-        return Actor.official(Long.parseLong(auth.getName()));
+        return importService.replaceMappings(CurrentOfficial.actor(auth), eventId, byRaceHubId).stream()
+                .map(ClassMappingDto::of).toList();
     }
 
     public record ClassMappingDto(String racehubEventClassId, Long eventClassId) {

@@ -11,12 +11,11 @@ import dev.monkeypatch.rctiming.domain.checkin.CheckInService;
 import dev.monkeypatch.rctiming.domain.checkin.SwapResult;
 import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
 import dev.monkeypatch.rctiming.query.racecontrol.CheckInQuery;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -69,7 +68,7 @@ public class CheckInController {
     @Audited("audit_log")
     @PostMapping("/check-in/entries/{entryId}/confirm")
     public ResponseEntity<?> confirm(@PathVariable long eventId, @PathVariable long entryId) {
-        CheckInResult result = checkInService.confirm(eventId, entryId, actingUserId());
+        CheckInResult result = checkInService.confirm(eventId, entryId, CurrentOfficial.id());
         return switch (result) {
             case CheckInResult.Success success -> checkInQuery.findEntry(eventId, entryId)
                     .<ResponseEntity<?>>map(dto -> ResponseEntity.ok(
@@ -85,12 +84,8 @@ public class CheckInController {
     public ResponseEntity<?> swapTransponder(@PathVariable long eventId,
                                              @PathVariable long entryId,
                                              @Valid @RequestBody TransponderSwapRequest request) {
-        Long userId = actingUserId();
-        if (userId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         SwapResult result = transponderSwapService.swap(
-                eventId, entryId, request.slot(), request.newTransponderNumber(), userId);
+                eventId, entryId, request.slot(), request.newTransponderNumber(), CurrentOfficial.id());
         return switch (result) {
             case SwapResult.Success s -> ResponseEntity.ok(new TransponderSwapResponse(
                     entryId, s.slot(), s.oldNumber(), s.newNumber()));
@@ -106,17 +101,5 @@ public class CheckInController {
 
     private static ResponseEntity<?> error(HttpStatus status, String code) {
         return ResponseEntity.status(status).body(Map.of("error", code));
-    }
-
-    private static Long actingUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth.getName() == null) {
-            return null;
-        }
-        try {
-            return Long.parseLong(auth.getName());
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 }

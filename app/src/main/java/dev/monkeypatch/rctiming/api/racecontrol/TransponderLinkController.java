@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.timing.UnknownTransponderLinkAudit;
 import dev.monkeypatch.rctiming.timing.UnknownTransponderLinkAuditRepository;
 import dev.monkeypatch.rctiming.timing.dto.LinkTransponderRequestDto;
@@ -14,8 +15,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -92,16 +91,7 @@ public class TransponderLinkController {
         String transponderNumber = request.transponderNumber();
         Long entryId = request.entryId();
 
-        // Extract acting user from JWT
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long userId = null;
-        if (auth != null && auth.getName() != null) {
-            try {
-                userId = Long.parseLong(auth.getName());
-            } catch (NumberFormatException ignored) {
-                // anonymous or non-numeric principal — userId remains null
-            }
-        }
+        long userId = CurrentOfficial.id();
 
         // Count passings BEFORE linking (returned as lapsCredited)
         int lapsCredited = lapTimingService.countPassingsForTransponder(raceId, transponderNumber);
@@ -114,8 +104,7 @@ public class TransponderLinkController {
         after.put("transponderNumber", transponderNumber);
         after.put("entryId", entryId);
         after.put("lapsCredited", lapsCredited);
-        audit.entry(userId == null ? Actor.system("transponder-link") : Actor.official(userId),
-                        "UNKNOWN_TRANSPONDER_LINKED")
+        audit.entry(Actor.official(userId), "UNKNOWN_TRANSPONDER_LINKED")
                 .entity("race", raceId).race(raceId).event(labels.eventOf(raceId))
                 .summary("Linked transponder " + transponderNumber + " to " + labels.driver(entryId) + " in "
                         + labels.race(raceId) + ", crediting " + lapsCredited + " laps")
