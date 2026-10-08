@@ -248,18 +248,12 @@ export interface GenerateRoundsRequest {
   classFinalsConfigs: ClassFinalsConfigDto[];
 }
 
-export interface QualifyingResultDto {
-  entryId: number;
-  bestLapMs: number;
-  lapsCompleted: number;
-}
-
+/** Who goes where comes from the class's stored qualifying results, not from the request. */
 export interface SeedFinalsRequest {
   eventClassId: number;
   finalsCount: number;
   carsPerFinal: number;
   bumpCount: number;
-  qualifyingResults: QualifyingResultDto[];
 }
 
 export interface AddEventClassRequest {

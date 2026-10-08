@@ -1,67 +1,129 @@
 package dev.monkeypatch.rctiming.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
+import dev.monkeypatch.rctiming.domain.entry.Entry;
+import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
+import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
+import dev.monkeypatch.rctiming.domain.race.Race;
+import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
+import dev.monkeypatch.rctiming.domain.race.RaceStatus;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotRepository;
+import dev.monkeypatch.rctiming.domain.race.RoundType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Recalculates qualifying standings for an EventClass.
+ * Works out the qualifying order of an event class from the results stored when its qualifying heats
+ * finished, so the order cannot be made up by whoever asks for the finals to be seeded (#137). The stored
+ * results already have lap penalties and marshal laps applied; time penalties change only the total time,
+ * which the order does not use.
  *
- * <p>Called after every QUALIFIER race finishes. Returns entryIds ordered by
- * qualifying position (best first).
- *
- * <p><b>Open Question #2</b> (from RESEARCH.md): The timing service (plan 04/05) will
- * maintain in-memory {@code LiveRaceState} result snapshots. This service currently
- * accepts pre-computed per-entry results as a parameter. In the final integration,
- * the caller (race state machine plan 05) will extract these from the LiveRaceState
- * result snapshots and pass them in. The sort rule used here is FTQ (fastest-time-quality):
- * primary sort by laps completed DESC, secondary by best lap time ASC — per FORMAT-09.
- * The open question is whether ties in laps and time are broken by position in the heat
- * or by total time for the run; this implementation uses best lap time as the tiebreak
- * which aligns with FORMAT-09's FTQ definition.
+ * <p>The rule is the one the finals seeding has always used: total laps over all the class's qualifying
+ * heats, most first, then the best single lap, quickest first, then the entry id so that exact ties come out
+ * the same every time. It does not look at the class's configured qualifying type (FORMAT-09). Only finished
+ * heats count, an abandoned heat's laps do not, and everyone who was on the grid of a finished heat is ranked,
+ * with no laps if they never crossed the line. Withdrawn entries are left out.
  */
 @Service
-@Transactional
 public class QualifyingStandingsService {
+
+    /** The best lap of a driver with no timed lap, which sorts behind every real one. */
+    private static final long NO_LAP = Long.MAX_VALUE;
+
+    private static final TypeReference<List<ResultSnapshotDto.ResultRow>> ROWS = new TypeReference<>() {};
 
     private final RaceRepository raceRepository;
     private final RaceEntryRepository raceEntryRepository;
+    private final ResultSnapshotRepository resultSnapshotRepository;
+    private final EntryRepository entryRepository;
+    private final ObjectMapper objectMapper;
 
     public QualifyingStandingsService(RaceRepository raceRepository,
-                                       RaceEntryRepository raceEntryRepository) {
+                                      RaceEntryRepository raceEntryRepository,
+                                      ResultSnapshotRepository resultSnapshotRepository,
+                                      EntryRepository entryRepository,
+                                      ObjectMapper objectMapper) {
         this.raceRepository = raceRepository;
         this.raceEntryRepository = raceEntryRepository;
+        this.resultSnapshotRepository = resultSnapshotRepository;
+        this.entryRepository = entryRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
-     * Sorts qualifying results and returns entryIds in standings order (best first).
-     *
-     * <p>Sort rule (FTQ — FORMAT-09): laps completed DESC, then best lap time ASC.
-     *
-     * @param eventClassId the EventClass being ranked (reserved for future use — e.g.
-     *                     fetching results directly from the DB in a later phase)
-     * @param results      pre-computed per-entry qualifying results
-     * @return entryIds ordered by qualifying position, best first
+     * Entry ids in qualifying order, best first, for everyone on the grid of one of the class's finished
+     * qualifying heats. Empty when no qualifying heat has finished.
      */
-    public List<Long> recalculateStandings(Long eventClassId, List<QualifyingResult> results) {
+    public List<Long> standingsFor(Long eventClassId) {
+        Map<Long, QualifyingResult> byEntry = new LinkedHashMap<>();
+        for (Race race : raceRepository.findByEventClassIdAndRoundType(eventClassId, RoundType.QUALIFIER)) {
+            if (race.getStatus() != RaceStatus.FINISHED) {
+                continue;
+            }
+            // A driver who never crossed the line has no result row but still gets a place in the finals
+            for (RaceEntry onGrid : raceEntryRepository.findByRaceIdOrderByGridPosition(race.getId())) {
+                byEntry.putIfAbsent(onGrid.getEntryId(), new QualifyingResult(onGrid.getEntryId(), NO_LAP, 0));
+            }
+            if (race.getAbandonedAt() != null) {
+                continue;
+            }
+            resultSnapshotRepository.findByRaceId(race.getId()).ifPresent(snapshot -> {
+                for (ResultSnapshotDto.ResultRow row : rowsOf(race.getId(), snapshot.getPositionsJson())) {
+                    long bestLap = row.bestLapMs() == null ? NO_LAP : row.bestLapMs();
+                    byEntry.merge(row.entryId(), new QualifyingResult(row.entryId(), bestLap, row.lapsCompleted()),
+                            QualifyingResult::plus);
+                }
+            });
+        }
+        Set<Long> withdrawn = entryRepository.findByEventClassIdAndStatus(eventClassId, EntryStatus.WITHDRAWN)
+                .stream().map(Entry::getId).collect(Collectors.toSet());
+        byEntry.keySet().removeAll(withdrawn);
+        return rank(byEntry.values());
+    }
+
+    /** Laps completed, most first, then best lap, quickest first, then entry id. */
+    static List<Long> rank(Collection<QualifyingResult> results) {
         return results.stream()
                 .sorted(Comparator
                         .comparingInt(QualifyingResult::lapsCompleted).reversed()
-                        .thenComparingLong(QualifyingResult::bestLapMs))
+                        .thenComparingLong(QualifyingResult::bestLapMs)
+                        .thenComparing(QualifyingResult::entryId))
                 .map(QualifyingResult::entryId)
                 .toList();
     }
 
+    private List<ResultSnapshotDto.ResultRow> rowsOf(long raceId, String positionsJson) {
+        try {
+            return objectMapper.readValue(positionsJson, ROWS);
+        } catch (JsonProcessingException e) {
+            // Seeding finals from the other heats alone would put drivers in the wrong finals
+            throw new IllegalStateException("The stored result of race " + raceId + " could not be read", e);
+        }
+    }
+
     /**
-     * A single driver's qualifying result across all heats for an EventClass.
+     * One driver's qualifying result across the class's heats.
      *
-     * @param entryId       the Entry identifier
-     * @param bestLapMs     best single-lap time in milliseconds across all heats (lower = faster)
-     * @param lapsCompleted total laps completed across all heats
+     * @param bestLapMs     best single lap in milliseconds across all heats; {@code Long.MAX_VALUE} for none
+     * @param lapsCompleted total laps across all heats
      */
-    public record QualifyingResult(Long entryId, long bestLapMs, int lapsCompleted) {}
+    record QualifyingResult(Long entryId, long bestLapMs, int lapsCompleted) {
+
+        QualifyingResult plus(QualifyingResult other) {
+            return new QualifyingResult(entryId, Math.min(bestLapMs, other.bestLapMs),
+                    lapsCompleted + other.lapsCompleted);
+        }
+    }
 }

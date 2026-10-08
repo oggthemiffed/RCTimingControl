@@ -14,7 +14,6 @@ import dev.monkeypatch.rctiming.domain.format.EventClassService;
 import dev.monkeypatch.rctiming.query.event.AdminEventListDto;
 import dev.monkeypatch.rctiming.query.event.AdminEventQueryService;
 import dev.monkeypatch.rctiming.service.EventRunOrderService;
-import dev.monkeypatch.rctiming.service.QualifyingStandingsService;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -113,11 +112,7 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<Void> seedFinals(Authentication auth, @PathVariable Long id,
                                            @Valid @RequestBody SeedFinalsRequest req) {
-        List<QualifyingStandingsService.QualifyingResult> results = req.qualifyingResults().stream()
-                .map(r -> new QualifyingStandingsService.QualifyingResult(
-                        r.entryId(), r.bestLapMs(), r.lapsCompleted()))
-                .toList();
-        runOrderService.seedFinals(actor(auth), req.eventClassId(), results,
+        runOrderService.seedFinals(actor(auth), id, req.eventClassId(),
                 req.finalsCount(), req.carsPerFinal(), req.bumpCount());
         return ResponseEntity.noContent().build();
     }

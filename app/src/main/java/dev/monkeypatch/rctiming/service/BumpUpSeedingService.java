@@ -1,11 +1,13 @@
 package dev.monkeypatch.rctiming.service;
 
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
+import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
@@ -76,6 +78,13 @@ public class BumpUpSeedingService {
                            int bumpCount) {
         // Load all final races for this event class
         List<Race> finals = raceRepository.findByEventClassIdAndRoundType(eventClassId, RoundType.FINAL);
+        if (finals.isEmpty()) {
+            throw new StateConflictException("This class has no finals to seed; generate the rounds first");
+        }
+        // Seeding replaces every grid, which would wipe a final that is under way or done, and the bumps already made
+        if (finals.stream().anyMatch(f -> f.getStatus() != RaceStatus.PENDING)) {
+            throw new StateConflictException("A final for this class has already started, so it can't be seeded again");
+        }
         // Sort by finalLetter DESC: C before B before A (lowest final first for assignment)
         finals.sort(Comparator.comparing(Race::getFinalLetter).reversed());
 

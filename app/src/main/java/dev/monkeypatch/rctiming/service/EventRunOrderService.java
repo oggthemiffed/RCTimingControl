@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.service;
 
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.event.Event;
@@ -66,13 +67,23 @@ public class EventRunOrderService {
                 .after(after).record();
     }
 
-    /** Ranks the qualifiers the caller supplied and seeds the class's finals from them. */
-    public void seedFinals(Actor actor, Long eventClassId,
-                           List<QualifyingStandingsService.QualifyingResult> results,
+    /**
+     * Seeds the class's finals from its qualifying results as stored when the heats finished. Refused while no
+     * qualifying heat has finished and once a final has started, because seeding replaces the finals' grids.
+     */
+    public void seedFinals(Actor actor, Long eventId, Long eventClassId,
                            int finalsCount, int carsPerFinal, int bumpCount) {
+        if (bumpCount > carsPerFinal) {
+            throw new IllegalArgumentException("bumpCount can't be more than carsPerFinal");
+        }
         EventClass eventClass = eventClassRepository.findById(eventClassId)
-                .orElseThrow(() -> new EntityNotFoundException("Event class not found: " + eventClassId));
-        List<Long> standings = qualifyingStandingsService.recalculateStandings(eventClassId, results);
+                .filter(c -> c.getEventId().equals(eventId))
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Event class " + eventClassId + " not found in event " + eventId));
+        List<Long> standings = qualifyingStandingsService.standingsFor(eventClassId);
+        if (standings.isEmpty()) {
+            throw new StateConflictException("No qualifying heat for this class has finished with a result yet");
+        }
         bumpUpSeedingService.seedFinals(eventClassId, standings, finalsCount, carsPerFinal, bumpCount);
         String className = racingClassRepository.findById(eventClass.getRacingClassId())
                 .map(RacingClass::getName).orElse("class " + eventClass.getRacingClassId());
