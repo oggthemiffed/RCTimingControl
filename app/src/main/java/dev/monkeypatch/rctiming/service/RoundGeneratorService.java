@@ -9,6 +9,7 @@ import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
+import dev.monkeypatch.rctiming.domain.race.RaceLabel;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.Round;
@@ -244,7 +245,7 @@ public class RoundGeneratorService {
                             .collect(Collectors.toList());
                     result.add(new RoundPreviewDto(
                             seq++,
-                            typeLabel(type, roundNumber),
+                            RaceLabel.round(type.name(), roundNumber, null),
                             roundNumber,
                             "Class#" + ec.getId(),
                             h + 1,
@@ -267,7 +268,7 @@ public class RoundGeneratorService {
                     String finalLetter = String.valueOf((char) ('A' + f));
                     result.add(new RoundPreviewDto(
                             seq++,
-                            finalLetter + " Final",
+                            RaceLabel.round(RoundType.FINAL.name(), 1, finalLetter),
                             1,
                             "Class#" + ec.getId(),
                             1,
@@ -400,14 +401,6 @@ public class RoundGeneratorService {
                 if (v != null) return v;
             }
             return 0;
-        }
-
-        private String typeLabel(RoundType type, int roundNumber) {
-            return switch (type) {
-                case PRACTICE -> "Practice " + roundNumber;
-                case QUALIFIER -> "Qualifying " + roundNumber;
-                case FINAL -> throw new IllegalArgumentException("Use finalLetter for finals");
-            };
         }
     }
 }

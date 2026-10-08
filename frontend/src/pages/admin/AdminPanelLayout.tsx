@@ -26,6 +26,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { useHelp } from '@/context/HelpContext';
 import { HelpSidebarButton } from '@/components/HelpSidebarButton';
 import PageLoading from '@/components/PageLoading';
+import { useRoles } from '@/hooks/useRoles';
 
 // ── Nav definition ─────────────────────────────────────────────────────────
 
@@ -104,7 +105,7 @@ function NavItem({
 
 function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
   const { user, logout } = useAuth();
-  const isAdmin = !!user?.roles.includes('ADMIN');
+  const { isAdmin } = useRoles();
 
   return (
     <div className="flex flex-col h-full">
@@ -135,7 +136,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
         {visibleTo(operationsGroup, isAdmin).map(({ to, label, Icon }) => (
           <NavItem key={to} to={to} label={label} Icon={Icon} onClick={onNavClick} />
         ))}
-        {user?.roles.includes('ADMIN') &&
+        {isAdmin &&
           adminOnlyOperations.map(({ to, label, Icon }) => (
             <NavItem key={to} to={to} label={label} Icon={Icon} onClick={onNavClick} />
           ))}
@@ -186,7 +187,7 @@ function SidebarContent({ onNavClick }: { onNavClick?: () => void }) {
 export default function AdminPanelLayout() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const { helpContent, isOpen, setIsOpen } = useHelp();
-  const isAdmin = !!useAuth().user?.roles.includes('ADMIN');
+  const { isAdmin } = useRoles();
 
   return (
     <div className="min-h-screen bg-background">

@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.query.racecontrol;
 
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.race.RaceLabel;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotJson;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
@@ -58,7 +59,7 @@ public class ResultSnapshotQuery {
         String className = row.get(RACING_CLASSES.NAME.as("className"), String.class);
         int heatNumber = row.get(RACES.HEAT_NUMBER);
         String finalLetter = row.get(RACES.FINAL_LETTER);
-        String raceLabel = buildRaceLabel(roundType, roundNumber, className, heatNumber, finalLetter);
+        String raceLabel = RaceLabel.of(roundType, roundNumber, className, heatNumber, finalLetter);
 
         Instant finishedAt = row.get(RESULT_SNAPSHOTS.FINISHED_AT);
 
@@ -82,15 +83,5 @@ public class ResultSnapshotQuery {
             return new ResultSnapshotDto.ClubBrandingDto(club.get(CLUB_PROFILES.NAME), null);
         }
         return new ResultSnapshotDto.ClubBrandingDto(club.get(CLUB_PROFILES.NAME), logoUrl);
-    }
-
-    private String buildRaceLabel(String roundType, int roundNumber, String className,
-                                   int heatNumber, String finalLetter) {
-        return switch (roundType) {
-            case "PRACTICE" -> "Practice " + roundNumber + " — " + className + " — Heat " + heatNumber;
-            case "QUALIFIER" -> "Qualifying " + roundNumber + " — " + className + " — Heat " + heatNumber;
-            case "FINAL" -> (finalLetter != null ? finalLetter : "A") + " Final — " + className;
-            default -> roundType + " " + roundNumber + " — " + className + " — Heat " + heatNumber;
-        };
     }
 }

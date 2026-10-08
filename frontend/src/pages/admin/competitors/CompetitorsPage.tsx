@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Loader2, Users } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import SpokenNameEditor from '@/components/SpokenNameEditor';
 import { useAdminCompetitorsList, usePossibleDuplicates } from '@/hooks/admin/useAdminCompetitors';
-import { useHelp } from '@/context/HelpContext';
-import { useAuth } from '@/hooks/useAuth';
+import { useHelpContent } from '@/context/HelpContext';
 import { CompetitorsHelp } from '@/help/CompetitorsHelp';
 import type { CompetitorSummaryDto } from '@/lib/adminApi';
 import MergeCompetitorDialog from './MergeCompetitorDialog';
+import { useRoles } from '@/hooks/useRoles';
 
 /** One competitor, with an editor for how their name is said aloud (#119). */
 function CompetitorRow({ competitor, canSetSpokenName, isAdmin, onMerge }: {
@@ -76,15 +76,9 @@ function CompetitorRow({ competitor, canSetSpokenName, isAdmin, onMerge }: {
  */
 export default function CompetitorsPage() {
   const [search, setSearch] = useState('');
-  const { setHelpContent } = useHelp();
   // Any official can fix how a name is said, often noticed on the day; only admins merge competitors
-  const roles = useAuth().user?.roles ?? [];
-  const isAdmin = roles.includes('ADMIN');
-  const canSetSpokenName = isAdmin || roles.includes('RACE_DIRECTOR') || roles.includes('REFEREE');
-  useEffect(() => {
-    setHelpContent(<CompetitorsHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  const { isAdmin, isOfficial } = useRoles();
+  useHelpContent(CompetitorsHelp);
   const { data: competitors, isLoading, isError } = useAdminCompetitorsList();
   const { data: duplicateGroups = [] } = usePossibleDuplicates(isAdmin);
   const [merging, setMerging] = useState<{ duplicate: CompetitorSummaryDto; suggested: CompetitorSummaryDto[] } | null>(null);
@@ -171,7 +165,7 @@ export default function CompetitorsPage() {
             <p className="text-sm text-muted-foreground">No competitors match “{search.trim()}”.</p>
           ) : (
             <ul className="divide-y rounded-lg border" aria-label="Competitors">
-              {shown.map(c => <CompetitorRow key={c.id} competitor={c} canSetSpokenName={canSetSpokenName} isAdmin={isAdmin} onMerge={d => setMerging({ duplicate: d, suggested: [] })} />)}
+              {shown.map(c => <CompetitorRow key={c.id} competitor={c} canSetSpokenName={isOfficial} isAdmin={isAdmin} onMerge={d => setMerging({ duplicate: d, suggested: [] })} />)}
             </ul>
           )}
         </>

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import RefereePage from './RefereePage';
 
-vi.mock('@/context/HelpContext', () => ({ useHelp: () => ({ setHelpContent: vi.fn() }) }));
+vi.mock('@/context/HelpContext', () => ({ useHelpContent: vi.fn() }));
 
 const mockRunOrder = vi.fn();
 vi.mock('@/hooks/race-control/useRunOrder', () => ({ useRunOrder: () => mockRunOrder() }));

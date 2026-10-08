@@ -2,18 +2,18 @@ import { Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/useAuth';
 import { useDownloadResultsExport } from '@/hooks/admin/useResultsExports';
+import { useRoles } from '@/hooks/useRoles';
 
 /**
  * Downloads the event's results as a Results Export v1 file (#27), for taking them to RaceHub by
  * hand. Shown to admins only, since only they may read the export.
  */
 export default function DownloadResultsButton({ eventId }: { eventId: number }) {
-  const { user } = useAuth();
+  const { isAdmin } = useRoles();
   const download = useDownloadResultsExport();
 
-  if (!user?.roles.includes('ADMIN')) return null;
+  if (!isAdmin) return null;
 
   return (
     <Button

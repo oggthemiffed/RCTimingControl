@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { PlusCircle, PlayCircle, CheckCircle2, Loader2, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useHelp } from '@/context/HelpContext';
+import { useHelpContent } from '@/context/HelpContext';
 import { PracticeHelp } from '@/help/PracticeHelp';
 import { PracticeCreateDialog } from './dialogs/PracticeCreateDialog';
 import { listSessions, type PracticeSessionDto } from '@/lib/practiceApi';
@@ -22,12 +22,8 @@ export function PracticeLandingPage() {
   const { eventId: eventIdParam } = useParams<{ eventId: string }>();
   const eventId = eventIdParam ? Number(eventIdParam) : undefined;
   const [createOpen, setCreateOpen] = useState(false);
-  const { setHelpContent } = useHelp();
 
-  useEffect(() => {
-    setHelpContent(<PracticeHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(PracticeHelp);
 
   const { data: sessions, isLoading } = useQuery({
     queryKey: ['practice-sessions'],

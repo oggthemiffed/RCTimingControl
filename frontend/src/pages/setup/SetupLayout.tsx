@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { useHelp } from '@/context/HelpContext';
+import { useHelp, useHelpContent } from '@/context/HelpContext';
 import { HelpSidebarButton } from '@/components/HelpSidebarButton';
 import { SetupWizardHelp } from '@/help/SetupWizardHelp';
 import { Circle, CircleCheck, CircleDot, Loader2, Menu } from 'lucide-react';
@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useSetupStatus, useSetupProgress } from '@/hooks/setup/useSetupProgress';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoles } from '@/hooks/useRoles';
 import AdminBootstrapGate from './AdminBootstrapGate';
 import ClubProfileStep from './steps/ClubProfileStep';
 import TrackStep from './steps/TrackStep';
@@ -141,12 +142,11 @@ export default function SetupLayout() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const { data: statusData, isLoading: statusLoading } = useSetupStatus();
   const { user } = useAuth();
-  const { helpContent, isOpen, setIsOpen, setHelpContent } = useHelp();
+  const { isAdmin } = useRoles();
+  const { helpContent, isOpen, setIsOpen } = useHelp();
 
-  useEffect(() => {
-    setHelpContent(<SetupWizardHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(SetupWizardHelp);
+
   // Only fetch progress once authenticated — /setup/progress requires auth and a 401 here
   // would trigger the refresh interceptor loop before bootstrap completes (T-08-02 mitigation).
   const { data: progress } = useSetupProgress({ enabled: !!user });
@@ -184,7 +184,7 @@ export default function SetupLayout() {
   }
 
   // Setup complete but user is not ADMIN → redirect to login
-  if (statusData?.setupComplete === true && !user.roles.includes('ADMIN')) {
+  if (statusData?.setupComplete === true && !isAdmin) {
     return <Navigate to="/login" replace />;
   }
 

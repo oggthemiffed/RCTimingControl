@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface HelpContextValue {
   helpContent: React.ReactNode | null;
@@ -25,4 +25,13 @@ export function useHelp(): HelpContextValue {
   const ctx = useContext(HelpContext);
   if (!ctx) throw new Error('useHelp must be used within HelpProvider');
   return ctx;
+}
+
+/** Shows `Help` in the help side bar while the calling page is open. */
+export function useHelpContent(Help: React.ComponentType) {
+  const { setHelpContent } = useHelp();
+  useEffect(() => {
+    setHelpContent(<Help />);
+    return () => setHelpContent(null);
+  }, [Help, setHelpContent]);
 }

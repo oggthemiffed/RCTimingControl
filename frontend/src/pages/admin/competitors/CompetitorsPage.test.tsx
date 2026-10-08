@@ -15,7 +15,7 @@ vi.mock('@/lib/adminApi', () => ({
 }));
 const mockUser = vi.fn();
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: mockUser() }) }));
-vi.mock('@/context/HelpContext', () => ({ useHelp: () => ({ setHelpContent: vi.fn() }) }));
+vi.mock('@/context/HelpContext', () => ({ useHelpContent: vi.fn() }));
 
 const api = vi.mocked(adminApi, true);
 

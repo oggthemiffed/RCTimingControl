@@ -10,7 +10,7 @@ import { adminApi, type CompetitorMergePreview, type CompetitorSummaryDto } from
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } }));
 const mockUser = vi.fn();
 vi.mock('@/hooks/useAuth', () => ({ useAuth: () => ({ user: mockUser() }) }));
-vi.mock('@/context/HelpContext', () => ({ useHelp: () => ({ setHelpContent: vi.fn() }) }));
+vi.mock('@/context/HelpContext', () => ({ useHelpContent: vi.fn() }));
 vi.mock('@/lib/adminApi', () => ({
   adminApi: {
     competitors: {

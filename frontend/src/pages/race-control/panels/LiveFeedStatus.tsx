@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useStomp } from '@/hooks/race-control/useStomp';
-import { useAuth } from '@/hooks/useAuth';
+import { useRoles } from '@/hooks/useRoles';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
@@ -38,9 +38,8 @@ function dotColor(state: LiveFeedState): string {
  * this event's races are sent. Hidden when no relay is set up, since then there is nothing to show.
  */
 export function LiveFeedStatus({ eventId }: { eventId: number }) {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
-  const canChange = !!user?.roles.some(r => r === 'ADMIN' || r === 'RACE_DIRECTOR');
+  const { canRunEvent: canChange } = useRoles();
 
   const { data: status } = useQuery({
     queryKey: ['live-feed-status'],

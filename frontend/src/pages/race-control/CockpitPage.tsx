@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useHelp } from '@/context/HelpContext';
+import { useHelpContent } from '@/context/HelpContext';
 import { RaceControlHelp } from '@/help/RaceControlHelp';
 import { useRunOrder } from '@/hooks/race-control/useRunOrder';
 import { useRaceStateMutations } from '@/hooks/race-control/useRaceStateMutations';
@@ -21,13 +21,13 @@ import { FinishedPanel } from './panels/FinishedPanel';
 import { AudioSettingsPanel } from './panels/AudioSettingsPanel';
 import { UnknownTransponderLinkDialog } from './dialogs/UnknownTransponderLinkDialog';
 import { RoundGeneratorWizard } from './RoundGeneratorWizard';
-import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { RunOrderItemDto } from '@/lib/raceControlApi';
 import { roundName } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/errors';
 import { useConfirm } from '@/components/ConfirmDialog';
+import { useRoles } from '@/hooks/useRoles';
 
 function raceTitle(item: RunOrderItemDto | undefined) {
   if (!item) return 'No race selected';
@@ -45,19 +45,13 @@ export default function CockpitPage() {
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
   const eventId = Number(eventIdStr);
 
-  const { setHelpContent } = useHelp();
-
-  useEffect(() => {
-    setHelpContent(<RaceControlHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(RaceControlHelp);
 
   const { data: runOrder = [], isLoading, isError } = useRunOrder(eventId || null);
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);
 
   // Generating rounds and finishing races are race director commands; referees also see the cockpit
-  const { user } = useAuth();
-  const canControlRace = !!user?.roles.some((r) => r === 'ADMIN' || r === 'RACE_DIRECTOR');
+  const { canRunEvent: canControlRace } = useRoles();
   const [generatorOpen, setGeneratorOpen] = useState(false);
 
   // Unknown transponder link dialog state
