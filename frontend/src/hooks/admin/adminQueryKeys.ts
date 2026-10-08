@@ -4,12 +4,14 @@ export const adminQueryKeys = {
     detail: (id: number) => ['admin', 'events', id] as const,
     entriesForClass: (eventId: number, classId: number) =>
       ['admin', 'events', eventId, 'classes', classId, 'entries'] as const,
-    entryHistory: (entryId: number) => ['admin', 'entries', entryId, 'history'] as const,
     classesFor: (eventId: number) =>
       ['admin', 'events', eventId, 'classes'] as const,
     racehubClassMappings: (eventId: number) =>
       ['admin', 'events', eventId, 'racehub-class-mappings'] as const,
     entryFeed: (eventId: number) => ['admin', 'events', eventId, 'entry-feed'] as const,
+  },
+  entries: {
+    history: (entryId: number) => ['admin', 'entries', entryId, 'history'] as const,
   },
   championships: {
     all: () => ['admin', 'championships'] as const,

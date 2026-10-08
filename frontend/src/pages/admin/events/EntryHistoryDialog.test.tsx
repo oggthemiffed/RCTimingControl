@@ -36,7 +36,7 @@ describe('EntryHistoryDialog', () => {
   it('says so when nothing was recorded', () => {
     state.data = [];
     render(<EntryHistoryDialog entry={entry} onClose={vi.fn()} />);
-    expect(screen.getByText(/Nothing has been recorded/)).toBeInTheDocument();
+    expect(screen.getByText(/No officials' actions are recorded/)).toBeInTheDocument();
   });
 
   it('shows an error with a retry', () => {

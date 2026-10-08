@@ -613,6 +613,17 @@ Requires `ADMIN` or `RACE_DIRECTOR`. Marks the entry `WITHDRAWN` and writes an a
 
 ---
 
+### See what has happened to an entry
+
+```http
+GET /admin/entries/{id}/history
+Authorization: Bearer <token>
+```
+
+Admin only; **404** for an unknown entry. Oldest first: `[{ "at": "...", "actor": "Dana Director", "summary": "Withdrawn", "reason": "Driver went home" }]`. It lists a walk-in being added, check-in, transponder swaps, a competitor merge and withdrawal by an official. Changes made by importing an entry file are recorded once per import, not per entry, so they are not listed. `actor` is a name only, and `reason` is null where the action asks for none.
+
+---
+
 ## Race control — Lifecycle commands
 
 ```

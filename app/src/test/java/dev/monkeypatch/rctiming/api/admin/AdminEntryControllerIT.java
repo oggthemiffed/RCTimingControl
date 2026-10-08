@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -125,13 +126,40 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
 
         var resp = restTemplate.exchange("/api/v1/admin/entries/" + entryId + "/history",
                 HttpMethod.GET, new HttpEntity<>(adminHeaders()),
-                new org.springframework.core.ParameterizedTypeReference<List<Map<String, Object>>>() {});
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {});
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(resp.getBody()).extracting(r -> r.get("summary"))
                 .containsExactly("Added by hand as a walk-in", "Withdrawn");
         assertThat(resp.getBody().get(1).get("reason")).isEqualTo("Car broke");
         assertThat(resp.getBody().get(1).get("actor")).isNotNull();
+    }
+
+    @Test
+    void history_putsTheCheckInAndTheTransponderSwapBetweenTheWalkInAndTheWithdrawal() {
+        String oldNumber = uniqueNumber();
+        String newNumber = uniqueNumber();
+        Long entryId = createWalkIn("History Check-in " + UUID.randomUUID(), oldNumber);
+        String checkIn = "/api/v1/race-control/events/" + OPEN_EVENT_ID + "/check-in/entries/" + entryId;
+        assertThat(restTemplate.exchange(checkIn + "/confirm", HttpMethod.POST,
+                new HttpEntity<>(adminHeaders()), Map.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(restTemplate.exchange(
+                "/api/v1/race-control/events/" + OPEN_EVENT_ID + "/entries/" + entryId + "/transponder-swap",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("slot", "PRIMARY", "newTransponderNumber", newNumber), adminHeaders()),
+                Map.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        var resp = restTemplate.exchange("/api/v1/admin/entries/" + entryId + "/history",
+                HttpMethod.GET, new HttpEntity<>(adminHeaders()),
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+
+        assertThat(resp.getBody()).extracting(r -> r.get("summary").toString()).hasSize(3);
+        assertThat(resp.getBody().get(0).get("summary")).isEqualTo("Added by hand as a walk-in");
+        assertThat(resp.getBody().get(1).get("summary").toString()).startsWith("Checked in History Check-in");
+        assertThat(resp.getBody().get(2).get("summary"))
+                .isEqualTo("Changed the primary transponder from " + oldNumber + " to " + newNumber);
+        // The audit log keeps the sign-in label with the email; the history shows the name only
+        assertThat(resp.getBody().get(1).get("actor").toString()).doesNotContain("@");
     }
 
     @Test

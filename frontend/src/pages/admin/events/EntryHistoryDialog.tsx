@@ -39,7 +39,10 @@ export default function EntryHistoryDialog({
           </div>
         )}
         {data && data.length === 0 && (
-          <p className="text-sm text-muted-foreground">Nothing has been recorded for this entry.</p>
+          <p className="text-sm text-muted-foreground">
+            No officials&apos; actions are recorded for this entry. Changes made by importing an entry file are
+            not listed here.
+          </p>
         )}
         {data && data.length > 0 && (
           <ul className="divide-y rounded-md border text-sm">

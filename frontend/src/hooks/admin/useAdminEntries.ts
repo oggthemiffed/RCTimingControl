@@ -14,7 +14,7 @@ export function useEntriesForClass(eventId: number, classId: number) {
 /** The history of one entry; nothing is fetched until an entry is chosen. */
 export function useEntryHistory(entryId: number | null) {
   return useQuery({
-    queryKey: adminQueryKeys.events.entryHistory(entryId ?? 0),
+    queryKey: adminQueryKeys.entries.history(entryId ?? 0),
     queryFn: () => adminApi.entryHistory(entryId!),
     enabled: entryId !== null,
   });

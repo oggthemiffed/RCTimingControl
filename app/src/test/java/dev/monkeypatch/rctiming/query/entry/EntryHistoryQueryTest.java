@@ -1,9 +1,9 @@
 package dev.monkeypatch.rctiming.query.entry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.jooq.DSLContext;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
