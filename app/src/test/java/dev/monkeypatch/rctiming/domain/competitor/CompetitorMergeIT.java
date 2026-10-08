@@ -168,8 +168,9 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
         assertThat(audit.get(0).getReason()).contains("Alex  Rowe " + run).contains("Alex Rowe " + run);
 
         // One row in the audit log for the whole merge, holding the duplicate's details, which are now gone
-        cleanup.add(() -> dsl.execute("delete from audit_log where action = ? and entity_id = ?",
-                CompetitorMergeService.AUDIT_ACTION, String.valueOf(keep.getId())));
+        // Writes need a transaction, which is what puts them on the write connection
+        cleanup.add(() -> dsl.transaction(tx -> tx.dsl().execute("delete from audit_log where action = ? and entity_id = ?",
+                CompetitorMergeService.AUDIT_ACTION, String.valueOf(keep.getId()))));
         var rows = dsl.fetch("select * from audit_log where action = ? and entity_id = ?",
                 CompetitorMergeService.AUDIT_ACTION, String.valueOf(keep.getId())).intoMaps();
         assertThat(rows).hasSize(1);
