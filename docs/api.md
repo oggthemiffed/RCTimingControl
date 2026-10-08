@@ -613,6 +613,19 @@ Requires `ADMIN` or `RACE_DIRECTOR`. Marks the entry `WITHDRAWN` and writes an a
 
 ---
 
+## Race control — Lifecycle commands
+
+```
+POST /race-control/race/{raceId}/call-grid
+POST /race-control/race/{raceId}/start        (also resumes a stopped race)
+POST /race-control/race/{raceId}/stop
+POST /race-control/race/{raceId}/finish
+POST /race-control/race/{raceId}/abandon
+POST /race-control/race/{raceId}/restart
+```
+
+Require `RACE_DIRECTOR` or `ADMIN`. Each answers **200** with no body, **404** for an unknown race, and **409** for a command the race's state does not allow (`restart` works from any state). Each writes one row to the audit log (`GET /admin/audit`) in the same transaction as the change, so a refused command leaves no row: `RACE_GRID_CALLED`, `RACE_STARTED`, `RACE_RESUMED`, `RACE_STOPPED`, `RACE_FINISHED`, `RACE_ABANDONED`, `RACE_RESTARTED`. The row names the official, the race and the event, and holds the status before and after. A restart also keeps what it throws away in the row's `before`: the race's times, its stored result (`resultSnapshot`) and the live positions held in memory.
+
 ## Race control — Check-in & transponder swap
 
 Open to any official (`ADMIN`, `RACE_DIRECTOR` or `REFEREE`). Withdrawn entries are never returned. Check-in recorded here is authoritative on the day; `racehubArrival` is RaceHub's arrival mark, shown read-only (`ARRIVED`, `NOT_ARRIVED`, or null for entries not imported).

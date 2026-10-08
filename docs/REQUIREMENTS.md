@@ -110,6 +110,7 @@
 - [x] **CTRL-07**: Race control displays the marshal list for the current race (the drivers who were in the previous race)
 - [x] **CTRL-08**: Race director can abandon a race in progress; results up to the abandonment point are saved and the meeting advances normally
 - [x] **CTRL-09**: Race director can skip to or re-run a specific race and round number
+- [x] **CTRL-10**: Every race lifecycle command (call the grid, start, stop, resume, finish, abandon, restart) is audit-logged with the official who gave it and the status before and after; a restart also records what it discards (the race's times, its stored result and the live timing) (#139)
 
 ### Audio Announcements
 
