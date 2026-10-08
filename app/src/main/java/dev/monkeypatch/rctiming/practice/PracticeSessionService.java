@@ -12,7 +12,6 @@ import dev.monkeypatch.rctiming.domain.practice.PracticeStatus;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.RaceStatusChangedEvent;
-import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.practice.dto.PracticeSessionDto;
 import org.slf4j.Logger;

@@ -3,13 +3,9 @@ package dev.monkeypatch.rctiming.timing;
 import java.time.Instant;
 
 /**
- * Phase 5 / TIMING-08: audit record for retroactive transponder links.
- * Maps to unknown_transponder_link (singular) created by V22 migration.
- * Stores actor, race, transponder, and linked entry for full audit trail (T-05-16).
- *
- * Note: distinct from domain.race.UnknownTransponderLink (V18 unknown_transponder_links, plural),
- * which is the CTRL-06 in-race registration record. This entity is for retroactive
- * lap-credit operations performed by RACE_DIRECTOR or ADMIN role.
+ * Record of a retroactive transponder link (TIMING-08): who linked which unknown transponder number to which
+ * entry in which race. Maps to the {@code unknown_transponder_link} table. The older
+ * {@code unknown_transponder_links} (plural) table has no code behind it.
  */
 public class UnknownTransponderLinkAudit {
 

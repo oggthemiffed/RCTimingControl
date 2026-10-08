@@ -2,7 +2,6 @@ package dev.monkeypatch.rctiming.timing;
 
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;

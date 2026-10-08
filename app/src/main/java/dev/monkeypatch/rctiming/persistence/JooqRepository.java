@@ -100,16 +100,6 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
         return entity;
     }
 
-    /** The same as {@link #save}: jOOQ writes straight away, so there is nothing to flush. */
-    @Transactional
-    public E saveAndFlush(E entity) {
-        return save(entity);
-    }
-
-    /** Does nothing: jOOQ writes straight away. Kept so callers written for JPA still compile. */
-    public void flush() {
-    }
-
     @Transactional
     public List<E> saveAll(Iterable<E> entities) {
         List<E> saved = new ArrayList<>();

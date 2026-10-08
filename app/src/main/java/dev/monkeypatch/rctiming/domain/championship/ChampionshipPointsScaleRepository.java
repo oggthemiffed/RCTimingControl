@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.domain.championship;
 
-import dev.monkeypatch.rctiming.jooq.generated.tables.records.ChampionshipPointsScaleRecord;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;

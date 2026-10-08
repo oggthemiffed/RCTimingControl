@@ -50,7 +50,7 @@ class CompetitorEntryIT extends AbstractIntegrationTest {
         Competitor competitor = saveCompetitor("walk-in-" + unique());
 
         Entry entry = newEntry(competitor, eventClassId, "101");
-        Long entryId = entryRepository.saveAndFlush(entry).getId();
+        Long entryId = entryRepository.save(entry).getId();
 
         Entry reloaded = entryRepository.findById(entryId).orElseThrow();
         assertThat(reloaded.getCompetitorId()).isEqualTo(competitor.getId());
@@ -61,9 +61,9 @@ class CompetitorEntryIT extends AbstractIntegrationTest {
     void sameCompetitorTwiceInOneClass_isRejected() {
         Long eventClassId = seedEventClass();
         Competitor competitor = saveCompetitor("dup-" + unique());
-        entryRepository.saveAndFlush(newEntry(competitor, eventClassId, "201"));
+        entryRepository.save(newEntry(competitor, eventClassId, "201"));
 
-        assertThatThrownBy(() -> entryRepository.saveAndFlush(newEntry(competitor, eventClassId, "201")))
+        assertThatThrownBy(() -> entryRepository.save(newEntry(competitor, eventClassId, "201")))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 
@@ -72,7 +72,7 @@ class CompetitorEntryIT extends AbstractIntegrationTest {
         competitor.setDisplayName(name);
         competitor.setCreatedAt(Instant.now());
         competitor.setUpdatedAt(Instant.now());
-        return competitorRepository.saveAndFlush(competitor);
+        return competitorRepository.save(competitor);
     }
 
     private Entry newEntry(Competitor competitor, Long eventClassId, String transponder) {
@@ -95,19 +95,19 @@ class CompetitorEntryIT extends AbstractIntegrationTest {
         event.setEventDate(LocalDate.of(2026, 6, 1));
         event.setCreatedAt(now);
         event.setUpdatedAt(now);
-        eventId = eventRepository.saveAndFlush(event).getId();
+        eventId = eventRepository.save(event).getId();
 
         RacingClass racingClass = new RacingClass();
         racingClass.setName("TestClass-" + unique());
         racingClass.setCreatedAt(now);
         racingClass.setUpdatedAt(now);
-        racingClass = racingClassRepository.saveAndFlush(racingClass);
+        racingClass = racingClassRepository.save(racingClass);
 
         EventClass eventClass = new EventClass();
         eventClass.setEventId(eventId);
         eventClass.setRacingClassId(racingClass.getId());
         eventClass.setConfigSnapshot(new TimedRaceConfig(5, StartType.GRID, QualifyingType.FASTEST_LAP, 1, 0));
-        return eventClassRepository.saveAndFlush(eventClass).getId();
+        return eventClassRepository.save(eventClass).getId();
     }
 
     private static String unique() {

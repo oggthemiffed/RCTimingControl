@@ -15,12 +15,10 @@ import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotRepository;
 import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
-import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.query.racecontrol.RunOrderQuery;
 import dev.monkeypatch.rctiming.resultsexport.FinishedRaceCorrected;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
-import dev.monkeypatch.rctiming.timing.LiveTimingHub;
 import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -41,7 +39,6 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Race control REST API (CTRL-01, CTRL-03, CTRL-06, CTRL-08, CTRL-09, D-04).
@@ -60,26 +57,17 @@ public class RaceControlController {
     private final RaceStateMachineService stateMachine;
     private final MarshalAdjustmentRepository marshalAdjustmentRepository;
     private final LapTimingService lapTimingService;
-    private final LiveTimingHub liveTimingHub;
     private final UserRepository userRepository;
     private final RoundRepository roundRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final AuditService audit;
     private final ResultSnapshotRepository resultSnapshotRepository;
 
-    /**
-     * Process-local active-race override for CTRL-09 skip-to.
-     * Keys: eventId → active raceId override. Process-local only; clients re-derive
-     * from run-order on reconnect. Cross-session persistence is deferred beyond Phase 4.
-     */
-    private final Map<Long, Long> activeRaceByEvent = new ConcurrentHashMap<>();
-
     public RaceControlController(RunOrderQuery runOrderQuery,
                                   RaceRepository raceRepository,
                                   RaceStateMachineService stateMachine,
                                   MarshalAdjustmentRepository marshalAdjustmentRepository,
                                   LapTimingService lapTimingService,
-                                  LiveTimingHub liveTimingHub,
                                   UserRepository userRepository,
                                   RoundRepository roundRepository,
                                   ApplicationEventPublisher eventPublisher,
@@ -90,7 +78,6 @@ public class RaceControlController {
         this.stateMachine = stateMachine;
         this.marshalAdjustmentRepository = marshalAdjustmentRepository;
         this.lapTimingService = lapTimingService;
-        this.liveTimingHub = liveTimingHub;
         this.userRepository = userRepository;
         this.roundRepository = roundRepository;
         this.eventPublisher = eventPublisher;
@@ -240,8 +227,9 @@ public class RaceControlController {
         return ResponseEntity.ok().build();
     }
 
-    // --- CTRL-09: Skip-to (process-local active-race override) ---
+    // --- CTRL-09: Skip-to ---
 
+    /** Checks the target race is in the same event and answers with it; the client keeps the active-race pointer. */
     @PostMapping("/race/{raceId}/skip-to")
     @Transactional
     public ResponseEntity<Map<String, Long>> skipTo(@PathVariable long raceId,
@@ -258,7 +246,6 @@ public class RaceControlController {
                 "Target race " + req.targetRaceId() + " belongs to a different event");
         }
 
-        activeRaceByEvent.put(sourceEventId, req.targetRaceId());
         return ResponseEntity.ok(Map.of("eventId", sourceEventId, "activeRaceId", req.targetRaceId()));
     }
 
