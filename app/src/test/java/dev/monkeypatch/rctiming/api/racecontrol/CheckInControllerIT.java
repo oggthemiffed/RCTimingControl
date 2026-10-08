@@ -64,6 +64,7 @@ class CheckInControllerIT extends AbstractIntegrationTest {
     @Autowired EntryAuditLogRepository auditLogRepository;
     @Autowired CompetitorService competitorService;
     @Autowired CheckInService checkInService;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
     @Autowired TransponderSwapService transponderSwapService;
 
     private Long directorId;
@@ -162,6 +163,14 @@ class CheckInControllerIT extends AbstractIntegrationTest {
 
         Entry saved = entryRepository.findById(entry.getId()).orElseThrow();
         assertThat(saved.getCheckedInByUserId()).isEqualTo(directorId);
+
+        // The first check-in is in the audit log with who did it; the repeat by the referee is not
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "select * from audit_log where entity_type = 'entry' and entity_id = ? and action = 'ENTRY_CHECKED_IN'",
+                String.valueOf(entry.getId()));
+        assertThat(rows).hasSize(1);
+        assertThat(((Number) rows.get(0).get("actor_user_id")).longValue()).isEqualTo(directorId);
+        assertThat(((Number) rows.get(0).get("event_id")).longValue()).isEqualTo(event.getId());
     }
 
     @Test

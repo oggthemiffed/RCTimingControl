@@ -66,6 +66,7 @@ public class CheckInController {
         return checkInQuery.searchByName(eventId, query);
     }
 
+    @Audited("audit_log")
     @PostMapping("/check-in/entries/{entryId}/confirm")
     public ResponseEntity<?> confirm(@PathVariable long eventId, @PathVariable long entryId) {
         CheckInResult result = checkInService.confirm(eventId, entryId, actingUserId());

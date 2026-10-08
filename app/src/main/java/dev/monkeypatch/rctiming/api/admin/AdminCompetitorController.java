@@ -84,6 +84,7 @@ public class AdminCompetitorController {
      * Moves the duplicate's entries onto the kept competitor and deletes the duplicate, in one
      * transaction (#123). 409 with the reasons when they can't be merged.
      */
+    @Audited("audit_log")
     @PostMapping("/merge")
     @PreAuthorize("hasRole('ADMIN')")
     public CompetitorMergeService.Result merge(Authentication auth, @Valid @RequestBody MergeRequest body) {
