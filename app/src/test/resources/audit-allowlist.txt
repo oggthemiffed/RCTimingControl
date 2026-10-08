@@ -18,17 +18,11 @@ POST /api/v1/admin/classes | GAP #139: config and event changes
 POST /api/v1/admin/club/affiliations | GAP #139: config and event changes
 POST /api/v1/admin/competitors/merge | PARTIAL: per-entry rows in entry_audit_log only (#139)
 POST /api/v1/admin/competitors/spoken-name/preview | READ-ONLY: plays the text, stores nothing
-POST /api/v1/admin/events | GAP #139: config and event changes
-POST /api/v1/admin/events/{eventId}/classes | GAP #139: config and event changes
-POST /api/v1/admin/events/{eventId}/classes/combine | GAP #139: config and event changes
 POST /api/v1/admin/events/{eventId}/csv-import | GAP #139: imports and entry feed
 POST /api/v1/admin/events/{eventId}/entry-feed/apply | GAP #139: imports and entry feed
 POST /api/v1/admin/events/{eventId}/entry-feed/fetch | GAP #139: imports and entry feed
 POST /api/v1/admin/events/{eventId}/entry-feed/preview | READ-ONLY: previews the held file, applies nothing
 POST /api/v1/admin/events/{eventId}/racehub-import | GAP #139: imports and entry feed
-POST /api/v1/admin/events/{id}/generate-rounds | GAP #139: config and event changes
-POST /api/v1/admin/events/{id}/seed-finals | GAP #139: config and event changes
-POST /api/v1/admin/events/{id}/transition | GAP #139: config and event changes
 POST /api/v1/admin/formats | GAP #139: config and event changes
 POST /api/v1/admin/formats/import | GAP #139: config and event changes
 POST /api/v1/admin/results-exports/{id}/retry | GAP #139: backup and results export
@@ -53,10 +47,8 @@ PUT /api/v1/admin/classes/{id} | GAP #139: config and event changes
 PUT /api/v1/admin/club/affiliations/{id} | GAP #139: config and event changes
 PUT /api/v1/admin/club/logo | GAP #139: config and event changes
 PUT /api/v1/admin/club/profile | GAP #139: config and event changes
-PUT /api/v1/admin/events/{eventId}/classes/{classId}/overrides | GAP #139: config and event changes
 PUT /api/v1/admin/events/{eventId}/entry-feed | GAP #139: imports and entry feed
 PUT /api/v1/admin/events/{eventId}/racehub-class-mappings | GAP #139: imports and entry feed
-PUT /api/v1/admin/events/{id} | GAP #139: config and event changes
 PUT /api/v1/admin/formats/{id} | GAP #139: config and event changes
 PUT /api/v1/admin/tracks/loops/{loopId} | GAP #139: config and event changes
 PUT /api/v1/admin/tracks/{id} | GAP #139: config and event changes

@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.api.admin.BackupController;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.auth.LoginRequest;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.event.EventService;
@@ -165,7 +166,7 @@ class BackupIT extends AbstractIntegrationTest {
         event.setUpdatedAt(Instant.now());
         long eventId = eventRepository.save(event).getId();
 
-        eventService.transition(eventId, EventStatus.COMPLETED);
+        eventService.transition(Actor.system("test"), eventId, EventStatus.COMPLETED);
 
         await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
                 assertThat(backupService.list()).extracting(BackupFile::reason).contains("day-close"));
