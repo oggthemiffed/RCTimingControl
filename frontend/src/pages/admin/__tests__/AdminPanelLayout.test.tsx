@@ -17,7 +17,6 @@ vi.mock('@/hooks/useAuth', () => ({
     logout: vi.fn(),
     isLoading: false,
     login: vi.fn(),
-    accessToken: 'mock-token',
     setAuthFromToken: vi.fn(),
   }),
 }));

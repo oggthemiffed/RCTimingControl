@@ -23,7 +23,6 @@ import { getRaceEntries, linkUnknownTransponder } from '@/lib/raceControlApi';
 type Props = {
   transponderNumber: string;
   raceId: number;
-  passingCount?: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLinked: (lapsCredited: number) => void;
@@ -32,7 +31,6 @@ type Props = {
 export function UnknownTransponderLinkDialog({
   transponderNumber,
   raceId,
-  passingCount = 0,
   open,
   onOpenChange,
   onLinked,
@@ -89,13 +87,6 @@ export function UnknownTransponderLinkDialog({
               className="font-mono text-sm"
             />
           </div>
-
-          {passingCount > 0 && (
-            <p className="text-xs text-muted-foreground">
-              This transponder has {passingCount} passing(s) since race start.
-              All will be credited to the linked entry immediately.
-            </p>
-          )}
 
           <div className="space-y-2">
             <Label htmlFor="entry-select">Link to entry</Label>

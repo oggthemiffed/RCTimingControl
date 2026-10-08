@@ -248,14 +248,6 @@ export interface GenerateRoundsRequest {
   classFinalsConfigs: ClassFinalsConfigDto[];
 }
 
-/** Who goes where comes from the class's stored qualifying results, not from the request. */
-export interface SeedFinalsRequest {
-  eventClassId: number;
-  finalsCount: number;
-  carsPerFinal: number;
-  bumpCount: number;
-}
-
 export interface AddEventClassRequest {
   racingClassId: number;
   templateId: number;
@@ -635,11 +627,6 @@ export const adminApi = {
       .post<void>(`/api/v1/admin/events/${id}/generate-rounds`, body)
       .then(r => r.data),
 
-  seedFinals: (id: number, body: SeedFinalsRequest) =>
-    api
-      .post<void>(`/api/v1/admin/events/${id}/seed-finals`, body)
-      .then(r => r.data),
-
   // Event classes
 
   addEventClass: (eventId: number, body: AddEventClassRequest) =>
@@ -745,9 +732,9 @@ export const adminApi = {
       api.get<TrackDto[]>('/api/v1/admin/tracks').then(r => r.data),
     get: (id: number) =>
       api.get<TrackDto>(`/api/v1/admin/tracks/${id}`).then(r => r.data),
-    create: (body: Omit<TrackDto, 'id' | 'decoderLoops' | 'lapThresholds'>) =>
+    create: (body: Omit<TrackDto, 'id'>) =>
       api.post<TrackDto>('/api/v1/admin/tracks', body).then(r => r.data),
-    update: (id: number, body: Omit<TrackDto, 'id' | 'decoderLoops' | 'lapThresholds'>) =>
+    update: (id: number, body: Omit<TrackDto, 'id'>) =>
       api.put<TrackDto>(`/api/v1/admin/tracks/${id}`, body).then(r => r.data),
     delete: (id: number) =>
       api.delete(`/api/v1/admin/tracks/${id}`),
