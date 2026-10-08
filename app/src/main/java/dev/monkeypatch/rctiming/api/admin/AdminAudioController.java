@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.api.admin;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
@@ -9,6 +11,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -63,23 +66,23 @@ public class AdminAudioController {
         ));
     }
 
+    @Audited("audit_log")
     @PutMapping("/settings")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
-    public ResponseEntity<AudioSettingsDto> saveAudioSettings(@RequestBody @Valid AudioSettingsDto dto) {
-        Long profileId = clubProfileService.getSingletonProfileId();
-        ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
-        ClubAudioSettings newSettings = new ClubAudioSettings(
-                dto.announceCountdown(),
-                dto.announceStagger(),
-                dto.announceLapBeep(),
-                dto.announceFinish(),
-                dto.announceRunningOrder(),
-                dto.runningOrderDepth(),
-                profile.getAudioSettings().countdownIntervals()  // not part of this form: keep them
-        );
-        profile.setAudioSettings(newSettings);
-        profile.setDefaultVoiceId(dto.defaultVoiceId());
-        clubProfileRepository.save(profile);
+    public ResponseEntity<AudioSettingsDto> saveAudioSettings(Authentication auth,
+                                                              @RequestBody @Valid AudioSettingsDto dto) {
+        clubProfileService.changeAudioSettings(Actor.official(Long.parseLong(auth.getName())), profile -> {
+            profile.setAudioSettings(new ClubAudioSettings(
+                    dto.announceCountdown(),
+                    dto.announceStagger(),
+                    dto.announceLapBeep(),
+                    dto.announceFinish(),
+                    dto.announceRunningOrder(),
+                    dto.runningOrderDepth(),
+                    profile.getAudioSettings().countdownIntervals()  // not part of this form: keep them
+            ));
+            profile.setDefaultVoiceId(dto.defaultVoiceId());
+        });
         return ResponseEntity.ok(dto);
     }
 }

@@ -48,6 +48,9 @@ class ClubLogoUploadIT extends AbstractIntegrationTest {
     }
 
     @Autowired
+    org.springframework.jdbc.core.JdbcTemplate jdbc;
+
+    @Autowired
     TestRestTemplate rest;
 
     @Autowired
@@ -129,6 +132,12 @@ class ClubLogoUploadIT extends AbstractIntegrationTest {
                 ClubProfileDto.class);
         assertEquals(HttpStatus.OK, profile.getStatusCode());
         assertEquals(logoUrl, profile.getBody().logoUrl());
+
+        // The change is in the audit log with the new address
+        var rows = jdbc.queryForList(
+                "select * from audit_log where action = 'CLUB_LOGO_CHANGED' and after_json like ?", "%" + logoUrl + "%");
+        assertEquals(1, rows.size());
+        assertNotNull(rows.get(0).get("actor_user_id"));
     }
 
     @Test

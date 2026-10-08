@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.timing;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
@@ -70,7 +71,7 @@ class DecoderListenerIT extends AbstractIntegrationTest {
     @AfterEach
     void tearDown() throws Exception {
         // Clearing the config stops the listener's socket, so the next test starts from DISCONNECTED.
-        clubProfileService.updateDecoderConfig(null, null, null);
+        clubProfileService.updateDecoderConfig(Actor.system("test"), null, null, null);
         awaitStatus("DISCONNECTED");
         clubProfileRepository.deleteAll();
         lapTimingService.releaseState(RACE_ID);
@@ -79,7 +80,7 @@ class DecoderListenerIT extends AbstractIntegrationTest {
     @Test
     void lapsFromDecoderSocketReachLiveTimingForRunningRace() throws Exception {
         try (FakeDecoder decoder = new FakeDecoder()) {
-            clubProfileService.updateDecoderConfig("localhost", decoder.port(), "RC4");
+            clubProfileService.updateDecoderConfig(Actor.system("test"), "localhost", decoder.port(), "RC4");
             decoder.acceptClient();
             awaitStatus("CONNECTED");
 
@@ -101,11 +102,11 @@ class DecoderListenerIT extends AbstractIntegrationTest {
     @Test
     void changingDecoderAddressReconnectsWithoutRestart() throws Exception {
         try (FakeDecoder first = new FakeDecoder(); FakeDecoder second = new FakeDecoder()) {
-            clubProfileService.updateDecoderConfig("localhost", first.port(), "RC4");
+            clubProfileService.updateDecoderConfig(Actor.system("test"), "localhost", first.port(), "RC4");
             first.acceptClient();
             awaitStatus("CONNECTED");
 
-            clubProfileService.updateDecoderConfig("localhost", second.port(), "RC4");
+            clubProfileService.updateDecoderConfig(Actor.system("test"), "localhost", second.port(), "RC4");
             second.acceptClient();
             awaitStatus("CONNECTED");
         }
@@ -115,14 +116,14 @@ class DecoderListenerIT extends AbstractIntegrationTest {
     void decoderDropReportsReconnectingAndClearingConfigReportsDisconnected() throws Exception {
         FakeDecoder decoder = new FakeDecoder();
         try {
-            clubProfileService.updateDecoderConfig("localhost", decoder.port(), "RC4");
+            clubProfileService.updateDecoderConfig(Actor.system("test"), "localhost", decoder.port(), "RC4");
             decoder.acceptClient();
             awaitStatus("CONNECTED");
 
             decoder.close();
             awaitStatus("RECONNECTING");
 
-            clubProfileService.updateDecoderConfig(null, null, null);
+            clubProfileService.updateDecoderConfig(Actor.system("test"), null, null, null);
             awaitStatus("DISCONNECTED");
         } finally {
             decoder.close();
