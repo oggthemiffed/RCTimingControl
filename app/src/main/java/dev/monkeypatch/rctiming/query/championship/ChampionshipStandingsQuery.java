@@ -1,9 +1,8 @@
 package dev.monkeypatch.rctiming.query.championship;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotJson;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
@@ -50,11 +49,11 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
 public class ChampionshipStandingsQuery {
 
     private final DSLContext dsl;
-    private final ObjectMapper objectMapper;
+    private final ResultSnapshotJson snapshotJson;
 
-    public ChampionshipStandingsQuery(DSLContext dsl, ObjectMapper objectMapper) {
+    public ChampionshipStandingsQuery(DSLContext dsl, ResultSnapshotJson snapshotJson) {
         this.dsl = dsl;
-        this.objectMapper = objectMapper;
+        this.snapshotJson = snapshotJson;
     }
 
     public List<StandingsRowDto> computeStandings(Long championshipId) {
@@ -231,26 +230,16 @@ public class ChampionshipStandingsQuery {
 
             // Step 6b/6c: Deserialize positions_json and collect per-driver best position per class
             for (var race : finishedRaces) {
-                String posJson = race.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
                 var raceEventClassId = race.get(EVENT_CLASSES.RACING_CLASS_ID);
+                var positions = snapshotJson.positions(race.get(RACES.ID), race.get(RESULT_SNAPSHOTS.POSITIONS_JSON));
+                for (ResultSnapshotDto.ResultRow row : positions) {
+                    Long driverId = entryIdToDriverId.get(row.entryId());
+                    if (driverId == null) continue;
 
-                if (posJson == null) continue;
-
-                try {
-                    List<ResultSnapshotDto.ResultRow> positions = objectMapper.readValue(
-                            posJson, new TypeReference<>() {});
-
-                    for (ResultSnapshotDto.ResultRow row : positions) {
-                        Long driverId = entryIdToDriverId.get(row.entryId());
-                        if (driverId == null) continue;
-
-                        // Track best position per driver per racing class at this event
-                        classBestPosition
-                                .computeIfAbsent(raceEventClassId, k -> new HashMap<>())
-                                .merge(driverId, row.position(), Math::min);
-                    }
-                } catch (Exception e) {
-                    // Malformed snapshot — skip this race
+                    // Track best position per driver per racing class at this event
+                    classBestPosition
+                            .computeIfAbsent(raceEventClassId, k -> new HashMap<>())
+                            .merge(driverId, row.position(), Math::min);
                 }
             }
 
@@ -283,26 +272,19 @@ public class ChampionshipStandingsQuery {
                 String roundType = race.get(ROUNDS.TYPE);
                 String finalLetter = race.get(RACES.FINAL_LETTER);
                 Long bonusClassId = race.get(EVENT_CLASSES.RACING_CLASS_ID);
-                String posJson = race.get(RESULT_SNAPSHOTS.POSITIONS_JSON);
-                if (posJson == null) continue;
-                try {
-                    List<ResultSnapshotDto.ResultRow> positions = objectMapper.readValue(
-                            posJson, new TypeReference<>() {});
-                    for (ResultSnapshotDto.ResultRow row : positions) {
-                        Long driverId = bonusEntryToDriver.get(row.entryId());
-                        if (driverId == null) continue;
-                        // An excluded driver earns nothing from that round, bonuses included (CHAMP-09)
-                        if (exclusionKeys.contains(driverId + ":" + eventId)) continue;
-                        ClassRound won = new ClassRound(driverId, bonusClassId, eventId);
-                        if ("QUALIFIER".equals(roundType) && row.position() == 1) {
-                            tqBonuses.add(won);
-                        }
-                        if ("FINAL".equals(roundType) && "A".equals(finalLetter) && row.position() == 1) {
-                            afinalBonuses.add(won);
-                        }
+                var positions = snapshotJson.positions(race.get(RACES.ID), race.get(RESULT_SNAPSHOTS.POSITIONS_JSON));
+                for (ResultSnapshotDto.ResultRow row : positions) {
+                    Long driverId = bonusEntryToDriver.get(row.entryId());
+                    if (driverId == null) continue;
+                    // An excluded driver earns nothing from that round, bonuses included (CHAMP-09)
+                    if (exclusionKeys.contains(driverId + ":" + eventId)) continue;
+                    ClassRound won = new ClassRound(driverId, bonusClassId, eventId);
+                    if ("QUALIFIER".equals(roundType) && row.position() == 1) {
+                        tqBonuses.add(won);
                     }
-                } catch (Exception e) {
-                    // Malformed snapshot — skip
+                    if ("FINAL".equals(roundType) && "A".equals(finalLetter) && row.position() == 1) {
+                        afinalBonuses.add(won);
+                    }
                 }
             }
 

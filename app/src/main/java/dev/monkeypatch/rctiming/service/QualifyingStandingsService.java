@@ -1,8 +1,5 @@
 package dev.monkeypatch.rctiming.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
@@ -12,6 +9,7 @@ import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotJson;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
 import org.springframework.stereotype.Service;
@@ -42,24 +40,23 @@ public class QualifyingStandingsService {
     /** The best lap of a driver with no timed lap, which sorts behind every real one. */
     private static final long NO_LAP = Long.MAX_VALUE;
 
-    private static final TypeReference<List<ResultSnapshotDto.ResultRow>> ROWS = new TypeReference<>() {};
 
     private final RaceRepository raceRepository;
     private final RaceEntryRepository raceEntryRepository;
     private final ResultSnapshotRepository resultSnapshotRepository;
     private final EntryRepository entryRepository;
-    private final ObjectMapper objectMapper;
+    private final ResultSnapshotJson snapshotJson;
 
     public QualifyingStandingsService(RaceRepository raceRepository,
                                       RaceEntryRepository raceEntryRepository,
                                       ResultSnapshotRepository resultSnapshotRepository,
                                       EntryRepository entryRepository,
-                                      ObjectMapper objectMapper) {
+                                      ResultSnapshotJson snapshotJson) {
         this.raceRepository = raceRepository;
         this.raceEntryRepository = raceEntryRepository;
         this.resultSnapshotRepository = resultSnapshotRepository;
         this.entryRepository = entryRepository;
-        this.objectMapper = objectMapper;
+        this.snapshotJson = snapshotJson;
     }
 
     /**
@@ -80,7 +77,8 @@ public class QualifyingStandingsService {
                 continue;
             }
             resultSnapshotRepository.findByRaceId(race.getId()).ifPresent(snapshot -> {
-                for (ResultSnapshotDto.ResultRow row : rowsOf(race.getId(), snapshot.getPositionsJson())) {
+                var rows = snapshotJson.positions(race.getId(), snapshot.getPositionsJson());
+                for (ResultSnapshotDto.ResultRow row : rows) {
                     long bestLap = row.bestLapMs() == null ? NO_LAP : row.bestLapMs();
                     byEntry.merge(row.entryId(), new QualifyingResult(row.entryId(), bestLap, row.lapsCompleted()),
                             QualifyingResult::plus);
@@ -102,15 +100,6 @@ public class QualifyingStandingsService {
                         .thenComparing(QualifyingResult::entryId))
                 .map(QualifyingResult::entryId)
                 .toList();
-    }
-
-    private List<ResultSnapshotDto.ResultRow> rowsOf(long raceId, String positionsJson) {
-        try {
-            return objectMapper.readValue(positionsJson, ROWS);
-        } catch (JsonProcessingException e) {
-            // Seeding finals from the other heats alone would put drivers in the wrong finals
-            throw new IllegalStateException("The stored result of race " + raceId + " could not be read", e);
-        }
     }
 
     /**
