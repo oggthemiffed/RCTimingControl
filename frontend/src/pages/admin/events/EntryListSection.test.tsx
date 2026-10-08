@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import EntryListSection from './EntryListSection';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +13,9 @@ vi.mock('@/hooks/admin/useAdminEntries', () => ({
   useWithdrawEntry: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock('./AddWalkInEntryDialog', () => ({ default: () => null }));
+vi.mock('./EntryHistoryDialog', () => ({
+  default: ({ entry }: { entry: AdminEntryDto }) => <p>History of {entry.displayName}</p>,
+}));
 vi.mock('@/hooks/admin/useAdminEventClasses', () => ({
   useRacingClasses: () => ({ data: [{ id: 3, name: 'Mod Buggy' }, { id: 4, name: 'Stock Truck' }] }),
 }));
@@ -24,6 +27,12 @@ function signInAs(roles: AuthUser['roles']) {
     user: { id: '1', email: 'staff@example.com', firstName: 'Staff', lastName: 'User', roles },
   } as AuthContextValue);
 }
+
+const adaEntry: AdminEntryDto = {
+  id: 1, userId: null, competitorId: 2, displayName: 'Ada Lovelace', transponderNumber: '9900',
+  secondaryTransponderNumber: null, importedTransponderNumber: null, importedSecondaryTransponderNumber: null,
+  status: 'CONFIRMED', submittedAt: '2026-10-06T09:00:00Z', withdrawnAt: null,
+};
 
 describe('EntryListSection', () => {
   beforeEach(() => {
@@ -65,5 +74,24 @@ describe('EntryListSection', () => {
 
     expect(screen.getByText('9900')).toBeInTheDocument();
     expect(screen.getByTestId('imported-transponder-difference')).toHaveTextContent('Booking has transponder 7500');
+  });
+
+  it.each([['RACE_DIRECTOR'], ['REFEREE']] as const)('hides History from %s', role => {
+    signInAs([role]);
+    entries = [adaEntry];
+
+    render(<EntryListSection eventId={5} classes={classes} />);
+
+    expect(screen.queryByRole('button', { name: 'History' })).not.toBeInTheDocument();
+  });
+
+  it('opens an entry\'s history for an admin', () => {
+    signInAs(['ADMIN']);
+    entries = [adaEntry];
+
+    render(<EntryListSection eventId={5} classes={classes} />);
+    fireEvent.click(screen.getByRole('button', { name: 'History' }));
+
+    expect(screen.getByText('History of Ada Lovelace')).toBeInTheDocument();
   });
 });

@@ -5,9 +5,13 @@ import dev.monkeypatch.rctiming.api.admin.dto.AdminCreateEntryRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.AdminWithdrawRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.EntryDto;
 import dev.monkeypatch.rctiming.api.admin.dto.EntryResult;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryService;
 import dev.monkeypatch.rctiming.query.entry.AdminEntryDto;
 import dev.monkeypatch.rctiming.query.entry.AdminEntryQueryService;
+import dev.monkeypatch.rctiming.query.entry.EntryHistoryDto;
+import dev.monkeypatch.rctiming.query.entry.EntryHistoryQuery;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,17 +33,33 @@ public class AdminEntryController {
 
     private final EntryService entryService;
     private final AdminEntryQueryService adminEntryQueryService;
+    private final EntryHistoryQuery entryHistoryQuery;
+    private final EntryRepository entryRepository;
 
     public AdminEntryController(EntryService entryService,
-                                AdminEntryQueryService adminEntryQueryService) {
+                                AdminEntryQueryService adminEntryQueryService,
+                                EntryHistoryQuery entryHistoryQuery,
+                                EntryRepository entryRepository) {
         this.entryService = entryService;
         this.adminEntryQueryService = adminEntryQueryService;
+        this.entryHistoryQuery = entryHistoryQuery;
+        this.entryRepository = entryRepository;
     }
 
     @GetMapping("/events/{eventId}/classes/{classId}")
     public List<AdminEntryDto> listEntriesForClass(@PathVariable Long eventId,
                                                     @PathVariable Long classId) {
         return adminEntryQueryService.listEntriesForClass(eventId, classId);
+    }
+
+    /** What has happened to one entry, oldest first (#140). Admins only: it names the officials who acted. */
+    @GetMapping("/{id}/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<EntryHistoryDto> getHistory(@PathVariable long id) {
+        if (!entryRepository.existsById(id)) {
+            throw new EntityNotFoundException("Entry not found: " + id);
+        }
+        return entryHistoryQuery.forEntry(id);
     }
 
     /** Adds a walk-in entry by hand (L9, #17). */

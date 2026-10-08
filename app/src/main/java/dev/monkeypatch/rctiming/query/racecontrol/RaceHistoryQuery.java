@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
+import dev.monkeypatch.rctiming.query.audit.AuditActors;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
@@ -130,7 +131,7 @@ public class RaceHistoryQuery {
                 .where(AUDIT_LOG.RACE_ID.eq(raceId))
                 .and(AUDIT_LOG.ACTION.notIn(COVERED_BY_TABLES))
                 .orderBy(AUDIT_LOG.OCCURRED_AT, AUDIT_LOG.ID)
-                .fetch(r -> new RaceHistoryDto(r.value1(), kindOf(r.value3()), readable(r.value2()), null,
+                .fetch(r -> new RaceHistoryDto(r.value1(), kindOf(r.value3()), AuditActors.readable(r.value2()), null,
                         r.value4()));
     }
 
@@ -139,17 +140,6 @@ public class RaceHistoryQuery {
             return "LIFECYCLE";
         }
         return "MARSHAL_PENALTY_APPLIED".equals(action) ? "MARSHAL_PENALTY" : "OTHER";
-    }
-
-    /** The audit label holds the official's email and the system jobs' prefix; the history shows the name only. */
-    static String readable(String actorLabel) {
-        if (actorLabel == null) {
-            return null;
-        }
-        if (actorLabel.startsWith("system:")) {
-            return "System (" + actorLabel.substring("system:".length()) + ")";
-        }
-        return actorLabel.replaceFirst("\\s*<[^>]*>$", "");
     }
 
     private static String reasonSuffix(String reason) {
