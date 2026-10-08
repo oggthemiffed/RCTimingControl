@@ -12,8 +12,10 @@ import MergeCompetitorDialog from './MergeCompetitorDialog';
 import { useRoles } from '@/hooks/useRoles';
 
 /** One competitor, with an editor for how their name is said aloud (#119). */
-function CompetitorRow({ competitor, isAdmin, onMerge }: {
+function CompetitorRow({ competitor, canSetSpokenName, isAdmin, onMerge }: {
   competitor: CompetitorSummaryDto;
+  /** Any official may fix how a name is said. */
+  canSetSpokenName: boolean;
   /** Only admins merge competitors, and see who changed a name. */
   isAdmin: boolean;
   onMerge: (competitor: CompetitorSummaryDto) => void;
@@ -49,10 +51,12 @@ function CompetitorRow({ competitor, isAdmin, onMerge }: {
                 : 'Said as written'}
           </span>
           <span className="flex items-center gap-1">
-            <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}
-              aria-label={`Edit how ${competitor.displayName} is said`}>
-              Say as…
-            </Button>
+            {canSetSpokenName && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}
+                aria-label={`Edit how ${competitor.displayName} is said`}>
+                Say as…
+              </Button>
+            )}
             {isAdmin && (
               <Button type="button" variant="ghost" size="sm" onClick={() => onMerge(competitor)}
                 aria-label={`Merge ${competitor.displayName} into another competitor`}>
@@ -73,7 +77,7 @@ function CompetitorRow({ competitor, isAdmin, onMerge }: {
 export default function CompetitorsPage() {
   const [search, setSearch] = useState('');
   // Any official can fix how a name is said, often noticed on the day; only admins merge competitors
-  const { isAdmin } = useRoles();
+  const { isAdmin, isOfficial } = useRoles();
   useHelpContent(CompetitorsHelp);
   const { data: competitors, isLoading, isError } = useAdminCompetitorsList();
   const { data: duplicateGroups = [] } = usePossibleDuplicates(isAdmin);
@@ -161,7 +165,7 @@ export default function CompetitorsPage() {
             <p className="text-sm text-muted-foreground">No competitors match “{search.trim()}”.</p>
           ) : (
             <ul className="divide-y rounded-lg border" aria-label="Competitors">
-              {shown.map(c => <CompetitorRow key={c.id} competitor={c} isAdmin={isAdmin} onMerge={d => setMerging({ duplicate: d, suggested: [] })} />)}
+              {shown.map(c => <CompetitorRow key={c.id} competitor={c} canSetSpokenName={isOfficial} isAdmin={isAdmin} onMerge={d => setMerging({ duplicate: d, suggested: [] })} />)}
             </ul>
           )}
         </>

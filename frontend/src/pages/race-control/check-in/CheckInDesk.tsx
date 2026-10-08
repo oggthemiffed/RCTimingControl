@@ -182,7 +182,7 @@ function ResolvedEntryPanel({
 }) {
   const shown = confirmResult?.entry ?? entry;
   // Any official can fix how a name is said; only admins see who changed it
-  const { isAdmin } = useRoles();
+  const { isAdmin, isOfficial } = useRoles();
   const [editing, setEditing] = useState(false);
   // What the editor saved, so the panel shows it without another lookup
   const [saved, setSaved] = useState<{ spokenName: string | null; speechName: string } | null>(null);
@@ -194,7 +194,7 @@ function ResolvedEntryPanel({
         <p className="font-medium">{shown.competitorName}</p>
         <CheckInBadge checkedIn={shown.checkedIn} />
       </div>
-      {shown.competitorId != null && (
+      {isOfficial && shown.competitorId != null && (
         editing ? (
           <SpokenNameEditor
             competitorId={shown.competitorId}

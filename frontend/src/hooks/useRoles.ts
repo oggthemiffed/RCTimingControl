@@ -8,11 +8,12 @@ import { useAuth } from '@/hooks/useAuth';
  * - {@code canRunEvent}: also moves an event through its day (publish, open, close entries, start, complete),
  *   adds entries and runs the races (generate rounds, call grid, start, finish).
  *
- * Every signed-in user is an official (admin, race director or referee), so anything any official may do needs
- * no check here.
+ * - {@code isOfficial}: holds any official role (admin, race director or referee). Every account the server
+ *   creates has one, so this only guards a control against a session without roles.
  */
 export function useRoles() {
   const roles = useAuth().user?.roles ?? [];
   const isAdmin = roles.includes('ADMIN');
-  return { isAdmin, canRunEvent: isAdmin || roles.includes('RACE_DIRECTOR') };
+  const canRunEvent = isAdmin || roles.includes('RACE_DIRECTOR');
+  return { isAdmin, canRunEvent, isOfficial: canRunEvent || roles.includes('REFEREE') };
 }
