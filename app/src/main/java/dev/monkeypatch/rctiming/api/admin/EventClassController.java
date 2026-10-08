@@ -4,10 +4,13 @@ import dev.monkeypatch.rctiming.api.admin.dto.AddEventClassRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.CombineClassesRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.EventClassDto;
 import dev.monkeypatch.rctiming.api.admin.dto.UpdateEventClassOverrideRequest;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.format.EventClassService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -29,26 +32,34 @@ public class EventClassController {
         this.eventClassService = eventClassService;
     }
 
+    @Audited("audit_log")
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
-    public EventClassDto addClassToEvent(@PathVariable Long eventId,
+    public EventClassDto addClassToEvent(Authentication auth, @PathVariable Long eventId,
                                           @RequestBody @Valid AddEventClassRequest request) {
-        return eventClassService.addClassToEvent(eventId, request);
+        return eventClassService.addClassToEvent(actor(auth), eventId, request);
     }
 
+    @Audited("audit_log")
     @PutMapping("/{classId}/overrides")
     @PreAuthorize("hasRole('ADMIN')")
-    public EventClassDto updateOverrides(@PathVariable Long eventId,
+    public EventClassDto updateOverrides(Authentication auth, @PathVariable Long eventId,
                                           @PathVariable Long classId,
                                           @RequestBody @Valid UpdateEventClassOverrideRequest request) {
-        return eventClassService.updateOverrides(classId, request);
+        return eventClassService.updateOverrides(actor(auth), classId, request);
     }
 
+    @Audited("audit_log")
     @PostMapping("/combine")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<EventClassDto> combineClasses(@PathVariable Long eventId,
+    public List<EventClassDto> combineClasses(Authentication auth, @PathVariable Long eventId,
                                                @RequestBody @Valid CombineClassesRequest request) {
-        return eventClassService.combineClasses(eventId, request.eventClassIds());
+        return eventClassService.combineClasses(actor(auth), eventId, request.eventClassIds());
+    }
+
+    /** The signed-in official, taken from the token and never from the request body. */
+    private static Actor actor(Authentication auth) {
+        return Actor.official(Long.parseLong(auth.getName()));
     }
 }

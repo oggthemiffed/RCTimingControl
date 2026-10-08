@@ -5,7 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.admin.dto.AddEventClassRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.EventClassDto;
 import dev.monkeypatch.rctiming.api.admin.dto.UpdateEventClassOverrideRequest;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
+import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
+import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.stereotype.Service;
@@ -14,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,17 +31,20 @@ public class EventClassService {
     private final RaceFormatTemplateRepository templateRepository;
     private final RacingClassRepository racingClassRepository;
     private final ObjectMapper objectMapper;
+    private final AuditService audit;
 
     public EventClassService(EventClassRepository eventClassRepository,
                              EventRepository eventRepository,
                              RaceFormatTemplateRepository templateRepository,
                              RacingClassRepository racingClassRepository,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper,
+                             AuditService audit) {
         this.eventClassRepository = eventClassRepository;
         this.eventRepository = eventRepository;
         this.templateRepository = templateRepository;
         this.racingClassRepository = racingClassRepository;
         this.objectMapper = objectMapper;
+        this.audit = audit;
     }
 
     @Transactional(readOnly = true)
@@ -50,13 +58,11 @@ public class EventClassService {
                 .toList();
     }
 
-    public EventClassDto addClassToEvent(Long eventId, AddEventClassRequest request) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new EntityNotFoundException("Event not found: " + eventId);
-        }
-        if (!racingClassRepository.existsById(request.racingClassId())) {
-            throw new EntityNotFoundException("Racing class not found: " + request.racingClassId());
-        }
+    public EventClassDto addClassToEvent(Actor actor, Long eventId, AddEventClassRequest request) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + eventId));
+        RacingClass racingClass = racingClassRepository.findById(request.racingClassId())
+                .orElseThrow(() -> new EntityNotFoundException("Racing class not found: " + request.racingClassId()));
         RaceFormatTemplate template = templateRepository.findById(request.templateId())
                 .orElseThrow(() -> new EntityNotFoundException("Template not found: " + request.templateId()));
 
@@ -72,24 +78,39 @@ public class EventClassService {
         Instant now = Instant.now();
         ec.setCreatedAt(now);
         ec.setUpdatedAt(now);
-        return EventClassDto.from(eventClassRepository.save(ec));
+        EventClass saved = eventClassRepository.save(ec);
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put("racingClassId", racingClass.getId());
+        after.put("templateId", template.getId());
+        after.put("templateName", template.getName());
+        audit.entry(actor, "EVENT_CLASS_ADDED").entity("event_class", saved.getId()).event(eventId)
+                .summary("Added " + racingClass.getName() + " to " + event.getName()
+                        + " using the format " + template.getName())
+                .after(after).record();
+        return EventClassDto.from(saved);
     }
 
-    public EventClassDto updateOverrides(Long classId, UpdateEventClassOverrideRequest request) {
+    public EventClassDto updateOverrides(Actor actor, Long classId, UpdateEventClassOverrideRequest request) {
         EventClass ec = getEventClassOrThrow(classId);
+        Map<String, Object> before = ec.getConfigOverride();
         Map<String, Object> override = request.override() == null || request.override().isEmpty()
                 ? null
                 : new HashMap<>(request.override());
         ec.setConfigOverride(override);
         ec.setUpdatedAt(Instant.now());
-        return EventClassDto.from(eventClassRepository.save(ec));
+        EventClass saved = eventClassRepository.save(ec);
+        audit.entry(actor, "EVENT_CLASS_OVERRIDES_CHANGED").entity("event_class", classId).event(ec.getEventId())
+                .summary((override == null ? "Cleared the format overrides of " : "Changed the format overrides of ")
+                        + describe(ec))
+                .before(before).after(override).record();
+        return EventClassDto.from(saved);
     }
 
     /**
      * EVENT-06: Assigns the same non-null combined_race_group to every supplied event class
      * so they race together but score separately.
      */
-    public List<EventClassDto> combineClasses(Long eventId, List<Long> eventClassIds) {
+    public List<EventClassDto> combineClasses(Actor actor, Long eventId, List<Long> eventClassIds) {
         if (eventClassIds == null || eventClassIds.size() < 2) {
             throw new IllegalArgumentException("At least 2 event class ids required to combine");
         }
@@ -97,6 +118,7 @@ public class EventClassService {
         long groupId = Instant.now().toEpochMilli();
 
         List<EventClassDto> result = new ArrayList<>();
+        List<String> names = new ArrayList<>();
         for (Long id : eventClassIds) {
             EventClass ec = getEventClassOrThrow(id);
             if (ec.getEventId() == null || !ec.getEventId().equals(eventId)) {
@@ -105,7 +127,14 @@ public class EventClassService {
             ec.setCombinedRaceGroup(groupId);
             ec.setUpdatedAt(Instant.now());
             result.add(EventClassDto.from(eventClassRepository.save(ec)));
+            names.add(describe(ec));
         }
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put("eventClassIds", eventClassIds);
+        after.put("combinedRaceGroup", groupId);
+        audit.entry(actor, "EVENT_CLASSES_COMBINED").entity("event", eventId).event(eventId)
+                .summary("Combined " + String.join(", ", names) + " to race together and score separately")
+                .after(after).record();
         return result;
     }
 
@@ -120,6 +149,12 @@ public class EventClassService {
                 ec.getConfigSnapshot(), new TypeReference<Map<String, Object>>() {});
         snapshotMap.putAll(ec.getConfigOverride());
         return objectMapper.convertValue(snapshotMap, RaceFormatConfig.class);
+    }
+
+    /** The class's name, for an audit summary. */
+    private String describe(EventClass ec) {
+        return racingClassRepository.findById(ec.getRacingClassId()).map(RacingClass::getName)
+                .orElse("class " + ec.getRacingClassId());
     }
 
     private EventClass getEventClassOrThrow(Long id) {
