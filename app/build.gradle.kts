@@ -66,6 +66,12 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    // Print a failed assertion's message, not just its class and line, so a failure seen only in CI can
+    // be read from the build log (#117)
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
 
 // ---------------------------------------------------------------------------
