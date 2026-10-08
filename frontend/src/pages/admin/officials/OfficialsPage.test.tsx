@@ -9,6 +9,7 @@ import { HelpProvider } from '@/context/HelpContext';
 import { toast } from 'sonner';
 
 vi.mock('@/lib/adminApi', () => ({
+  OFFICIAL_CHANGES_PAGE_SIZE: 50,
   adminApi: {
     officials: {
       list: vi.fn(),
@@ -154,5 +155,23 @@ describe('OfficialsPage', () => {
     expect(within(list).getByText(/by Ann Admin/)).toBeInTheDocument();
     expect(within(list).getByText(/from the command line ·/)).toBeInTheDocument();
     expect(within(list).getByText('Password set')).toBeInTheDocument();
+  });
+
+  it('offers older changes when a full page came back, and stops when a short one does', async () => {
+    const change = (id: number) => ({
+      id, at: '2026-10-04T10:00:00Z', officialId: 3, officialName: 'Kim Former', action: 'DISABLED' as const,
+      detail: null, actorId: 1, actorName: 'Ann Admin',
+    });
+    const firstPage = Array.from({ length: 50 }, (_, i) => change(100 - i));
+    api.officials.changes.mockResolvedValueOnce(firstPage).mockResolvedValueOnce([change(50)]);
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Show older changes' }));
+    expect(api.officials.changes).toHaveBeenNthCalledWith(1, undefined);
+
+    await waitFor(() => expect(api.officials.changes).toHaveBeenLastCalledWith(51));
+    await waitFor(() =>
+      expect(within(screen.getByRole('list', { name: 'Recent changes' })).getAllByRole('listitem')).toHaveLength(51));
+    expect(screen.queryByRole('button', { name: 'Show older changes' })).not.toBeInTheDocument();
   });
 });

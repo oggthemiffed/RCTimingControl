@@ -193,6 +193,9 @@ export interface RaceHubClassMappingDto {
   eventClassId: number;
 }
 
+/** How many changes to ask for at a time; a shorter page than this is the last one. */
+export const OFFICIAL_CHANGES_PAGE_SIZE = 50;
+
 export interface EntryHistoryItem {
   at: string;
   actor: string | null;
@@ -807,8 +810,11 @@ export const adminApi = {
   officials: {
     list: () =>
       api.get<OfficialDto[]>('/api/v1/admin/officials').then(r => r.data),
-    changes: () =>
-      api.get<OfficialChangeDto[]>('/api/v1/admin/officials/changes').then(r => r.data),
+    /** Newest first, one page at a time; `before` is the id of the oldest change already shown. */
+    changes: (before?: number) =>
+      api.get<OfficialChangeDto[]>('/api/v1/admin/officials/changes',
+        { params: { before, size: OFFICIAL_CHANGES_PAGE_SIZE } })
+        .then(r => r.data),
     add: (body: AddOfficialRequest) =>
       api.post<OfficialDto>('/api/v1/admin/officials', body).then(r => r.data),
     changeRoles: (id: number, roles: OfficialRole[]) =>

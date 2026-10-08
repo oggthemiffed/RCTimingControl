@@ -292,7 +292,7 @@ export default function OfficialsPage() {
   const { setHelpContent } = useHelp();
   const { user } = useAuth();
   const { data: officials, isLoading, isError } = useOfficials();
-  const { data: changes } = useOfficialChanges();
+  const { data: changes, hasNextPage, fetchNextPage, isFetchingNextPage } = useOfficialChanges();
   const setEnabled = useSetOfficialEnabled();
 
   const [adding, setAdding] = useState(false);
@@ -423,6 +423,11 @@ export default function OfficialsPage() {
               </li>
             ))}
           </ul>
+          {hasNextPage && (
+            <Button variant="outline" size="sm" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+              {isFetchingNextPage ? 'Loading…' : 'Show older changes'}
+            </Button>
+          )}
         </section>
       )}
 

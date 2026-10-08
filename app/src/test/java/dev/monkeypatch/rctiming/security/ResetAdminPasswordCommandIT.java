@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.nio.file.Path;
@@ -22,6 +23,7 @@ import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,6 +43,9 @@ class ResetAdminPasswordCommandIT extends AbstractIntegrationTest {
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    JdbcTemplate jdbc;
 
     @Value("${rctiming.database.data-directory}")
     String dataDirectory;
@@ -65,6 +70,19 @@ class ResetAdminPasswordCommandIT extends AbstractIntegrationTest {
         assertThat(log).extracting(OfficialAuditLog::getAction)
                 .containsExactlyInAnyOrder("PASSWORD_SET", "ROLES_CHANGED", "ENABLED");
         assertThat(log).allSatisfy(entry -> assertThat(entry.getActorUserId()).isNull());
+
+        // One row in the audit log too, from the command line user, naming the official and what else changed
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "select * from audit_log where entity_type = 'official' and entity_id = ?"
+                        + " and action = 'ADMIN_PASSWORD_RESET'",
+                String.valueOf(reset.getId()));
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0)).containsEntry("source", "CLI").containsEntry("actor_user_id", null);
+        assertThat(rows.get(0).get("actor_label").toString()).startsWith("cli:");
+        assertThat(rows.get(0).get("summary").toString())
+                .contains("from the command line").contains("made them an admin").contains("enabled their account");
+        assertThat(rows.get(0).get("after_json").toString())
+                .contains("\"madeAdmin\":true").contains("\"reEnabled\":true");
     }
 
     @Test
@@ -79,6 +97,12 @@ class ResetAdminPasswordCommandIT extends AbstractIntegrationTest {
         assertThat(reset.getRoles()).containsExactly(Role.ADMIN);
         assertThat(auditLogRepository.findByOfficialUserIdOrderByCreatedAtAsc(reset.getId()))
                 .extracting(OfficialAuditLog::getAction).containsExactly("PASSWORD_SET");
+        Map<String, Object> row = jdbc.queryForMap(
+                "select summary, after_json from audit_log where entity_type = 'official' and entity_id = ?"
+                        + " and action = 'ADMIN_PASSWORD_RESET'", String.valueOf(reset.getId()));
+        assertThat(row.get("summary").toString()).endsWith("from the command line");
+        assertThat(row.get("after_json").toString()).contains("\"madeAdmin\":false").contains("\"reEnabled\":false");
+        assertThat(row.toString()).doesNotContain("rescued123");
     }
 
     @Test

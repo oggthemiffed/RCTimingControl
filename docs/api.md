@@ -730,9 +730,9 @@ POST /api/v1/admin/officials/{id}/enable
 `roles`, `disable` and `enable` answer **200 OK** with the updated `Official`; `password` answers **204 No Content**. Setting a password or disabling signs the official out of every session: their refresh tokens are revoked, their live timing (STOMP) connections are closed straight away and can't reconnect with a token issued before the change, and an access token they already hold works for REST calls for at most 15 minutes. **409** with a `detail` when the change would leave no admin who can sign in, or when an admin disables themselves. **404** for an unknown id.
 
 ```http
-GET /api/v1/admin/officials/changes
+GET /api/v1/admin/officials/changes?before=7&size=50
 ```
-**200 OK** — the newest 50 changes: `[{ "id": 7, "at": "2026-10-04T19:12:00Z", "officialId": 2, "officialName": "Rob Smith", "action": "ROLES_CHANGED", "detail": "RACE_DIRECTOR → ADMIN, RACE_DIRECTOR", "actorId": 1, "actorName": "Dave Admin" }]`. `action` is `ADDED`, `ROLES_CHANGED`, `PASSWORD_SET`, `DISABLED` or `ENABLED`. `actorId` and `actorName` are null for a change made with `reset-admin-password`.
+**200 OK** — changes, newest first, one page at a time. `size` is 50 unless given (at most 200); `before` is the id of the oldest change already shown, so the page after it comes back, and leaving it out starts at the newest. A page shorter than `size` is the last. Each change: `[{ "id": 7, "at": "2026-10-04T19:12:00Z", "officialId": 2, "officialName": "Rob Smith", "action": "ROLES_CHANGED", "detail": "RACE_DIRECTOR → ADMIN, RACE_DIRECTOR", "actorId": 1, "actorName": "Dave Admin" }]`. `action` is `ADDED`, `ROLES_CHANGED`, `PASSWORD_SET`, `DISABLED` or `ENABLED`. `actorId` and `actorName` are null for a change made with `reset-admin-password`.
 
 ---
 

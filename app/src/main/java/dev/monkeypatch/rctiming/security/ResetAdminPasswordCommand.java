@@ -1,11 +1,12 @@
 package dev.monkeypatch.rctiming.security;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.user.OfficialAuditLog;
 import dev.monkeypatch.rctiming.domain.user.OfficialService;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.persistence.DatabaseProperties;
 import org.jooq.DSLContext;
-import org.jooq.Record3;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.springframework.boot.Banner;
 import org.springframework.boot.WebApplicationType;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static dev.monkeypatch.rctiming.jooq.generated.Tables.AUDIT_LOG;
 import static dev.monkeypatch.rctiming.jooq.generated.Tables.OFFICIAL_AUDIT_LOG;
 import static dev.monkeypatch.rctiming.jooq.generated.Tables.REFRESH_TOKENS;
 import static dev.monkeypatch.rctiming.jooq.generated.Tables.USERS;
@@ -38,8 +40,8 @@ import static dev.monkeypatch.rctiming.jooq.generated.Tables.USER_ROLES;
  * only admin is locked out. It needs local access to the data folder, not the app, so it works
  * when nobody can sign in. It sets a new password for the official with that email, makes sure
  * they are an enabled admin, signs out their other sessions and records the change in the
- * officials' audit log as coming from the command line. Run without an email, it lists the
- * admins.
+ * officials' audit log as coming from the command line, and in the audit log with the operating system
+ * user who ran it. Run without an email, it lists the admins.
  * <p>
  * The data directory is found the way the app finds it, as for {@code restore}.
  */
@@ -124,13 +126,13 @@ public final class ResetAdminPasswordCommand {
         String hash = new BCryptPasswordEncoder().encode(password);
         return dsl.transactionResult(configuration -> {
             DSLContext tx = configuration.dsl();
-            Record3<Long, Instant, Instant> user = tx.select(USERS.ID, USERS.DISABLED_AT, USERS.CREATED_AT)
+            Record user = tx.select(USERS.ID, USERS.DISABLED_AT, USERS.FIRST_NAME, USERS.LAST_NAME)
                     .from(USERS)
                     .where(USERS.EMAIL.eq(email))
                     .fetchSingle();
-            long userId = user.value1();
+            long userId = user.get(USERS.ID);
             Instant now = clock.instant();
-            boolean reEnabled = user.value2() != null;
+            boolean reEnabled = user.get(USERS.DISABLED_AT) != null;
             boolean madeAdmin = !tx.fetchExists(USER_ROLES,
                     USER_ROLES.USER_ID.eq(userId).and(USER_ROLES.ROLE.eq(Role.ADMIN.name())));
 
@@ -157,7 +159,15 @@ public final class ResetAdminPasswordCommand {
             if (reEnabled) {
                 log(tx, userId, OfficialAuditLog.Action.ENABLED, "From the command line", now);
             }
-            return new Outcome(madeAdmin, reEnabled);
+            Outcome outcome = new Outcome(madeAdmin, reEnabled);
+            try {
+                // In its own savepoint: the password reset must work even where the audit log does not exist yet
+                tx.transaction(inner -> logToAuditLog(inner.dsl(), userId,
+                        user.get(USERS.FIRST_NAME) + " " + user.get(USERS.LAST_NAME), outcome, now));
+            } catch (RuntimeException e) {
+                System.err.println("Warning: could not add the reset to the audit log (" + e.getMessage() + ").");
+            }
+            return outcome;
         });
     }
 
@@ -173,6 +183,24 @@ public final class ResetAdminPasswordCommand {
 
     private static boolean exists(DSLContext dsl, String email) {
         return dsl.fetchExists(USERS, USERS.EMAIL.eq(email));
+    }
+
+    /**
+     * The same reset as one row of the audit log, with the operating system user who ran the command. The
+     * app and its audit service are not running here, so the row is written directly. The table is created by
+     * the app's migrations, so a database restored from an old backup may not have it yet.
+     */
+    private static void logToAuditLog(DSLContext tx, long userId, String name, Outcome outcome, Instant at) {
+        Actor actor = Actor.cli(System.getProperty("user.name", "unknown"));
+        String summary = "Reset the password of " + name + " from the command line"
+                + (outcome.madeAdmin() ? ", and made them an admin" : "")
+                + (outcome.reEnabled() ? ", and enabled their account again" : "");
+        tx.insertInto(AUDIT_LOG, AUDIT_LOG.OCCURRED_AT, AUDIT_LOG.ACTOR_LABEL, AUDIT_LOG.SOURCE, AUDIT_LOG.ACTION,
+                        AUDIT_LOG.ENTITY_TYPE, AUDIT_LOG.ENTITY_ID, AUDIT_LOG.SUMMARY, AUDIT_LOG.AFTER_JSON)
+                .values(at, actor.label(), actor.source().name(), "ADMIN_PASSWORD_RESET", "official",
+                        String.valueOf(userId), summary,
+                        "{\"madeAdmin\":" + outcome.madeAdmin() + ",\"reEnabled\":" + outcome.reEnabled() + "}")
+                .execute();
     }
 
     private static void log(DSLContext tx, long userId, OfficialAuditLog.Action action, String detail, Instant at) {
