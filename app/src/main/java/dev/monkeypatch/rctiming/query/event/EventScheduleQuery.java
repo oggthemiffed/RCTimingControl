@@ -1,10 +1,10 @@
 package dev.monkeypatch.rctiming.query.event;
 
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -16,7 +16,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Races.RACES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
 
 @Service
-@Transactional(readOnly = true)
+@ReadTransaction
 public class EventScheduleQuery {
 
     private static final Logger log = LoggerFactory.getLogger(EventScheduleQuery.class);

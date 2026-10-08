@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.query.resultsexport;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import dev.monkeypatch.rctiming.query.championship.ChampionshipStandingsQuery;
 import dev.monkeypatch.rctiming.query.championship.RoundResultDto;
 import dev.monkeypatch.rctiming.query.championship.StandingsRowDto;
@@ -11,7 +12,6 @@ import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -43,7 +43,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
  * standings. Read-only; the caller decides the revision.
  */
 @Component
-@Transactional(readOnly = true)
+@ReadTransaction
 public class ResultsExportQuery {
 
     static final String SYSTEM = "RCTimingControl";

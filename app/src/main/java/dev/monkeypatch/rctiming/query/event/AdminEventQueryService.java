@@ -1,9 +1,9 @@
 package dev.monkeypatch.rctiming.query.event;
 
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Events.EVENTS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Tracks.TRACKS;
 
 @Service
-@Transactional(readOnly = true)
+@ReadTransaction
 public class AdminEventQueryService {
 
     private final DSLContext dsl;

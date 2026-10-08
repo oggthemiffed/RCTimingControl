@@ -1,8 +1,8 @@
 package dev.monkeypatch.rctiming.query.resultsexport;
 
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -12,7 +12,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.ResultsOutbox.RESUL
 
 /** The results exports queued for RaceHub, newest first, for the admin page (#27). */
 @Component
-@Transactional(readOnly = true)
+@ReadTransaction
 public class ResultsOutboxQuery {
 
     private final DSLContext dsl;
