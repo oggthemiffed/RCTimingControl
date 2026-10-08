@@ -6,6 +6,7 @@ import { useAdminBackups, useBackupNow } from '@/hooks/admin/useAdminBackups';
 import { useHelpContent } from '@/context/HelpContext';
 import { BackupsHelp } from '@/help/BackupsHelp';
 import { getApiErrorMessage } from '@/lib/errors';
+import { formatDateTime } from '@/lib/dates';
 
 const REASONS: Record<string, string> = {
   manual: 'Taken by hand',
@@ -81,7 +82,7 @@ export default function BackupsPage() {
           {data.backups.map(b => (
             <li key={b.name} className="flex items-center justify-between gap-4 px-4 py-3">
               <div className="min-w-0">
-                <p className="font-medium">{new Date(b.createdAt).toLocaleString()}</p>
+                <p className="font-medium">{formatDateTime(b.createdAt)}</p>
                 <p className="text-xs text-muted-foreground truncate">{b.name}</p>
               </div>
               <span className="text-xs text-muted-foreground text-right shrink-0">

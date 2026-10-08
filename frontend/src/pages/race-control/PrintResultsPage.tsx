@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useResultSnapshot } from '@/hooks/race-control/useResultSnapshot';
 import { fmtMs } from '@/lib/format';
+import { formatDateTime } from '@/lib/dates';
 
 export default function PrintResultsPage() {
   const { raceId: raceIdStr } = useParams<{ raceId: string }>();
@@ -38,7 +39,7 @@ export default function PrintResultsPage() {
             <h1 className="text-2xl font-bold">{data.raceLabel}</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {data.clubBranding?.clubName} &bull; Finished{' '}
-              {new Date(data.finishedAt).toLocaleString()}
+              {formatDateTime(data.finishedAt)}
             </p>
           </div>
           {data.clubBranding?.logoUrl && (

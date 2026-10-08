@@ -3,7 +3,7 @@ import { Flag, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAdminEventsList } from '@/hooks/admin/useAdminEvents';
-import { parseLocalDate } from '@/lib/utils';
+import { formatEventDate } from '@/lib/dates';
 
 export default function RaceControlSelectPage() {
   const navigate = useNavigate();
@@ -52,11 +52,7 @@ export default function RaceControlSelectPage() {
               <div>
                 <p className="font-medium">{event.name}</p>
                 <p className="text-sm text-muted-foreground mt-0.5">
-                  {new Intl.DateTimeFormat('en-GB', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  }).format(parseLocalDate(event.eventDate))}
+                  {formatEventDate(event.eventDate)}
                   {event.trackName && ` · ${event.trackName}`}
                 </p>
               </div>

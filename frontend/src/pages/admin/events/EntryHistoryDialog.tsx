@@ -9,8 +9,8 @@ import {
 } from '@/components/ui/dialog';
 import { useEntryHistory } from '@/hooks/admin/useAdminEntries';
 import type { AdminEntryDto } from '@/lib/adminApi';
+import { formatDateTime } from '@/lib/dates';
 
-const when = new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
 
 /** What has happened to one entry, oldest first: added, checked in, transponder swapped, withdrawn (#140). */
 export default function EntryHistoryDialog({
@@ -51,7 +51,7 @@ export default function EntryHistoryDialog({
                 <p>{item.summary}</p>
                 {item.reason && <p className="text-muted-foreground">Reason: {item.reason}</p>}
                 <p className="text-xs text-muted-foreground">
-                  {when.format(new Date(item.at))}
+                  {formatDateTime(item.at)}
                   {item.actor && ` by ${item.actor}`}
                 </p>
               </li>

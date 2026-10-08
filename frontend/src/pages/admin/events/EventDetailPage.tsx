@@ -44,8 +44,8 @@ import RaceHubImportDialog from './RaceHubImportDialog';
 import CsvImportDialog from './CsvImportDialog';
 import EntryFeedSection from './EntryFeedSection';
 import DownloadResultsButton from './DownloadResultsButton';
-import { parseLocalDate } from '@/lib/utils';
 import { eventStatusColor, eventStatusLabel } from './eventStatus';
+import { formatDateTime, formatEventDate } from '@/lib/dates';
 
 // ── Valid state transitions ────────────────────────────────────────────────
 
@@ -232,9 +232,7 @@ export default function EventDetailPage() {
             <Badge className={eventStatusColor[data.status]}>{eventStatusLabel[data.status]}</Badge>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            {new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(
-              parseLocalDate(data.eventDate)
-            )}
+            {formatEventDate(data.eventDate, 'long')}
             {trackName && <span> · {trackName}</span>}
           </p>
         </div>
@@ -352,9 +350,7 @@ export default function EventDetailPage() {
               {data.racehubLastImportAt ? (
                 <>
                   Last imported from RaceHub{' '}
-                  {new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(
-                    new Date(data.racehubLastImportAt)
-                  )}
+                  {formatDateTime(data.racehubLastImportAt)}
                   {data.racehubLastRevision != null && <> (revision {data.racehubLastRevision})</>}
                 </>
               ) : (

@@ -22,6 +22,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import type { OfficialAction, OfficialDto, OfficialRole } from '@/lib/adminApi';
 import { getApiErrorMessage } from '@/lib/errors';
+import { formatDate, formatDateTime } from '@/lib/dates';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -357,7 +358,7 @@ export default function OfficialsPage() {
                       <span className="text-sm">Can sign in</span>
                     ) : (
                       <span className="text-sm">
-                        Disabled{official.disabledAt && ` ${new Date(official.disabledAt).toLocaleDateString()}`}
+                        Disabled{official.disabledAt && ` ${formatDate(official.disabledAt)}`}
                       </span>
                     )}
                   </TableCell>
@@ -408,7 +409,7 @@ export default function OfficialsPage() {
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {change.actorName ? `by ${change.actorName}` : 'from the command line'}
-                  {' · '}{new Date(change.at).toLocaleString()}
+                  {' · '}{formatDateTime(change.at)}
                 </span>
               </li>
             ))}

@@ -28,6 +28,7 @@ import AddWalkInEntryDialog from './AddWalkInEntryDialog';
 import EntryHistoryDialog from './EntryHistoryDialog';
 import { ImportedTransponderDifference } from '@/pages/race-control/check-in/CheckInStatus';
 import { useRoles } from '@/hooks/useRoles';
+import { formatDateTime } from '@/lib/dates';
 
 // ── Entry status colors ───────────────────────────────────────────────────
 
@@ -193,10 +194,7 @@ function EntriesTable({
                 </Badge>
               </TableCell>
               <TableCell className="text-sm text-muted-foreground">
-                {new Intl.DateTimeFormat('en-GB', {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-                }).format(new Date(entry.submittedAt))}
+                {formatDateTime(entry.submittedAt)}
               </TableCell>
               <TableCell className="space-x-2">
                 {canSeeHistory && (

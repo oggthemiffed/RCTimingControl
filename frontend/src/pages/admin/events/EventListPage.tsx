@@ -39,8 +39,8 @@ import { useRoles } from '@/hooks/useRoles';
 import type { AdminEventListDto } from '@/lib/adminApi';
 import { useHelpContent } from '@/context/HelpContext';
 import { EntryManagementHelp } from '@/help/EntryManagementHelp';
-import { parseLocalDate } from '@/lib/utils';
 import { eventStatusColor, eventStatusLabel } from './eventStatus';
+import { formatEventDate } from '@/lib/dates';
 
 // ── Create Event form schema ───────────────────────────────────────────────
 
@@ -100,12 +100,7 @@ export default function EventListPage() {
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       ),
-      cell: info =>
-        new Intl.DateTimeFormat('en-GB', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        }).format(parseLocalDate(info.getValue())),
+      cell: info => formatEventDate(info.getValue()),
     }),
     columnHelper.accessor('status', {
       header: 'Status',

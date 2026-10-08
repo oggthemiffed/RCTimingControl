@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 import { getRaceHistory } from '@/lib/raceControlApi';
 import type { RaceHistoryKind, RunOrderItemDto } from '@/lib/raceControlApi';
+import { formatTime } from '@/lib/dates';
 
 type RaceStatus = RunOrderItemDto['status'];
 
@@ -47,7 +48,7 @@ export function RaceHistoryPanel({ raceId, status }: { raceId: number; status: R
           {data.map((item, i) => (
             <li key={`${item.at}-${i}`} className="flex gap-3 px-3 py-2">
               <time className="w-24 shrink-0 whitespace-nowrap tabular-nums text-muted-foreground" dateTime={item.at}>
-                {new Date(item.at).toLocaleTimeString()}
+                {formatTime(item.at, true)}
               </time>
               <span className="w-32 shrink-0 font-medium">{KIND_LABEL[item.kind] ?? item.kind}</span>
               <span className="flex-1">

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getResults, getSession } from '@/lib/practiceApi';
 import type { PracticeTimingRowDto } from '@/lib/practiceApi';
 import { fmtMs } from '@/lib/format';
+import { formatDateTime } from '@/lib/dates';
 
 export default function PrintPracticeResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -51,7 +52,7 @@ export default function PrintPracticeResultsPage() {
         <p className="text-sm text-muted-foreground mt-1">
           Practice session &bull; Best {bestN} consecutive laps
           {session.stoppedAt
-            ? ` &bull; Ended ${new Date(session.stoppedAt).toLocaleString()}`
+            ? ` &bull; Ended ${formatDateTime(session.stoppedAt)}`
             : ''}
         </p>
       </div>

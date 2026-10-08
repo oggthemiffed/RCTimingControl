@@ -17,6 +17,7 @@ import type { EntryFeedDto, EventClassDto, SaveEntryFeedRequest } from '@/lib/ad
 import { getApiErrorMessage } from '@/lib/errors';
 import RaceHubImportDialog from './RaceHubImportDialog';
 import { useConfirm } from '@/components/ConfirmDialog';
+import { formatDateTime } from '@/lib/dates';
 
 interface EntryFeedSectionProps {
   eventId: number;
@@ -30,10 +31,6 @@ const STATUS_TEXT: Record<NonNullable<EntryFeedDto['lastStatus']>, string> = {
   AUTH_FAILED: 'Token refused',
   FAILED: 'Failed',
 };
-
-function formatTime(iso: string) {
-  return new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
-}
 
 /**
  * Pull an event's entries from a URL that serves Entry Export v1 (#42): the URL and its token, whether to fetch
@@ -215,7 +212,7 @@ export default function EntryFeedSection({ eventId, classes }: EntryFeedSectionP
 
       {feed?.lastFetchAt && (
         <p className="text-sm text-muted-foreground" data-testid="entry-feed-status">
-          Last fetched {formatTime(feed.lastFetchAt)}
+          Last fetched {formatDateTime(feed.lastFetchAt)}
           {feed.lastStatus && <>: {STATUS_TEXT[feed.lastStatus]}</>}
           {feed.lastStatus !== 'WAITING' && feed.lastMessage && <>. {feed.lastMessage}</>}
           {feed.appliedRevision != null && <> (last imported revision {feed.appliedRevision})</>}

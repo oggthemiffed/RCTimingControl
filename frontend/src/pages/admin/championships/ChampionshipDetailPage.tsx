@@ -57,6 +57,7 @@ import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 import { useHelpContent } from '@/context/HelpContext';
 import { ChampionshipHelp } from '@/help/ChampionshipHelp';
 import { useConfirm } from '@/components/ConfirmDialog';
+import { formatDate } from '@/lib/dates';
 
 // ── Driver combobox ────────────────────────────────────────────────────────
 
@@ -709,7 +710,7 @@ export default function ChampionshipDetailPage() {
                         <TableCell>{eventName}</TableCell>
                         <TableCell className="max-w-xs truncate">{exc.reason}</TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(exc.createdAt))}
+                          {formatDate(exc.createdAt)}
                           <br />
                           {exc.createdByName ? `by ${exc.createdByName}` : null}
                         </TableCell>
