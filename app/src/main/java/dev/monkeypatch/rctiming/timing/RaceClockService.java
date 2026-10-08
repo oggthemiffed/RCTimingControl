@@ -72,27 +72,19 @@ public class RaceClockService {
                 .orElseGet(RaceClock::new));
     }
 
-    /** Race time so far, not counting time stopped; 0 for a race whose clock isn't kept. */
-    public long elapsedMs(long raceId) {
-        RaceClock raceClock = clocks.get(raceId);
-        return raceClock == null ? 0 : raceClock.elapsedMs(clock.instant());
-    }
-
-    /** Whether the race's clock is counting now. */
-    public boolean running(long raceId) {
-        RaceClock raceClock = clocks.get(raceId);
-        return raceClock != null && raceClock.running();
-    }
-
     /** The race's clock with its length, or empty for an unknown race. */
     @Transactional(readOnly = true)
     public Optional<RaceClockDto> clock(long raceId) {
-        return raceRepository.findById(raceId).map(this::clockOf);
+        return raceRepository.findById(raceId)
+                .map(race -> clockOf(race.getId(), race.getStatus(), durationMs(race)));
     }
 
-    private RaceClockDto clockOf(Race race) {
+    /**
+     * The clock of a race the caller has already looked up, with the length its format gives it (null for
+     * none). Shared by the boards, the overlay and the live feed so they all show the same time.
+     */
+    public RaceClockDto clockOf(long raceId, RaceStatus status, Long durationMs) {
         Instant now = clock.instant();
-        RaceStatus status = race.getStatus();
         long elapsed;
         boolean running;
         if (status == RaceStatus.PENDING) {
@@ -100,8 +92,10 @@ public class RaceClockService {
             elapsed = 0;
             running = false;
         } else {
-            RaceClock kept = clocks.computeIfAbsent(race.getId(), id -> {
-                RaceClock fromTimes = RaceClock.fromTimes(race, now);
+            RaceClock kept = clocks.computeIfAbsent(raceId, id -> {
+                RaceClock fromTimes = raceRepository.findById(id)
+                        .map(race -> RaceClock.fromTimes(race, now))
+                        .orElseGet(RaceClock::new);
                 if (status == RaceStatus.RUNNING) {
                     fromTimes.start(now);
                 }
@@ -110,9 +104,8 @@ public class RaceClockService {
             elapsed = kept.elapsedMs(now);
             running = kept.running();
         }
-        Long duration = durationMs(race);
-        Long remaining = duration == null ? null : Math.max(0, duration - elapsed);
-        return new RaceClockDto(race.getId(), status.name(), elapsed, duration, remaining, running);
+        Long remaining = durationMs == null ? null : Math.max(0, durationMs - elapsed);
+        return new RaceClockDto(raceId, status.name(), elapsed, durationMs, remaining, running);
     }
 
     private Long durationMs(Race race) {

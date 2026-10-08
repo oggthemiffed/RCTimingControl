@@ -10,6 +10,7 @@ import dev.monkeypatch.rctiming.timing.LiveTimingHub;
 import dev.monkeypatch.rctiming.timing.RaceClockService;
 import dev.monkeypatch.rctiming.timing.dto.LiveFeedStatusDto;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
+import dev.monkeypatch.rctiming.timing.dto.RaceClockDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -283,11 +284,9 @@ public class LiveFeedPublisher implements SmartLifecycle {
                         0, null, null, null, null, leaderLaps));
             }
         }
-        boolean pending = RaceStatus.PENDING.name().equals(race.status());
-        long elapsed = pending ? 0 : raceClocks.elapsedMs(race.raceId());
-        Long remaining = race.durationMs() == null ? null : Math.max(0, race.durationMs() - elapsed);
-        LiveFeedV1.Clock raceTime = new LiveFeedV1.Clock(elapsed, race.durationMs(), remaining,
-                !pending && raceClocks.running(race.raceId()));
+        RaceClockDto clock = raceClocks.clockOf(race.raceId(), RaceStatus.valueOf(race.status()), race.durationMs());
+        LiveFeedV1.Clock raceTime = new LiveFeedV1.Clock(clock.elapsedMs(), clock.durationMs(), clock.remainingMs(),
+                clock.running());
         return new Content(race.status(), standings, raceTime);
     }
 

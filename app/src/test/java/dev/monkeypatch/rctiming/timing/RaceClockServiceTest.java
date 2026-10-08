@@ -61,8 +61,10 @@ class RaceClockServiceTest {
         clock.advance(Duration.ofSeconds(30));
         status(RaceStatus.STOPPED);
         clock.advance(Duration.ofSeconds(20));
-        assertThat(service.elapsedMs(RACE_ID)).isEqualTo(30_000);
-        assertThat(service.running(RACE_ID)).isFalse();
+        RaceClockDto stopped = service.clockOf(RACE_ID, RaceStatus.STOPPED, null);
+        assertThat(stopped.elapsedMs()).isEqualTo(30_000);
+        assertThat(stopped.running()).isFalse();
+        assertThat(stopped.remainingMs()).isNull();
 
         status(RaceStatus.RUNNING);
         clock.advance(Duration.ofSeconds(10));
@@ -156,7 +158,6 @@ class RaceClockServiceTest {
     @Test
     void anUnknownRaceHasNoClock() {
         assertThat(service.clock(99)).isEmpty();
-        assertThat(service.elapsedMs(99)).isZero();
     }
 
     private void status(RaceStatus newStatus) {
