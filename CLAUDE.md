@@ -193,5 +193,12 @@ A later initiative extracted the shared decoder-protocol parser (`decoder-protoc
    1. Open it as a draft early, linked to its issue: first thing, or straight after the first change.
    2. Commit and push small changes often, so progress shows on the PR.
    3. Mark it ready for review only when the issue's acceptance is met and CI is green.
-   4. Request a Copilot review if one isn't triggered automatically, and wait for it. Fix and push important findings (bugs, security issues, broken behaviour, missed acceptance criteria), and reply to each Copilot comment saying it's fixed or why it stays as is.
-   5. Merge only when that's done and CI is green again.
+   4. **Always spin up a review agent** (the Agent tool) before merging, in the persona of a highly skilled senior Java engineer who knows Spring Boot, jOOQ and SQLite well. Give it the PR's diff and the files around it, never your own conclusions about it. It reviews for:
+      - **Security**: authorisation on every endpoint, input validation, injection, secrets or personal data in logs and audit rows, anything a racer or a spectator on the venue network could reach.
+      - **Logic errors**: transactions and their boundaries, races between the timing thread and requests, null and empty cases, off-by-ones, state-machine edges.
+      - **Formatting**: indentation, imports, line length, dead code and leftover debugging.
+      - **Consistency**: naming, comment density and idiom matching the surrounding code, how neighbouring classes are laid out, and the shared helpers it should reuse instead of a new one.
+
+      A frontend-only PR gets the same review of its TypeScript and React. The agent only reports. Check each finding against the code, fix and push the real ones, and say on the PR which were fixed and which were declined and why.
+   5. Copilot reviews are not used (they cost credits): don't request one.
+   6. Merge only when that's done and CI is green again.
