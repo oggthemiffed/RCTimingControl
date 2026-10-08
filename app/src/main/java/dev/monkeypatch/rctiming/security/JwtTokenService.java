@@ -8,11 +8,14 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.util.Date;
 import java.util.HexFormat;
+import java.util.List;
 
 /**
  * JWT token creation and validation using JJWT 0.12.x API.
@@ -68,6 +71,20 @@ public class JwtTokenService {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    /**
+     * The Spring Security authorities for a parsed token's {@code roles} claim, one {@code ROLE_} per role.
+     * A token without the claim gets none, so it can reach only what anonymous visitors can.
+     */
+    public static List<GrantedAuthority> authorities(Claims claims) {
+        List<?> roles = claims.get("roles", List.class);
+        if (roles == null) {
+            return List.of();
+        }
+        return roles.stream()
+                .map(role -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + role))
+                .toList();
     }
 
     public long getRefreshTokenTtlMs() {

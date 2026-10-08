@@ -41,7 +41,8 @@ public class SpaConfig implements WebMvcConfigurer {
                 .addResolver(new IndexFallbackResolver());
     }
 
-    static boolean isServerPath(String path) {
+    /** Whether a path, given without its leading slash, belongs to the server rather than to a page. */
+    public static boolean isServerPath(String path) {
         return SERVER_ROOTS.stream().anyMatch(root -> path.equals(root) || path.startsWith(root + "/"));
     }
 
