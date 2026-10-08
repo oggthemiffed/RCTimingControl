@@ -62,7 +62,7 @@ Authorization: Bearer {{token}}
 
 ###
 
-# ── 4. Run order ─────────────────────────────────────────────────────────────
+# ── 3. Run order ─────────────────────────────────────────────────────────────
 
 GET {{baseUrl}}/race-control/event/1/run-order
 Authorization: Bearer {{token}}
