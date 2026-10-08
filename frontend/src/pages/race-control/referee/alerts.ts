@@ -6,11 +6,6 @@ export interface ProximityRow {
   gapToAheadMs: number | null;
 }
 
-export interface LapRow {
-  entryId: number;
-  lapsCompleted: number;
-}
-
 /** OFFICIAL-01: entryIds whose gapToAheadMs has shrunk by >= PROXIMITY_CLOSING_DELTA_MS since previous. */
 export function computeProximityAlerts(
   current: ProximityRow[],
@@ -39,18 +34,3 @@ export function computeProximityAlerts(
   return result;
 }
 
-/** OFFICIAL-02: entryIds whose lapsCompleted < leader's lapsCompleted. */
-export function computeBackmarkers(current: LapRow[]): Set<number> {
-  if (current.length === 0) return new Set<number>();
-
-  const leaderLaps = Math.max(...current.map((c) => c.lapsCompleted));
-  const result = new Set<number>();
-
-  for (const c of current) {
-    if (c.lapsCompleted < leaderLaps) {
-      result.add(c.entryId);
-    }
-  }
-
-  return result;
-}

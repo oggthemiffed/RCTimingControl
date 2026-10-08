@@ -68,16 +68,3 @@ export const getSnapshot = (id: number) =>
 /** Get the final results for a stopped session. */
 export const getResults = (id: number) =>
   api.get<PracticeTimingRowDto[]>(`/api/v1/practice-sessions/${id}/results`);
-
-/** Link an unknown transponder to a racer during a practice session. */
-export const linkTransponder = (
-  sessionId: number,
-  transponderNumber: string,
-  userId: number,
-  racerName: string,
-) =>
-  api.post(`/api/v1/practice-sessions/${sessionId}/link-transponder`, {
-    transponderNumber,
-    userId,
-    racerName,
-  });

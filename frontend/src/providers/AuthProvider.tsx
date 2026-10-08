@@ -15,7 +15,6 @@ export interface AuthUser {
 
 export interface AuthContextValue {
   user: AuthUser | null;
-  accessToken: string | null;
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -47,7 +46,6 @@ export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [accessTokenState, setAccessTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -59,7 +57,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // A refresh cookie from an account with no official role does not restore a session
         if (!isOfficial(data.roles)) return;
         setAccessToken(data.accessToken);
-        setAccessTokenState(data.accessToken);
         setUser(authResponseToUser(data));
       })
       .catch(() => {
@@ -77,7 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new NotAnOfficialError();
     }
     setAccessToken(data.accessToken);
-    setAccessTokenState(data.accessToken);
     setUser(authUser);
 
     navigate(redirectTo ?? '/admin');
@@ -90,14 +86,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void endSession()
       .then(() => api.delete('/api/v1/auth/refresh'))
       .catch(() => {});
-    setAccessTokenState(null);
     setUser(null);
     navigate('/login');
   };
 
   const setAuthFromToken = (token: string, authUser: AuthUser) => {
     setAccessToken(token);
-    setAccessTokenState(token);
     setUser(authUser);
   };
 
@@ -111,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, accessToken: accessTokenState, login, logout, isLoading, setAuthFromToken }}
+      value={{ user, login, logout, isLoading, setAuthFromToken }}
     >
       {children}
     </AuthContext.Provider>

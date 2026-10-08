@@ -68,7 +68,6 @@ function renderDialog(props = {}) {
   const defaultProps = {
     transponderNumber: '12345678',
     raceId: 1,
-    passingCount: 3,
     open: true,
     onOpenChange: vi.fn(),
     onLinked: vi.fn(),
@@ -182,7 +181,7 @@ describe('UnknownTransponderLinkDialog', () => {
 
   it('clears the chosen entry when the dialog is opened again', async () => {
     const props = {
-      transponderNumber: '12345678', raceId: 1, passingCount: 3, onOpenChange: vi.fn(), onLinked: vi.fn(),
+      transponderNumber: '12345678', raceId: 1, onOpenChange: vi.fn(), onLinked: vi.fn(),
     };
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const view = (open: boolean) => (

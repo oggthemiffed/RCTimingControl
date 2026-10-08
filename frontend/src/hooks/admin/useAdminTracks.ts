@@ -14,7 +14,7 @@ export function useCreateTrack() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (body: Omit<TrackDto, 'id'>) =>
-      adminApi.tracks.create(body as Omit<TrackDto, 'id' | 'decoderLoops' | 'lapThresholds'>),
+      adminApi.tracks.create(body),
     onSuccess: () => qc.invalidateQueries({ queryKey: adminQueryKeys.tracks.all() }),
   });
 }
@@ -23,7 +23,7 @@ export function useUpdateTrack() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, body }: { id: number; body: Omit<TrackDto, 'id'> }) =>
-      adminApi.tracks.update(id, body as Omit<TrackDto, 'id' | 'decoderLoops' | 'lapThresholds'>),
+      adminApi.tracks.update(id, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: adminQueryKeys.tracks.all() }),
   });
 }

@@ -1,18 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeProximityAlerts,
-  computeBackmarkers,
   PROXIMITY_CLOSING_DELTA_MS,
   type ProximityRow,
-  type LapRow,
 } from './alerts';
 
 function makeProximityRow(overrides: Partial<ProximityRow> & { entryId: number }): ProximityRow {
   return { gapToAheadMs: null, ...overrides };
-}
-
-function makeLapRow(overrides: Partial<LapRow> & { entryId: number }): LapRow {
-  return { lapsCompleted: 5, ...overrides };
 }
 
 describe('computeProximityAlerts', () => {
@@ -47,26 +41,5 @@ describe('computeProximityAlerts', () => {
     const alerts = computeProximityAlerts(current, previous);
     expect(alerts.size).toBe(0);
     expect(PROXIMITY_CLOSING_DELTA_MS).toBe(500);
-  });
-});
-
-describe('computeBackmarkers', () => {
-  it('computeBackmarkers_flagsCarsOnLowerLapCount', () => {
-    const current = [
-      makeLapRow({ entryId: 1, lapsCompleted: 12 }),
-      makeLapRow({ entryId: 2, lapsCompleted: 11 }),
-      makeLapRow({ entryId: 3, lapsCompleted: 10 }),
-    ];
-    const backmarkers = computeBackmarkers(current);
-    expect(backmarkers).toEqual(new Set([2, 3]));
-  });
-
-  it('computeBackmarkers_excludesLeaderAndCarsOnLeadLap', () => {
-    const current = [
-      makeLapRow({ entryId: 1, lapsCompleted: 15 }),
-      makeLapRow({ entryId: 2, lapsCompleted: 15 }),
-    ];
-    const backmarkers = computeBackmarkers(current);
-    expect(backmarkers.size).toBe(0);
   });
 });
