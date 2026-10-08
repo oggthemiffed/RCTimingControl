@@ -58,6 +58,7 @@ import { useHelpContent } from '@/context/HelpContext';
 import { ChampionshipHelp } from '@/help/ChampionshipHelp';
 import { useConfirm } from '@/components/ConfirmDialog';
 import { formatDate } from '@/lib/dates';
+import { optionalPositiveInt, refineBestXFromY } from './bestXFromY';
 
 // ── Driver combobox ────────────────────────────────────────────────────────
 
@@ -121,34 +122,13 @@ function DriverCombobox({
 
 // ── Add class dialog ───────────────────────────────────────────────────────
 
-const optionalPositiveInt = z.preprocess(
-  (v) => (v === '' || v == null) ? null : Number(v),
-  z.number().int().positive().nullable()
-);
-
 const addClassSchema = z.object({
   racingClassId: z.coerce.number().int().positive('Racing class is required'),
   bestXFromYX: optionalPositiveInt,
   bestXFromYY: optionalPositiveInt,
-}).superRefine((data, ctx) => {
-  const bothSet = data.bestXFromYX !== null && data.bestXFromYY !== null;
-  const neitherSet = data.bestXFromYX === null && data.bestXFromYY === null;
-  if (!bothSet && !neitherSet) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Set both fields or leave both empty',
-      path: ['bestXFromYX'],
-    });
-  }
-  if (bothSet && data.bestXFromYX! > data.bestXFromYY!) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Rounds to count cannot exceed total rounds',
-      path: ['bestXFromYX'],
-    });
-  }
-});
-type AddClassFormValues = z.infer<typeof addClassSchema>;
+}).superRefine(refineBestXFromY);
+type AddClassFormInput = z.input<typeof addClassSchema>;
+type AddClassFormValues = z.output<typeof addClassSchema>;
 
 function AddClassDialog({
   championshipId,
@@ -165,8 +145,7 @@ function AddClassDialog({
   });
   const addMutation = useAddChampionshipClass(championshipId);
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } =
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    useForm<AddClassFormValues>({ resolver: zodResolver(addClassSchema) as any });
+    useForm<AddClassFormInput, unknown, AddClassFormValues>({ resolver: zodResolver(addClassSchema) });
 
   async function onSubmit(values: AddClassFormValues) {
     try {
