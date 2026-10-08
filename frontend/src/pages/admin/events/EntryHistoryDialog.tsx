@@ -11,7 +11,6 @@ import { useEntryHistory } from '@/hooks/admin/useAdminEntries';
 import type { AdminEntryDto } from '@/lib/adminApi';
 import { formatDateTime } from '@/lib/dates';
 
-
 /** What has happened to one entry, oldest first: added, checked in, transponder swapped, withdrawn (#140). */
 export default function EntryHistoryDialog({
   entry,

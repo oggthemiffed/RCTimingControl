@@ -52,7 +52,7 @@ export default function PrintPracticeResultsPage() {
         <p className="text-sm text-muted-foreground mt-1">
           Practice session &bull; Best {bestN} consecutive laps
           {session.stoppedAt
-            ? ` &bull; Ended ${formatDateTime(session.stoppedAt)}`
+            ? ` • Ended ${formatDateTime(session.stoppedAt)}`
             : ''}
         </p>
       </div>
