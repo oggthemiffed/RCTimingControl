@@ -34,7 +34,7 @@ export default function AdminGuidePage() {
           </li>
           <li>
             <span className="font-semibold">Save:</span> Click
-            <span className="font-semibold"> Save changes</span>. The club name updates
+            <span className="font-semibold"> Save Profile</span>. The club name updates
             throughout the Admin panel immediately.
           </li>
         </ol>
@@ -45,8 +45,7 @@ export default function AdminGuidePage() {
         <h2 className="text-xl font-semibold mb-3">2. Tracks</h2>
         <p className="text-sm mb-3">
           Tracks define the physical circuits where events are held. Each track has a
-          name and configurable minimum and maximum lap time thresholds used to filter
-          spurious decoder passings.
+          name, an optional length and optional venue notes.
         </p>
         <ol className="list-decimal list-inside space-y-2 text-sm">
           <li>
@@ -57,9 +56,9 @@ export default function AdminGuidePage() {
           </li>
           <li>
             <span className="font-semibold">Create a track:</span> Click
-            <span className="font-semibold"> Add track</span>. Enter a track name (e.g.
-            "Club Carpet Circuit") and set the minimum lap time in seconds. Passings
-            faster than the minimum are discarded as loop noise.
+            <span className="font-semibold"> Create Track</span>. Enter a track name (e.g.
+            "Club Carpet Circuit"), and the track length in metres and any venue notes if
+            you want them.
           </li>
           <li>
             <span className="font-semibold">Assign to an event:</span> When creating or
@@ -87,7 +86,7 @@ export default function AdminGuidePage() {
           </li>
           <li>
             <span className="font-semibold">Create a format:</span> Click
-            <span className="font-semibold"> Add format</span>. Enter the format name
+            <span className="font-semibold"> Create Format Template</span>. Enter the format name
             (e.g. "5-Minute Timed Qualifier + ABC Finals") and configure the heat
             duration in seconds, number of qualifier rounds, and finals structure.
           </li>
@@ -115,14 +114,16 @@ export default function AdminGuidePage() {
           </li>
           <li>
             <span className="font-semibold">Create an event:</span> Click
-            <span className="font-semibold"> Create event</span>. Enter the event name,
+            <span className="font-semibold"> Create Event</span>. Enter the event name,
             date, and select a track. The event is created in DRAFT status.
           </li>
           <li>
             <span className="font-semibold">Add classes:</span> Open the event detail
             and switch to the <span className="font-semibold">Classes</span> tab. Add
             each racing class that will compete, assigning a format template to each.
-            Generate the race schedule using the Generate Rounds button in each class.
+            Once the event is in progress, generate the race schedule from Race Control:
+            the cockpit shows a <span className="font-semibold">Generate Rounds</span> button
+            until the run order exists.
           </li>
           <li>
             <span className="font-semibold">Publish:</span> Click
@@ -165,13 +166,14 @@ export default function AdminGuidePage() {
           <li>
             <span className="font-semibold">Add a class to an event:</span> Open the
             event detail, click the <span className="font-semibold">Classes</span> tab,
-            then click <span className="font-semibold">Add class</span>. Select a racing
+            then click <span className="font-semibold">Add Class</span>. Select a racing
             class and a format template, then save.
           </li>
           <li>
-            <span className="font-semibold">Generate rounds:</span> After adding a class,
-            click <span className="font-semibold">Generate Rounds</span> to create the
-            race schedule (qualifiers and finals) for that class.
+            <span className="font-semibold">Generate rounds:</span> Once the event is in
+            progress, open Race Control and click
+            <span className="font-semibold"> Generate Rounds</span> to create the race
+            schedule (practice, qualifiers and finals) for all the event&apos;s classes.
           </li>
           <li>
             <span className="font-semibold">View entries:</span> Click the
@@ -391,7 +393,7 @@ export default function AdminGuidePage() {
           </li>
           <li>
             <span className="font-semibold">Step 2 — Track:</span> Create at least one
-            track with a name and minimum lap time threshold. Coming back to this step
+            track with a name. Coming back to this step
             lists the tracks you already have, with an "Add another track" button, so a
             second visit does not create a copy.
           </li>

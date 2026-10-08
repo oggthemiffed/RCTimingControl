@@ -14,7 +14,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 
 **Backend:** Spring Boot 3.4.x, Java 21 (LTS), Gradle (Kotlin DSL)
 
-**Frontend:** React 18 + Vite, TypeScript, Tailwind CSS + shadcn/ui, TanStack Query v5, TanStack Table v8, React Hook Form v7, Zod, `@stomp/stompjs` (native WebSocket — no SockJS)
+**Frontend:** React 19 + React Router 7 + Vite, TypeScript, Tailwind CSS 4 + shadcn/ui, TanStack Query v5, TanStack Table v8, React Hook Form v7, Zod, `@stomp/stompjs` (native WebSocket — no SockJS)
 
 **Persistence:** SQLite (one file, sqlite-jdbc; WAL, one write connection plus a read pool), Flyway for migrations. The vendor is chosen in one place (`rctiming.database.vendor`, `persistence/DatabaseConfig`); vendor-specific code lives only in `persistence/vendor/`, and `PersistencePortabilityTest` enforces it. See `docs/development.md` → "Keeping the database swappable".
 
@@ -31,7 +31,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 - `/topic/race/{raceId}/timing` — live lap passings, positions, gaps
 - `/topic/race/{raceId}/state` — race lifecycle changes
 - `/topic/race/{raceId}/marshal` — marshal lap adjustments
-- `/topic/race/{raceId}/unknown-transponder`, `/audio`, `/bump-up-alert` — referee, announcer and bump-up prompts
+- `/topic/race/{raceId}/unknown-transponder`, `/audio`, `/bump-up-alert` — race director, announcer and bump-up prompts
 - `/topic/practice/{sessionId}/timing` and `/unknown-transponder` — open practice
 - `/topic/system/decoder-status` — whether the decoder is connected
 - `/topic/system/live-feed-status` — whether the live feed is connected to its relay
@@ -101,9 +101,9 @@ The decoder listener runs on a **dedicated background thread** (`SmartLifecycle`
 
 ### Race State Machine
 
-`PENDING → GRID → RUNNING → STOPPED → RUNNING` (resume) or `RUNNING → FINISHED`
+`PENDING → GRID → RUNNING → STOPPED → RUNNING` (resume) or `RUNNING → FINISHED` (a stopped race can also be finished; a grid call can be taken back to `PENDING`)
 
-`RaceState` is an enum on the `Race` entity. `RaceStateMachine` service exposes one method per command. Invalid transitions throw `IllegalStateTransitionException` (HTTP 409). Every successful transition publishes a domain event that `LiveTimingHub` broadcasts to `/topic/race/{id}/state`.
+`RaceStatus` is an enum on the `Race` entity. `RaceStateMachineService` checks every move against one table of allowed transitions: `transition(race, target)` is the single entry point (the race control controller picks the target for each command: call grid, start, stop, finish, abandon), and `restart(race)` is separate because it resets a race to `PENDING` from any state. Invalid transitions throw `IllegalStateTransitionException` (HTTP 409). Every successful `transition` publishes a `RaceStatusChangedEvent` (for audio, the race clock, the live feed, results export and practice) and has `LiveTimingHub` broadcast the new state to `/topic/race/{id}/state`; `restart` only broadcasts. Abandoning a race finishes it with an abandoned time.
 
 Marshal laps are **not** state transitions — they are `MarshalAdjustment` records (+1/−1) with full audit trail that trigger position recalculation and re-broadcast.
 
@@ -113,9 +113,10 @@ Staff roles are **stackable** — a single user account can hold any combination
 
 | Role | Permissions |
 |------|-------------|
-| `ADMIN` | Club config, user/role management, event and championship setup, all entries |
-| `RACE_DIRECTOR` | Race control client — start/stop races, call grid, marshal laps, abandon/skip |
-| `REFEREE` | Apply lap/time penalties, link unknown transponders, raise incident reports |
+| `ADMIN` | Everything the other roles can do, plus club config, tracks, formats and classes, decoder, backups, results exports, officials and the audit log, the RaceHub, CSV and feed imports, creating and editing events and championships, and competitor merges |
+| `RACE_DIRECTOR` | Runs the day: moves an event through its states, generates rounds and seeds finals, adds walk-ins and withdraws entries, race control commands (call grid, start, stop, finish, abandon, restart, skip), marshal laps, links unknown transponders, audio settings, the live feed switch and open practice |
+| `REFEREE` | Raises incident reports, applies lap and time penalties, records marshal absences and penalties |
+| Any official | Check-in desk, the run order, and read-only views of events, entries and race history |
 | Competitors | No account (L10, #18): entries come from the RaceHub import or are added as walk-ins |
 | Anonymous | Event schedule, live timing, results, championship standings |
 

@@ -177,12 +177,12 @@ Request body:
 {
   "loopId": "LOOP_01",
   "displayName": "Start/Finish",
-  "loopType": "START_FINISH",
+  "loopType": "FINISH_LINE",
   "isScoringLoop": true
 }
 ```
 
-`loopType` values: `START_FINISH`, `SPLIT`, `PIT_ENTRY`, `PIT_EXIT`
+`loopType` values: `FINISH_LINE`, `CHICANE`, `OTHER`
 
 ---
 
@@ -733,6 +733,31 @@ POST /api/v1/admin/officials/{id}/enable
 GET /api/v1/admin/officials/changes?before=7&size=50
 ```
 **200 OK** — changes, newest first, one page at a time. `size` is 50 unless given (at most 200); `before` is the id of the oldest change already shown, so the page after it comes back, and leaving it out starts at the newest. A page shorter than `size` is the last. Each change: `[{ "id": 7, "at": "2026-10-04T19:12:00Z", "officialId": 2, "officialName": "Rob Smith", "action": "ROLES_CHANGED", "detail": "RACE_DIRECTOR → ADMIN, RACE_DIRECTOR", "actorId": 1, "actorName": "Dave Admin" }]`. `action` is `ADDED`, `ROLES_CHANGED`, `PASSWORD_SET`, `DISABLED` or `ENABLED`. `actorId` and `actorName` are null for a change made with `reset-admin-password`.
+
+---
+
+## Admin — Audit log
+
+`ADMIN` only. Every action an official takes that changes data, and the system's own background changes, is one row (see AUDIT-01 in [REQUIREMENTS.md](REQUIREMENTS.md)). Rows are only ever added.
+
+```http
+GET /api/v1/admin/audit?entityType=race&raceId=42&from=2026-10-04T00:00:00Z&page=0&size=50
+```
+
+Newest first. Every filter is optional and the ones given must all match: `entityType`, `entityId` (text, since an id can be an email), `action` (such as `RACE_STARTED`), `actorUserId`, `eventId`, `raceId`, `from` (inclusive) and `to` (exclusive), both ISO date-times. `size` is 50 unless given and at most 200. **200 OK**:
+
+```json
+{
+  "entries": [{
+    "id": 311, "at": "2026-10-04T19:12:00Z", "actorUserId": 1, "actor": "Dave Admin <dave@example.com>",
+    "source": "UI", "action": "RACE_STARTED", "entityType": "race", "entityId": "42", "eventId": 7, "raceId": 42,
+    "summary": "Started heat 1 (race 42)", "before": "GRID", "after": "RUNNING"
+  }],
+  "total": 1, "page": 0, "size": 50
+}
+```
+
+`source` is `UI` (a request through the app), `CLI` (a command line tool, with `actorUserId` null and `actor` like `cli:rob`) or `SYSTEM` (a background job, `actor` like `system:bump-up`). `before` and `after` are the stored JSON values, or null. There is no screen for the log yet; the referee view shows a race's own history from `GET /api/v1/race-control/races/{raceId}/history`, and an admin sees an entry's on the entry list.
 
 ---
 
