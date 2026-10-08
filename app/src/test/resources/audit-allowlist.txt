@@ -5,15 +5,9 @@
 #   PARTIAL  something records who, but without what changed. See #139 and #140.
 #   READ-ONLY  a POST that changes nothing.
 #   EXEMPT   changes only bookkeeping, no data an official relies on; the reason says why.
-POST /api/v1/admin/backups | GAP #139: backup and results export
 POST /api/v1/admin/competitors/spoken-name/preview | READ-ONLY: plays the text, stores nothing
 POST /api/v1/admin/events/{eventId}/entry-feed/fetch | EXEMPT: downloads the file and holds it for an official to confirm, changing no entries; the import it leads to is audited
 POST /api/v1/admin/events/{eventId}/entry-feed/preview | READ-ONLY: previews the held file, applies nothing
-POST /api/v1/admin/results-exports/{id}/retry | GAP #139: backup and results export
-POST /api/v1/practice-sessions | GAP #139: practice sessions
-POST /api/v1/practice-sessions/{id}/link-transponder | GAP #139: practice sessions
-POST /api/v1/practice-sessions/{id}/start | GAP #139: practice sessions
-POST /api/v1/practice-sessions/{id}/stop | GAP #139: practice sessions
 POST /api/v1/race-control/events/{eventId}/check-in/resolve | READ-ONLY: looks up an entry from a scan
 POST /api/v1/race-control/race/{raceId}/skip-to | READ-ONLY: checks the run order, stores nothing
 POST /api/v1/race-control/races/{raceId}/transponders/link | PARTIAL: unknown_transponder_link row (#139)

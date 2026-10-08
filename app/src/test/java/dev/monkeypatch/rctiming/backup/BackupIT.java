@@ -59,6 +59,8 @@ class BackupIT extends AbstractIntegrationTest {
     @Autowired PracticeSessionRepository practiceSessionRepository;
     @Autowired ApplicationEventPublisher eventPublisher;
 
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
+
     @TempDir Path backupFolder;
 
     @Test
@@ -69,6 +71,12 @@ class BackupIT extends AbstractIntegrationTest {
                 new HttpEntity<>(admin), BackupFile.class);
         assertThat(taken.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(taken.getBody().reason()).isEqualTo("manual");
+
+        // A backup an official asks for is in the audit log with who asked; the automatic ones are not
+        var rows = jdbc.queryForList("select * from audit_log where action = 'BACKUP_TAKEN' and entity_id = ?",
+                taken.getBody().name());
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).get("actor_user_id")).isNotNull();
 
         ResponseEntity<BackupController.BackupsDto> listed = restTemplate.exchange("/api/v1/admin/backups",
                 HttpMethod.GET, new HttpEntity<>(admin), BackupController.BackupsDto.class);
@@ -175,10 +183,10 @@ class BackupIT extends AbstractIntegrationTest {
     @Test
     void aBackupTakenWhileLapsAreWrittenOpensCleanly() throws Exception {
         practiceSessionRepository.findRunningSession()
-                .ifPresent(running -> practiceSessionService.stop(running.getId()));
+                .ifPresent(running -> practiceSessionService.stop(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), running.getId()));
         long sessionId = practiceSessionService
-                .create(new PracticeSessionService.CreateRequest("Backup race", null, 3), null).id();
-        practiceSessionService.start(sessionId);
+                .create(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), new PracticeSessionService.CreateRequest("Backup race", null, 3)).id();
+        practiceSessionService.start(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), sessionId);
         AtomicBoolean racing = new AtomicBoolean(true);
         CompletableFuture<Integer> decoder = CompletableFuture.supplyAsync(() -> {
             int passings = 0;
@@ -202,7 +210,7 @@ class BackupIT extends AbstractIntegrationTest {
             assertThat(lapsInBackup).isPositive().isLessThanOrEqualTo(lapsSoFar(sessionId));
         } finally {
             racing.set(false);
-            practiceSessionService.stop(sessionId);
+            practiceSessionService.stop(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), sessionId);
         }
     }
 

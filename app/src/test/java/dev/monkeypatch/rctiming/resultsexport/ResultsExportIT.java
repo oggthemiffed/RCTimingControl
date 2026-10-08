@@ -400,6 +400,10 @@ class ResultsExportIT extends AbstractIntegrationTest {
         ResponseEntity<Void> retry = restTemplate.exchange("/api/v1/admin/results-exports/" + item.getId() + "/retry",
                 HttpMethod.POST, new HttpEntity<>(headers()), Void.class);
         assertThat(retry.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        var retried = jdbc.queryForList("select * from audit_log where action = 'RESULTS_EXPORT_RETRIED' "
+                + "and entity_id = ?", String.valueOf(item.getId()));
+        assertThat(retried).hasSize(1);
+        assertThat(retried.get(0).get("actor_user_id")).isNotNull();
 
         ResponseEntity<String> download = restTemplate.exchange("/api/v1/admin/events/" + eventId + "/results-export",
                 HttpMethod.GET, new HttpEntity<>(headers()), String.class);

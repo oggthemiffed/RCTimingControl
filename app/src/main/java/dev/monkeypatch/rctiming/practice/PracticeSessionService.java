@@ -2,6 +2,8 @@ package dev.monkeypatch.rctiming.practice;
 
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.StateConflictException;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.practice.PracticeSession;
@@ -27,15 +29,18 @@ public class PracticeSessionService {
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final PracticeTimingService timingService;
+    private final AuditService audit;
 
     public PracticeSessionService(PracticeSessionRepository sessionRepository,
                                   EventRepository eventRepository,
                                   UserRepository userRepository,
-                                  PracticeTimingService timingService) {
+                                  PracticeTimingService timingService,
+                                  AuditService audit) {
         this.sessionRepository = sessionRepository;
         this.eventRepository = eventRepository;
         this.userRepository = userRepository;
         this.timingService = timingService;
+        this.audit = audit;
     }
 
     // ---------------------------------------------------------------------------
@@ -43,7 +48,7 @@ public class PracticeSessionService {
     // ---------------------------------------------------------------------------
 
     @Transactional
-    public PracticeSessionDto create(CreateRequest request, String createdByEmail) {
+    public PracticeSessionDto create(Actor actor, CreateRequest request) {
         PracticeSession session = new PracticeSession();
         session.setName(request.name());
 
@@ -57,11 +62,13 @@ public class PracticeSessionService {
             session.setBestLapN(request.bestLapN());
         }
 
-        if (createdByEmail != null) {
-            session.setCreatedByUserId(userRepository.findByEmail(createdByEmail).map(User::getId).orElse(null));
-        }
+        session.setCreatedByUserId(actor.userId());
 
         session = sessionRepository.save(session);
+        audit.entry(actor, "PRACTICE_SESSION_CREATED").entity("practice_session", session.getId())
+                .event(session.getEventId())
+                .summary("Created the practice session " + session.getName())
+                .after(sessionValues(session)).record();
         return toDto(session);
     }
 
@@ -82,7 +89,7 @@ public class PracticeSessionService {
     // ---------------------------------------------------------------------------
 
     @Transactional
-    public PracticeSessionDto start(Long sessionId) {
+    public PracticeSessionDto start(Actor actor, Long sessionId) {
         PracticeSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session not found: " + sessionId));
 
@@ -92,12 +99,16 @@ public class PracticeSessionService {
 
         session.start();
         session = sessionRepository.save(session);
+        audit.entry(actor, "PRACTICE_SESSION_STARTED").entity("practice_session", sessionId)
+                .event(session.getEventId())
+                .summary("Started the practice session " + session.getName())
+                .before(PracticeStatus.IDLE).after(session.getStatus()).record();
         timingService.startSession(session);
         return toDto(session);
     }
 
     @Transactional
-    public PracticeSessionDto stop(Long sessionId) {
+    public PracticeSessionDto stop(Actor actor, Long sessionId) {
         PracticeSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session not found: " + sessionId));
 
@@ -107,8 +118,20 @@ public class PracticeSessionService {
 
         session.stop();
         session = sessionRepository.save(session);
+        audit.entry(actor, "PRACTICE_SESSION_STOPPED").entity("practice_session", sessionId)
+                .event(session.getEventId())
+                .summary("Stopped the practice session " + session.getName())
+                .before(PracticeStatus.RUNNING).after(session.getStatus()).record();
         timingService.stopSession(sessionId);
         return toDto(session);
+    }
+
+    private static java.util.Map<String, Object> sessionValues(PracticeSession s) {
+        java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+        m.put("name", s.getName());
+        m.put("eventId", s.getEventId());
+        m.put("bestLapN", s.getBestLapN());
+        return m;
     }
 
     // ---------------------------------------------------------------------------
