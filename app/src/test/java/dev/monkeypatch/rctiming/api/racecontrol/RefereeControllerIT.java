@@ -44,6 +44,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -283,8 +284,6 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
         assertThat(row.get("after_json").toString()).contains("\"lapsCredited\":0");
     }
 
-    // --- Helpers ---
-
     @Test
     void history_listsIncidentsAndPenaltiesOldestFirstWithNames() {
         RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
@@ -298,17 +297,18 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
                 new HttpEntity<>(Map.of("entryId", re.entry().getId(), "penaltyType", "LAP", "value", 1,
                         "reason", "Jumped start"), refereeHeaders()), Map.class);
 
-        ResponseEntity<java.util.List> resp = restTemplate.exchange(
+        ResponseEntity<List<Map<String, Object>>> resp = restTemplate.exchange(
                 "/api/v1/race-control/races/" + raceId + "/history",
                 org.springframework.http.HttpMethod.GET,
-                new HttpEntity<>(refereeHeaders()), java.util.List.class);
+                new HttpEntity<>(refereeHeaders()),
+                new org.springframework.core.ParameterizedTypeReference<>() {});
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        java.util.List<Map<String, Object>> rows = resp.getBody();
+        List<Map<String, Object>> rows = resp.getBody();
         assertThat(rows).extracting(r -> r.get("kind")).containsExactly("INCIDENT", "PENALTY");
         assertThat(rows.get(0).get("actor")).isEqualTo("Race Referee");
         assertThat(rows.get(0).get("summary").toString()).contains("Contact").contains("Turn 3");
-        assertThat(rows.get(1).get("summary").toString()).contains("LAP penalty of 1").contains("Jumped start");
+        assertThat(rows.get(1).get("summary").toString()).contains("1 lap penalty").contains("Jumped start");
     }
 
     @Test
@@ -330,6 +330,27 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
 
         assertThat(resp.getStatusCode()).isIn(HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN);
     }
+
+    @Test
+    void history_showsAMarshalPenaltyGivenWithoutAnAbsenceOnTheRaceItWasGivenIn() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+        long raceId = re.race().getId();
+        restTemplate.exchange("/api/v1/race-control/referee/race/" + raceId + "/apply-marshal-penalty",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("entryId", re.entry().getId(), "eventId", resolveEventId(re.race())),
+                        refereeHeaders()), Map.class);
+
+        ResponseEntity<List<Map<String, Object>>> resp = restTemplate.exchange(
+                "/api/v1/race-control/races/" + raceId + "/history",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(refereeHeaders()),
+                new org.springframework.core.ParameterizedTypeReference<>() {});
+
+        assertThat(resp.getBody()).extracting(r -> r.get("kind")).containsExactly("MARSHAL_PENALTY");
+        assertThat(resp.getBody().get(0).get("actor")).isEqualTo("Race Referee");
+    }
+
+    // --- Helpers ---
 
     private HttpHeaders refereeHeaders() {
         HttpHeaders headers = new HttpHeaders();

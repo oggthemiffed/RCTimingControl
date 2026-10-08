@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 import { getRaceHistory } from '@/lib/raceControlApi';
 import type { RaceHistoryKind, RunOrderItemDto } from '@/lib/raceControlApi';
 
@@ -20,7 +21,7 @@ const LIVE_STATUSES: RaceStatus[] = ['GRID', 'RUNNING', 'STOPPED'];
 /** What happened in the race, oldest first: lifecycle, penalties, incidents, marshal laps and links (#140). */
 export function RaceHistoryPanel({ raceId, status }: { raceId: number; status: RaceStatus }) {
   const { data, isPending, isError, refetch } = useQuery({
-    queryKey: ['race-history', raceId],
+    queryKey: raceControlQueryKeys.raceHistory(raceId),
     queryFn: () => getRaceHistory(raceId),
     // New things keep happening until the race is over
     refetchInterval: LIVE_STATUSES.includes(status) ? 5000 : false,
@@ -45,7 +46,7 @@ export function RaceHistoryPanel({ raceId, status }: { raceId: number; status: R
         <ul className="divide-y rounded-md border text-sm">
           {data.map((item, i) => (
             <li key={`${item.at}-${i}`} className="flex gap-3 px-3 py-2">
-              <time className="w-20 shrink-0 tabular-nums text-muted-foreground" dateTime={item.at}>
+              <time className="w-24 shrink-0 whitespace-nowrap tabular-nums text-muted-foreground" dateTime={item.at}>
                 {new Date(item.at).toLocaleTimeString()}
               </time>
               <span className="w-32 shrink-0 font-medium">{KIND_LABEL[item.kind] ?? item.kind}</span>
@@ -53,7 +54,7 @@ export function RaceHistoryPanel({ raceId, status }: { raceId: number; status: R
                 {item.driver && <strong>{item.driver}: </strong>}
                 {item.summary}
               </span>
-              {item.actor && <span className="shrink-0 text-muted-foreground">{item.actor}</span>}
+              {item.actor && <span className="max-w-40 shrink-0 truncate text-muted-foreground">{item.actor}</span>}
             </li>
           ))}
         </ul>

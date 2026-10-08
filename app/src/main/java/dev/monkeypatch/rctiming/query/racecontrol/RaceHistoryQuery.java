@@ -17,7 +17,6 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Entries.ENTRIES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports.INCIDENT_REPORTS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAbsences.MARSHAL_ABSENCES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.MarshalAdjustments.MARSHAL_ADJUSTMENTS;
-import static dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties.MARSHAL_PENALTIES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Penalties.PENALTIES;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.UnknownTransponderLink.UNKNOWN_TRANSPONDER_LINK;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Users.USERS;
@@ -27,6 +26,8 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Users.USERS;
  * The race's own tables (penalties, incidents, marshal laps, links) hold records from before the audit log
  * existed, so they are read directly; the audit log adds what has no table of its own, such as the race
  * starting, stopping and finishing. Audit rows that only repeat a race table row are left out.
+ * A marshal penalty comes from the audit log alone: its table has no race id, and links to an absence that
+ * may belong to another race of the event.
  */
 @Component
 @Transactional(readOnly = true)
@@ -34,8 +35,7 @@ public class RaceHistoryQuery {
 
     /** Audit actions whose facts are already read from the race's own tables. */
     static final Set<String> COVERED_BY_TABLES = Set.of(
-            "PENALTY_APPLIED", "INCIDENT_RAISED", "MARSHAL_ABSENCE_RECORDED", "MARSHAL_PENALTY_APPLIED",
-            "UNKNOWN_TRANSPONDER_LINKED");
+            "PENALTY_APPLIED", "INCIDENT_RAISED", "MARSHAL_ABSENCE_RECORDED", "UNKNOWN_TRANSPONDER_LINKED");
 
     private final DSLContext dsl;
 
@@ -49,10 +49,9 @@ public class RaceHistoryQuery {
         all.addAll(incidents(raceId));
         all.addAll(marshalLaps(raceId));
         all.addAll(marshalAbsences(raceId));
-        all.addAll(marshalPenalties(raceId));
         all.addAll(transponderLinks(raceId));
         all.addAll(auditRows(raceId));
-        all.sort(Comparator.comparing(RaceHistoryDto::at));
+        all.sort(Comparator.comparing(RaceHistoryDto::at));  // stable, so ties keep the order each source returned
         return all;
     }
 
@@ -68,8 +67,10 @@ public class RaceHistoryQuery {
                 .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                 .leftJoin(USERS).on(USERS.ID.eq(PENALTIES.APPLIED_BY))
                 .where(PENALTIES.RACE_ID.eq(raceId))
+                .orderBy(PENALTIES.APPLIED_AT, PENALTIES.ID)
                 .fetch(r -> new RaceHistoryDto(r.value1(), "PENALTY", r.value2(), r.value3(),
-                        r.value4() + " penalty of " + r.value5().stripTrailingZeros().toPlainString()
+                        r.value5().stripTrailingZeros().toPlainString()
+                                + ("LAP".equals(r.value4()) ? " lap penalty" : " second time penalty")
                                 + reasonSuffix(r.value6())));
     }
 
@@ -81,6 +82,7 @@ public class RaceHistoryQuery {
                 .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                 .leftJoin(USERS).on(USERS.ID.eq(INCIDENT_REPORTS.RAISED_BY))
                 .where(INCIDENT_REPORTS.RACE_ID.eq(raceId))
+                .orderBy(INCIDENT_REPORTS.RAISED_AT, INCIDENT_REPORTS.ID)
                 .fetch(r -> new RaceHistoryDto(r.value1(), "INCIDENT", r.value2(), r.value3(),
                         "Incident reported: " + r.value4() + reasonSuffix(r.value5())));
     }
@@ -92,6 +94,7 @@ public class RaceHistoryQuery {
                 .join(ENTRIES).on(ENTRIES.ID.eq(MARSHAL_ADJUSTMENTS.ENTRY_ID))
                 .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                 .where(MARSHAL_ADJUSTMENTS.RACE_ID.eq(raceId))
+                .orderBy(MARSHAL_ADJUSTMENTS.ADJUSTED_AT, MARSHAL_ADJUSTMENTS.ID)
                 .fetch(r -> new RaceHistoryDto(r.value1(), "MARSHAL_LAP", r.value2(), r.value3(),
                         (r.value4() > 0 ? "Added a lap" : "Removed a lap") + " (race was " + r.value5() + ")"));
     }
@@ -103,20 +106,9 @@ public class RaceHistoryQuery {
                 .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                 .leftJoin(USERS).on(USERS.ID.eq(MARSHAL_ABSENCES.RECORDED_BY))
                 .where(MARSHAL_ABSENCES.RACE_ID.eq(raceId))
+                .orderBy(MARSHAL_ABSENCES.RECORDED_AT, MARSHAL_ABSENCES.ID)
                 .fetch(r -> new RaceHistoryDto(r.value1(), "MARSHAL_ABSENCE", r.value2(), r.value3(),
                         "Did not marshal"));
-    }
-
-    private List<RaceHistoryDto> marshalPenalties(long raceId) {
-        return dsl.select(MARSHAL_PENALTIES.APPLIED_AT, userName(), COMPETITORS.DISPLAY_NAME, MARSHAL_PENALTIES.NOTES)
-                .from(MARSHAL_PENALTIES)
-                .join(MARSHAL_ABSENCES).on(MARSHAL_ABSENCES.ID.eq(MARSHAL_PENALTIES.ABSENCE_ID))
-                .join(ENTRIES).on(ENTRIES.ID.eq(MARSHAL_PENALTIES.ENTRY_ID))
-                .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
-                .leftJoin(USERS).on(USERS.ID.eq(MARSHAL_PENALTIES.APPLIED_BY))
-                .where(MARSHAL_ABSENCES.RACE_ID.eq(raceId))
-                .fetch(r -> new RaceHistoryDto(r.value1(), "MARSHAL_PENALTY", r.value2(), r.value3(),
-                        "Marshalling penalty" + reasonSuffix(r.value4())));
     }
 
     private List<RaceHistoryDto> transponderLinks(long raceId) {
@@ -127,6 +119,7 @@ public class RaceHistoryQuery {
                 .leftJoin(COMPETITORS).on(COMPETITORS.ID.eq(ENTRIES.COMPETITOR_ID))
                 .leftJoin(USERS).on(USERS.ID.eq(UNKNOWN_TRANSPONDER_LINK.LINKED_BY_USER_ID))
                 .where(UNKNOWN_TRANSPONDER_LINK.RACE_ID.eq(raceId))
+                .orderBy(UNKNOWN_TRANSPONDER_LINK.LINKED_AT, UNKNOWN_TRANSPONDER_LINK.ID)
                 .fetch(r -> new RaceHistoryDto(r.value1(), "TRANSPONDER_LINK", r.value2(), r.value3(),
                         "Linked transponder " + r.value4()));
     }
@@ -136,8 +129,27 @@ public class RaceHistoryQuery {
                 .from(AUDIT_LOG)
                 .where(AUDIT_LOG.RACE_ID.eq(raceId))
                 .and(AUDIT_LOG.ACTION.notIn(COVERED_BY_TABLES))
-                .fetch(r -> new RaceHistoryDto(r.value1(), r.value3().startsWith("RACE_") ? "LIFECYCLE" : "OTHER",
-                        r.value2(), null, r.value4()));
+                .orderBy(AUDIT_LOG.OCCURRED_AT, AUDIT_LOG.ID)
+                .fetch(r -> new RaceHistoryDto(r.value1(), kindOf(r.value3()), readable(r.value2()), null,
+                        r.value4()));
+    }
+
+    private static String kindOf(String action) {
+        if (action.startsWith("RACE_")) {
+            return "LIFECYCLE";
+        }
+        return "MARSHAL_PENALTY_APPLIED".equals(action) ? "MARSHAL_PENALTY" : "OTHER";
+    }
+
+    /** The audit label holds the official's email and the system jobs' prefix; the history shows the name only. */
+    static String readable(String actorLabel) {
+        if (actorLabel == null) {
+            return null;
+        }
+        if (actorLabel.startsWith("system:")) {
+            return "System (" + actorLabel.substring("system:".length()) + ")";
+        }
+        return actorLabel.replaceFirst("\\s*<[^>]*>$", "");
     }
 
     private static String reasonSuffix(String reason) {

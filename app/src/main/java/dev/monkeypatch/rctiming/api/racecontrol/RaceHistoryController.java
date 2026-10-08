@@ -27,8 +27,8 @@ public class RaceHistoryController {
     }
 
     @GetMapping
-    public List<RaceHistoryDto> getHistory(@PathVariable Long raceId) {
-        if (raceRepository.findById(raceId).isEmpty()) {
+    public List<RaceHistoryDto> getHistory(@PathVariable long raceId) {
+        if (!raceRepository.existsById(raceId)) {
             throw new EntityNotFoundException("Race not found: " + raceId);
         }
         return history.forRace(raceId);
