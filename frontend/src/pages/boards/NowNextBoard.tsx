@@ -1,54 +1,21 @@
 // Anonymous spectator board for a venue TV (L12): the race on track with live
 // timing, what's next, and the last finished race's results when nothing is running.
-// Polls the public board endpoints and, while a race is on track, follows its STOMP timing and
-// state topics, which anonymous sessions may subscribe to.
-import { useEffect, useMemo } from 'react';
+// Polls the public board endpoints and, while a race is on track, follows it live (useBoardRace).
 import { useSearchParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useStomp } from '@/hooks/race-control/useStomp';
-import type { LiveTimingRowDto, RaceStateChangeDto } from '@/lib/raceControlApi';
-import { getBoardLiveTiming, getNowNext, getResultsBoard } from '@/lib/boardsApi';
+import { useQuery } from '@tanstack/react-query';
+import { getResultsBoard } from '@/lib/boardsApi';
 import { BoardShell, BoardMessage } from './BoardShell';
 import { BoardLiveTable } from './BoardLiveTable';
 import { BoardResultsTable } from './BoardResultsTable';
 import { BOARD_POLL_MS, parseEventParam } from './boardFormat';
+import { useBoardRace } from './useBoardRace';
 
 export default function NowNextBoard() {
   const [searchParams] = useSearchParams();
   const eventId = parseEventParam(searchParams.get('event'));
-  const queryClient = useQueryClient();
-
-  const { data: nowNext, isPending } = useQuery({
-    queryKey: ['boards', 'now-next', eventId],
-    queryFn: () => getNowNext(eventId),
-    refetchInterval: BOARD_POLL_MS,
-  });
-
-  const currentRace = nowNext?.currentRace ?? null;
+  const { nowNext, isPending, currentRace, rows } = useBoardRace(eventId);
   const nextRace = nowNext?.nextRace ?? null;
   const lastCompletedRace = nowNext?.lastCompletedRace ?? null;
-  const raceId = currentRace?.raceId ?? null;
-
-  const { data: liveRows } = useStomp<LiveTimingRowDto[]>(
-    raceId ? `/topic/race/${raceId}/timing` : null,
-  );
-  const { data: stateChange } = useStomp<RaceStateChangeDto>(
-    raceId ? `/topic/race/${raceId}/state` : null,
-  );
-
-  // Seed the table so a board opened mid-race shows the field before the next passing.
-  const { data: seedRows } = useQuery({
-    queryKey: ['boards', 'live-timing', raceId],
-    queryFn: () => getBoardLiveTiming(raceId!),
-    enabled: raceId !== null,
-  });
-
-  // A stop, resume or finish changes what the board should show, so don't wait for the next poll.
-  useEffect(() => {
-    if (stateChange) {
-      void queryClient.invalidateQueries({ queryKey: ['boards'] });
-    }
-  }, [stateChange, queryClient]);
 
   const { data: results } = useQuery({
     queryKey: ['boards', 'results', eventId],
@@ -56,11 +23,6 @@ export default function NowNextBoard() {
     enabled: !currentRace && lastCompletedRace !== null,
     refetchInterval: BOARD_POLL_MS,
   });
-
-  const rows = useMemo(() => {
-    const source = liveRows ?? seedRows ?? [];
-    return [...source].sort((a, b) => a.position - b.position);
-  }, [liveRows, seedRows]);
 
   if (isPending) {
     return (
