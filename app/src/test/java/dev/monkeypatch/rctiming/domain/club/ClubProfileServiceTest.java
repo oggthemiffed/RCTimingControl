@@ -31,12 +31,21 @@ class ClubProfileServiceTest {
 
     @Test
     void aBlankVoice_meansThePiperDefault() {
-        ClubProfile profile = new ClubProfile();
-        profile.setDefaultVoiceId(" ");
-        when(repository.findCurrent()).thenReturn(Optional.of(profile));
+        when(repository.findCurrent()).thenReturn(Optional.of(profileWithVoice(" ")));
 
         assertThat(service.defaultVoiceId()).isEmpty();
-        profile.setDefaultVoiceId("en_GB-jenny_dioco-medium");
+    }
+
+    @Test
+    void aChosenVoice_isTheClubsVoice() {
+        when(repository.findCurrent()).thenReturn(Optional.of(profileWithVoice("en_GB-jenny_dioco-medium")));
+
         assertThat(service.defaultVoiceId()).contains("en_GB-jenny_dioco-medium");
+    }
+
+    private static ClubProfile profileWithVoice(String voice) {
+        ClubProfile profile = new ClubProfile();
+        profile.setDefaultVoiceId(voice);
+        return profile;
     }
 }

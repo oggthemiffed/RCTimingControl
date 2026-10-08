@@ -52,8 +52,9 @@ public class AdminAudioController {
     @GetMapping("/settings")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<AudioSettingsDto> getAudioSettings() {
+        // "" until a voice is chosen, so the page's select shows its placeholder
         return ResponseEntity.ok(AudioSettingsDto.of(
-                clubProfileService.audioSettings(), clubProfileService.defaultVoiceId().orElse(null)));
+                clubProfileService.audioSettings(), clubProfileService.defaultVoiceId().orElse("")));
     }
 
     @Audited("audit_log")
@@ -71,7 +72,10 @@ public class AdminAudioController {
                     dto.runningOrderDepth(),
                     profile.getAudioSettings().countdownIntervals()  // not part of this form: keep them
             ));
-            profile.setDefaultVoiceId(dto.defaultVoiceId());
+            // No voice chosen on the page: keep the one stored (the column is NOT NULL)
+            if (dto.defaultVoiceId() != null && !dto.defaultVoiceId().isBlank()) {
+                profile.setDefaultVoiceId(dto.defaultVoiceId());
+            }
         });
         return ResponseEntity.ok(dto);
     }

@@ -1,7 +1,6 @@
 package dev.monkeypatch.rctiming.infrastructure.audio;
 
-import dev.monkeypatch.rctiming.domain.club.ClubProfile;
-import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
@@ -58,7 +57,7 @@ public class RunningOrderAnnouncementService {
     private static final Duration INITIAL_PERIOD = Duration.ofMinutes(10);
 
     private final RaceRepository raceRepository;
-    private final ClubProfileRepository clubProfileRepository;
+    private final ClubProfileService clubProfileService;
     private final SimpMessagingTemplate messagingTemplate;
     private final LapTimingService lapTimingService;
     private final EntryRepository entryRepository;
@@ -70,13 +69,13 @@ public class RunningOrderAnnouncementService {
     private final Map<Long, Instant> lastAnnouncementTimes = new ConcurrentHashMap<>();
 
     public RunningOrderAnnouncementService(RaceRepository raceRepository,
-                                           ClubProfileRepository clubProfileRepository,
+                                           ClubProfileService clubProfileService,
                                            SimpMessagingTemplate messagingTemplate,
                                            LapTimingService lapTimingService,
                                            EntryRepository entryRepository,
                                            CompetitorRepository competitorRepository) {
         this.raceRepository = raceRepository;
-        this.clubProfileRepository = clubProfileRepository;
+        this.clubProfileService = clubProfileService;
         this.messagingTemplate = messagingTemplate;
         this.lapTimingService = lapTimingService;
         this.entryRepository = entryRepository;
@@ -204,10 +203,7 @@ public class RunningOrderAnnouncementService {
     }
 
     private int resolveAnnouncementDepth() {
-        return clubProfileRepository.findCurrent()
-                .map(ClubProfile::getAudioSettings)
-                .map(s -> s.runningOrderDepth())
-                .orElse(3);
+        return clubProfileService.audioSettings().runningOrderDepth();
     }
 
     /**

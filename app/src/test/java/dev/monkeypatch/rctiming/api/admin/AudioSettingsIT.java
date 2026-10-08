@@ -25,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -86,6 +87,24 @@ class AudioSettingsIT extends AbstractIntegrationTest {
         assertThat(now.announceCountdown()).isFalse();
         assertThat(now.runningOrderDepth()).isEqualTo(5);
         assertThat(now.countdownIntervals()).containsExactly(900, 120);
+    }
+
+    @Test
+    void savingTheAdminFormWithNoVoiceChosen_keepsTheStoredVoice() {
+        ClubProfile profile = clubProfileRepository.findById(clubProfileService.getSingletonProfileId()).orElseThrow();
+        profile.setDefaultVoiceId("");
+        clubProfileRepository.save(profile);
+        JsonNode shown = call(HttpMethod.GET, ADMIN_SETTINGS, null).getBody();
+        assertThat(shown.get("defaultVoiceId").asText()).isEmpty();
+
+        Map<String, Object> form = new HashMap<>(Map.of(
+                "announceCountdown", true, "announceStagger", true, "announceLapBeep", true,
+                "announceFinish", true, "announceRunningOrder", true, "runningOrderDepth", 3));
+        form.put("defaultVoiceId", null);
+        ResponseEntity<JsonNode> saved = call(HttpMethod.PUT, ADMIN_SETTINGS, form);
+
+        assertThat(saved.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(clubProfileRepository.findById(profile.getId()).orElseThrow().getDefaultVoiceId()).isEmpty();
     }
 
     @Test

@@ -1,7 +1,6 @@
 package dev.monkeypatch.rctiming.infrastructure.tts;
 
-import dev.monkeypatch.rctiming.domain.club.ClubProfile;
-import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
+import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
@@ -49,7 +48,7 @@ public class AudioPreGenerationService {
     private final RaceEntryRepository raceEntryRepository;
     private final EntryRepository entryRepository;
     private final CompetitorRepository competitorRepository;
-    private final ClubProfileRepository clubProfileRepository;
+    private final ClubProfileService clubProfileService;
 
     /** In-memory clip cache: raceId → Map<clipKey, url> */
     private final Map<Long, Map<String, String>> clipCache = new ConcurrentHashMap<>();
@@ -59,13 +58,13 @@ public class AudioPreGenerationService {
                                      RaceEntryRepository raceEntryRepository,
                                      EntryRepository entryRepository,
                                      CompetitorRepository competitorRepository,
-                                     ClubProfileRepository clubProfileRepository) {
+                                     ClubProfileService clubProfileService) {
         this.clipService = clipService;
         this.raceRepository = raceRepository;
         this.raceEntryRepository = raceEntryRepository;
         this.entryRepository = entryRepository;
         this.competitorRepository = competitorRepository;
-        this.clubProfileRepository = clubProfileRepository;
+        this.clubProfileService = clubProfileService;
     }
 
     // -------------------------------------------------------------------------
@@ -97,9 +96,7 @@ public class AudioPreGenerationService {
         }
 
         // The club's voice; null leaves the choice to TtsClipService, which uses the Piper default
-        String voiceId = clubProfileRepository.findCurrent()
-                .map(ClubProfile::getDefaultVoiceId)
-                .orElse(null);
+        String voiceId = clubProfileService.defaultVoiceId().orElse(null);
 
         Map<String, String> clips = new HashMap<>();
 
