@@ -54,7 +54,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 /**
  * The live feed (#28) end to end through the test relay: a viewer sees the race live, only display names go
@@ -341,8 +340,7 @@ class LiveFeedIT extends AbstractIntegrationTest {
 
         connection.close();
 
-        await().atMost(java.time.Duration.ofSeconds(5))
-                .untilAsserted(() -> assertThat(relay.closeFrameCount()).isGreaterThan(before));
+        await(() -> relay.closeFrameCount() > before);
     }
 
     @Test
