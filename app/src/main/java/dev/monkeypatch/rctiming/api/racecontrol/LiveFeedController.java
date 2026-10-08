@@ -1,5 +1,8 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.livefeed.LiveFeedPublisher;
@@ -8,6 +11,7 @@ import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,10 +30,12 @@ public class LiveFeedController {
 
     private final LiveFeedPublisher publisher;
     private final EventRepository eventRepository;
+    private final AuditService audit;
 
-    public LiveFeedController(LiveFeedPublisher publisher, EventRepository eventRepository) {
+    public LiveFeedController(LiveFeedPublisher publisher, EventRepository eventRepository, AuditService audit) {
         this.publisher = publisher;
         this.eventRepository = eventRepository;
+        this.audit = audit;
     }
 
     /** @param enabled whether the event's races are sent to the relay while they run */
@@ -47,13 +53,22 @@ public class LiveFeedController {
         return new LiveFeedSettingDto(event(eventId).isLiveFeedEnabled());
     }
 
+    @Audited("audit_log")
     @PutMapping("/events/{eventId}/live-feed")
     @PreAuthorize("hasAnyRole('RACE_DIRECTOR','ADMIN')")
     @Transactional
-    public LiveFeedSettingDto update(@PathVariable long eventId, @Valid @RequestBody LiveFeedSettingDto request) {
+    public LiveFeedSettingDto update(Authentication auth, @PathVariable long eventId,
+                                     @Valid @RequestBody LiveFeedSettingDto request) {
         Event event = event(eventId);
+        boolean before = event.isLiveFeedEnabled();
         event.setLiveFeedEnabled(request.enabled());
         eventRepository.save(event);
+        if (before != request.enabled()) {
+            audit.entry(Actor.official(Long.parseLong(auth.getName())), "LIVE_FEED_SWITCHED")
+                    .entity("event", eventId).event(eventId)
+                    .summary("Turned the live feed " + (request.enabled() ? "on" : "off") + " for " + event.getName())
+                    .before(before).after(request.enabled()).record();
+        }
         return new LiveFeedSettingDto(event.isLiveFeedEnabled());
     }
 

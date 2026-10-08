@@ -2,6 +2,8 @@ package dev.monkeypatch.rctiming.domain.club;
 
 import dev.monkeypatch.rctiming.infrastructure.storage.ObjectStorageService;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,14 +22,17 @@ public class LogoUploadService {
 
     private final ObjectStorageService storage;
     private final ClubProfileRepository clubProfileRepository;
+    private final AuditService audit;
 
     public LogoUploadService(ObjectStorageService storage,
-                              ClubProfileRepository clubProfileRepository) {
+                              ClubProfileRepository clubProfileRepository,
+                              AuditService audit) {
         this.storage = storage;
         this.clubProfileRepository = clubProfileRepository;
+        this.audit = audit;
     }
 
-    public String uploadLogo(Long clubProfileId, MultipartFile file) {
+    public String uploadLogo(Actor actor, Long clubProfileId, MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("file part is required");
         }
@@ -59,8 +64,12 @@ public class LogoUploadService {
         }
 
         String url = storage.upload(key, bytes, contentType);
+        String before = profile.getLogoUrl();
         profile.setLogoUrl(url);
         clubProfileRepository.save(profile);
+        audit.entry(actor, "CLUB_LOGO_CHANGED").entity("club_profile", clubProfileId)
+                .summary("Replaced the club logo")
+                .before(before).after(url).record();
         return url;
     }
 }

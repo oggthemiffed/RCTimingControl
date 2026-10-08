@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api.setup;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.setup.dto.BootstrapRequest;
@@ -81,10 +82,11 @@ public class SetupController {
         return decoderProbe.probe(req.decoderHost(), req.decoderPort(), req.decoderProtocol());
     }
 
+    @Audited("audit_log")
     @PatchMapping("/decoder-config")
     @PreAuthorize("hasRole('ADMIN')")
-    public SetupProgressDto updateDecoderConfig(@RequestBody @Valid DecoderConfigUpdateRequest req) {
-        clubProfileService.updateDecoderConfig(req.decoderHost(), req.decoderPort(), req.decoderProtocol());
+    public SetupProgressDto updateDecoderConfig(Authentication auth, @RequestBody @Valid DecoderConfigUpdateRequest req) {
+        clubProfileService.updateDecoderConfig(Actor.official(Long.parseLong(auth.getName())), req.decoderHost(), req.decoderPort(), req.decoderProtocol());
         return setupService.getProgress();
     }
 

@@ -6,16 +6,12 @@
 #   READ-ONLY  a POST that changes nothing.
 #   EXEMPT   changes only bookkeeping, no data an official relies on; the reason says why.
 DELETE /api/v1/admin/classes/{id} | GAP #139: config and event changes
-DELETE /api/v1/admin/club/affiliations/{id} | GAP #139: config and event changes
 DELETE /api/v1/admin/formats/{id} | GAP #139: config and event changes
 DELETE /api/v1/admin/tracks/loops/{loopId} | GAP #139: config and event changes
 DELETE /api/v1/admin/tracks/thresholds/{thresholdId} | GAP #139: config and event changes
 DELETE /api/v1/admin/tracks/{id} | GAP #139: config and event changes
-PATCH /api/v1/race-control/settings/audio | GAP #139: config and event changes
-PATCH /api/v1/setup/decoder-config | GAP #139: config and event changes
 POST /api/v1/admin/backups | GAP #139: backup and results export
 POST /api/v1/admin/classes | GAP #139: config and event changes
-POST /api/v1/admin/club/affiliations | GAP #139: config and event changes
 POST /api/v1/admin/competitors/spoken-name/preview | READ-ONLY: plays the text, stores nothing
 POST /api/v1/admin/events/{eventId}/entry-feed/fetch | EXEMPT: downloads the file and holds it for an official to confirm, changing no entries; the import it leads to is audited
 POST /api/v1/admin/events/{eventId}/entry-feed/preview | READ-ONLY: previews the held file, applies nothing
@@ -37,12 +33,7 @@ POST /api/v1/race-control/referee/race/{raceId}/incident-report | PARTIAL: appli
 POST /api/v1/race-control/referee/race/{raceId}/marshal-absent | PARTIAL: applied_by/raised_by on the row only (#140)
 POST /api/v1/race-control/referee/race/{raceId}/penalty | PARTIAL: applied_by/raised_by on the row only (#140)
 POST /api/v1/setup/decoder-config/test | READ-ONLY: tries a decoder address, saves nothing
-PUT /api/v1/admin/audio/settings | GAP #139: config and event changes
 PUT /api/v1/admin/classes/{id} | GAP #139: config and event changes
-PUT /api/v1/admin/club/affiliations/{id} | GAP #139: config and event changes
-PUT /api/v1/admin/club/logo | GAP #139: config and event changes
-PUT /api/v1/admin/club/profile | GAP #139: config and event changes
 PUT /api/v1/admin/formats/{id} | GAP #139: config and event changes
 PUT /api/v1/admin/tracks/loops/{loopId} | GAP #139: config and event changes
 PUT /api/v1/admin/tracks/{id} | GAP #139: config and event changes
-PUT /api/v1/race-control/events/{eventId}/live-feed | GAP #139: config and event changes
