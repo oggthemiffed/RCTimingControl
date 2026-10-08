@@ -23,9 +23,9 @@ describe('usePregeneratedClips', () => {
   it('polls until the server has made the clips, then stops', async () => {
     const setClipMap = vi.fn();
     getRaceClipMap
-      .mockResolvedValueOnce({ data: {} })
-      .mockResolvedValueOnce({ data: {} })
-      .mockResolvedValue({ data: { 'grid-1': 'http://x/grid-1.wav' } });
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({})
+      .mockResolvedValue({ 'grid-1': 'http://x/grid-1.wav' });
 
     renderHook(() => usePregeneratedClips({ raceId: 5, raceState: 'GRID', setClipMap }));
     await flush();
@@ -40,7 +40,7 @@ describe('usePregeneratedClips', () => {
   });
 
   it('keeps one poll running when the race goes from GRID to RUNNING', async () => {
-    getRaceClipMap.mockResolvedValue({ data: { finish: 'http://x/finish.wav' } });
+    getRaceClipMap.mockResolvedValue({ finish: 'http://x/finish.wav' });
     const setClipMap = vi.fn();
     const { rerender } = renderHook(
       ({ raceState }) => usePregeneratedClips({ raceId: 5, raceState, setClipMap }),
@@ -53,14 +53,14 @@ describe('usePregeneratedClips', () => {
   });
 
   it('gives up after the maximum number of attempts', async () => {
-    getRaceClipMap.mockResolvedValue({ data: {} });
+    getRaceClipMap.mockResolvedValue({});
     renderHook(() => usePregeneratedClips({ raceId: 5, raceState: 'GRID', setClipMap: vi.fn() }));
     await act(async () => { await vi.advanceTimersByTimeAsync(CLIP_POLL_MS * (CLIP_POLL_MAX_ATTEMPTS + 5)); });
     expect(getRaceClipMap).toHaveBeenCalledTimes(CLIP_POLL_MAX_ATTEMPTS);
   });
 
   it('stops polling when the race changes', async () => {
-    getRaceClipMap.mockResolvedValue({ data: {} });
+    getRaceClipMap.mockResolvedValue({});
     const { rerender } = renderHook(
       ({ raceState }) => usePregeneratedClips({ raceId: 5, raceState, setClipMap: vi.fn() }),
       { initialProps: { raceState: 'GRID' } },

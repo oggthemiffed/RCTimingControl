@@ -1,4 +1,5 @@
 import api from './api';
+import type { StandingsRowDto } from './adminApi';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -241,28 +242,10 @@ export async function getPublicResultSnapshot(raceId: number): Promise<ResultSna
   return data;
 }
 
-export type RoundResultDto = {
-  roundNumber: number;
-  eventId: number;
-  eventName: string;
-  position: number;
-  points: number;
-  excluded: boolean;
-  dropped: boolean;
-};
-
-export type PublicStandingsRowDto = {
-  driverId: number;
-  displayName: string;
-  racingClassId: number;
-  totalPoints: number;
-  rounds: RoundResultDto[];
-};
-
 export async function getPublicChampionshipStandings(
   championshipId: number,
-): Promise<PublicStandingsRowDto[]> {
-  const { data } = await api.get<PublicStandingsRowDto[]>(`/api/v1/championships/${championshipId}`);
+): Promise<StandingsRowDto[]> {
+  const { data } = await api.get<StandingsRowDto[]>(`/api/v1/championships/${championshipId}`);
   return data;
 }
 

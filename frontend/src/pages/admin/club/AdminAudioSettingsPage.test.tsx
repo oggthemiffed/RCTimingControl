@@ -35,9 +35,9 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('AdminAudioSettingsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(audioApi.getAdminAudioSettings).mockResolvedValue({ data: defaultSettings } as never);
-    vi.mocked(audioApi.saveAdminAudioSettings).mockResolvedValue({ data: defaultSettings } as never);
-    vi.mocked(audioApi.listVoices).mockResolvedValue({ data: voices } as never);
+    vi.mocked(audioApi.getAdminAudioSettings).mockResolvedValue(defaultSettings as never);
+    vi.mocked(audioApi.saveAdminAudioSettings).mockResolvedValue(defaultSettings as never);
+    vi.mocked(audioApi.listVoices).mockResolvedValue(voices as never);
   });
 
   it('renders default announcement toggles', async () => {

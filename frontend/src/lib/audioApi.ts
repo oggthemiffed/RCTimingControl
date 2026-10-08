@@ -23,28 +23,28 @@ export interface AudioSettingsDto {
 
 /** List available TTS voices. */
 export const listVoices = () =>
-  api.get<VoiceInfo[]>('/api/v1/audio/voices');
+  api.get<VoiceInfo[]>('/api/v1/audio/voices').then(r => r.data);
 
 /** Fetch the clip URL map for a race (used by race control for pre-generated clips). */
 export const getRaceClipMap = (raceId: number) =>
-  api.get<Record<string, string>>(`/api/v1/race/${raceId}/audio-clips`);
+  api.get<Record<string, string>>(`/api/v1/race/${raceId}/audio-clips`).then(r => r.data);
 
 // ── Race-control audio settings ────────────────────────────────────────────
 
 /** GET current audio settings for race control (announcement toggles, volume etc.). */
 export const getAudioSettings = () =>
-  api.get<AudioSettingsDto>('/api/v1/race-control/settings/audio');
+  api.get<AudioSettingsDto>('/api/v1/race-control/settings/audio').then(r => r.data);
 
 /** PATCH audio settings for race control. */
 export const patchAudioSettings = (settings: AudioSettingsDto) =>
-  api.patch<AudioSettingsDto>('/api/v1/race-control/settings/audio', settings);
+  api.patch<AudioSettingsDto>('/api/v1/race-control/settings/audio', settings).then(r => r.data);
 
 // ── Admin audio endpoints ──────────────────────────────────────────────────
 
 /** GET admin-level audio settings (same DTO, different auth). */
 export const getAdminAudioSettings = () =>
-  api.get<AudioSettingsDto>('/api/v1/admin/audio/settings');
+  api.get<AudioSettingsDto>('/api/v1/admin/audio/settings').then(r => r.data);
 
 /** PUT admin-level audio settings. */
 export const saveAdminAudioSettings = (settings: AudioSettingsDto) =>
-  api.put<AudioSettingsDto>('/api/v1/admin/audio/settings', settings);
+  api.put<AudioSettingsDto>('/api/v1/admin/audio/settings', settings).then(r => r.data);

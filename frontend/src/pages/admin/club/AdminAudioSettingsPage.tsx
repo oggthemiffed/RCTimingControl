@@ -35,11 +35,11 @@ export default function AdminAudioSettingsPage() {
   // ── Fetch audio settings ───────────────────────────────────────────────────
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['admin-audio-settings'],
-    queryFn: () => getAdminAudioSettings().then((r) => r.data),
+    queryFn: () => getAdminAudioSettings(),
   });
 
   const saveSettingsMutation = useMutation({
-    mutationFn: (s: AudioSettingsDto) => saveAdminAudioSettings(s).then((r) => r.data),
+    mutationFn: (s: AudioSettingsDto) => saveAdminAudioSettings(s),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-audio-settings'] });
       toast.success('Audio settings saved.');
@@ -50,7 +50,7 @@ export default function AdminAudioSettingsPage() {
   // ── Fetch voices ───────────────────────────────────────────────────────────
   const { data: voices, isLoading: voicesLoading } = useQuery({
     queryKey: ['voices'],
-    queryFn: () => listVoices().then((r) => r.data),
+    queryFn: () => listVoices(),
   });
 
   const displaySettings = localSettings ?? settings;

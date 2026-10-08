@@ -22,7 +22,7 @@ vi.mock('@/hooks/race-control/useAnnouncements', () => ({
 }));
 vi.mock('@/hooks/race-control/usePreRaceReadiness', () => ({ usePreRaceReadiness: () => ({ data: undefined }) }));
 vi.mock('@/hooks/race-control/usePregeneratedClips', () => ({ usePregeneratedClips: () => undefined }));
-vi.mock('@/lib/audioApi', () => ({ getAudioSettings: vi.fn().mockResolvedValue({ data: null }) }));
+vi.mock('@/lib/audioApi', () => ({ getAudioSettings: vi.fn().mockResolvedValue(null) }));
 vi.mock('./panels/AudioSettingsPanel', () => ({ AudioSettingsPanel: () => null }));
 
 vi.mock('@/lib/adminApi', () => ({

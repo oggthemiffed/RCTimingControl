@@ -10,13 +10,6 @@ export function useRacingClasses() {
   });
 }
 
-export function useFormatTemplates() {
-  return useQuery({
-    queryKey: adminQueryKeys.formats.all(),
-    queryFn: () => adminApi.listFormatTemplates(),
-  });
-}
-
 export function useAddEventClass(eventId: number) {
   const qc = useQueryClient();
   return useMutation({

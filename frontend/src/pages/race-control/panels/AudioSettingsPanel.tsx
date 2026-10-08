@@ -36,11 +36,11 @@ export function AudioSettingsPanel({ raceId }: AudioSettingsPanelProps) {
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['audio-settings'],
-    queryFn: () => getAudioSettings().then((r) => r.data),
+    queryFn: () => getAudioSettings(),
   });
 
   const mutation = useMutation({
-    mutationFn: (s: AudioSettingsDto) => patchAudioSettings(s).then((r) => r.data),
+    mutationFn: (s: AudioSettingsDto) => patchAudioSettings(s),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['audio-settings'] }),
   });
 

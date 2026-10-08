@@ -36,12 +36,8 @@ describe('AudioSettingsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    vi.mocked(audioApi.getAudioSettings).mockResolvedValue({
-      data: defaultSettings,
-    } as never);
-    vi.mocked(audioApi.patchAudioSettings).mockResolvedValue({
-      data: defaultSettings,
-    } as never);
+    vi.mocked(audioApi.getAudioSettings).mockResolvedValue(defaultSettings as never);
+    vi.mocked(audioApi.patchAudioSettings).mockResolvedValue(defaultSettings as never);
   });
 
   it('renders toggle switches for each announcement type after opening', async () => {
@@ -107,14 +103,12 @@ describe('AudioSettingsPanel', () => {
 
   it('status dot is green when all toggles enabled', async () => {
     vi.mocked(audioApi.getAudioSettings).mockResolvedValue({
-      data: {
-        ...defaultSettings,
-        announceCountdown: true,
-        announceStagger: true,
-        announceLapBeep: true,
-        announceFinish: true,
-        announceRunningOrder: true,
-      },
+      ...defaultSettings,
+      announceCountdown: true,
+      announceStagger: true,
+      announceLapBeep: true,
+      announceFinish: true,
+      announceRunningOrder: true,
     } as never);
 
     render(<AudioSettingsPanel raceId={1} />, { wrapper });

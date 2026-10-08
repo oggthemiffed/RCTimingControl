@@ -83,7 +83,7 @@ export default function CockpitPage() {
   // Fetch audio settings — shared query key with AudioSettingsPanel so only one request fires
   const { data: audioSettings } = useQuery({
     queryKey: ['audio-settings'],
-    queryFn: () => getAudioSettings().then((r) => r.data),
+    queryFn: () => getAudioSettings(),
   });
 
   // Fetch grid entries for stagger sequencer when race is at GRID state
