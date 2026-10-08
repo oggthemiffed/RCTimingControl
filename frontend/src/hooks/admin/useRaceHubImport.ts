@@ -59,8 +59,8 @@ export function useCsvImport(eventId: number) {
  * {@code save} sends nothing until the saved ones have loaded and resolves to false then. It throws if the
  * save fails.
  */
-export function useImportClassMappings(eventId: number, open: boolean) {
-  const mappingsQuery = useRaceHubClassMappings(eventId, open);
+export function useImportClassMappings(eventId: number, enabled: boolean) {
+  const mappingsQuery = useRaceHubClassMappings(eventId, enabled);
   const replaceMappings = useReplaceRaceHubClassMappings(eventId);
 
   async function save(choices: Record<string, string>): Promise<boolean> {
