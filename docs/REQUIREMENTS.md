@@ -43,8 +43,8 @@
 ### Tracks
 
 - [x] **TRACK-01**: Admin can define and manage tracks (name, venue/location notes, optional track length); a club may have multiple tracks
-- [x] **TRACK-02**: Each track has a configurable minimum lap time per racing class; passing events with crossings faster than this threshold are ignored (prevents loop double-counting and track-cutting); a track-wide default applies to all classes unless a class-specific override is set
-- [x] **TRACK-03**: Each track has a configurable maximum last lap time per racing class; a race closes automatically if no crossing occurs within this window after the clock expires (prevents infinite wait for broken cars)
+- [ ] **TRACK-02**: Each track has a configurable minimum lap time per racing class; passing events with crossings faster than this threshold are ignored (prevents loop double-counting and track-cutting); a track-wide default applies to all classes unless a class-specific override is set **Not yet**: thresholds can be stored through `POST /admin/tracks/{id}/thresholds`, but nothing in timing applies them and the Tracks page has no fields for them.
+- [ ] **TRACK-03**: Each track has a configurable maximum last lap time per racing class; a race closes automatically if no crossing occurs within this window after the clock expires (prevents infinite wait for broken cars) **Not yet**: thresholds can be stored through `POST /admin/tracks/{id}/thresholds`, but nothing in timing applies them and the Tracks page has no fields for them.
 - [x] **TRACK-04**: Admin can configure the decoder loops associated with a track; each loop has a decoder-assigned loop ID, a display name, and a type (`FINISH_LINE`, `CHICANE`, `OTHER`); one or more loops are designated as primary scoring loops; crossing events on non-primary loops are recorded but excluded from lap counting; the model accommodates multiple loops and multiple decoders per track (multi-decoder operation is deferred to post-v1)
 
 ### Racing Classes
@@ -54,7 +54,7 @@
 ### Event Management
 
 - [x] **EVENT-01**: Admin can create an event with a name, date, and venue
-- [x] **EVENT-07**: Admin associates an event with a configured track; track lap time thresholds (TRACK-02, TRACK-03) apply automatically to all races at that event
+- [x] **EVENT-07**: Admin associates an event with a configured track; track lap time thresholds (TRACK-02, TRACK-03) apply automatically to all races at that event The thresholds themselves are not applied yet (see TRACK-02 and TRACK-03).
 - [x] **EVENT-02**: Admin can add racing classes to an event and assign a race format to each class
 - ~~**EVENT-03**: Racer can enter an event online via the portal, selecting their class, car, and transponder~~ **Removed** (#18): entries come from the RaceHub import or are added as walk-ins.
 - [x] **EVENT-04**: Public event schedule is visible without login **Changed**: "published" means the event shows on the public schedule. Walk-ins can be added until the event is completed (#17).
@@ -114,7 +114,7 @@
 
 ### Audit
 
-- [x] **AUDIT-01**: Every action an official takes that changes data, and the system's own background changes, is written to the audit log with who did it (or `system`, or the command line user), when, what it was done to and, where it applies, the value before and after. The row is written in the same transaction as the change, so a refused change leaves no row, and `AuditCoverageIT` fails when a data-changing endpoint is neither audited nor listed with a reason. Recorded: sign-in, sign-out and refresh (#152); race control (#165); championships, events and their classes, the run order and finals; entry imports and the entry feed; competitor merges and check-ins; club settings, tracks, classes and race formats; manual backups, results-export retries and practice sessions; referee actions and transponder links; bump-ups (as the system) and database restores (as the command line user, written when the app next starts); see #139. A race's own history (lifecycle, penalties, incidents, marshal laps and links, read from the race tables and the audit log) shows under the referee view (#140). An entry's own history (walk-in, check-in, transponder swaps, withdrawal, merges) shows to admins on the entry list, though changes made by importing an entry file are recorded per import, not per entry (#140). The officials' history pages through everything, newest first, and each competitor's changes are readable on their own page. The command line password reset is in the audit log too, as the operating system user who ran it (#140)
+- [x] **AUDIT-01**: Every action an official takes that changes data, and the system's own background changes, is written to the audit log with who did it (or `system`, or the command line user), when, what it was done to and, where it applies, the value before and after. The row is written in the same transaction as the change, so a refused change leaves no row, and `AuditCoverageIT` fails when a data-changing endpoint is neither audited nor listed with a reason. Recorded: sign-in, sign-out and refresh (#152); race control (#165); championships, events and their classes, the run order and finals; entry imports and the entry feed; competitor merges and check-ins; club settings, tracks, classes and race formats; manual backups, results-export retries and practice sessions; referee actions and transponder links; bump-ups (as the system) and database restores (as the command line user, written when the app next starts); see #139. Admins read the log through `GET /api/v1/admin/audit` (filter by entity, action, official, event, race and date; paged); there is no screen for it yet. A race's own history (lifecycle, penalties, incidents, marshal laps and links, read from the race tables and the audit log) shows under the referee view (#140). An entry's own history (walk-in, check-in, transponder swaps, withdrawal, merges) shows to admins on the entry list, though changes made by importing an entry file are recorded per import, not per entry (#140). The officials' history pages through everything, newest first, and each competitor's changes are readable on their own page. The command line password reset is in the audit log too, as the operating system user who ran it (#140)
 
 ### Audio Announcements
 
@@ -269,8 +269,8 @@
 | CLUB-01 | Phase 1 | Changed (#18) |
 | CLUB-02 | Phase 1 | Complete |
 | TRACK-01 | Phase 1 | Complete |
-| TRACK-02 | Phase 1 | Complete |
-| TRACK-03 | Phase 1 | Complete |
+| TRACK-02 | Phase 1 | Stored only, not applied |
+| TRACK-03 | Phase 1 | Stored only, not applied |
 | TRACK-04 | Phase 1 | Complete |
 | RACECLASS-01 | Phase 1 | Complete |
 | EVENT-01 | Phase 3 | Complete |
