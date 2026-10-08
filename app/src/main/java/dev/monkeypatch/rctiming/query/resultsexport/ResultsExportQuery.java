@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.query.resultsexport;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
+import dev.monkeypatch.rctiming.domain.ExternalSources;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import dev.monkeypatch.rctiming.query.championship.ChampionshipStandingsQuery;
 import dev.monkeypatch.rctiming.query.championship.RoundResultDto;
@@ -23,7 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeSet;
 
-import static dev.monkeypatch.rctiming.domain.racehub.RaceHubImportService.RACEHUB_SOURCE;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipEventLinks.CHAMPIONSHIP_EVENT_LINKS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Championships.CHAMPIONSHIPS;
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles.CLUB_PROFILES;
@@ -314,9 +314,9 @@ public class ResultsExportQuery {
                 .forEach(e -> {
                     // RaceHub only knows its own ids, so an entry from anywhere else (a CSV import, another
                     // booking system) is sent like a walk-in, by its RCTC ids
-                    boolean fromRaceHub = RACEHUB_SOURCE.equals(e.get(ENTRIES.EXTERNAL_SOURCE));
+                    boolean fromRaceHub = ExternalSources.RACEHUB.equals(e.get(ENTRIES.EXTERNAL_SOURCE));
                     entries.put(e.get(ENTRIES.ID), new EntryRef(
-                            fromRaceHub ? RACEHUB_SOURCE : null,
+                            fromRaceHub ? ExternalSources.RACEHUB : null,
                             fromRaceHub ? e.get(ENTRIES.EXTERNAL_ENTRY_ID) : null,
                             e.get(ENTRIES.RACEHUB_EVENT_CLASS_ID),
                             e.get(COMPETITORS.ID),
@@ -339,7 +339,7 @@ public class ResultsExportQuery {
          * RaceHub without saying which driver. Any other source is sent like a walk-in.
          */
         static CompetitorRef of(String externalSource, String externalId) {
-            return !RACEHUB_SOURCE.equals(externalSource) || externalId == null
+            return !ExternalSources.RACEHUB.equals(externalSource) || externalId == null
                     ? NONE : new CompetitorRef(externalSource, externalId);
         }
     }

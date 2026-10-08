@@ -56,6 +56,7 @@ import { useQuery } from '@tanstack/react-query';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 import { useHelp } from '@/context/HelpContext';
 import { ChampionshipHelp } from '@/help/ChampionshipHelp';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 // ── Driver combobox ────────────────────────────────────────────────────────
 
@@ -440,6 +441,7 @@ export default function ChampionshipDetailPage() {
   const unlinkEventMutation = useUnlinkChampionshipEvent(id);
   const { data: exclusions = [], isLoading: exclusionsLoading } = useChampionshipExclusions(id);
   const deleteExclusionMutation = useDeleteExclusion(id);
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const { data: racingClasses = [] } = useQuery({
     queryKey: adminQueryKeys.racingClasses.all(),
@@ -554,7 +556,15 @@ export default function ChampionshipDetailPage() {
                             variant="ghost"
                             size="icon-sm"
                             disabled={removeClassMutation.isPending}
+                            aria-label={`Remove ${rcName}`}
                             onClick={async () => {
+                              const confirmed = await confirm({
+                                title: `Remove ${rcName} from this championship?`,
+                                description: 'Its standings and best-X-from-Y setting go. You can add the class again later.',
+                                confirmLabel: 'Remove',
+                                destructive: true,
+                              });
+                              if (!confirmed) return;
                               try {
                                 await removeClassMutation.mutateAsync(cls.racingClassId);
                                 toast.success('Class removed');
@@ -618,7 +628,15 @@ export default function ChampionshipDetailPage() {
                               variant="ghost"
                               size="icon-sm"
                               disabled={unlinkEventMutation.isPending}
+                              aria-label={`Unlink ${eventName}`}
                               onClick={async () => {
+                                const confirmed = await confirm({
+                                  title: `Unlink ${eventName}?`,
+                                  description: `Its results stop counting as round ${link.roundNumber}. You can link it again later.`,
+                                  confirmLabel: 'Unlink',
+                                  destructive: true,
+                                });
+                                if (!confirmed) return;
                                 try {
                                   await unlinkEventMutation.mutateAsync(link.eventId);
                                   toast.success('Event unlinked');
@@ -704,7 +722,15 @@ export default function ChampionshipDetailPage() {
                             variant="ghost"
                             size="icon-sm"
                             disabled={deleteExclusionMutation.isPending}
+                            aria-label={`Delete exclusion for ${driverName(exc.driverId)}`}
                             onClick={async () => {
+                              const confirmed = await confirm({
+                                title: 'Delete this exclusion?',
+                                description: `${driverName(exc.driverId)}'s result at ${eventName} will count again.`,
+                                confirmLabel: 'Delete',
+                                destructive: true,
+                              });
+                              if (!confirmed) return;
                               try {
                                 await deleteExclusionMutation.mutateAsync(exc.id);
                                 toast.success('Exclusion deleted');
@@ -730,6 +756,7 @@ export default function ChampionshipDetailPage() {
           />
         </TabsContent>
       </Tabs>
+      {confirmDialog}
     </div>
   );
 }

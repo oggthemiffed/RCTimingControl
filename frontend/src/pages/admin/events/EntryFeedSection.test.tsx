@@ -168,6 +168,7 @@ describe('EntryFeedSection', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Remove token' })).not.toBeInTheDocument());
 
     fireEvent.click(screen.getByRole('button', { name: 'Remove feed' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Remove' }));
     await waitFor(() => expect(api.deleteEntryFeed).toHaveBeenCalledWith(5));
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Fetch now' })).not.toBeInTheDocument());
   });

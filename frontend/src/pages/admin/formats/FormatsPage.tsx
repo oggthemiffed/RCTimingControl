@@ -28,6 +28,7 @@ import {
   useDeleteFormat,
 } from '@/hooks/admin/useAdminFormats';
 import type { RaceFormatConfig, RaceFormatTemplateDto } from '@/lib/adminApi';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const DEFAULT_CONFIG: RaceFormatConfig = {
   type: 'TIMED',
@@ -111,6 +112,7 @@ export default function FormatsPage() {
   const createMutation = useCreateFormat();
   const updateMutation = useUpdateFormat();
   const deleteMutation = useDeleteFormat();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<RaceFormatTemplateDto | null>(null);
@@ -136,7 +138,14 @@ export default function FormatsPage() {
     }
   }
 
-  async function handleDelete(id: number) {
+  async function handleDelete(id: number, name: string) {
+    const confirmed = await confirm({
+      title: `Delete ${name}?`,
+      description: 'This format template will be removed. This cannot be undone.',
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (!confirmed) return;
     try {
       await deleteMutation.mutateAsync(id);
       toast.success('Format template deleted');
@@ -206,7 +215,7 @@ export default function FormatsPage() {
                         variant="ghost"
                         size="icon-sm"
                         disabled={deleteMutation.isPending}
-                        onClick={() => handleDelete(fmt.id)}
+                        onClick={() => handleDelete(fmt.id, fmt.name)}
                         aria-label="Delete format"
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -235,6 +244,7 @@ export default function FormatsPage() {
         onSubmit={handleUpdate}
         title="Edit Format Template"
       />
+      {confirmDialog}
     </div>
   );
 }

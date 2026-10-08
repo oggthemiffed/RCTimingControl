@@ -1,12 +1,12 @@
 package dev.monkeypatch.rctiming.domain.racehub;
 
+import dev.monkeypatch.rctiming.domain.ExternalSources;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.checkin.TransponderSlot;
 import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
-import dev.monkeypatch.rctiming.domain.csvimport.CsvImportService;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -55,7 +55,6 @@ import java.util.stream.Collectors;
 @Service
 public class RaceHubImportService {
 
-    public static final String RACEHUB_SOURCE = "RACEHUB";
     public static final int SUPPORTED_SCHEMA_VERSION = 1;
 
     /** As in the published schema: it fits {@code external_source} and reads as a code, not free text. */
@@ -112,7 +111,7 @@ public class RaceHubImportService {
             throw new IllegalArgumentException("RaceHub export has no revision");
         }
         String source = sourceOf(export);
-        boolean fromRaceHub = RACEHUB_SOURCE.equals(source);
+        boolean fromRaceHub = ExternalSources.RACEHUB.equals(source);
         List<ExportEntry> exportEntries = export.entries() == null ? List.of() : export.entries();
         String racehubEventId = !fromRaceHub || export.event() == null ? null : blankToNull(export.event().id());
 
@@ -261,7 +260,7 @@ public class RaceHubImportService {
         after.put("changed", changed);
         audit.entry(actor, "ENTRIES_IMPORTED").entity("event", event.getId()).event(event.getId())
                 .summary("Imported entries into " + event.getName() + " from "
-                        + (RACEHUB_SOURCE.equals(source) ? "RaceHub" : source) + " revision " + revision + ": "
+                        + (ExternalSources.RACEHUB.equals(source) ? "RaceHub" : source) + " revision " + revision + ": "
                         + summary.created() + " new, " + summary.updated() + " updated, "
                         + summary.withdrawn() + " withdrawn")
                 .after(after).record();
@@ -317,13 +316,13 @@ public class RaceHubImportService {
     static String sourceOf(RaceHubEntryExport export) {
         String source = export.source();
         if (source == null) {
-            return RACEHUB_SOURCE;
+            return ExternalSources.RACEHUB;
         }
         if (!SOURCE.matcher(source).matches()) {
             throw new IllegalArgumentException("source must be up to 30 capital letters, digits or underscores, "
                     + "starting with a letter, not \"" + source + "\"");
         }
-        if (CsvImportService.CSV_SOURCE.equals(source)) {
+        if (ExternalSources.CSV.equals(source)) {
             throw new IllegalArgumentException("source CSV is used by the RC-Timing CSV import; choose another");
         }
         return source;
@@ -468,7 +467,7 @@ public class RaceHubImportService {
                 e.setCompetitorId(competitor.getId());
                 e.setEventClassId(p.eventClassId);
                 // Results go back to RaceHub by its class ids (#27), so another system's are not kept
-                e.setRacehubEventClassId(RACEHUB_SOURCE.equals(source) ? row.eventClassId() : null);
+                e.setRacehubEventClassId(ExternalSources.RACEHUB.equals(source) ? row.eventClassId() : null);
                 e.setTransponderNumberSnapshot(p.transponders.primary());
                 e.setSecondaryTransponderNumber(p.transponders.secondary());
                 e.setImportedTransponderNumber(p.transponders.importedPrimary());
@@ -496,7 +495,7 @@ public class RaceHubImportService {
             c.setCreatedAt(now);
         }
         String name = row.driverDisplayName();
-        String unnamed = RACEHUB_SOURCE.equals(source) ? "RaceHub driver " : "Driver ";
+        String unnamed = ExternalSources.RACEHUB.equals(source) ? "RaceHub driver " : "Driver ";
         c.setDisplayName(name == null || name.isBlank() ? unnamed + row.driverProfileId() : name.trim());
         c.setBrcaNumber(blankToNull(row.brcaNumber()));
         c.setHomeClub(blankToNull(row.homeClub()));
@@ -611,7 +610,7 @@ public class RaceHubImportService {
         }
 
         String mappingKey(ExportEntry row) {
-            return RACEHUB_SOURCE.equals(source) ? row.eventClassId() : source + ":" + row.eventClassId();
+            return ExternalSources.RACEHUB.equals(source) ? row.eventClassId() : source + ":" + row.eventClassId();
         }
 
         Optional<Long> resolve(ExportEntry row) {

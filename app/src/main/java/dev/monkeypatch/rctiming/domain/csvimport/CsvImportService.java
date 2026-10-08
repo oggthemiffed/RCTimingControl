@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.domain.csvimport;
 
+import dev.monkeypatch.rctiming.domain.ExternalSources;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
@@ -62,8 +63,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class CsvImportService {
-
-    public static final String CSV_SOURCE = "CSV";
 
     private final EventRepository eventRepository;
     private final EventClassRepository eventClassRepository;
@@ -136,13 +135,14 @@ public class CsvImportService {
             String competitorKey = competitorKey(row);
             competitors.computeIfAbsent(competitorKey, k -> findCompetitor(k, row));
             Entry existing = eventClassId.isEmpty() ? null
-                    : entryRepository.findByExternalSourceAndExternalEntryId(CSV_SOURCE, key).orElse(null);
+                    : entryRepository.findByExternalSourceAndExternalEntryId(ExternalSources.CSV, key).orElse(null);
             plan.add(new Planned(key, row, competitorKey, eventClassId.orElse(null), existing,
                     existing == null ? List.of() : changes(existing, row, classes)));
         }
 
         List<Entry> missing = entryRepository.findByEventId(eventId).stream()
-                .filter(e -> CSV_SOURCE.equals(e.getExternalSource()) && e.getStatus() != EntryStatus.WITHDRAWN)
+                .filter(e -> ExternalSources.CSV.equals(e.getExternalSource())
+                        && e.getStatus() != EntryStatus.WITHDRAWN)
                 .filter(e -> !lineByKey.containsKey(e.getExternalEntryId()))
                 .toList();
 
@@ -244,7 +244,8 @@ public class CsvImportService {
      * any source with the same BRCA number, or, without one, the same name and no BRCA number.
      */
     private Competitor findCompetitor(String competitorKey, RcTimingCsvParser.Row row) {
-        Optional<Competitor> fromCsv = competitorRepository.findByExternalSourceAndExternalId(CSV_SOURCE, competitorKey);
+        Optional<Competitor> fromCsv =
+                competitorRepository.findByExternalSourceAndExternalId(ExternalSources.CSV, competitorKey);
         if (fromCsv.isPresent()) {
             return fromCsv.get();
         }
@@ -262,7 +263,7 @@ public class CsvImportService {
         // A BRCA-keyed row can rename a driver the CSV import made; a name-keyed row with another
         // name is another key, and a competitor from another source keeps its own name
         Competitor competitor = classes.competitor(existing.getCompetitorId());
-        if (competitor != null && CSV_SOURCE.equals(competitor.getExternalSource())
+        if (competitor != null && ExternalSources.CSV.equals(competitor.getExternalSource())
                 && !competitor.getDisplayName().equals(row.name())) {
             changes.add(new Change("Name", competitor.getDisplayName(), row.name()));
         }
@@ -355,11 +356,11 @@ public class CsvImportService {
         Competitor competitor = competitors.get(p.competitorKey);
         if (competitor == null) {
             competitor = new Competitor();
-            competitor.setExternalSource(CSV_SOURCE);
+            competitor.setExternalSource(ExternalSources.CSV);
             competitor.setExternalId(p.competitorKey);
             competitor.setCreatedAt(now);
         }
-        boolean ours = CSV_SOURCE.equals(competitor.getExternalSource());
+        boolean ours = ExternalSources.CSV.equals(competitor.getExternalSource());
         if (ours && (!p.row.name().equals(competitor.getDisplayName())
                 || !Objects.equals(text(p.row.brcaNumber()), competitor.getBrcaNumber()))) {
             competitor.setDisplayName(p.row.name());
@@ -373,7 +374,7 @@ public class CsvImportService {
         if (e == null) {
             e = new Entry();
             e.setEventId(eventId);
-            e.setExternalSource(CSV_SOURCE);
+            e.setExternalSource(ExternalSources.CSV);
             e.setExternalEntryId(p.key);
             e.setSubmittedAt(now);
         }
@@ -473,7 +474,8 @@ public class CsvImportService {
         }
 
         String mappingKey(RcTimingCsvParser.Row row) {
-            return row.className() != null ? "CSV:" + normalise(row.className()) : "CSV:#" + row.classNumber();
+            String prefix = ExternalSources.CSV + ":";
+            return row.className() != null ? prefix + normalise(row.className()) : prefix + "#" + row.classNumber();
         }
 
         /**

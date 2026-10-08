@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.domain.competitor;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.domain.ExternalSources;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
@@ -47,7 +48,6 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACIN
 public class CompetitorMergeService {
 
     private static final Logger log = LoggerFactory.getLogger(CompetitorMergeService.class);
-    private static final String RACEHUB_SOURCE = "RACEHUB";
     public static final String AUDIT_ACTION = "COMPETITOR_MERGED";
 
     private final CompetitorRepository competitorRepository;
@@ -189,7 +189,8 @@ public class CompetitorMergeService {
         List<String> blockers = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
 
-        if (RACEHUB_SOURCE.equals(keep.getExternalSource()) && RACEHUB_SOURCE.equals(duplicate.getExternalSource())) {
+        if (ExternalSources.RACEHUB.equals(keep.getExternalSource())
+                && ExternalSources.RACEHUB.equals(duplicate.getExternalSource())) {
             blockers.add(keep.getDisplayName() + " and " + duplicate.getDisplayName() + " are linked to different "
                     + "RaceHub drivers, so they are different people as far as RaceHub is concerned. "
                     + "They can't be merged.");
@@ -256,11 +257,12 @@ public class CompetitorMergeService {
         if (isBlank(keep.getExternalId())) {
             return true;
         }
-        return RACEHUB_SOURCE.equals(duplicate.getExternalSource()) && !RACEHUB_SOURCE.equals(keep.getExternalSource());
+        return ExternalSources.RACEHUB.equals(duplicate.getExternalSource())
+                && !ExternalSources.RACEHUB.equals(keep.getExternalSource());
     }
 
     private static String sourceName(String source) {
-        return RACEHUB_SOURCE.equals(source) ? "RaceHub" : "import";
+        return ExternalSources.RACEHUB.equals(source) ? "RaceHub" : "import";
     }
 
     private static Side side(Competitor c, int entries) {
