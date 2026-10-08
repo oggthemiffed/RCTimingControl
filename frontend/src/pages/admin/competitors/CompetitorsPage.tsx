@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Loader2, Users } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import SpokenNameEditor from '@/components/SpokenNameEditor';
 import { useAdminCompetitorsList, usePossibleDuplicates } from '@/hooks/admin/useAdminCompetitors';
-import { useHelp } from '@/context/HelpContext';
+import { useHelpContent } from '@/context/HelpContext';
 import { useAuth } from '@/hooks/useAuth';
 import { CompetitorsHelp } from '@/help/CompetitorsHelp';
 import type { CompetitorSummaryDto } from '@/lib/adminApi';
@@ -76,15 +76,11 @@ function CompetitorRow({ competitor, canSetSpokenName, isAdmin, onMerge }: {
  */
 export default function CompetitorsPage() {
   const [search, setSearch] = useState('');
-  const { setHelpContent } = useHelp();
   // Any official can fix how a name is said, often noticed on the day; only admins merge competitors
   const roles = useAuth().user?.roles ?? [];
   const isAdmin = roles.includes('ADMIN');
   const canSetSpokenName = isAdmin || roles.includes('RACE_DIRECTOR') || roles.includes('REFEREE');
-  useEffect(() => {
-    setHelpContent(<CompetitorsHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(CompetitorsHelp);
   const { data: competitors, isLoading, isError } = useAdminCompetitorsList();
   const { data: duplicateGroups = [] } = usePossibleDuplicates(isAdmin);
   const [merging, setMerging] = useState<{ duplicate: CompetitorSummaryDto; suggested: CompetitorSummaryDto[] } | null>(null);

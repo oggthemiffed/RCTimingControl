@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useHelp } from '@/context/HelpContext';
+import { useHelpContent } from '@/context/HelpContext';
 import { RaceControlHelp } from '@/help/RaceControlHelp';
 import { useRunOrder } from '@/hooks/race-control/useRunOrder';
 import { useRaceStateMutations } from '@/hooks/race-control/useRaceStateMutations';
@@ -45,12 +45,8 @@ export default function CockpitPage() {
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
   const eventId = Number(eventIdStr);
 
-  const { setHelpContent } = useHelp();
 
-  useEffect(() => {
-    setHelpContent(<RaceControlHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(RaceControlHelp);
 
   const { data: runOrder = [], isLoading, isError } = useRunOrder(eventId || null);
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);

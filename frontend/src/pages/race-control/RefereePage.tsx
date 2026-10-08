@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useHelp } from '@/context/HelpContext';
+import { useHelpContent } from '@/context/HelpContext';
 import { RefereeHelp } from '@/help/RefereeHelp';
 import { useRunOrder } from '@/hooks/race-control/useRunOrder';
 import { useRaceStateMutations } from '@/hooks/race-control/useRaceStateMutations';
@@ -23,12 +23,8 @@ export default function RefereePage() {
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
   const eventId = Number(eventIdStr);
 
-  const { setHelpContent } = useHelp();
 
-  useEffect(() => {
-    setHelpContent(<RefereeHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(RefereeHelp);
 
   const { data: runOrder = [] } = useRunOrder(eventId || null);
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);

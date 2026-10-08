@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useReactTable,
@@ -37,7 +37,7 @@ import { Label } from '@/components/ui/label';
 import { useAdminEventsList, useCreateAdminEvent } from '@/hooks/admin/useAdminEvents';
 import { useRoles } from '@/hooks/useRoles';
 import type { AdminEventListDto, EventStatus } from '@/lib/adminApi';
-import { useHelp } from '@/context/HelpContext';
+import { useHelpContent } from '@/context/HelpContext';
 import { EntryManagementHelp } from '@/help/EntryManagementHelp';
 import { parseLocalDate } from '@/lib/utils';
 
@@ -79,12 +79,8 @@ export default function EventListPage() {
   const navigate = useNavigate();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [createOpen, setCreateOpen] = useState(false);
-  const { setHelpContent } = useHelp();
 
-  useEffect(() => {
-    setHelpContent(<EntryManagementHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(EntryManagementHelp);
 
   const { data: events, isLoading, isError, refetch } = useAdminEventsList();
   const createEvent = useCreateAdminEvent();

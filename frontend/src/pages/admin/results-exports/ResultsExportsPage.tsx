@@ -1,11 +1,10 @@
-import { useEffect } from 'react';
 import { CloudUpload, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useResultsExports, useRetryResultsExport } from '@/hooks/admin/useResultsExports';
-import { useHelp } from '@/context/HelpContext';
+import { useHelpContent } from '@/context/HelpContext';
 import { ResultsExportsHelp } from '@/help/ResultsExportsHelp';
 import type { ResultsExportReason, ResultsExportRowDto, ResultsExportStatus } from '@/lib/adminApi';
 
@@ -45,11 +44,7 @@ function detail(row: ResultsExportRowDto) {
  * in the background and keeps retrying while RaceHub cannot be reached.
  */
 export default function ResultsExportsPage() {
-  const { setHelpContent } = useHelp();
-  useEffect(() => {
-    setHelpContent(<ResultsExportsHelp />);
-    return () => setHelpContent(null);
-  }, [setHelpContent]);
+  useHelpContent(ResultsExportsHelp);
   const { data, isLoading, isError } = useResultsExports();
   const retry = useRetryResultsExport();
 
