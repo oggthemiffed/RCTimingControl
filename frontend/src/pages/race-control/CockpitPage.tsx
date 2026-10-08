@@ -45,7 +45,6 @@ export default function CockpitPage() {
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
   const eventId = Number(eventIdStr);
 
-
   useHelpContent(RaceControlHelp);
 
   const { data: runOrder = [], isLoading, isError } = useRunOrder(eventId || null);

@@ -251,10 +251,9 @@ export default function EntryListSection({ eventId, classes }: EntryListSectionP
   const [selectedClassIdx, setSelectedClassIdx] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
   const { data: racingClasses = [] } = useRacingClasses();
-  // The add-entry endpoint is for admins and race directors; referees can see entries but not add them
-  const { isAdmin, canRunEvent: canAddEntries } = useRoles();
-  // The history names the officials who acted, so it is for admins only
-  const canSeeHistory = isAdmin;
+  // The add-entry endpoint is for admins and race directors; referees can see entries but not add them.
+  // The history names the officials who acted, so it is for admins only.
+  const { isAdmin: canSeeHistory, canRunEvent: canAddEntries } = useRoles();
 
   if (classes.length === 0) {
     return (

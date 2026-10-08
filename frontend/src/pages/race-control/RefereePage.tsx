@@ -23,7 +23,6 @@ export default function RefereePage() {
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
   const eventId = Number(eventIdStr);
 
-
   useHelpContent(RefereeHelp);
 
   const { data: runOrder = [] } = useRunOrder(eventId || null);

@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useSetupStatus, useSetupProgress } from '@/hooks/setup/useSetupProgress';
 import { useAuth } from '@/hooks/useAuth';
+import { useRoles } from '@/hooks/useRoles';
 import AdminBootstrapGate from './AdminBootstrapGate';
 import ClubProfileStep from './steps/ClubProfileStep';
 import TrackStep from './steps/TrackStep';
@@ -141,6 +142,7 @@ export default function SetupLayout() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const { data: statusData, isLoading: statusLoading } = useSetupStatus();
   const { user } = useAuth();
+  const { isAdmin } = useRoles();
   const { helpContent, isOpen, setIsOpen } = useHelp();
 
   useHelpContent(SetupWizardHelp);
@@ -182,7 +184,7 @@ export default function SetupLayout() {
   }
 
   // Setup complete but user is not ADMIN → redirect to login
-  if (statusData?.setupComplete === true && !user.roles.includes('ADMIN')) {
+  if (statusData?.setupComplete === true && !isAdmin) {
     return <Navigate to="/login" replace />;
   }
 

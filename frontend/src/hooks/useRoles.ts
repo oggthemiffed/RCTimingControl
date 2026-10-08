@@ -7,7 +7,6 @@ import { useAuth } from '@/hooks/useAuth';
  * - {@code isAdmin}: changes club config, tracks, classes, formats, events and championships (#132).
  * - {@code canRunEvent}: also moves an event through its day (publish, open, close entries, start, complete),
  *   adds entries and runs the races (generate rounds, call grid, start, finish).
- *
  * - {@code isOfficial}: holds any official role (admin, race director or referee). Every account the server
  *   creates has one, so this only guards a control against a session without roles.
  */
