@@ -31,7 +31,7 @@ See `docs/PROJECT.md` for the requirements summary, `docs/REQUIREMENTS.md` for t
 - `/topic/race/{raceId}/timing` — live lap passings, positions, gaps
 - `/topic/race/{raceId}/state` — race lifecycle changes
 - `/topic/race/{raceId}/marshal` — marshal lap adjustments
-- `/topic/race/{raceId}/unknown-transponder`, `/audio`, `/bump-up-alert` — referee, announcer and bump-up prompts
+- `/topic/race/{raceId}/unknown-transponder`, `/audio`, `/bump-up-alert` — race director, announcer and bump-up prompts
 - `/topic/practice/{sessionId}/timing` and `/unknown-transponder` — open practice
 - `/topic/system/decoder-status` — whether the decoder is connected
 - `/topic/system/live-feed-status` — whether the live feed is connected to its relay
@@ -101,9 +101,9 @@ The decoder listener runs on a **dedicated background thread** (`SmartLifecycle`
 
 ### Race State Machine
 
-`PENDING → GRID → RUNNING → STOPPED → RUNNING` (resume) or `RUNNING → FINISHED`
+`PENDING → GRID → RUNNING → STOPPED → RUNNING` (resume) or `RUNNING → FINISHED` (a stopped race can also be finished; a grid call can be taken back to `PENDING`)
 
-`RaceStatus` is an enum on the `Race` entity. `RaceStateMachineService` checks every move against one table of allowed transitions: `transition(race, target)` is the single entry point (the race control controller picks the target for each command: call grid, start, stop, finish, abandon), and `restart(race)` is separate because it resets a race to `PENDING` from any state. Invalid transitions throw `IllegalStateTransitionException` (HTTP 409). Every successful transition publishes a `RaceStatusChangedEvent` and `LiveTimingHub` broadcasts it to `/topic/race/{id}/state`. Abandoning a race finishes it with an abandoned time.
+`RaceStatus` is an enum on the `Race` entity. `RaceStateMachineService` checks every move against one table of allowed transitions: `transition(race, target)` is the single entry point (the race control controller picks the target for each command: call grid, start, stop, finish, abandon), and `restart(race)` is separate because it resets a race to `PENDING` from any state. Invalid transitions throw `IllegalStateTransitionException` (HTTP 409). Every successful `transition` publishes a `RaceStatusChangedEvent` (for audio, the race clock, the live feed, results export and practice) and has `LiveTimingHub` broadcast the new state to `/topic/race/{id}/state`; `restart` only broadcasts. Abandoning a race finishes it with an abandoned time.
 
 Marshal laps are **not** state transitions — they are `MarshalAdjustment` records (+1/−1) with full audit trail that trigger position recalculation and re-broadcast.
 

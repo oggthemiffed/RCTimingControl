@@ -43,8 +43,8 @@
 ### Tracks
 
 - [x] **TRACK-01**: Admin can define and manage tracks (name, venue/location notes, optional track length); a club may have multiple tracks
-- [ ] **TRACK-02**: Each track has a configurable minimum lap time per racing class; passing events with crossings faster than this threshold are ignored (prevents loop double-counting and track-cutting); a track-wide default applies to all classes unless a class-specific override is set **Not yet**: thresholds can be stored through `POST /admin/tracks/{id}/thresholds`, but nothing in timing applies them and the Tracks page has no fields for them.
-- [ ] **TRACK-03**: Each track has a configurable maximum last lap time per racing class; a race closes automatically if no crossing occurs within this window after the clock expires (prevents infinite wait for broken cars) **Not yet**: thresholds can be stored through `POST /admin/tracks/{id}/thresholds`, but nothing in timing applies them and the Tracks page has no fields for them.
+- [ ] **TRACK-02**: Each track has a configurable minimum lap time per racing class; passing events with crossings faster than this threshold are ignored (prevents loop double-counting and track-cutting); a track-wide default applies to all classes unless a class-specific override is set. **Not yet**: thresholds can be stored through `POST /admin/tracks/{id}/thresholds`, but nothing in timing applies them and the Tracks page has no fields for them.
+- [ ] **TRACK-03**: Each track has a configurable maximum last lap time per racing class; a race closes automatically if no crossing occurs within this window after the clock expires (prevents infinite wait for broken cars). Not yet applied: see TRACK-02.
 - [x] **TRACK-04**: Admin can configure the decoder loops associated with a track; each loop has a decoder-assigned loop ID, a display name, and a type (`FINISH_LINE`, `CHICANE`, `OTHER`); one or more loops are designated as primary scoring loops; crossing events on non-primary loops are recorded but excluded from lap counting; the model accommodates multiple loops and multiple decoders per track (multi-decoder operation is deferred to post-v1)
 
 ### Racing Classes
@@ -54,7 +54,7 @@
 ### Event Management
 
 - [x] **EVENT-01**: Admin can create an event with a name, date, and venue
-- [x] **EVENT-07**: Admin associates an event with a configured track; track lap time thresholds (TRACK-02, TRACK-03) apply automatically to all races at that event The thresholds themselves are not applied yet (see TRACK-02 and TRACK-03).
+- [x] **EVENT-07**: Admin associates an event with a configured track; the track's lap time thresholds (TRACK-02, TRACK-03) are meant to apply to all races at that event, but are not applied yet.
 - [x] **EVENT-02**: Admin can add racing classes to an event and assign a race format to each class
 - ~~**EVENT-03**: Racer can enter an event online via the portal, selecting their class, car, and transponder~~ **Removed** (#18): entries come from the RaceHub import or are added as walk-ins.
 - [x] **EVENT-04**: Public event schedule is visible without login **Changed**: "published" means the event shows on the public schedule. Walk-ins can be added until the event is completed (#17).
@@ -66,7 +66,7 @@
 
 ### Race Format Configuration
 
-- [x] **FORMAT-01**: Admin can configure a standard timed race (duration, start type, qualifying type); lap time thresholds are set at the track level (see TRACK-02, TRACK-03)
+- [x] **FORMAT-01**: Admin can configure a standard timed race (duration, start type, qualifying type); lap time thresholds are meant to be set at the track level (see TRACK-02, TRACK-03; not applied yet)
 - [x] **FORMAT-02**: Admin can configure bump-up finals (qualifying heats, heat duration, best heats count, grid size, bump spots — default 2); number of finals is calculated automatically from actual entry count at event time
 - [x] **FORMAT-04**: Admin can configure points finals (qualifying heats, finals count, final duration)
 - [x] **FORMAT-05**: Race format config is type-discriminated; only fields valid for the chosen type are accepted and required fields are validated
@@ -384,7 +384,7 @@
 
 **Coverage:**
 - Requirements: 132 total (109 from the original v1 plan, 23 in the local-only timing section)
-- Complete: 91, changed and complete: 16, removed: 25, planned: 0
+- Complete: 89, stored only and not applied: 2 (TRACK-02, TRACK-03), changed and complete: 16, removed: 25, planned: 0
 
 ---
 *Requirements defined: 2026-04-15*
