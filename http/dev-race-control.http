@@ -1,4 +1,4 @@
-### Dev Race Control — synthetic timing & race lifecycle
+### Dev Race Control — race lifecycle
 ### Requires VS Code REST Client extension (humao.rest-client)
 ###
 ### Dev seed accounts (make dev):
@@ -24,16 +24,7 @@ Content-Type: application/json
 
 @token = {{login.response.parsedBody.accessToken}}
 
-# ── 2. Fire a synthetic lap passing (random entry in the race) ───────────────
-# Replace 5 with the actual race ID shown in the run order sidebar.
-# Call repeatedly to simulate multiple drivers completing laps.
-
-POST {{baseUrl}}/dev/race/5/synthetic-passing
-Authorization: Bearer {{token}}
-
-###
-
-# ── 3. Race lifecycle commands ───────────────────────────────────────────────
+# ── 2. Race lifecycle commands ───────────────────────────────────────────────
 
 # Call Grid (PENDING → GRID)
 POST {{baseUrl}}/race-control/race/5/call-grid

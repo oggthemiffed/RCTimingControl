@@ -231,7 +231,7 @@ public class RaceControlController {
 
     /** Checks the target race is in the same event and answers with it; the client keeps the active-race pointer. */
     @PostMapping("/race/{raceId}/skip-to")
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Long>> skipTo(@PathVariable long raceId,
                                                      @Valid @RequestBody SkipToRaceRequest req) {
         Race sourceRace = loadRace(raceId);

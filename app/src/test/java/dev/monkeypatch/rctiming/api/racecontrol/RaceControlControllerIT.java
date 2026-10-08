@@ -238,7 +238,7 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
     // --- CTRL-09: skip-to ---
 
     @Test
-    void skipToLaterRace_overridesAutoAdvance() {
+    void skipToLaterRace_answersWithTheTargetAndChangesNoRace() {
         // Seed two races in the same event/round
         RoundWithClass rwc = seedRoundWithClass();
         Round round = rwc.round();
