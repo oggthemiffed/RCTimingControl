@@ -137,8 +137,9 @@ public class EntryService {
         created.put("eventClassId", String.valueOf(req.eventClassId()));
         created.put("transponderNumberSnapshot", primary);
         created.put("secondaryTransponderNumber", secondary);
-        auditLogRepository.save(EntryAuditLog.of(persisted.getId(), adminUserId, "ADMIN_CREATE", null,
-                null, EntryAuditLog.snapshot(objectMapper, created), now));
+        String afterJson = EntryAuditLog.snapshot(objectMapper, created);
+        auditLogRepository.save(
+                EntryAuditLog.of(persisted.getId(), adminUserId, "ADMIN_CREATE", null, null, afterJson, now));
         return new EntryResult(EntryDto.from(persisted), warnings);
     }
 

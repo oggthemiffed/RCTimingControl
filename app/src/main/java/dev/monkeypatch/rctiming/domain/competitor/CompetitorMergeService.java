@@ -287,8 +287,10 @@ public class CompetitorMergeService {
     }
 
     private String snapshot(Competitor c) {
-        return EntryAuditLog.snapshot(objectMapper,
-                Map.of("competitorId", String.valueOf(c.getId()), "displayName", c.getDisplayName()));
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("competitorId", String.valueOf(c.getId()));
+        m.put("displayName", c.getDisplayName());
+        return EntryAuditLog.snapshot(objectMapper, m);
     }
 
     private void writeAudit(Long entryId, Long adminId, String reason, String before, String after, Instant now) {

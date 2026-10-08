@@ -15,8 +15,7 @@ public class EntryAuditLog {
     private Long id;
     private Long entryId;
     private Long adminUserId;
-    private String action;   // "TRANSPONDER_SWAP" | "MEMBERSHIP_OVERRIDE"
-
+    private String action;   // ADMIN_CREATE, ADMIN_WITHDRAW, TRANSPONDER_SWAP or COMPETITOR_MERGED
     private String reason;
     private String beforeSnapshot;
     private String afterSnapshot;
@@ -65,7 +64,7 @@ public class EntryAuditLog {
         return log;
     }
 
-    /** The values as a JSON snapshot. A null value is written as JSON null. */
+    /** The values as a JSON snapshot. A null value is written as JSON null, so pass a map that allows nulls. */
     public static String snapshot(ObjectMapper objectMapper, Map<String, ?> values) {
         try {
             return objectMapper.writeValueAsString(values);
