@@ -44,7 +44,7 @@ public class RaceHubImportController {
                                                              @RequestParam(defaultValue = "false") boolean dryRun,
                                                              @RequestBody RaceHubEntryExport export) {
         RaceHubImportResult result = importService.importEntries(CurrentOfficial.actor(auth), eventId, export, dryRun);
-        return ImportResponses.of(result, !dryRun && result.blocked());
+        return ImportResponses.of(result);
     }
 
     @GetMapping("/racehub-class-mappings")

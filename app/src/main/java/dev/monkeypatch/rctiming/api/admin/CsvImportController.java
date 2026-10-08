@@ -50,6 +50,6 @@ public class CsvImportController {
                 update == null ? Set.of() : Set.copyOf(update), withdraw == null ? Set.of() : Set.copyOf(withdraw));
         CsvImportResult result =
                 importService.importCsv(CurrentOfficial.actor(auth), eventId, content, dryRun, selection);
-        return ImportResponses.of(result, !dryRun && result.blocked());
+        return ImportResponses.of(result);
     }
 }

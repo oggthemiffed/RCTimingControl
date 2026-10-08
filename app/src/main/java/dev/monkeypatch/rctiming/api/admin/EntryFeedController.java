@@ -71,7 +71,7 @@ public class EntryFeedController {
     @PostMapping("/apply")
     public ResponseEntity<RaceHubImportResult> apply(Authentication auth, @PathVariable long eventId) {
         RaceHubImportResult result = feedService.applyHeld(CurrentOfficial.actor(auth), eventId);
-        return ImportResponses.of(result, result.blocked());
+        return ImportResponses.of(result);
     }
 
     public record SaveRequest(String url, String token, Boolean autoFetch) {
