@@ -48,6 +48,7 @@ class PracticeSessionAuditIT extends AbstractIntegrationTest {
     @BeforeEach
     void setUp() {
         run = String.valueOf(ThreadLocalRandom.current().nextInt(10_000_000, 99_999_999));
+        finishLeftoverRunningRaces();
         // Only one session runs at a time, and another test may have left one going
         sessionRepository.findRunningSession().ifPresent(r -> sessionService.stop(Actor.system("test"), r.getId()));
         token = loginAsDirector();

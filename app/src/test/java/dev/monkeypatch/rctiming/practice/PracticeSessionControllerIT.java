@@ -48,6 +48,7 @@ class PracticeSessionControllerIT extends AbstractIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        finishLeftoverRunningRaces();
         String email = "rd-practice-" + UUID.randomUUID() + "@test.com";
         createRaceDirectorUser(email, "rdPass123");
         ResponseEntity<AuthResponse> loginResp = restTemplate.postForEntity(

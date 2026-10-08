@@ -14,6 +14,7 @@ import {
   stopSession,
   type PracticeSessionDto,
 } from '@/lib/practiceApi';
+import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
 
 function statusBadgeVariant(
@@ -38,6 +39,8 @@ export function PracticeSessionPage() {
     queryKey: ['practice-session', id],
     queryFn: () => getSession(id).then((r) => r.data),
     enabled: !isNaN(id),
+    // A race starting stops practice from the server's side, so keep the page's view of it fresh
+    refetchInterval: 5000,
   });
 
   const { rows, unknownTransponders } = usePracticeTiming(
@@ -50,7 +53,11 @@ export function PracticeSessionPage() {
       queryClient.invalidateQueries({ queryKey: ['practice-session', id] });
       toast.success('Practice session started.');
     },
-    onError: () => toast.error('Failed to start session.'),
+    onError: (err) => {
+      // The server says why, such as a race running (practice and a race share the decoder)
+      const detail = isAxiosError(err) ? err.response?.data?.detail : undefined;
+      toast.error(detail ?? 'Failed to start session.');
+    },
   });
 
   const stopMutation = useMutation({
