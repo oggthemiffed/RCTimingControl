@@ -16,13 +16,17 @@ import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.user.User;
+import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -36,6 +40,7 @@ public class ChampionshipService {
     private final EventRepository eventRepository;
     private final RacingClassRepository racingClassRepository;
     private final CompetitorRepository competitorRepository;
+    private final UserRepository userRepository;
 
     public ChampionshipService(ChampionshipRepository championshipRepository,
                                ChampionshipClassRepository classRepository,
@@ -44,7 +49,8 @@ public class ChampionshipService {
                                ChampionshipExclusionRepository exclusionRepository,
                                EventRepository eventRepository,
                                RacingClassRepository racingClassRepository,
-                               CompetitorRepository competitorRepository) {
+                               CompetitorRepository competitorRepository,
+                               UserRepository userRepository) {
         this.championshipRepository = championshipRepository;
         this.classRepository = classRepository;
         this.eventLinkRepository = eventLinkRepository;
@@ -53,6 +59,7 @@ public class ChampionshipService {
         this.eventRepository = eventRepository;
         this.racingClassRepository = racingClassRepository;
         this.competitorRepository = competitorRepository;
+        this.userRepository = userRepository;
     }
 
     public ChampionshipDto create(CreateChampionshipRequest request) {
@@ -203,7 +210,7 @@ public class ChampionshipService {
         x.setReason(request.reason());
         x.setCreatedBy(actingAdminId);
         x.setCreatedAt(Instant.now());
-        return ChampionshipExclusionDto.from(exclusionRepository.save(x));
+        return ChampionshipExclusionDto.from(exclusionRepository.save(x), officialName(actingAdminId));
     }
 
     public void deleteExclusion(Long championshipId, Long exclusionId) {
@@ -221,8 +228,22 @@ public class ChampionshipService {
         if (!championshipRepository.existsById(championshipId)) {
             throw new EntityNotFoundException("Championship not found: " + championshipId);
         }
-        return exclusionRepository.findByChampionshipIdOrderByCreatedAtDesc(championshipId)
-                .stream().map(ChampionshipExclusionDto::from).toList();
+        List<ChampionshipExclusion> exclusions =
+                exclusionRepository.findByChampionshipIdOrderByCreatedAtDesc(championshipId);
+        Map<Long, String> officials = new HashMap<>();
+        userRepository.findAllById(exclusions.stream().map(ChampionshipExclusion::getCreatedBy).distinct().toList())
+                .forEach(u -> officials.put(u.getId(), fullName(u)));
+        return exclusions.stream()
+                .map(x -> ChampionshipExclusionDto.from(x, officials.get(x.getCreatedBy())))
+                .toList();
+    }
+
+    private String officialName(Long userId) {
+        return userRepository.findById(userId).map(ChampionshipService::fullName).orElse(null);
+    }
+
+    private static String fullName(User user) {
+        return (user.getFirstName() + " " + user.getLastName()).trim();
     }
 
     private Championship getChampionshipOrThrow(Long id) {

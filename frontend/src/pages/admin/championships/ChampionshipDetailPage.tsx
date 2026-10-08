@@ -697,7 +697,7 @@ export default function ChampionshipDetailPage() {
                         <TableCell className="text-xs text-muted-foreground">
                           {new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(new Date(exc.createdAt))}
                           <br />
-                          by {driverName(exc.createdBy)}
+                          {exc.createdByName ? `by ${exc.createdByName}` : null}
                         </TableCell>
                         <TableCell>
                           <Button

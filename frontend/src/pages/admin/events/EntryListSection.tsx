@@ -22,6 +22,7 @@ import {
 import { Label } from '@/components/ui/label';
 
 import { useEntriesForClass, useWithdrawEntry } from '@/hooks/admin/useAdminEntries';
+import { useRacingClasses } from '@/hooks/admin/useAdminEventClasses';
 import type { AdminEntryDto, EventClassDto } from '@/lib/adminApi';
 import { useAuth } from '@/hooks/useAuth';
 import AddWalkInEntryDialog from './AddWalkInEntryDialog';
@@ -237,6 +238,7 @@ export default function EntryListSection({ eventId, classes }: EntryListSectionP
   const [selectedClassIdx, setSelectedClassIdx] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
   const { user } = useAuth();
+  const { data: racingClasses = [] } = useRacingClasses();
   // The add-entry endpoint is for admins and race directors; referees can see entries but not add them
   const canAddEntries = !!user?.roles.some(r => r === 'ADMIN' || r === 'RACE_DIRECTOR');
 
@@ -264,7 +266,7 @@ export default function EntryListSection({ eventId, classes }: EntryListSectionP
               variant={idx === selectedClassIdx ? 'default' : 'outline'}
               onClick={() => setSelectedClassIdx(idx)}
             >
-              Class {cls.racingClassId ?? cls.id}
+              {racingClasses.find(rc => rc.id === cls.racingClassId)?.name ?? `Class ${cls.racingClassId ?? cls.id}`}
             </Button>
           ))}
         </div>

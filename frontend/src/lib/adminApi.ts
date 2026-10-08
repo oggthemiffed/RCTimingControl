@@ -332,7 +332,10 @@ export interface ChampionshipExclusionDto {
   driverId: number;
   eventId: number;
   reason: string;
+  /** User id of the official who recorded it. */
   createdBy: number;
+  /** That official's name; null if the account has been removed. */
+  createdByName: string | null;
   createdAt: string;
 }
 
