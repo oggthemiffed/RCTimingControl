@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.query.boards;
 
 import dev.monkeypatch.rctiming.api.boards.dto.BoardRaceDto;
+import dev.monkeypatch.rctiming.domain.race.RaceLabel;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -119,22 +120,12 @@ public class BoardQuery {
         String finalLetter = r.get(RACES.FINAL_LETTER);
         return new BoardRaceDto(
                 r.get(RACES.ID),
-                label(roundType, roundNumber, className, heatNumber, finalLetter),
+                RaceLabel.of(roundType, roundNumber, className, heatNumber, finalLetter),
                 roundType,
                 roundNumber,
                 className,
                 heatNumber,
                 finalLetter,
                 r.get(RACES.STATUS));
-    }
-
-    /** Same wording as the race labels on result snapshots and the grid call. */
-    static String label(String roundType, int roundNumber, String className, int heatNumber, String finalLetter) {
-        return switch (roundType) {
-            case "PRACTICE" -> "Practice " + roundNumber + " — " + className + " — Heat " + heatNumber;
-            case "QUALIFIER" -> "Qualifying " + roundNumber + " — " + className + " — Heat " + heatNumber;
-            case "FINAL" -> (finalLetter != null ? finalLetter : "A") + " Final — " + className;
-            default -> roundType + " " + roundNumber + " — " + className + " — Heat " + heatNumber;
-        };
     }
 }
