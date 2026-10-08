@@ -14,19 +14,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  ANNOUNCEMENT_TOGGLES,
   getAdminAudioSettings,
   saveAdminAudioSettings,
   listVoices,
   type AudioSettingsDto,
 } from '@/lib/audioApi';
-
-const TOGGLE_ITEMS: { key: keyof AudioSettingsDto; label: string }[] = [
-  { key: 'announceCountdown', label: 'Countdown intervals' },
-  { key: 'announceStagger', label: 'Stagger car calls' },
-  { key: 'announceLapBeep', label: 'Lap improvement beeps' },
-  { key: 'announceFinish', label: 'Finish announcements' },
-  { key: 'announceRunningOrder', label: 'Running order' },
-];
 
 export default function AdminAudioSettingsPage() {
   const queryClient = useQueryClient();
@@ -87,12 +80,12 @@ export default function AdminAudioSettingsPage() {
             </div>
           ) : displaySettings ? (
             <>
-              {TOGGLE_ITEMS.map(({ key, label }) => (
+              {ANNOUNCEMENT_TOGGLES.map(({ key, label }) => (
                 <div key={key} className="flex items-center justify-between h-10">
                   <Label htmlFor={`admin-toggle-${key}`}>{label}</Label>
                   <Switch
                     id={`admin-toggle-${key}`}
-                    checked={displaySettings[key] as boolean}
+                    checked={displaySettings[key]}
                     onCheckedChange={() => handleToggle(key)}
                     aria-label={label}
                   />

@@ -19,6 +19,15 @@ export interface AudioSettingsDto {
   countdownIntervals?: number[];
 }
 
+/** The announcement switches, in the order the settings screens show them. */
+export const ANNOUNCEMENT_TOGGLES = [
+  { key: 'announceCountdown', label: 'Countdown intervals' },
+  { key: 'announceStagger', label: 'Stagger car calls' },
+  { key: 'announceLapBeep', label: 'Lap improvement beeps' },
+  { key: 'announceFinish', label: 'Finish announcements' },
+  { key: 'announceRunningOrder', label: 'Running order' },
+] as const satisfies readonly { key: keyof AudioSettingsDto; label: string }[];
+
 // ── Public audio endpoints ─────────────────────────────────────────────────
 
 /** List available TTS voices. */

@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AdminAudioSettingsPage from './AdminAudioSettingsPage';
 
 // Mock audioApi
-vi.mock('@/lib/audioApi', () => ({
+vi.mock('@/lib/audioApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/audioApi')>()),
   getAdminAudioSettings: vi.fn(),
   saveAdminAudioSettings: vi.fn(),
   listVoices: vi.fn(),
