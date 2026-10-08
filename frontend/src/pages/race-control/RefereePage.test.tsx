@@ -17,6 +17,7 @@ vi.mock('@/hooks/race-control/useLiveTiming', () => ({ useLiveTiming: () => ({ r
 vi.mock('./referee/useProximityAlerts', () => ({ useProximityAlerts: () => new Set<number>() }));
 vi.mock('./panels/LiveTimingPanel', () => ({ LiveTimingPanel: () => null }));
 vi.mock('./panels/RunOrderPanel', () => ({ RunOrderPanel: () => null }));
+vi.mock('./panels/RaceHistoryPanel', () => ({ RaceHistoryPanel: () => null }));
 
 type Driver = { entryId: number; driverName: string };
 const penaltyDrivers = vi.fn<(drivers: Driver[]) => void>();

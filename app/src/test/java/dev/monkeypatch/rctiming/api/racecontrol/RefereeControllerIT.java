@@ -285,6 +285,52 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
 
     // --- Helpers ---
 
+    @Test
+    void history_listsIncidentsAndPenaltiesOldestFirstWithNames() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+        long raceId = re.race().getId();
+        restTemplate.exchange("/api/v1/race-control/referee/race/" + raceId + "/incident-report",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("entryId", re.entry().getId(), "incidentType", "Contact",
+                        "description", "Turn 3"), refereeHeaders()), Map.class);
+        restTemplate.exchange("/api/v1/race-control/referee/race/" + raceId + "/penalty",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(Map.of("entryId", re.entry().getId(), "penaltyType", "LAP", "value", 1,
+                        "reason", "Jumped start"), refereeHeaders()), Map.class);
+
+        ResponseEntity<java.util.List> resp = restTemplate.exchange(
+                "/api/v1/race-control/races/" + raceId + "/history",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(refereeHeaders()), java.util.List.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        java.util.List<Map<String, Object>> rows = resp.getBody();
+        assertThat(rows).extracting(r -> r.get("kind")).containsExactly("INCIDENT", "PENALTY");
+        assertThat(rows.get(0).get("actor")).isEqualTo("Race Referee");
+        assertThat(rows.get(0).get("summary").toString()).contains("Contact").contains("Turn 3");
+        assertThat(rows.get(1).get("summary").toString()).contains("LAP penalty of 1").contains("Jumped start");
+    }
+
+    @Test
+    void history_ofAnUnknownRaceIsNotFound() {
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/race-control/races/999999/history",
+                org.springframework.http.HttpMethod.GET,
+                new HttpEntity<>(refereeHeaders()), Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void history_needsASignedInOfficial() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+
+        ResponseEntity<Map> resp = restTemplate.getForEntity(
+                "/api/v1/race-control/races/" + re.race().getId() + "/history", Map.class);
+
+        assertThat(resp.getStatusCode()).isIn(HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN);
+    }
+
     private HttpHeaders refereeHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(refereeToken);

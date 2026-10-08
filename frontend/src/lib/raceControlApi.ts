@@ -396,3 +396,27 @@ export async function swapTransponder(
   );
   return data;
 }
+
+export type RaceHistoryKind =
+  | 'LIFECYCLE'
+  | 'PENALTY'
+  | 'INCIDENT'
+  | 'MARSHAL_LAP'
+  | 'MARSHAL_ABSENCE'
+  | 'MARSHAL_PENALTY'
+  | 'TRANSPONDER_LINK'
+  | 'OTHER';
+
+export type RaceHistoryItem = {
+  at: string;
+  kind: RaceHistoryKind;
+  actor: string | null;
+  driver: string | null;
+  summary: string;
+};
+
+/** Everything that happened in a race, oldest first (#140). */
+export async function getRaceHistory(raceId: number): Promise<RaceHistoryItem[]> {
+  const { data } = await api.get<RaceHistoryItem[]>(`/api/v1/race-control/races/${raceId}/history`);
+  return data;
+}

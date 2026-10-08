@@ -11,6 +11,7 @@ import { LiveTimingPanel } from './panels/LiveTimingPanel';
 import { IncidentDialog } from './dialogs/IncidentDialog';
 import { PenaltyDialog } from './dialogs/PenaltyDialog';
 import { RunOrderPanel } from './panels/RunOrderPanel';
+import { RaceHistoryPanel } from './panels/RaceHistoryPanel';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useProximityAlerts } from './referee/useProximityAlerts';
@@ -125,11 +126,14 @@ export default function RefereePage() {
         {!selectedRaceId ? (
           <p className="text-sm text-muted-foreground">Select a race from the run order.</p>
         ) : (
-          <LiveTimingPanel
-            raceId={selectedRaceId}
-            status={selectedRace?.status ?? 'PENDING'}
-            highlightEntryIds={highlightEntryIds}
-          />
+          <>
+            <LiveTimingPanel
+              raceId={selectedRaceId}
+              status={selectedRace?.status ?? 'PENDING'}
+              highlightEntryIds={highlightEntryIds}
+            />
+            <RaceHistoryPanel raceId={selectedRaceId} status={selectedRace?.status ?? 'PENDING'} />
+          </>
         )}
       </main>
 
