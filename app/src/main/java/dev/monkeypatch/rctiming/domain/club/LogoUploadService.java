@@ -1,7 +1,6 @@
 package dev.monkeypatch.rctiming.domain.club;
 
 import dev.monkeypatch.rctiming.infrastructure.storage.ObjectStorageService;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import org.springframework.stereotype.Service;
@@ -44,8 +43,7 @@ public class LogoUploadService {
         if (file.getSize() > MAX_BYTES) {
             throw new IllegalArgumentException("File too large: max " + MAX_BYTES + " bytes");
         }
-        ClubProfile profile = clubProfileRepository.findById(clubProfileId)
-                .orElseThrow(() -> new EntityNotFoundException("Club profile not found: " + clubProfileId));
+        ClubProfile profile = clubProfileRepository.getOrThrow(clubProfileId);
 
         String extension = switch (contentType.toLowerCase()) {
             case "image/png" -> "png";

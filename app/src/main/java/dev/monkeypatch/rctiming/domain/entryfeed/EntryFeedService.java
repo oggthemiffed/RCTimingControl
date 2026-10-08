@@ -350,8 +350,7 @@ public class EntryFeedService {
     }
 
     private Event requireEvent(long eventId) {
-        return eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+        return eventRepository.getOrThrow(eventId);
     }
 
     private EntryFeed requireFeed(long eventId) {

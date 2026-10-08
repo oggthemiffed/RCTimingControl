@@ -9,6 +9,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -19,6 +20,7 @@ class CompetitorServiceTest {
     @Test
     void createWalkIn_savesATrimmedNameWithNoExternalIdentity() {
         CompetitorRepository repo = mock(CompetitorRepository.class);
+        when(repo.getOrThrow(anyLong())).thenCallRealMethod();
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -40,6 +42,7 @@ class CompetitorServiceTest {
     @Test
     void setSpokenName_savesATrimmedValue() {
         CompetitorRepository repo = mock(CompetitorRepository.class);
+        when(repo.getOrThrow(anyLong())).thenCallRealMethod();
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         when(repo.findById(7L)).thenReturn(Optional.of(existing()));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -55,6 +58,7 @@ class CompetitorServiceTest {
     @Test
     void setSpokenName_recordsWhoChangedItAndWhatItWas() {
         CompetitorRepository repo = mock(CompetitorRepository.class);
+        when(repo.getOrThrow(anyLong())).thenCallRealMethod();
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         Competitor before = existing();
         before.setSpokenName("Old say-as");
@@ -76,6 +80,7 @@ class CompetitorServiceTest {
     @Test
     void setSpokenName_clearingItIsRecordedAsNone() {
         CompetitorRepository repo = mock(CompetitorRepository.class);
+        when(repo.getOrThrow(anyLong())).thenCallRealMethod();
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         Competitor before = existing();
         before.setSpokenName("Old say-as");
@@ -93,6 +98,7 @@ class CompetitorServiceTest {
     @Test
     void setSpokenName_savingTheSameValueChangesAndRecordsNothing() {
         CompetitorRepository repo = mock(CompetitorRepository.class);
+        when(repo.getOrThrow(anyLong())).thenCallRealMethod();
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         Competitor before = existing();
         before.setSpokenName("Same say-as");
@@ -107,6 +113,7 @@ class CompetitorServiceTest {
     @Test
     void setSpokenName_blankClearsItAndTheDisplayNameIsSpokenAgain() {
         CompetitorRepository repo = mock(CompetitorRepository.class);
+        when(repo.getOrThrow(anyLong())).thenCallRealMethod();
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         Competitor withSpoken = existing();
         withSpoken.setSpokenName("Shiv-awn Keen");
@@ -122,6 +129,7 @@ class CompetitorServiceTest {
     @Test
     void setSpokenName_refusesTextOverTheLimit() {
         CompetitorRepository repo = mock(CompetitorRepository.class);
+        when(repo.getOrThrow(anyLong())).thenCallRealMethod();
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
 
         assertThatThrownBy(() -> new CompetitorService(repo, audit)
@@ -133,6 +141,7 @@ class CompetitorServiceTest {
     @Test
     void setSpokenName_unknownCompetitorIsNotFound() {
         CompetitorRepository repo = mock(CompetitorRepository.class);
+        when(repo.getOrThrow(anyLong())).thenCallRealMethod();
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         when(repo.findById(99L)).thenReturn(Optional.empty());
 

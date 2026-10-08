@@ -1,7 +1,6 @@
 package dev.monkeypatch.rctiming.domain.user;
 
 import dev.monkeypatch.rctiming.domain.auth.RefreshTokenRepository;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -166,8 +165,7 @@ public class OfficialService {
     }
 
     private User load(long officialId) {
-        return userRepository.findById(officialId)
-                .orElseThrow(() -> new EntityNotFoundException("No official with id " + officialId));
+        return userRepository.getOrThrow(officialId);
     }
 
     private static Set<Role> requireRoles(Set<Role> roles) {

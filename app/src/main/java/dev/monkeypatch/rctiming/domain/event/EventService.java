@@ -3,7 +3,6 @@ package dev.monkeypatch.rctiming.domain.event;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateEventRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.EventDto;
 import dev.monkeypatch.rctiming.api.admin.dto.UpdateEventRequest;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import org.springframework.context.ApplicationEventPublisher;
@@ -91,8 +90,7 @@ public class EventService {
     }
 
     private Event getEventOrThrow(Long id) {
-        return eventRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + id));
+        return eventRepository.getOrThrow(id);
     }
 
     private static Map<String, Object> detailsOf(Event e) {

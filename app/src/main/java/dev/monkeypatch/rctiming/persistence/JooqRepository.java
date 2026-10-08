@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.persistence;
 
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -55,6 +56,38 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
 
     public Optional<E> findById(Long entityId) {
         return findOne(id.eq(entityId));
+    }
+
+    /** The entity, or an {@link EntityNotFoundException} naming it, which the API answers with 404. */
+    public E getOrThrow(Long entityId) {
+        return findById(entityId).orElseThrow(() -> notFound(entityId));
+    }
+
+    /** Throws an {@link EntityNotFoundException}, which the API answers with 404, when there is no such row. */
+    public void requireExists(Long entityId) {
+        if (!existsById(entityId)) {
+            throw notFound(entityId);
+        }
+    }
+
+    /**
+     * What one row is called in a not-found message, such as "Racing class". By default it comes from the
+     * table's name, made singular.
+     */
+    protected String entityName() {
+        String name = table.getName().toLowerCase().replace('_', ' ');
+        if (name.endsWith("ies")) {
+            name = name.substring(0, name.length() - 3) + "y";
+        } else if (name.endsWith("sses")) {
+            name = name.substring(0, name.length() - 2);
+        } else if (name.endsWith("s")) {
+            name = name.substring(0, name.length() - 1);
+        }
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    }
+
+    private EntityNotFoundException notFound(Long entityId) {
+        return new EntityNotFoundException(entityName() + " not found: " + entityId);
     }
 
     public List<E> findAll() {

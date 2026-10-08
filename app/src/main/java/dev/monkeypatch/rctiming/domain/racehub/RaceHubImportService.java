@@ -20,7 +20,6 @@ import dev.monkeypatch.rctiming.domain.racehub.RaceHubEntryExport.ExportEntry;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult.Action;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult.Row;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult.UnmappedClass;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,8 +103,7 @@ public class RaceHubImportService {
      */
     @Transactional
     public RaceHubImportResult importEntries(Actor actor, Long eventId, RaceHubEntryExport export, boolean dryRun) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+        Event event = eventRepository.getOrThrow(eventId);
         if (export == null || !Objects.equals(export.schemaVersion(), SUPPORTED_SCHEMA_VERSION)) {
             throw new IllegalArgumentException("Unsupported RaceHub export schema_version: expected "
                     + SUPPORTED_SCHEMA_VERSION + ", got " + (export == null ? null : export.schemaVersion()));
@@ -273,17 +271,14 @@ public class RaceHubImportService {
 
     @Transactional(readOnly = true)
     public List<RaceHubClassMapping> listMappings(Long eventId) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new EntityNotFoundException("Event not found");
-        }
+        eventRepository.requireExists(eventId);
         return mappingRepository.findByEventIdOrderByRacehubEventClassId(eventId);
     }
 
     /** Replaces the event's class mappings with {@code mappings} (RaceHub event_class_id → event class id). */
     @Transactional
     public List<RaceHubClassMapping> replaceMappings(Actor actor, Long eventId, Map<String, Long> mappings) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+        Event event = eventRepository.getOrThrow(eventId);
         Map<String, Long> before = new TreeMap<>();
         mappingRepository.findByEventIdOrderByRacehubEventClassId(eventId)
                 .forEach(m -> before.put(m.getRacehubEventClassId(), m.getEventClassId()));

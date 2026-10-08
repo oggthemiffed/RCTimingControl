@@ -51,8 +51,7 @@ public class EventRunOrderService {
     }
 
     public void generateRounds(Actor actor, RoundGenerationRequest request) {
-        Event event = eventRepository.findById(request.eventId())
-                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + request.eventId()));
+        Event event = eventRepository.getOrThrow(request.eventId());
         roundGeneratorService.generate(request);
         Map<String, Object> after = new LinkedHashMap<>();
         after.put("practiceRoundsCount", request.practiceRoundsCount());

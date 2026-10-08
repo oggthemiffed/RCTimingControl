@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.query.racecontrol.RaceHistoryDto;
 import dev.monkeypatch.rctiming.query.racecontrol.RaceHistoryQuery;
@@ -28,9 +27,7 @@ public class RaceHistoryController {
 
     @GetMapping
     public List<RaceHistoryDto> getHistory(@PathVariable long raceId) {
-        if (!raceRepository.existsById(raceId)) {
-            throw new EntityNotFoundException("Race not found: " + raceId);
-        }
+        raceRepository.requireExists(raceId);
         return history.forRace(raceId);
     }
 }

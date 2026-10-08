@@ -2,7 +2,6 @@ package dev.monkeypatch.rctiming.domain.competitor;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
@@ -183,8 +182,7 @@ public class CompetitorMergeService {
     }
 
     private Competitor load(Long id) {
-        return competitorRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Competitor not found: " + id));
+        return competitorRepository.getOrThrow(id);
     }
 
     private Preview plan(Competitor keep, Competitor duplicate, List<Entry> moving, List<Entry> keepEntries) {

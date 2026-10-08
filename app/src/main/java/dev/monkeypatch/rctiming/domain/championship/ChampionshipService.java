@@ -123,12 +123,8 @@ public class ChampionshipService {
     }
 
     public ChampionshipClassDto addClass(Actor actor, Long championshipId, AddChampionshipClassRequest request) {
-        if (!championshipRepository.existsById(championshipId)) {
-            throw new EntityNotFoundException("Championship not found: " + championshipId);
-        }
-        if (!racingClassRepository.existsById(request.racingClassId())) {
-            throw new EntityNotFoundException("Racing class not found: " + request.racingClassId());
-        }
+        championshipRepository.requireExists(championshipId);
+        racingClassRepository.requireExists(request.racingClassId());
         if (classRepository.existsByChampionshipIdAndRacingClassId(championshipId, request.racingClassId())) {
             throw new DataIntegrityViolationException(
                     "Racing class " + request.racingClassId() + " already belongs to championship " + championshipId);
@@ -148,9 +144,7 @@ public class ChampionshipService {
     }
 
     public void removeClass(Actor actor, Long championshipId, Long racingClassId) {
-        if (!championshipRepository.existsById(championshipId)) {
-            throw new EntityNotFoundException("Championship not found: " + championshipId);
-        }
+        championshipRepository.requireExists(championshipId);
         // Nothing to record if the class was not in the championship
         classRepository.findByChampionshipId(championshipId).stream()
                 .filter(c -> c.getRacingClassId().equals(racingClassId))
@@ -164,12 +158,8 @@ public class ChampionshipService {
     }
 
     public ChampionshipEventLinkDto linkEvent(Actor actor, Long championshipId, AddChampionshipEventRequest request) {
-        if (!championshipRepository.existsById(championshipId)) {
-            throw new EntityNotFoundException("Championship not found: " + championshipId);
-        }
-        if (!eventRepository.existsById(request.eventId())) {
-            throw new EntityNotFoundException("Event not found: " + request.eventId());
-        }
+        championshipRepository.requireExists(championshipId);
+        eventRepository.requireExists(request.eventId());
         if (eventLinkRepository.existsByChampionshipIdAndEventId(championshipId, request.eventId())) {
             throw new DataIntegrityViolationException(
                     "Event " + request.eventId() + " already linked to championship " + championshipId);
@@ -192,9 +182,7 @@ public class ChampionshipService {
     }
 
     public void unlinkEvent(Actor actor, Long championshipId, Long eventId) {
-        if (!championshipRepository.existsById(championshipId)) {
-            throw new EntityNotFoundException("Championship not found: " + championshipId);
-        }
+        championshipRepository.requireExists(championshipId);
         // Nothing to record if the event was not linked
         eventLinkRepository.findByChampionshipIdOrderByRoundNumberAsc(championshipId).stream()
                 .filter(l -> l.getEventId().equals(eventId))
@@ -210,9 +198,7 @@ public class ChampionshipService {
     /** CHAMP-04: replace-all points scale in a single transaction. */
     public List<PointsScaleEntryDto> replacePointsScale(Actor actor, Long championshipId,
                                                         UpdatePointsScaleRequest request) {
-        if (!championshipRepository.existsById(championshipId)) {
-            throw new EntityNotFoundException("Championship not found: " + championshipId);
-        }
+        championshipRepository.requireExists(championshipId);
         List<PointsScaleEntryDto> before = pointsScaleRepository.findByChampionshipIdOrderByPositionAsc(championshipId)
                 .stream().map(PointsScaleEntryDto::from).toList();
         pointsScaleRepository.deleteAllByChampionshipId(championshipId);
@@ -238,15 +224,9 @@ public class ChampionshipService {
     public ChampionshipExclusionDto createExclusion(Actor actor,
                                                     Long championshipId,
                                                     CreateExclusionRequest request) {
-        if (!championshipRepository.existsById(championshipId)) {
-            throw new EntityNotFoundException("Championship not found: " + championshipId);
-        }
-        if (!competitorRepository.existsById(request.driverId())) {
-            throw new EntityNotFoundException("Competitor not found: " + request.driverId());
-        }
-        if (!eventRepository.existsById(request.eventId())) {
-            throw new EntityNotFoundException("Event not found: " + request.eventId());
-        }
+        championshipRepository.requireExists(championshipId);
+        competitorRepository.requireExists(request.driverId());
+        eventRepository.requireExists(request.eventId());
         if (exclusionRepository.existsByChampionshipIdAndDriverIdAndEventId(
                 championshipId, request.driverId(), request.eventId())) {
             throw new DataIntegrityViolationException(
@@ -269,8 +249,7 @@ public class ChampionshipService {
     }
 
     public void deleteExclusion(Actor actor, Long championshipId, Long exclusionId) {
-        ChampionshipExclusion x = exclusionRepository.findById(exclusionId)
-                .orElseThrow(() -> new EntityNotFoundException("Exclusion not found: " + exclusionId));
+        ChampionshipExclusion x = exclusionRepository.getOrThrow(exclusionId);
         if (!x.getChampionshipId().equals(championshipId)) {
             throw new EntityNotFoundException(
                     "Exclusion " + exclusionId + " does not belong to championship " + championshipId);
@@ -285,9 +264,7 @@ public class ChampionshipService {
 
     @Transactional(readOnly = true)
     public List<ChampionshipExclusionDto> listExclusions(Long championshipId) {
-        if (!championshipRepository.existsById(championshipId)) {
-            throw new EntityNotFoundException("Championship not found: " + championshipId);
-        }
+        championshipRepository.requireExists(championshipId);
         List<ChampionshipExclusion> exclusions =
                 exclusionRepository.findByChampionshipIdOrderByCreatedAtDesc(championshipId);
         Map<Long, String> officials = new HashMap<>();
@@ -367,7 +344,6 @@ public class ChampionshipService {
     }
 
     private Championship getChampionshipOrThrow(Long id) {
-        return championshipRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Championship not found: " + id));
+        return championshipRepository.getOrThrow(id);
     }
 }

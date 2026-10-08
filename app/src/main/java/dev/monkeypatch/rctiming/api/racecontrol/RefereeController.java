@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
@@ -222,8 +221,7 @@ public class RefereeController {
     /** The absence a marshal penalty is for: the one named, which must be this entry's in this event, or the latest. */
     private Long absenceFor(MarshalPenaltyRequest req) {
         if (req.absenceId() != null) {
-            MarshalAbsence named = marshalAbsenceRepository.findById(req.absenceId())
-                    .orElseThrow(() -> new EntityNotFoundException("Marshal absence not found: " + req.absenceId()));
+            MarshalAbsence named = marshalAbsenceRepository.getOrThrow(req.absenceId());
             if (!named.getEntryId().equals(req.entryId()) || !named.getEventId().equals(req.eventId())) {
                 throw new StateConflictException("That absence was recorded for a different entry or event");
             }

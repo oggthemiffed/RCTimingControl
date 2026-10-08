@@ -21,6 +21,11 @@ public class ResultsOutboxRepository extends JooqRepository<ResultsOutboxItem, R
         super(dsl, RESULTS_OUTBOX, RESULTS_OUTBOX.ID);
     }
 
+    @Override
+    protected String entityName() {
+        return "Results export";
+    }
+
     public List<ResultsOutboxItem> findByStatusInAndNextAttemptAtLessThanEqualOrderByIdAsc(
             Collection<OutboxStatus> statuses, Instant due) {
         return findWhere(RESULTS_OUTBOX.STATUS.in(names(statuses)).and(RESULTS_OUTBOX.NEXT_ATTEMPT_AT.le(due)));

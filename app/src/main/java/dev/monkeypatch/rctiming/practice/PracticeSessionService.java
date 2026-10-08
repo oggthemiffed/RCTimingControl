@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.practice;
 
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
@@ -100,8 +99,7 @@ public class PracticeSessionService {
 
     @Transactional
     public PracticeSessionDto start(Actor actor, Long sessionId) {
-        PracticeSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new EntityNotFoundException("Session not found: " + sessionId));
+        PracticeSession session = sessionRepository.getOrThrow(sessionId);
 
         if (session.getStatus() != PracticeStatus.IDLE) {
             throw new StateConflictException("Session must be IDLE to start; current: " + session.getStatus());
@@ -129,8 +127,7 @@ public class PracticeSessionService {
 
     /** @param causedByRaceId the race whose start stops the session, or null when an official stopped it */
     private PracticeSessionDto stop(Actor actor, Long sessionId, Long causedByRaceId) {
-        PracticeSession session = sessionRepository.findById(sessionId)
-                .orElseThrow(() -> new EntityNotFoundException("Session not found: " + sessionId));
+        PracticeSession session = sessionRepository.getOrThrow(sessionId);
 
         if (session.getStatus() != PracticeStatus.RUNNING) {
             throw new StateConflictException("Session must be RUNNING to stop; current: " + session.getStatus());
