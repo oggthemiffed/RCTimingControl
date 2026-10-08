@@ -6,7 +6,6 @@ import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalDutyRowDto;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.PreRaceReadinessDto;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.jooq.DSLContext;
-import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

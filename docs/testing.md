@@ -113,14 +113,7 @@ Log in as `director@example.com` or `admin1@example.com` to access these.
 
 Run `make simulator` and set the decoder host to `localhost` in **Admin → Decoder**: it sends laps for the seed transponders (101–106) on port 5100, the same as a real RC-4 decoder. See [decoder.md](decoder.md).
 
-For a single lap without the simulator, POST to the dev-only endpoint with a race in RUNNING state:
-
-```bash
-curl -X POST http://localhost:8080/api/v1/dev/race/{raceId}/synthetic-passing \
-  -H "Authorization: Bearer <token>"
-```
-
-The live timing panel will update in real time via WebSocket without needing physical decoder hardware.
+The live timing panel updates in real time over WebSocket, so no decoder hardware is needed.
 
 ---
 

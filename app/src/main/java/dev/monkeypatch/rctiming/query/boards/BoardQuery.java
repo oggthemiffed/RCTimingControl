@@ -5,7 +5,6 @@ import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.SortField;
-import org.jooq.impl.DSL;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

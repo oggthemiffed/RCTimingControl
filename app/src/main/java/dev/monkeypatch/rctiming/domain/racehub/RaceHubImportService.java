@@ -210,7 +210,6 @@ public class RaceHubImportService {
             // the old one in the one-active-entry index.
             plan.stream().filter(p -> p.action == Action.WITHDRAW)
                     .forEach(p -> savedIds.put(p, applyRow(eventId, p, competitors, source)));
-            entryRepository.flush();
             plan.stream().filter(p -> p.action != Action.WITHDRAW)
                     .forEach(p -> savedIds.put(p, applyRow(eventId, p, competitors, source)));
             if (fromRaceHub) {
@@ -299,7 +298,6 @@ public class RaceHubImportService {
             }
         });
         mappingRepository.deleteByEventId(eventId);
-        mappingRepository.flush();
         Instant now = Instant.now();
         List<RaceHubClassMapping> saved = new ArrayList<>();
         new TreeMap<>(mappings).forEach((racehubId, eventClassId) -> {

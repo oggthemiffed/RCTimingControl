@@ -8,7 +8,7 @@ package dev.monkeypatch.rctiming.timing;
  * {@code raceId} is {@link #NO_RACE} when no race is running; practice sessions still use those passings.
  *
  * <p>Published by {@code DecoderListener} on the single timing thread (see {@code AsyncConfig}), so
- * listeners run in decoder order, and by the dev-profile synthetic timing service.
+ * listeners run in decoder order.
  */
 public record LapPassingEvent(long raceId, String transponderNumber, long rtcTimeMicros) {
 

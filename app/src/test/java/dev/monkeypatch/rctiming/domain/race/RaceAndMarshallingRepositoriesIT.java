@@ -51,7 +51,6 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
     @Autowired MarshalPenaltyRepository marshalPenalties;
     @Autowired PenaltyRepository penalties;
     @Autowired IncidentReportRepository incidents;
-    @Autowired UnknownTransponderLinkRepository links;
     @Autowired EventRepository events;
     @Autowired EventClassRepository eventClasses;
     @Autowired RaceFormatTemplateRepository templates;
@@ -273,22 +272,6 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
         cleanup.add(() -> incidents.deleteById(incident.getId()));
         assertThat(incidents.findByRaceIdOrderByRaisedAt(race.getId())).extracting(IncidentReport::getId)
                 .containsExactly(incident.getId());
-
-        UnknownTransponderLink l = new UnknownTransponderLink();
-        l.setRaceId(race.getId());
-        l.setTransponderNumber("9999999");
-        l.setLinkedEntryId(entry.getId());
-        l.setLinkedBy(official.getId());
-        l.setLinkedAt(T1);
-        UnknownTransponderLink link = assertSavedAndReloaded(links, l, c -> {
-            c.setTransponderNumber("8888888");
-            c.setLinkedEntryId(null);
-            c.setLinkedAt(T2);
-            return c;
-        }, UnknownTransponderLink::getId);
-        cleanup.add(() -> links.deleteById(link.getId()));
-        assertThat(links.findByRaceIdAndTransponderNumber(race.getId(), "8888888")).isPresent();
-        assertThat(links.findByRaceIdAndTransponderNumber(race.getId(), "9999999")).isEmpty();
     }
 
     @Test

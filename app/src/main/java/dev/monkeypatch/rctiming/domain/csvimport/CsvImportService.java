@@ -180,9 +180,6 @@ public class CsvImportService {
                     e.getTransponderNumberSnapshot(), e.getSecondaryTransponderNumber(), List.of(), Map.of(),
                     withdraw, null));
         }
-        if (withdrawn > 0) {
-            entryRepository.flush();
-        }
         for (Planned p : plan) {
             Group group = p.group();
             boolean write = apply && (group == Group.NEW || group == Group.CHANGED && picked.update().contains(p.key));
