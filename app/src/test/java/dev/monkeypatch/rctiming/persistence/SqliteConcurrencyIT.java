@@ -55,10 +55,10 @@ class SqliteConcurrencyIT extends AbstractIntegrationTest {
     @Test
     void lapWritesAndPollingReadersRunTogetherWithoutLockErrors() throws Exception {
         practiceSessionRepository.findRunningSession()
-                .ifPresent(running -> practiceSessionService.stop(running.getId()));
+                .ifPresent(running -> practiceSessionService.stop(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), running.getId()));
         long sessionId = practiceSessionService
-                .create(new PracticeSessionService.CreateRequest("Concurrency", null, 3), null).id();
-        practiceSessionService.start(sessionId);
+                .create(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), new PracticeSessionService.CreateRequest("Concurrency", null, 3)).id();
+        practiceSessionService.start(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), sessionId);
 
         Queue<Throwable> failures = new ConcurrentLinkedQueue<>();
         AtomicBoolean writing = new AtomicBoolean(true);
@@ -110,7 +110,7 @@ class SqliteConcurrencyIT extends AbstractIntegrationTest {
             writing.set(false);
             pool.shutdown();
             assertThat(pool.awaitTermination(1, TimeUnit.MINUTES)).isTrue();
-            practiceSessionService.stop(sessionId);
+            practiceSessionService.stop(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), sessionId);
         }
 
         assertThat(failures).isEmpty();

@@ -2,6 +2,8 @@ package dev.monkeypatch.rctiming.resultsexport;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
@@ -34,15 +36,19 @@ public class ResultsExportService {
     private final ResultsExportQuery exportQuery;
     private final ObjectMapper objectMapper;
 
+    private final AuditService audit;
+
     public ResultsExportService(EventRepository eventRepository, RaceRepository raceRepository,
                                 RoundRepository roundRepository, ResultsOutboxRepository outboxRepository,
-                                ResultsExportQuery exportQuery, ObjectMapper objectMapper) {
+                                ResultsExportQuery exportQuery, ObjectMapper objectMapper,
+                                AuditService audit) {
         this.eventRepository = eventRepository;
         this.raceRepository = raceRepository;
         this.roundRepository = roundRepository;
         this.outboxRepository = outboxRepository;
         this.exportQuery = exportQuery;
         this.objectMapper = objectMapper;
+        this.audit = audit;
     }
 
     /**
@@ -138,12 +144,16 @@ public class ResultsExportService {
 
     /** Sends a queued or failed export on the sender's next pass instead of waiting for its retry time. */
     @Transactional
-    public ResultsOutboxItem retryNow(long itemId) {
+    public ResultsOutboxItem retryNow(Actor actor, long itemId) {
         ResultsOutboxItem item = outboxRepository.findById(itemId)
                 .orElseThrow(() -> new EntityNotFoundException("Results export not found: " + itemId));
         if (outboxRepository.makeDue(itemId, Instant.now()) == 0) {
             return item;
         }
+        audit.entry(actor, "RESULTS_EXPORT_RETRIED").entity("results_export", itemId).event(item.getEventId())
+                .summary("Asked for results export " + itemId + " (revision " + item.getRevision()
+                        + ") to be sent again now")
+                .before(item.getStatus()).after("QUEUED").record();
         return outboxRepository.findById(itemId).orElseThrow();
     }
 

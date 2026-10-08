@@ -1,5 +1,8 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.practice.PracticeSessionService;
 import dev.monkeypatch.rctiming.practice.PracticeTimingService;
 import dev.monkeypatch.rctiming.practice.dto.PracticeSessionDto;
@@ -30,21 +33,24 @@ public class PracticeSessionController {
 
     private final PracticeSessionService sessionService;
     private final PracticeTimingService timingService;
+    private final AuditService audit;
 
     public PracticeSessionController(PracticeSessionService sessionService,
-                                     PracticeTimingService timingService) {
+                                     PracticeTimingService timingService,
+                                     AuditService audit) {
         this.sessionService = sessionService;
         this.timingService = timingService;
+        this.audit = audit;
     }
 
     /** Create a new practice session in IDLE state. */
+    @Audited("audit_log")
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<PracticeSessionDto> create(
             @RequestBody PracticeSessionService.CreateRequest request,
             Authentication auth) {
-        PracticeSessionDto session = sessionService.create(request,
-                auth != null ? auth.getName() : null);
+        PracticeSessionDto session = sessionService.create(actor(auth), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(session);
     }
 
@@ -66,17 +72,19 @@ public class PracticeSessionController {
     }
 
     /** Start a practice session (IDLE → RUNNING). Returns 409 on invalid state. */
+    @Audited("audit_log")
     @PostMapping("/{id}/start")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
-    public ResponseEntity<PracticeSessionDto> start(@PathVariable Long id) {
-        return ResponseEntity.ok(sessionService.start(id));
+    public ResponseEntity<PracticeSessionDto> start(Authentication auth, @PathVariable Long id) {
+        return ResponseEntity.ok(sessionService.start(actor(auth), id));
     }
 
     /** Stop a practice session (RUNNING → STOPPED). Returns 409 on invalid state. */
+    @Audited("audit_log")
     @PostMapping("/{id}/stop")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
-    public ResponseEntity<PracticeSessionDto> stop(@PathVariable Long id) {
-        return ResponseEntity.ok(sessionService.stop(id));
+    public ResponseEntity<PracticeSessionDto> stop(Authentication auth, @PathVariable Long id) {
+        return ResponseEntity.ok(sessionService.stop(actor(auth), id));
     }
 
     /** Get live timing snapshot (rows sorted by position). */
@@ -94,13 +102,26 @@ public class PracticeSessionController {
     }
 
     /** Link an unknown transponder to a user in an active session. */
+    @Audited("audit_log")
     @PostMapping("/{id}/link-transponder")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<Void> linkTransponder(
+            Authentication auth,
             @PathVariable Long id,
             @RequestBody LinkRequest request) {
         timingService.linkTransponder(id, request.transponderNumber(), request.userId(), request.racerName());
+        // The link lives in memory only, so there is no change to commit with: the row is written on its own
+        audit.entry(actor(auth), "PRACTICE_TRANSPONDER_LINKED").entity("practice_session", id)
+                .summary("Linked transponder " + request.transponderNumber() + " to "
+                        + (request.racerName() != null ? request.racerName() : "user " + request.userId())
+                        + " in practice session " + id)
+                .after(request).recordStandalone();
         return ResponseEntity.ok().build();
+    }
+
+    /** The signed-in official, taken from the token and never from the request body. */
+    private static Actor actor(Authentication auth) {
+        return Actor.official(Long.parseLong(auth.getName()));
     }
 
     /** Request body for linking a transponder to a user. */
