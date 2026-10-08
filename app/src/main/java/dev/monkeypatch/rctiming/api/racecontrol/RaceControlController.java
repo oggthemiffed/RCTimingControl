@@ -25,8 +25,6 @@ import jakarta.validation.Valid;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -195,8 +193,7 @@ public class RaceControlController {
     public ResponseEntity<Void> marshalAdjustment(@PathVariable long raceId,
                                                    @Valid @RequestBody MarshalAdjustmentRequest req) {
         Race race = loadRace(raceId);
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long actingUserId = CurrentOfficial.id(auth);
+        long actingUserId = CurrentOfficial.id();
         String actingUserName = resolveUserName(actingUserId);
 
         MarshalAdjustment adjustment = new MarshalAdjustment();

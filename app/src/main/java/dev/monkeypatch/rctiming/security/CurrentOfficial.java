@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.security;
 
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -9,8 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
  * The official making the current request. The JWT subject is the official's user id
  * ({@link JwtTokenService#generateAccessToken}), so every endpoint that needs an official reads it here.
  *
- * <p>Only call this behind a rule that asks for an official role. With no signed-in official it throws
- * {@link AuthenticationCredentialsNotFoundException}, which Spring Security answers with a 401.
+ * <p>Only call this behind a rule that asks for an official role. With no signed-in official it throws an
+ * {@link org.springframework.security.core.AuthenticationException}, which the API answers with a 401.
  */
 public final class CurrentOfficial {
 
@@ -24,7 +25,7 @@ public final class CurrentOfficial {
         try {
             return Long.parseLong(auth.getName());
         } catch (NumberFormatException e) {
-            throw new AuthenticationCredentialsNotFoundException("No official is signed in", e);
+            throw new BadCredentialsException("The token's subject is not an official", e);
         }
     }
 

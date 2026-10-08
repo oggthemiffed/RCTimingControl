@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,7 +44,6 @@ class CurrentOfficialTest {
         assertThatThrownBy(CurrentOfficial::id).isInstanceOf(AuthenticationCredentialsNotFoundException.class);
         var anonymous = new AnonymousAuthenticationToken("key", "anonymousUser",
                 AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
-        assertThatThrownBy(() -> CurrentOfficial.id(anonymous))
-                .isInstanceOf(AuthenticationCredentialsNotFoundException.class);
+        assertThatThrownBy(() -> CurrentOfficial.id(anonymous)).isInstanceOf(BadCredentialsException.class);
     }
 }
