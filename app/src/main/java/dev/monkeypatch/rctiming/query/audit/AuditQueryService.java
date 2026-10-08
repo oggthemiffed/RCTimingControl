@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.query.audit;
 
-import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,6 +7,7 @@ import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 
 import java.util.ArrayList;
 import java.util.List;

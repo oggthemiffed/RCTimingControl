@@ -9,6 +9,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -48,5 +49,19 @@ class LiveTimingHubTest {
 
         TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
         verify(messaging).convertAndSend("/topic/race/7/state", new RaceStateChangeDto(7, "FINISHED"));
+        verify(messaging).convertAndSend("/topic/race/7/bump-up-alert",
+                Map.of("finishedRaceId", 7L, "promotedEntryIds", List.of(3L)));
+    }
+
+    @Test
+    void onARollback_nothingIsSent() {
+        TransactionSynchronizationManager.initSynchronization();
+        TransactionSynchronizationManager.setActualTransactionActive(true);
+
+        hub.broadcastStateChange(7, RaceStatus.FINISHED);
+        TransactionSynchronizationManager.getSynchronizations()
+                .forEach(s -> s.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
+
+        verify(messaging, never()).convertAndSend(anyString(), any(Object.class));
     }
 }

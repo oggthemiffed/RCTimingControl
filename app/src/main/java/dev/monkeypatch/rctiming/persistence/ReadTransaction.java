@@ -17,8 +17,8 @@ import java.lang.annotation.Target;
  * that must wait for a write in progress on another thread needs plain {@code @Transactional(readOnly = true)}
  * instead, which runs on the write connection.
  *
- * <p>The read pool's connections refuse writes with {@code PRAGMA query_only}; sqlite-jdbc ignores the JDBC
- * read-only flag the transaction sets, which is only a hint.
+ * <p>The read pool's connections refuse writes with {@code PRAGMA query_only}. sqlite-jdbc refuses the JDBC
+ * read-only flag the transaction sets, and Spring ignores the refusal.
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

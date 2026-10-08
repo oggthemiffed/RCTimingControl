@@ -69,7 +69,8 @@ class TransactionRoutingConnectionProvider implements ConnectionProvider {
         if (TransactionSynchronizationManager.hasResource(readTransactionDataSource)) {
             return readTransactionDataSource;
         }
-        // A transaction manager over neither pool: refuse rather than guess which one it meant
-        throw new IllegalStateException("A transaction is open on neither the write nor the read pool");
+        // Only a transaction manager over neither pool gets here: refuse rather than guess which one it meant
+        throw new IllegalStateException("A transaction is open on neither the write nor the read pool; bound: "
+                + TransactionSynchronizationManager.getResourceMap().keySet());
     }
 }

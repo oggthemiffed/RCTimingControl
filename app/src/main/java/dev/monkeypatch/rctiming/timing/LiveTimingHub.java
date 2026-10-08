@@ -74,9 +74,12 @@ public class LiveTimingHub {
         messagingTemplate.convertAndSend("/topic/system/live-feed-status", status);
     }
 
-    /** Sends when the current transaction commits, or now outside one. */
+    /**
+     * Sends when the current transaction commits, or now outside one. Callers are race-control commands in a
+     * write transaction; called from another transaction's after-commit callback the message would be lost.
+     */
     private void sendAfterCommit(String destination, Object payload) {
-        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             messagingTemplate.convertAndSend(destination, payload);
             return;
         }

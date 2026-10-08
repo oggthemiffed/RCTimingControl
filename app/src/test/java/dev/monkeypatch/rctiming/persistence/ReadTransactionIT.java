@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.persistence;
 
+import com.zaxxer.hikari.HikariDataSource;
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
@@ -7,14 +8,20 @@ import dev.monkeypatch.rctiming.query.competitor.CompetitorQueryService;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorSummaryDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +35,7 @@ class ReadTransactionIT extends AbstractIntegrationTest {
     @Autowired CompetitorQueryService competitorQueryService;
     @Autowired CompetitorRepository competitorRepository;
     @Autowired TransactionTemplate transactionTemplate;
+    @Autowired @Qualifier("read") DataSource readDataSource;
 
     @Test
     void aReadQuery_doesNotWaitForAWriteInProgress_andSeesOnlyCommittedData() throws Exception {
@@ -58,6 +66,29 @@ class ReadTransactionIT extends AbstractIntegrationTest {
             threads.shutdownNow();
         }
         assertThat(listsCompetitor(name)).isTrue();
+    }
+
+    @Test
+    void aReadQueryInsideAWriteTransaction_takesNoReadConnection() throws Exception {
+        // Every read connection is busy; a write that reads must still finish, on its own connection
+        HikariDataSource readPool = (HikariDataSource) readDataSource;
+        List<Connection> held = new ArrayList<>();
+        ExecutorService threads = Executors.newSingleThreadExecutor();
+        try {
+            for (int i = 0; i < readPool.getMaximumPoolSize(); i++) {
+                held.add(readPool.getConnection());
+            }
+            Future<Boolean> sawIt = threads.submit(() -> transactionTemplate.execute(status -> {
+                status.setRollbackOnly();
+                return listsCompetitor("Nobody " + UUID.randomUUID());
+            }));
+            assertThat(sawIt.get(5, TimeUnit.SECONDS)).isFalse();
+        } finally {
+            for (Connection connection : held) {
+                connection.close();
+            }
+            threads.shutdownNow();
+        }
     }
 
     @Test
