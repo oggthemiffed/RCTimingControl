@@ -114,6 +114,24 @@ class PracticeRaceExclusionIT extends AbstractIntegrationTest {
                 + "and entity_id = ? and action = 'PRACTICE_SESSION_STOPPED'", String.valueOf(practice));
         assertThat(rows).hasSize(1);
         assertThat(rows.get(0).get("actor_label")).isEqualTo("system:race-start");
+        assertThat(((Number) rows.get(0).get("race_id")).longValue()).isEqualTo(race);
+        assertThat(rows.get(0).get("summary").toString()).contains("because race " + race + " started");
+    }
+
+    @Test
+    void startingARaceStopsEveryRunningPracticeSessionEvenIfTwoWereLeftRunning() {
+        Object first = createPractice();
+        Object second = createPractice();
+        assertThat(practice("/" + first + "/start").getStatusCode()).isEqualTo(HttpStatus.OK);
+        // Nothing stops a second one being started, so make sure the race still copes
+        jdbc.update("update practice_sessions set status = 'RUNNING' where id = ?", second);
+        long race = race("PENDING");
+
+        command(race, "call-grid");
+        command(race, "start");
+
+        assertThat(practiceStatus(first)).isEqualTo("STOPPED");
+        assertThat(practiceStatus(second)).isEqualTo("STOPPED");
     }
 
     @Test

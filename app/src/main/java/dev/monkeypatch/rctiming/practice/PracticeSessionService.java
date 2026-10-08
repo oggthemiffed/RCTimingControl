@@ -125,6 +125,11 @@ public class PracticeSessionService {
 
     @Transactional
     public PracticeSessionDto stop(Actor actor, Long sessionId) {
+        return stop(actor, sessionId, null);
+    }
+
+    /** @param causedByRaceId the race whose start stops the session, or null when an official stopped it */
+    private PracticeSessionDto stop(Actor actor, Long sessionId, Long causedByRaceId) {
         PracticeSession session = sessionRepository.findById(sessionId)
                 .orElseThrow(() -> new EntityNotFoundException("Session not found: " + sessionId));
 
@@ -135,8 +140,9 @@ public class PracticeSessionService {
         session.stop();
         session = sessionRepository.save(session);
         audit.entry(actor, "PRACTICE_SESSION_STOPPED").entity("practice_session", sessionId)
-                .event(session.getEventId())
-                .summary("Stopped the practice session " + session.getName())
+                .event(session.getEventId()).race(causedByRaceId)
+                .summary("Stopped the practice session " + session.getName()
+                        + (causedByRaceId == null ? "" : " because race " + causedByRaceId + " started"))
                 .before(PracticeStatus.RUNNING).after(session.getStatus()).record();
         timingService.stopSession(sessionId);
         return toDto(session);
@@ -151,8 +157,10 @@ public class PracticeSessionService {
     }
 
     /**
-     * A race starting or resuming takes the track over from practice: a running practice session is stopped, so
-     * the race's passings are not counted as practice laps too. Runs in the race command's own transaction.
+     * A race starting or resuming takes the track over from practice: every running practice session is stopped,
+     * so the race's passings are not counted as practice laps too. It runs in the race command's own transaction
+     * and is not caught: if a session can't be stopped the race command fails with it and nothing is half done.
+     * (A separate transaction would wait for the single write connection the race command is holding.)
      */
     @EventListener
     @Transactional
@@ -160,15 +168,10 @@ public class PracticeSessionService {
         if (event.getNewStatus() != RaceStatus.RUNNING) {
             return;
         }
-        sessionRepository.findRunningSession().ifPresent(running -> {
-            try {
-                stop(Actor.system("race-start"), running.getId());
-                log.info("Race {} started, so practice session {} was stopped", event.getRaceId(), running.getId());
-            } catch (RuntimeException e) {
-                // Never stop a race from starting over practice; the passings would just count twice
-                log.error("Could not stop practice session {} for race {}", running.getId(), event.getRaceId(), e);
-            }
-        });
+        for (PracticeSession running : sessionRepository.findRunningSessions()) {
+            stop(Actor.system("race-start"), running.getId(), event.getRaceId());
+            log.info("Race {} started, so practice session {} was stopped", event.getRaceId(), running.getId());
+        }
     }
 
     // ---------------------------------------------------------------------------

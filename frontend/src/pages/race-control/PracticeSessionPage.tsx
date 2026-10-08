@@ -39,8 +39,8 @@ export function PracticeSessionPage() {
     queryKey: ['practice-session', id],
     queryFn: () => getSession(id).then((r) => r.data),
     enabled: !isNaN(id),
-    // A race starting stops practice from the server's side, so keep the page's view of it fresh
-    refetchInterval: 5000,
+    // A race starting stops practice from the server's side, so keep a running session's view fresh
+    refetchInterval: (query) => (query.state.data?.status === 'RUNNING' ? 5000 : false),
   });
 
   const { rows, unknownTransponders } = usePracticeTiming(
@@ -66,7 +66,11 @@ export function PracticeSessionPage() {
       queryClient.invalidateQueries({ queryKey: ['practice-session', id] });
       toast.success('Practice session stopped.');
     },
-    onError: () => toast.error('Failed to stop session.'),
+    onError: (err) => {
+      // A race may have stopped it already, and the server says so
+      const detail = isAxiosError(err) ? err.response?.data?.detail : undefined;
+      toast.error(detail ?? 'Failed to stop session.');
+    },
   });
 
   if (sessionLoading || !session) {

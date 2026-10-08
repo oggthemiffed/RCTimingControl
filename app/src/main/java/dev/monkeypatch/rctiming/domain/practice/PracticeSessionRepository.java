@@ -18,8 +18,13 @@ public class PracticeSessionRepository extends JooqRepository<PracticeSession, P
         super(dsl, PRACTICE_SESSIONS, PRACTICE_SESSIONS.ID);
     }
 
+    /** The oldest running session. Nothing stops two being started, so this must not fail when there are more. */
     public Optional<PracticeSession> findRunningSession() {
-        return findOne(PRACTICE_SESSIONS.STATUS.eq(PracticeStatus.RUNNING.name()));
+        return findRunningSessions().stream().findFirst();
+    }
+
+    public List<PracticeSession> findRunningSessions() {
+        return findWhere(PRACTICE_SESSIONS.STATUS.eq(PracticeStatus.RUNNING.name()));
     }
 
     public List<PracticeSession> findByEventId(Long eventId) {

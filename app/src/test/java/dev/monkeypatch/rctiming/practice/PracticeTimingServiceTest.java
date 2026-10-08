@@ -129,6 +129,15 @@ class PracticeTimingServiceTest {
     }
 
     @Test
+    void onLapPassingEvent_duringARace_isIgnoredEvenWithAPracticeSessionRunning() {
+        // A passing with a race id is the race's; a practice session left running must not count it too
+        service.onLapPassing(new LapPassingEvent(7L, "T1", 1_000_000_000L));
+
+        verifyNoInteractions(sessionRepository);
+        verifyNoInteractions(lapRepository);
+    }
+
+    @Test
     void onLapPassingEvent_noSession_ignored() {
         when(sessionRepository.findRunningSession()).thenReturn(Optional.empty());
 
