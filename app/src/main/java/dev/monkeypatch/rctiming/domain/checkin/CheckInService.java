@@ -1,5 +1,9 @@
 package dev.monkeypatch.rctiming.domain.checkin;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
+import dev.monkeypatch.rctiming.domain.competitor.Competitor;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -17,9 +21,14 @@ import java.util.Objects;
 public class CheckInService {
 
     private final EntryRepository entryRepository;
+    private final CompetitorRepository competitorRepository;
+    private final AuditService audit;
 
-    public CheckInService(EntryRepository entryRepository) {
+    public CheckInService(EntryRepository entryRepository, CompetitorRepository competitorRepository,
+                          AuditService audit) {
         this.entryRepository = entryRepository;
+        this.competitorRepository = competitorRepository;
+        this.audit = audit;
     }
 
     /**
@@ -43,6 +52,14 @@ public class CheckInService {
         entry.setCheckedInAt(now);
         entry.setCheckedInByUserId(actingUserId);
         entry.setUpdatedAt(now);
-        return new CheckInResult.Success(entryRepository.save(entry), false);
+        Entry saved = entryRepository.save(entry);
+        // Only the first check-in is a change; a repeat confirm keeps it and records nothing
+        String name = entry.getCompetitorId() == null ? null
+                : competitorRepository.findById(entry.getCompetitorId()).map(Competitor::getDisplayName).orElse(null);
+        audit.entry(actingUserId == null ? Actor.system("check-in") : Actor.official(actingUserId), "ENTRY_CHECKED_IN")
+                .entity("entry", entryId).event(eventId)
+                .summary("Checked in " + (name == null ? "entry " + entryId : name))
+                .after(now.toString()).record();
+        return new CheckInResult.Success(saved, false);
     }
 }

@@ -3,6 +3,8 @@ package dev.monkeypatch.rctiming.domain.competitor;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryAuditLog;
 import dev.monkeypatch.rctiming.domain.entry.EntryAuditLogRepository;
@@ -54,17 +56,20 @@ public class CompetitorMergeService {
     private final EntryAuditLogRepository auditLogRepository;
     private final DSLContext dsl;
     private final ObjectMapper objectMapper;
+    private final AuditService audit;
 
     public CompetitorMergeService(CompetitorRepository competitorRepository,
                                   EntryRepository entryRepository,
                                   EntryAuditLogRepository auditLogRepository,
                                   DSLContext dsl,
-                                  ObjectMapper objectMapper) {
+                                  ObjectMapper objectMapper,
+                                  AuditService audit) {
         this.competitorRepository = competitorRepository;
         this.entryRepository = entryRepository;
         this.auditLogRepository = auditLogRepository;
         this.dsl = dsl;
         this.objectMapper = objectMapper;
+        this.audit = audit;
     }
 
     /** One of the two competitors, as the preview shows it. */
@@ -106,6 +111,8 @@ public class CompetitorMergeService {
             throw new CompetitorMergeRefusedException(preview.blockers());
         }
 
+        Map<String, Object> keepBefore = details(keep);
+        Map<String, Object> duplicateBefore = details(duplicate);
         Instant now = Instant.now();
         String reason = "Merged duplicate competitor " + duplicate.getDisplayName() + " (#" + duplicate.getId()
                 + ") into " + keep.getDisplayName() + " (#" + keep.getId() + ")";
@@ -149,6 +156,18 @@ public class CompetitorMergeService {
         keep.setUpdatedAt(now);
         competitorRepository.save(keep);
         competitorRepository.deleteById(duplicateId);
+
+        // The duplicate is deleted, so this row is the only place its details survive
+        Map<String, Object> before = new LinkedHashMap<>();
+        before.put("kept", keepBefore);
+        before.put("duplicate", duplicateBefore);
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put("kept", details(keep));
+        after.put("entriesMoved", moving.stream().map(Entry::getId).toList());
+        after.put("exclusionsMoved", exclusions);
+        audit.entry(Actor.official(adminUserId), AUDIT_ACTION).entity("competitor", keepId)
+                .summary(reason + ": " + moving.size() + " entries and " + exclusions + " championship exclusions moved")
+                .before(before).after(after).record();
 
         log.info("{} by user {}: {} entries and {} championship exclusions moved",
                 reason, adminUserId, moving.size(), exclusions);
@@ -249,6 +268,18 @@ public class CompetitorMergeService {
     private static Side side(Competitor c, int entries) {
         return new Side(c.getId(), c.getDisplayName(), c.getBrcaNumber(), c.getHomeClub(), c.getSpokenName(),
                 c.getExternalSource(), entries);
+    }
+
+    private static Map<String, Object> details(Competitor c) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", c.getId());
+        m.put("displayName", c.getDisplayName());
+        m.put("brcaNumber", c.getBrcaNumber());
+        m.put("homeClub", c.getHomeClub());
+        m.put("spokenName", c.getSpokenName());
+        m.put("externalSource", c.getExternalSource());
+        m.put("externalId", c.getExternalId());
+        return m;
     }
 
     private static boolean isBlank(String s) {

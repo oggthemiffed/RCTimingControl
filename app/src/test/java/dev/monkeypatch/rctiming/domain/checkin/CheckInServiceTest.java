@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.domain.checkin;
 
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
+import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -12,6 +14,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -19,12 +22,14 @@ import static org.mockito.Mockito.verify;
 class CheckInServiceTest {
 
     private EntryRepository entryRepository;
+    private AuditService audit;
     private CheckInService service;
 
     @BeforeEach
     void setUp() {
         entryRepository = Mockito.mock(EntryRepository.class);
-        service = new CheckInService(entryRepository);
+        audit = Mockito.mock(AuditService.class, Mockito.RETURNS_DEEP_STUBS);
+        service = new CheckInService(entryRepository, Mockito.mock(CompetitorRepository.class), audit);
         Mockito.when(entryRepository.save(any(Entry.class))).thenAnswer(inv -> inv.getArgument(0));
     }
 
@@ -49,6 +54,7 @@ class CheckInServiceTest {
         assertThat(e.getCheckedInAt()).isNotNull();
         assertThat(e.getCheckedInByUserId()).isEqualTo(42L);
         verify(entryRepository).save(e);
+        verify(audit).entry(any(), eq("ENTRY_CHECKED_IN"));
     }
 
     @Test
@@ -64,6 +70,7 @@ class CheckInServiceTest {
         assertThat(e.getCheckedInAt()).isEqualTo(first);
         assertThat(e.getCheckedInByUserId()).isEqualTo(42L);
         verify(entryRepository, never()).save(any());
+        verify(audit, never()).entry(any(), any());
     }
 
     @Test
