@@ -11,11 +11,13 @@ public record ChampionshipExclusionDto(
         Long eventId,
         String reason,
         Long createdBy,
+        /** The official who recorded it, by name; null if that account has since been removed. */
+        String createdByName,
         Instant createdAt
 ) {
-    public static ChampionshipExclusionDto from(ChampionshipExclusion x) {
+    public static ChampionshipExclusionDto from(ChampionshipExclusion x, String createdByName) {
         return new ChampionshipExclusionDto(
                 x.getId(), x.getChampionshipId(), x.getDriverId(), x.getEventId(),
-                x.getReason(), x.getCreatedBy(), x.getCreatedAt());
+                x.getReason(), x.getCreatedBy(), createdByName, x.getCreatedAt());
     }
 }

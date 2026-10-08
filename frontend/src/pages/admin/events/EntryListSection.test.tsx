@@ -13,6 +13,9 @@ vi.mock('@/hooks/admin/useAdminEntries', () => ({
   useWithdrawEntry: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock('./AddWalkInEntryDialog', () => ({ default: () => null }));
+vi.mock('@/hooks/admin/useAdminEventClasses', () => ({
+  useRacingClasses: () => ({ data: [{ id: 3, name: 'Mod Buggy' }, { id: 4, name: 'Stock Truck' }] }),
+}));
 
 const classes = [{ id: 11, racingClassId: 3 }] as EventClassDto[];
 
@@ -32,6 +35,16 @@ describe('EntryListSection', () => {
     signInAs([role]);
     render(<EntryListSection eventId={5} classes={classes} />);
     expect(screen.getByRole('button', { name: 'Add entry' })).toBeInTheDocument();
+  });
+
+  it('names each class on the class selector', () => {
+    signInAs(['ADMIN']);
+    const twoClasses = [{ id: 11, racingClassId: 3 }, { id: 12, racingClassId: 4 }] as EventClassDto[];
+
+    render(<EntryListSection eventId={5} classes={twoClasses} />);
+
+    expect(screen.getByRole('button', { name: 'Mod Buggy' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Stock Truck' })).toBeInTheDocument();
   });
 
   it('hides Add entry from a referee', () => {

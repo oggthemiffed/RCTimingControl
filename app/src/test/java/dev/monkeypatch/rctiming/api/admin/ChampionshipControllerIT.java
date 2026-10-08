@@ -330,6 +330,8 @@ class ChampionshipControllerIT extends AbstractIntegrationTest {
                 ((Number) exclusionResp.getBody().get("createdBy")).intValue());
         assertNotNull(exclusionResp.getBody().get("createdAt"));
         assertEquals("missed round 2", exclusionResp.getBody().get("reason"));
+        // The official is named for the screen, which only has the user id otherwise
+        assertEquals("Admin User", exclusionResp.getBody().get("createdByName"));
 
         // GET exclusions returns 1 row
         ResponseEntity<List> listResp = restTemplate.exchange(
@@ -337,6 +339,7 @@ class ChampionshipControllerIT extends AbstractIntegrationTest {
                 new HttpEntity<>(adminHeaders()), List.class);
         assertEquals(HttpStatus.OK, listResp.getStatusCode());
         assertEquals(1, listResp.getBody().size());
+        assertEquals("Admin User", ((Map<?, ?>) listResp.getBody().get(0)).get("createdByName"));
     }
 
     @Test

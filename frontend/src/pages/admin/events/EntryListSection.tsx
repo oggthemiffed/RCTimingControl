@@ -22,6 +22,7 @@ import {
 import { Label } from '@/components/ui/label';
 
 import { useEntriesForClass, useWithdrawEntry } from '@/hooks/admin/useAdminEntries';
+import { useRacingClasses } from '@/hooks/admin/useAdminEventClasses';
 import type { AdminEntryDto, EventClassDto } from '@/lib/adminApi';
 import { useAuth } from '@/hooks/useAuth';
 import AddWalkInEntryDialog from './AddWalkInEntryDialog';
@@ -86,7 +87,7 @@ function WithdrawDialog({
           <DialogTitle>Withdraw entry?</DialogTitle>
           <DialogDescription>
             {entry &&
-              `This will withdraw ${entry.displayName ?? 'Unknown driver'}'s entry for this class. The racer will need to re-enter if entries are still open.`}
+              `This will withdraw ${entry.displayName ?? 'Unknown driver'}'s entry for this class. To enter them again, add a walk-in or import a newer entry file.`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-1.5">
@@ -157,7 +158,7 @@ function EntriesTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Racer</TableHead>
+            <TableHead>Driver</TableHead>
             <TableHead>Transponder</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Submitted</TableHead>
@@ -237,6 +238,7 @@ export default function EntryListSection({ eventId, classes }: EntryListSectionP
   const [selectedClassIdx, setSelectedClassIdx] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
   const { user } = useAuth();
+  const { data: racingClasses = [] } = useRacingClasses();
   // The add-entry endpoint is for admins and race directors; referees can see entries but not add them
   const canAddEntries = !!user?.roles.some(r => r === 'ADMIN' || r === 'RACE_DIRECTOR');
 
@@ -264,7 +266,7 @@ export default function EntryListSection({ eventId, classes }: EntryListSectionP
               variant={idx === selectedClassIdx ? 'default' : 'outline'}
               onClick={() => setSelectedClassIdx(idx)}
             >
-              Class {cls.racingClassId ?? cls.id}
+              {racingClasses.find(rc => rc.id === cls.racingClassId)?.name ?? `Class ${cls.racingClassId ?? cls.id}`}
             </Button>
           ))}
         </div>

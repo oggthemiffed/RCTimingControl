@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -53,8 +54,14 @@ export function IncidentDialog({ open, onOpenChange, onSubmit, isPending, driver
 
   function handleSubmit(values: FormValues) {
     onSubmit({ entryId: values.entryId, incidentType: values.incidentType, description: values.description });
-    form.reset();
   }
+
+  // The form is cleared when the dialog closes, which the page does once the request has gone through. It
+  // was cleared as soon as it was sent, so a request that failed lost what had been typed.
+  const { reset } = form;
+  useEffect(() => {
+    if (!open) reset();
+  }, [open, reset]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

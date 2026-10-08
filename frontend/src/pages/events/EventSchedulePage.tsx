@@ -4,11 +4,12 @@ import { getEventSchedule } from '@/lib/raceControlApi';
 import type { EventScheduleDto } from '@/lib/raceControlApi';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { parseLocalDate } from '@/lib/utils';
 
 function entryAvailabilityBadge(availability: EventScheduleDto['entryAvailability']) {
   switch (availability) {
     case 'ENTRY_OPEN':
-      return <Badge variant="default">Open for Entry</Badge>;
+      return <Badge variant="default">Entries Open</Badge>;
     case 'ENTRY_CLOSED':
       return <Badge variant="secondary">Entries Closed</Badge>;
     case 'ENTRY_NOT_YET_OPEN':
@@ -63,7 +64,7 @@ export default function EventSchedulePage() {
                 <h2 className="font-semibold text-base">{event.name}</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   {new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(
-                    new Date(event.eventDate),
+                    parseLocalDate(event.eventDate),
                   )}
                 </p>
               </div>

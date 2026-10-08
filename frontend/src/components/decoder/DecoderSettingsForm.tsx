@@ -157,7 +157,8 @@ export function DecoderSettingsForm({ onSaved, onBack, onSkip, saveLabel = 'Save
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="RC4">RC4 (firmware &lt; 4.5, port 5100)</SelectItem>
-                  <SelectItem value="P3">P3 binary (firmware ≥ 4.5, port 5403)</SelectItem>
+                  {/* Not built yet: the app only reads RC4 text. Listed so a club can see why, but it can't be chosen. */}
+                  <SelectItem value="P3" disabled>P3 binary (firmware ≥ 4.5, port 5403) — not supported yet</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
