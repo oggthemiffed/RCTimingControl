@@ -333,6 +333,39 @@ class RaceHubImportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void anAppliedImportIsRecordedButAPreviewABlockedImportAndAReplayAreNot() {
+        importFixture("entries-v1-initial.json", true);
+        importFixture("entries-v1-unmapped-class.json", false);
+        assertThat(auditRows("ENTRIES_IMPORTED")).isEmpty();
+
+        importFixture("entries-v1-initial.json", false);
+        importFixture("entries-v1-initial.json", false);
+        importFixture("entries-v1-update.json", false);
+
+        List<Map<String, Object>> rows = auditRows("ENTRIES_IMPORTED");
+        assertThat(rows).hasSize(2);
+        assertThat(((Number) rows.get(0).get("actor_user_id")).longValue()).isEqualTo(adminUserId);
+        assertThat(rows.get(0).get("summary").toString()).contains("2 new").contains("0 withdrawn");
+        assertThat(rows.get(0).get("after_json").toString()).contains("Ada Lovelace").contains("\"revision\":4");
+        assertThat(rows.get(1).get("summary").toString()).contains("withdrawn");
+    }
+
+    @Test
+    void replacingClassMappingsRecordsBeforeAndAfter() {
+        String url = "/api/v1/admin/events/" + eventId + "/racehub-class-mappings";
+        restTemplate.exchange(url, HttpMethod.PUT, new HttpEntity<>(List.of(Map.of(
+                "racehubEventClassId", "rh-a-" + run, "eventClassId", buggyClassId)), adminHeaders()), JsonNode.class);
+        restTemplate.exchange(url, HttpMethod.PUT, new HttpEntity<>(List.of(Map.of(
+                "racehubEventClassId", "rh-a-" + run, "eventClassId", truckClassId)), adminHeaders()), JsonNode.class);
+
+        List<Map<String, Object>> rows = auditRows("CLASS_MAPPINGS_REPLACED");
+        assertThat(rows).hasSize(2);
+        assertThat(rows.get(0).get("before_json")).isEqualTo("{}");
+        assertThat(rows.get(1).get("before_json").toString()).contains("rh-a-" + run).contains(String.valueOf(buggyClassId));
+        assertThat(rows.get(1).get("after_json").toString()).contains(String.valueOf(truckClassId));
+    }
+
+    @Test
     void classMapping_rejectsAClassFromAnotherEvent() {
         var put = restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-class-mappings",
                 HttpMethod.PUT, new HttpEntity<>(List.of(Map.of(
@@ -522,6 +555,11 @@ class RaceHubImportIT extends AbstractIntegrationTest {
                 insert into event_classes (event_id, racing_class_id, config_snapshot)
                 values (?, ?, '{"type":"TIMED"}') returning id""",
                 Long.class, eventId, racingClassId);
+    }
+
+    private List<Map<String, Object>> auditRows(String action) {
+        return jdbc.queryForList("select * from audit_log where event_id = ? and action = ? order by id",
+                eventId, action);
     }
 
     private String loginAs(Set<Role> roles) {

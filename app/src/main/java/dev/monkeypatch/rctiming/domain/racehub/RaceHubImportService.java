@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.domain.racehub;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.checkin.TransponderSlot;
 import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
@@ -70,6 +72,7 @@ public class RaceHubImportService {
     private final EntryRepository entryRepository;
     private final CompetitorRepository competitorRepository;
     private final TransponderSwapService transponderSwapService;
+    private final AuditService audit;
 
     public RaceHubImportService(EventRepository eventRepository,
                                 EventClassRepository eventClassRepository,
@@ -77,7 +80,8 @@ public class RaceHubImportService {
                                 RaceHubClassMappingRepository mappingRepository,
                                 EntryRepository entryRepository,
                                 CompetitorRepository competitorRepository,
-                                TransponderSwapService transponderSwapService) {
+                                TransponderSwapService transponderSwapService,
+                                AuditService audit) {
         this.eventRepository = eventRepository;
         this.eventClassRepository = eventClassRepository;
         this.racingClassRepository = racingClassRepository;
@@ -85,10 +89,21 @@ public class RaceHubImportService {
         this.entryRepository = entryRepository;
         this.competitorRepository = competitorRepository;
         this.transponderSwapService = transponderSwapService;
+        this.audit = audit;
     }
 
+    /** What importing the file would do, saving nothing. */
     @Transactional
-    public RaceHubImportResult importEntries(Long eventId, RaceHubEntryExport export, boolean dryRun) {
+    public RaceHubImportResult preview(Long eventId, RaceHubEntryExport export) {
+        return importEntries(null, eventId, export, true);
+    }
+
+    /**
+     * Imports the file, or with {@code dryRun} only previews it. {@code actor} is who is importing (an official,
+     * or the system for the automatic fetch); it is not needed, and may be null, for a dry run.
+     */
+    @Transactional
+    public RaceHubImportResult importEntries(Actor actor, Long eventId, RaceHubEntryExport export, boolean dryRun) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found"));
         if (export == null || !Objects.equals(export.schemaVersion(), SUPPORTED_SCHEMA_VERSION)) {
@@ -219,9 +234,40 @@ public class RaceHubImportService {
                 counts[Action.CREATE.ordinal()], counts[Action.UPDATE.ordinal()],
                 counts[Action.WITHDRAW.ordinal()], counts[Action.UNCHANGED.ordinal()],
                 counts[Action.STALE.ordinal()], counts[Action.SKIP.ordinal()]);
+        if (apply && (summary.created() + summary.updated() + summary.withdrawn()) > 0) {
+            recordImport(Objects.requireNonNull(actor, "an import that saves needs an actor"), event, source,
+                    export.revision(), summary, rows);
+        }
         return new RaceHubImportResult(dryRun, blocked, apply,
                 export.event() == null ? null : export.event().name(), export.revision(),
                 summary, unmappedClasses, errors, warnings, rows);
+    }
+
+    /** One audit row per import that changed entries: the counts, and each entry created, updated or withdrawn. */
+    private void recordImport(Actor actor, Event event, String source, Long revision,
+                              RaceHubImportResult.Summary summary, List<Row> rows) {
+        List<Map<String, Object>> changed = new ArrayList<>();
+        for (Row r : rows) {
+            if (r.action() == Action.CREATE || r.action() == Action.UPDATE || r.action() == Action.WITHDRAW) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("action", r.action());
+                m.put("name", r.driverDisplayName());
+                m.put("entryId", r.rctcEntryId());
+                m.put("eventClassId", r.eventClassId());
+                changed.add(m);
+            }
+        }
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put("source", source);
+        after.put("revision", revision);
+        after.put("summary", summary);
+        after.put("changed", changed);
+        audit.entry(actor, "ENTRIES_IMPORTED").entity("event", event.getId()).event(event.getId())
+                .summary("Imported entries into " + event.getName() + " from "
+                        + (RACEHUB_SOURCE.equals(source) ? "RaceHub" : source) + " revision " + revision + ": "
+                        + summary.created() + " new, " + summary.updated() + " updated, "
+                        + summary.withdrawn() + " withdrawn")
+                .after(after).record();
     }
 
     // ── Class mappings ─────────────────────────────────────────────────────────────
@@ -236,10 +282,12 @@ public class RaceHubImportService {
 
     /** Replaces the event's class mappings with {@code mappings} (RaceHub event_class_id → event class id). */
     @Transactional
-    public List<RaceHubClassMapping> replaceMappings(Long eventId, Map<String, Long> mappings) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new EntityNotFoundException("Event not found");
-        }
+    public List<RaceHubClassMapping> replaceMappings(Actor actor, Long eventId, Map<String, Long> mappings) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+        Map<String, Long> before = new TreeMap<>();
+        mappingRepository.findByEventIdOrderByRacehubEventClassId(eventId)
+                .forEach(m -> before.put(m.getRacehubEventClassId(), m.getEventClassId()));
         Set<Long> eventClassIds = eventClassRepository.findRefsByEventId(eventId).stream()
                 .map(EventClassRef::getId).collect(Collectors.toSet());
         mappings.forEach((racehubId, eventClassId) -> {
@@ -263,6 +311,10 @@ public class RaceHubImportService {
             m.setUpdatedAt(now);
             saved.add(mappingRepository.save(m));
         });
+        audit.entry(actor, "CLASS_MAPPINGS_REPLACED").entity("event", eventId).event(eventId)
+                .summary("Changed the import class mappings of " + event.getName() + " (" + before.size()
+                        + " before, " + mappings.size() + " after)")
+                .before(before).after(new TreeMap<>(mappings)).record();
         return saved;
     }
 

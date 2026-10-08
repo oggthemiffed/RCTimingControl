@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.api.admin;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.entryfeed.EntryFeed;
 import dev.monkeypatch.rctiming.domain.entryfeed.EntryFeedService;
 import dev.monkeypatch.rctiming.domain.entryfeed.EntryFeedStatus;
@@ -7,6 +9,7 @@ import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,15 +41,17 @@ public class EntryFeedController {
     }
 
     /** Saves the settings. A null token keeps the saved one; an empty one removes it. */
+    @Audited("audit_log")
     @PutMapping
-    public EntryFeedDto save(@PathVariable long eventId, @RequestBody SaveRequest request) {
-        return EntryFeedDto.of(feedService.save(eventId, request.url(), request.token(),
+    public EntryFeedDto save(Authentication auth, @PathVariable long eventId, @RequestBody SaveRequest request) {
+        return EntryFeedDto.of(feedService.save(actor(auth), eventId, request.url(), request.token(),
                 Boolean.TRUE.equals(request.autoFetch())));
     }
 
+    @Audited("audit_log")
     @DeleteMapping
-    public ResponseEntity<Void> delete(@PathVariable long eventId) {
-        feedService.delete(eventId);
+    public ResponseEntity<Void> delete(Authentication auth, @PathVariable long eventId) {
+        feedService.delete(actor(auth), eventId);
         return ResponseEntity.noContent().build();
     }
 
@@ -63,10 +68,16 @@ public class EntryFeedController {
     }
 
     /** Imports the held file, or answers 422 with the preview when something blocks it. */
+    @Audited("audit_log")
     @PostMapping("/apply")
-    public ResponseEntity<RaceHubImportResult> apply(@PathVariable long eventId) {
-        RaceHubImportResult result = feedService.applyHeld(eventId);
+    public ResponseEntity<RaceHubImportResult> apply(Authentication auth, @PathVariable long eventId) {
+        RaceHubImportResult result = feedService.applyHeld(actor(auth), eventId);
         return ResponseEntity.status(result.blocked() ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.OK).body(result);
+    }
+
+    /** The signed-in official, taken from the token and never from the request body. */
+    private static Actor actor(Authentication auth) {
+        return Actor.official(Long.parseLong(auth.getName()));
     }
 
     public record SaveRequest(String url, String token, Boolean autoFetch) {

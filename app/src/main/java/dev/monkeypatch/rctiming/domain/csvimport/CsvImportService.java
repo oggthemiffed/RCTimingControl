@@ -1,6 +1,8 @@
 package dev.monkeypatch.rctiming.domain.csvimport;
 
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.csvimport.CsvImportResult.Change;
@@ -11,6 +13,7 @@ import dev.monkeypatch.rctiming.domain.csvimport.RcTimingCsvParser.ParsedCsv;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
+import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository.EventClassRef;
@@ -69,19 +72,22 @@ public class CsvImportService {
     private final RaceHubClassMappingRepository mappingRepository;
     private final EntryRepository entryRepository;
     private final CompetitorRepository competitorRepository;
+    private final AuditService audit;
 
     public CsvImportService(EventRepository eventRepository,
                             EventClassRepository eventClassRepository,
                             RacingClassRepository racingClassRepository,
                             RaceHubClassMappingRepository mappingRepository,
                             EntryRepository entryRepository,
-                            CompetitorRepository competitorRepository) {
+                            CompetitorRepository competitorRepository,
+                            AuditService audit) {
         this.eventRepository = eventRepository;
         this.eventClassRepository = eventClassRepository;
         this.racingClassRepository = racingClassRepository;
         this.mappingRepository = mappingRepository;
         this.entryRepository = entryRepository;
         this.competitorRepository = competitorRepository;
+        this.audit = audit;
     }
 
     /** What the official picked in the preview: changed rows to update (by key), missing entries to withdraw. */
@@ -95,10 +101,9 @@ public class CsvImportService {
     }
 
     @Transactional
-    public CsvImportResult importCsv(Long eventId, String content, boolean dryRun, Selection selection) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new EntityNotFoundException("Event not found");
-        }
+    public CsvImportResult importCsv(Actor actor, Long eventId, String content, boolean dryRun, Selection selection) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
         Selection picked = selection == null ? Selection.NONE : selection;
         ParsedCsv parsed = RcTimingCsvParser.parse(content);
         List<String> errors = new ArrayList<>(parsed.errors());
@@ -200,6 +205,26 @@ public class CsvImportService {
         var summary = new CsvImportResult.Summary(count(counts, Group.NEW), count(counts, Group.CHANGED),
                 count(counts, Group.UNCHANGED), count(counts, Group.MISSING), count(counts, Group.SKIPPED),
                 created, updated, withdrawn);
+        if (apply && created + updated + withdrawn > 0) {
+            List<Map<String, Object>> changed = new ArrayList<>();
+            for (CsvImportResult.Row r : rows) {
+                if (r.applied()) {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("group", r.group());
+                    m.put("name", r.name());
+                    m.put("className", r.className());
+                    m.put("entryId", r.entryId());
+                    changed.add(m);
+                }
+            }
+            Map<String, Object> after = new LinkedHashMap<>();
+            after.put("summary", summary);
+            after.put("changed", changed);
+            audit.entry(actor, "ENTRIES_IMPORTED").entity("event", eventId).event(eventId)
+                    .summary("Imported entries into " + event.getName() + " from an RC-Timing CSV: " + created
+                            + " new, " + updated + " updated, " + withdrawn + " withdrawn")
+                    .after(after).record();
+        }
         return new CsvImportResult(dryRun, blocked, apply, summary, unmappedClasses, errors, warnings, rows);
     }
 
