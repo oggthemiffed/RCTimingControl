@@ -140,7 +140,7 @@ class EventAuditIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void generatingTheRunOrderAndSeedingFinalsAreRecorded() {
+    void generatingTheRunOrderIsRecordedAndSeedingFinalsBeforeAnyQualifyingResultIsRefusedWithNoRow() {
         long eventId = createEvent("Run order " + run);
         long eventClassId = addClass(eventId, racingClassId);
 
@@ -150,16 +150,14 @@ class EventAuditIT extends AbstractIntegrationTest {
                                 "carsPerFinal", 10, "bumpCount", 0))));
         assertThat(generated.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         ResponseEntity<String> seeded = send("POST", "/api/v1/admin/events/" + eventId + "/seed-finals",
-                Map.of("eventClassId", eventClassId, "finalsCount", 1, "carsPerFinal", 10, "bumpCount", 1,
-                        "qualifyingResults", List.of()));
-        assertThat(seeded.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+                Map.of("eventClassId", eventClassId, "finalsCount", 1, "carsPerFinal", 10, "bumpCount", 0));
+        assertThat(seeded.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
 
         List<Map<String, Object>> rows = rows(eventId);
         assertThat(rows).extracting(r -> r.get("action")).containsExactly(
-                "EVENT_CREATED", "EVENT_CLASS_ADDED", "RUN_ORDER_GENERATED", "FINALS_SEEDED");
+                "EVENT_CREATED", "EVENT_CLASS_ADDED", "RUN_ORDER_GENERATED");
         assertThat(rows.get(2).get("summary").toString()).contains("Run order " + run).contains("1 qualifying");
-        assertThat(rows.get(3).get("summary").toString()).contains("Audit Buggy " + run);
-        assertThat(((Number) rows.get(3).get("actor_user_id")).longValue()).isEqualTo(adminId);
+        assertThat(((Number) rows.get(2).get("actor_user_id")).longValue()).isEqualTo(adminId);
     }
 
     @Test

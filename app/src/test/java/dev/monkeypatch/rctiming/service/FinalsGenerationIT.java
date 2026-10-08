@@ -1,6 +1,9 @@
 package dev.monkeypatch.rctiming.service;
 
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.StateConflictException;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
@@ -21,6 +24,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Generating rounds, seeding finals and bumping drivers up, against a real database with its
@@ -31,6 +35,7 @@ class FinalsGenerationIT extends AbstractIntegrationTest {
 
     @Autowired RoundGeneratorService roundGeneratorService;
     @Autowired BumpUpSeedingService bumpUpSeedingService;
+    @Autowired EventRunOrderService runOrderService;
     @Autowired RaceRepository raceRepository;
     @Autowired RaceEntryRepository raceEntryRepository;
     @Autowired JdbcTemplate jdbc;
@@ -52,6 +57,7 @@ class FinalsGenerationIT extends AbstractIntegrationTest {
     /** The test database is shared, so leave no in-progress event behind for the boards to pick up. */
     @AfterEach
     void tearDown() {
+        jdbc.update("delete from audit_log where event_id = ?", eventId);
         jdbc.update("delete from rounds where event_id = ?", eventId); // races and race_entries cascade
         jdbc.update("delete from entries where event_id = ?", eventId);
         jdbc.update("delete from event_classes where event_id = ?", eventId);
@@ -129,6 +135,63 @@ class FinalsGenerationIT extends AbstractIntegrationTest {
                 left join entries e on e.id = re.entry_id
                 where ro.event_id = ? and e.id is null""", Integer.class, eventId);
         assertThat(orphans).isZero();
+    }
+
+    @Test
+    void seedsFinalsFromTheStoredQualifyingResultsOverAllHeatsAndRefusesBeforeThereAreAny() {
+        long buggyClass = addClass("Buggy");
+        List<Long> buggies = addEntries(buggyClass, 20);
+        roundGeneratorService.generate(new RoundGenerationRequest(eventId, 0, 2, 10, List.of(
+                new ClassFinalsConfig(buggyClass, 2, 10, 2))));
+
+        // Nothing has finished, so there is nothing to seed from and the grids are left alone
+        assertThatThrownBy(() -> runOrderService.seedFinals(Actor.system("test"), eventId, buggyClass, 2, 10, 2))
+                .isInstanceOf(StateConflictException.class);
+        assertThatThrownBy(() -> runOrderService.seedFinals(Actor.system("test"), eventId + 1_000_000, buggyClass,
+                2, 10, 2)).isInstanceOf(EntityNotFoundException.class);
+
+        // Everyone does 10 laps in each of the two rounds, except the first entry, who does one more in round 1.
+        // Round 1 best laps are all slow; in round 2 the later the entry, the quicker its best lap.
+        for (Race heat : raceRepository.findByEventClassIdAndRoundType(buggyClass, RoundType.QUALIFIER)) {
+            int round = jdbc.queryForObject("select round_number from rounds where id = ?", Integer.class,
+                    heat.getRoundId());
+            finishWithResult(heat, buggies, round);
+        }
+        runOrderService.seedFinals(Actor.system("test"), eventId, buggyClass, 2, 10, 2);
+
+        // The first entry has the most laps; the rest tie on laps, so the quickest best lap (the last entry) is next
+        List<Long> order = new ArrayList<>();
+        order.add(buggies.get(0));
+        List<Long> rest = new ArrayList<>(buggies.subList(1, buggies.size()));
+        Collections.reverse(rest);
+        order.addAll(rest);
+        assertThat(gridOf(finalOf(buggyClass, "A"))).extracting(RaceEntry::getEntryId)
+                .containsExactlyElementsOf(order.subList(0, 8));
+        assertThat(gridOf(finalOf(buggyClass, "B"))).extracting(RaceEntry::getEntryId)
+                .containsExactlyElementsOf(order.subList(10, 20));
+
+        List<java.util.Map<String, Object>> audited = jdbc.queryForList(
+                "select * from audit_log where event_id = ? and action = 'FINALS_SEEDED'", eventId);
+        assertThat(audited).hasSize(1);
+        assertThat(audited.get(0).get("summary").toString()).contains("from 20 qualifiers");
+    }
+
+    private void finishWithResult(Race heat, List<Long> buggies, int round) {
+        jdbc.update("update races set status = 'FINISHED' where id = ?", heat.getId());
+        List<String> rows = new ArrayList<>();
+        int position = 1;
+        for (RaceEntry entry : raceEntryRepository.findByRaceIdOrderByGridPosition(heat.getId())) {
+            int index = buggies.indexOf(entry.getEntryId());
+            int laps = 10 + (index == 0 && round == 1 ? 1 : 0);
+            long bestLapMs = round == 1 ? 60_000 : 50_000 - index * 100L;
+            rows.add("{\"position\":" + position++ + ",\"entryId\":" + entry.getEntryId()
+                    + ",\"competitorId\":null,\"driverName\":\"d\",\"carNumber\":\"1\",\"lapsCompleted\":" + laps
+                    + ",\"totalTimeMs\":300000,\"bestLapMs\":" + bestLapMs + ",\"gapToLeaderMs\":null}");
+        }
+        jdbc.update("""
+                insert into result_snapshots (race_id, finished_at, positions_json, lap_history_json)
+                values (?, CAST(unixepoch('subsec') * 1000000 AS INTEGER), ?, '[]')""",
+                heat.getId(), "[" + String.join(",", rows) + "]");
     }
 
     private long addClass(String name) {
