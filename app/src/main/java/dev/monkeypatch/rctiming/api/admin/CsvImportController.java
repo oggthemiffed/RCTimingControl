@@ -5,7 +5,6 @@ import dev.monkeypatch.rctiming.domain.csvimport.CsvImportResult;
 import dev.monkeypatch.rctiming.domain.csvimport.CsvImportService;
 import dev.monkeypatch.rctiming.domain.csvimport.RcTimingCsvParser;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -51,7 +50,6 @@ public class CsvImportController {
                 update == null ? Set.of() : Set.copyOf(update), withdraw == null ? Set.of() : Set.copyOf(withdraw));
         CsvImportResult result =
                 importService.importCsv(CurrentOfficial.actor(auth), eventId, content, dryRun, selection);
-        HttpStatus status = !dryRun && result.blocked() ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.OK;
-        return ResponseEntity.status(status).body(result);
+        return ImportResponses.of(result);
     }
 }

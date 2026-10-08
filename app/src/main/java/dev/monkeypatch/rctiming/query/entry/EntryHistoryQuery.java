@@ -2,12 +2,12 @@ package dev.monkeypatch.rctiming.query.entry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import dev.monkeypatch.rctiming.query.audit.AuditActors;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -23,7 +23,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Users.USERS;
  * The older entry log keeps its own table, so the two are read side by side rather than copied.
  */
 @Component
-@Transactional(readOnly = true)
+@ReadTransaction
 public class EntryHistoryQuery {
 
     private final DSLContext dsl;

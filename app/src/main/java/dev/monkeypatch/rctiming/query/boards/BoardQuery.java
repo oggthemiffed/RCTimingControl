@@ -1,12 +1,12 @@
 package dev.monkeypatch.rctiming.query.boards;
 
 import dev.monkeypatch.rctiming.api.boards.dto.BoardRaceDto;
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.SortField;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +23,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
  * that is racing now.
  */
 @Component
-@Transactional(readOnly = true)
+@ReadTransaction
 public class BoardQuery {
 
     public record BoardEvent(long id, String name) {}

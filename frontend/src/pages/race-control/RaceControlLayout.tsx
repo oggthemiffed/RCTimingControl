@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Outlet, Link, useParams, useMatches } from 'react-router-dom';
 import { Flag, Shield, LogOut, ChevronLeft, Dumbbell, HelpCircle, ScanLine } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +15,7 @@ import { useHelp } from '@/context/HelpContext';
 import { DecoderStatusBar } from './panels/DecoderStatusBar';
 import { LiveFeedStatus } from './panels/LiveFeedStatus';
 import { RaceControlErrorBoundary } from '@/components/RaceControlErrorBoundary';
+import PageLoading from '@/components/PageLoading';
 
 export default function RaceControlLayout() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -108,7 +110,9 @@ export default function RaceControlLayout() {
       {/* Page content fills remaining height */}
       <div className="flex-1 overflow-hidden">
         <RaceControlErrorBoundary>
-          <Outlet />
+          <Suspense fallback={<PageLoading />}>
+            <Outlet />
+          </Suspense>
         </RaceControlErrorBoundary>
       </div>
     </div>

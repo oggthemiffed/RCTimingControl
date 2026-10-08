@@ -13,8 +13,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
+import org.springframework.jdbc.support.JdbcTransactionManager;
 import org.springframework.jdbc.support.SQLExceptionSubclassTranslator;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -28,17 +31,22 @@ import java.nio.file.Path;
  * class may name a vendor-specific class or dialect; {@code PersistencePortabilityTest} enforces
  * that.
  *
- * <p>There are two pools on the same database. Flyway and anything inside a transaction use
+ * <p>There are two pools on the same database. Flyway and anything inside a write transaction use
  * the write pool, which the vendor may limit to one connection. jOOQ read queries outside a
- * transaction use a read-only pool.
+ * transaction, or inside a {@link ReadTransaction}, use a read-only pool, so they never queue behind
+ * the writer.
  */
 @Configuration
 @EnableConfigurationProperties(DatabaseProperties.class)
 public class DatabaseConfig {
 
+    /** The transaction manager on the read pool, used by {@link ReadTransaction}. */
+    public static final String READ_TRANSACTION_MANAGER = "readTransactionManager";
+
     private final DatabaseProperties properties;
     private final DatabaseVendor vendor;
     private final String jdbcUrl;
+    private LazyConnectionDataSourceProxy readTransactionDataSource;
 
     public DatabaseConfig(DatabaseProperties properties) {
         this.properties = properties;
@@ -67,9 +75,37 @@ public class DatabaseConfig {
         return new HikariDataSource(config);
     }
 
+    /**
+     * Plain {@code @Transactional}, read-only or not, runs here on the write pool. Declared because the
+     * read transaction manager below stops Spring Boot creating its own.
+     */
+    @Bean
+    @Primary
+    PlatformTransactionManager transactionManager(DataSource dataSource) {
+        return new JdbcTransactionManager(dataSource);
+    }
+
+    @Bean(READ_TRANSACTION_MANAGER)
+    PlatformTransactionManager readTransactionManager(@Qualifier("read") DataSource readDataSource) {
+        return new JdbcTransactionManager(readTransactionDataSource(readDataSource));
+    }
+
     @Bean
     ConnectionProvider jooqConnectionProvider(DataSource dataSource, @Qualifier("read") DataSource readDataSource) {
-        return new TransactionRoutingConnectionProvider(dataSource, readDataSource);
+        return new TransactionRoutingConnectionProvider(
+                dataSource, readDataSource, readTransactionDataSource(readDataSource));
+    }
+
+    /**
+     * The read pool as the read transaction manager sees it. Lazy, so a {@link ReadTransaction} only takes a
+     * read connection when a query runs on it: one nested in a write transaction runs on the write connection
+     * and must not hold a read connection, or wait for one, while it does.
+     */
+    private synchronized LazyConnectionDataSourceProxy readTransactionDataSource(DataSource readDataSource) {
+        if (readTransactionDataSource == null) {
+            readTransactionDataSource = new LazyConnectionDataSourceProxy(readDataSource);
+        }
+        return readTransactionDataSource;
     }
 
     @Bean

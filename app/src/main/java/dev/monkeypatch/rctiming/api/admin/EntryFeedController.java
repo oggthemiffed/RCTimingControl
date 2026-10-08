@@ -6,7 +6,6 @@ import dev.monkeypatch.rctiming.domain.entryfeed.EntryFeedService;
 import dev.monkeypatch.rctiming.domain.entryfeed.EntryFeedStatus;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -72,7 +71,7 @@ public class EntryFeedController {
     @PostMapping("/apply")
     public ResponseEntity<RaceHubImportResult> apply(Authentication auth, @PathVariable long eventId) {
         RaceHubImportResult result = feedService.applyHeld(CurrentOfficial.actor(auth), eventId);
-        return ResponseEntity.status(result.blocked() ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.OK).body(result);
+        return ImportResponses.of(result);
     }
 
     public record SaveRequest(String url, String token, Boolean autoFetch) {
