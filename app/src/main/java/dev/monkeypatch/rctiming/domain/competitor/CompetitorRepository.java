@@ -1,15 +1,15 @@
 package dev.monkeypatch.rctiming.domain.competitor;
 
+import dev.monkeypatch.rctiming.domain.Names;
 import dev.monkeypatch.rctiming.jooq.generated.tables.records.CompetitorsRecord;
 import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETITORS;
 
@@ -29,34 +29,25 @@ public class CompetitorRepository extends JooqRepository<Competitor, Competitors
         return findWhere(COMPETITORS.BRCA_NUMBER.eq(brcaNumber));
     }
 
-    /** Competitors from any source with no BRCA number and this display name, ignoring case. */
-    public List<Competitor> findWithoutBrcaNumberByName(String displayName) {
-        return findWhere(COMPETITORS.BRCA_NUMBER.isNull()
-                .and(DSL.lower(DSL.trim(COMPETITORS.DISPLAY_NAME)).eq(displayName.trim().toLowerCase(Locale.ROOT))));
+    /**
+     * Competitors from any source with no BRCA number, by {@link Names#matchKey} of their name. Loaded once
+     * for a whole import rather than once for each of its rows.
+     */
+    public Map<String, List<Competitor>> findWithoutBrcaNumberByMatchKey() {
+        return findWhere(COMPETITORS.BRCA_NUMBER.isNull()).stream()
+                .collect(Collectors.groupingBy(c -> Names.matchKey(c.getDisplayName())));
     }
 
     /**
-     * Competitors from any source whose name is the same as this one, ignoring case and spacing, so
-     * "alex  rowe" finds "Alex Rowe", and capitals are folded for every letter, accented ones included.
-     * Accents themselves are kept. The rule a typed walk-in name is checked against (#123).
-     * <p>
-     * The names are compared in Java, not SQL: the database's own {@code lower()} only folds ASCII and
-     * {@code replace()} only removes a literal space, so SQL would miss accents and tabs, and the rule
-     * must not depend on the database vendor. A club has hundreds of competitors, and this runs once
-     * per typed walk-in.
+     * Competitors from any source whose name is the same as this one ({@link Names#matchKey}), so "alex  rowe"
+     * finds "Alex Rowe". The rule a typed walk-in name is checked against (#123). The names are compared in
+     * Java: a club has hundreds of competitors, and this runs once per typed walk-in.
      */
-    public List<Competitor> findByNormalizedName(String displayName) {
-        String target = normalizeName(displayName);
+    public List<Competitor> findBySameName(String displayName) {
+        String target = Names.matchKey(displayName);
         return findAll().stream()
-                .filter(c -> c.getDisplayName() != null && normalizeName(c.getDisplayName()).equals(target))
+                .filter(c -> Names.matchKey(c.getDisplayName()).equals(target))
                 .toList();
-    }
-
-    private static final Pattern WHITESPACE = Pattern.compile("\\s+", Pattern.UNICODE_CHARACTER_CLASS);
-
-    /** The form of a name two competitors are compared by: no spacing, folded to lower case. */
-    public static String normalizeName(String displayName) {
-        return WHITESPACE.matcher(displayName).replaceAll("").toLowerCase(Locale.ROOT);
     }
 
     @Override

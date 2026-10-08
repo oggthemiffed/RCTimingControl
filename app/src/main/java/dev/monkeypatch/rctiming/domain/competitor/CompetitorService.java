@@ -36,7 +36,7 @@ public class CompetitorService {
      */
     @Transactional(readOnly = true)
     public List<Competitor> findPossibleDuplicates(String displayName) {
-        return competitorRepository.findByNormalizedName(displayName);
+        return competitorRepository.findBySameName(displayName);
     }
 
     /** The longest spoken name accepted; it is a short pronunciation hint, not free text. */

@@ -3,7 +3,7 @@ package dev.monkeypatch.rctiming.query.competitor;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 
-import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
+import dev.monkeypatch.rctiming.domain.Names;
 import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 
@@ -66,7 +66,7 @@ public class CompetitorQueryService {
     public List<CompetitorDuplicateGroupDto> listPossibleDuplicates() {
         List<CompetitorSummaryDto> all = listAll();
         Map<String, List<CompetitorSummaryDto>> byName = all.stream()
-                .collect(Collectors.groupingBy(c -> CompetitorRepository.normalizeName(c.displayName()),
+                .collect(Collectors.groupingBy(c -> Names.matchKey(c.displayName()),
                         LinkedHashMap::new, Collectors.toList()));
         Map<String, List<CompetitorSummaryDto>> byBrca = all.stream()
                 .filter(c -> c.brcaNumber() != null && !c.brcaNumber().isBlank())

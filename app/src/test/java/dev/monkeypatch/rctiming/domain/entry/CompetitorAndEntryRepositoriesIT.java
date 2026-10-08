@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.domain.entry;
 
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
+import dev.monkeypatch.rctiming.domain.Names;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.event.Event;
@@ -71,34 +72,48 @@ class CompetitorAndEntryRepositoriesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void findByNormalizedNameIgnoresCaseAndSpacing() {
+    void findBySameNameIgnoresCaseAndSpacing() {
         String name = "Normal Name " + System.nanoTime();
         Competitor saved = competitors.save(named(name));
         cleanup.add(() -> competitors.deleteById(saved.getId()));
         Competitor other = competitors.save(named(name + " Jr"));
         cleanup.add(() -> competitors.deleteById(other.getId()));
 
-        assertThat(competitors.findByNormalizedName("  " + name.toUpperCase().replace(" ", "   ") + " "))
+        assertThat(competitors.findBySameName("  " + name.toUpperCase().replace(" ", "   ") + " "))
                 .extracting(Competitor::getId).containsExactly(saved.getId());
-        assertThat(competitors.findByNormalizedName(name.toLowerCase().replace(" ", "")))
+        assertThat(competitors.findBySameName(name.toLowerCase().replace(" ", "")))
                 .extracting(Competitor::getId).containsExactly(saved.getId());
-        assertThat(competitors.findByNormalizedName("Nobody Like " + name)).isEmpty();
+        assertThat(competitors.findBySameName("Nobody Like " + name)).isEmpty();
     }
 
     @Test
-    void findByNormalizedNameIgnoresAccentedCapitalsAndTabs() {
+    void findBySameNameIgnoresAccentedCapitalsAndTabs() {
         String n = String.valueOf(System.nanoTime());
         Competitor accented = competitors.save(named("Ren\u00e9 M\u00fcller " + n));
         cleanup.add(() -> competitors.deleteById(accented.getId()));
         Competitor tabbed = competitors.save(named("Alex\tRowe " + n));
         cleanup.add(() -> competitors.deleteById(tabbed.getId()));
 
-        assertThat(competitors.findByNormalizedName("REN\u00c9  M\u00dcLLER " + n))
+        assertThat(competitors.findBySameName("REN\u00c9  M\u00dcLLER " + n))
                 .extracting(Competitor::getId).containsExactly(accented.getId());
-        assertThat(competitors.findByNormalizedName("alex rowe " + n))
+        assertThat(competitors.findBySameName("alex rowe " + n))
                 .extracting(Competitor::getId).containsExactly(tabbed.getId());
-        assertThat(competitors.findByNormalizedName("Alex\u00a0Rowe " + n))
+        assertThat(competitors.findBySameName("Alex\u00a0Rowe " + n))
                 .extracting(Competitor::getId).containsExactly(tabbed.getId());
+    }
+
+    @Test
+    void findWithoutBrcaNumberByMatchKeyUsesTheSameRuleAndSkipsBrcaHolders() {
+        String n = String.valueOf(System.nanoTime());
+        Competitor plain = competitors.save(named("Ren\u00e9 M\u00fcller " + n));
+        cleanup.add(() -> competitors.deleteById(plain.getId()));
+        Competitor numbered = named("Ren\u00e9 M\u00fcller " + n);
+        numbered.setBrcaNumber("B" + n);
+        Competitor withBrca = competitors.save(numbered);
+        cleanup.add(() -> competitors.deleteById(withBrca.getId()));
+
+        assertThat(competitors.findWithoutBrcaNumberByMatchKey().get(Names.matchKey("REN\u00c9   M\u00dcLLER " + n)))
+                .extracting(Competitor::getId).containsExactly(plain.getId());
     }
 
     private static Competitor named(String displayName) {
