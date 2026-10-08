@@ -114,6 +114,9 @@ class WalkInEntryIT extends AbstractIntegrationTest {
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         Entry entry = entryRepository.findById(resp.getBody().get("entry").get("id").asLong()).orElseThrow();
         assertThat(entry.getCompetitorId()).isEqualTo(competitorId);
+        // With no secondary transponder the audit row records JSON null, not the string "null"
+        String after = auditLogRepository.findByEntryIdOrderByCreatedAtAsc(entry.getId()).get(0).getAfterSnapshot();
+        assertThat(after).contains("\"secondaryTransponderNumber\":null");
     }
 
     @Test
