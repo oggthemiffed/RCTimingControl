@@ -14,8 +14,8 @@ import {
   useSaveEntryFeed,
 } from '@/hooks/admin/useEntryFeed';
 import type { EntryFeedDto, EventClassDto, SaveEntryFeedRequest } from '@/lib/adminApi';
-import RaceHubImportDialog from './RaceHubImportDialog';
 import { getApiErrorMessage } from '@/lib/errors';
+import RaceHubImportDialog from './RaceHubImportDialog';
 
 interface EntryFeedSectionProps {
   eventId: number;

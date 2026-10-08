@@ -36,7 +36,7 @@ function raceTitle(item: RunOrderItemDto | undefined) {
 /** A toast for a race command the server refused, with its reason (such as a race already running). */
 function commandFailed(command: string) {
   return (err: unknown) =>
-    toast.error(`${command} failed: ${getApiErrorMessage(err, 'check the connection and try again.')}`);
+    toast.error(`${command} failed: ${getApiErrorMessage(err, 'try again, and check the connection if it keeps failing.')}`);
 }
 
 export default function CockpitPage() {

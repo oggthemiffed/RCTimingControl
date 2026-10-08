@@ -17,6 +17,7 @@ import {
 import { useAdminCompetitorsList } from '@/hooks/admin/useAdminCompetitors';
 import { useCreateWalkInEntry } from '@/hooks/admin/useAdminEntries';
 import type { CompetitorSummaryDto } from '@/lib/adminApi';
+import { getApiErrorMessage } from '@/lib/errors';
 
 interface AddWalkInEntryDialogProps {
   eventId: number;
@@ -93,9 +94,9 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
       if (axios.isAxiosError(err) && err.response?.status === 409 && data?.code === 'POSSIBLE_DUPLICATE_COMPETITOR') {
         setPossibleDuplicates(data.matches ?? []);
       } else if (axios.isAxiosError(err) && err.response?.status === 409) {
-        setError(data?.detail ?? 'This driver already has an entry in this class.');
+        setError(getApiErrorMessage(err, 'This driver already has an entry in this class.'));
       } else if (axios.isAxiosError(err) && (err.response?.status === 400 || err.response?.status === 422)) {
-        setError(data?.detail ?? 'Check the details and try again.');
+        setError(getApiErrorMessage(err, 'Check the details and try again.'));
       } else {
         setError('Could not add the entry. Check your connection and try again.');
       }

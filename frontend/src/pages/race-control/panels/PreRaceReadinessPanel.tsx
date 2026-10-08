@@ -36,7 +36,7 @@ export function PreRaceReadinessPanel({ raceId }: Props) {
     return (
       <Card className="p-6">
         <p className="text-destructive text-sm">
-          Could not load pre-race readiness: {getApiErrorMessage(error, 'check the connection and try again.')}
+          Could not load pre-race readiness: {getApiErrorMessage(error, 'try again, and check the connection if it keeps failing.')}
         </p>
       </Card>
     );
