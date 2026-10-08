@@ -69,7 +69,7 @@ class AudioPreGenerationServiceTest {
     void onRaceGridTransition_generatesCountdownClips() {
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(Collections.emptyList());
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString()))
                 .thenReturn("http://localhost:8080/storage/clip.wav");
 
@@ -99,7 +99,7 @@ class AudioPreGenerationServiceTest {
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
         when(entryRepository.findById(100L)).thenReturn(Optional.of(entry));
         when(competitorRepository.findById(200L)).thenReturn(Optional.of(competitor));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
@@ -132,7 +132,7 @@ class AudioPreGenerationServiceTest {
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
         when(entryRepository.findById(100L)).thenReturn(Optional.of(entry));
         when(competitorRepository.findById(200L)).thenReturn(Optional.of(competitor));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
@@ -162,7 +162,7 @@ class AudioPreGenerationServiceTest {
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
         when(entryRepository.findById(100L)).thenReturn(Optional.of(entry));
         when(competitorRepository.findById(200L)).thenReturn(Optional.of(competitor));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
@@ -184,7 +184,7 @@ class AudioPreGenerationServiceTest {
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(List.of(raceEntry));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
         when(entryRepository.findById(100L)).thenReturn(Optional.empty());
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
         when(clipService.generateRaceFinishedClip(anyLong(), anyString(), anyString())).thenReturn(null);
@@ -198,7 +198,7 @@ class AudioPreGenerationServiceTest {
     void onRaceGridTransition_generatesOneRaceFinishedClip() {
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(Collections.emptyList());
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString())).thenReturn(null);
         when(clipService.generateRaceFinishedClip(anyLong(), anyString(), anyString()))
                 .thenReturn("http://localhost:8080/storage/finish.wav");
@@ -213,7 +213,7 @@ class AudioPreGenerationServiceTest {
     void getClipMap_returnsAllGeneratedUrls() {
         when(raceRepository.findById(1L)).thenReturn(Optional.of(race));
         when(raceEntryRepository.findByRaceIdOrderByGridPosition(1L)).thenReturn(Collections.emptyList());
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
         when(clipService.generateCountdownClip(anyLong(), anyInt(), anyString(), anyString()))
                 .thenReturn("http://localhost:8080/storage/clip.wav");
 

@@ -56,7 +56,7 @@ public class SetupService {
         boolean staff = userRepository.findAll().stream()
                 .filter(User::isOfficial)
                 .count() >= 2;
-        boolean decoder = clubProfileRepository.findAll().stream().findFirst()
+        boolean decoder = clubProfileRepository.findCurrent()
                 .map(p -> p.getDecoderHost() != null && p.getDecoderPort() != null && p.getDecoderProtocol() != null)
                 .orElse(false);
         return new SetupProgressDto(club, track, format, staff, decoder);

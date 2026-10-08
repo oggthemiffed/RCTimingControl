@@ -117,7 +117,7 @@ class RunningOrderAnnouncementServiceTest {
         LapTimingService mockLts = lapTimingService;
         when(mockLts.peek(1L)).thenReturn(Optional.of(liveState));
         when(raceRepository.findById(1L)).thenReturn(Optional.of(runningRace));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
 
         // We can't easily inject rows into LiveRaceState (no positions = empty calculatePositions)
         // so test the no-rows path first:
@@ -139,7 +139,7 @@ class RunningOrderAnnouncementServiceTest {
         // Do NOT backdate — just registered, so interval has NOT elapsed
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(runningRace));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
 
         service.checkAndAnnounce();
 
@@ -156,7 +156,7 @@ class RunningOrderAnnouncementServiceTest {
         stoppedRace.setStatus(RaceStatus.STOPPED);
 
         when(raceRepository.findById(1L)).thenReturn(Optional.of(stoppedRace));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
 
         service.checkAndAnnounce();
 
@@ -167,8 +167,8 @@ class RunningOrderAnnouncementServiceTest {
     @Test
     void announcementDepth_usesDefaultThreeWhenNoClubProfile() throws Exception {
         // Verify depth = 3 is applied (default) — implicitly confirmed by no exception when
-        // findAll returns empty; depth 3 still used in broadcastRunningOrder
-        when(clubProfileRepository.findAll()).thenReturn(List.of());
+        // No club profile; depth 3 still used in broadcastRunningOrder
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.empty());
         // Just assert no exception with empty club profile list
         service.onRaceStarted(1L);
         backdateRaceStart(1L, Instant.now().minusSeconds(150));
@@ -190,7 +190,7 @@ class RunningOrderAnnouncementServiceTest {
                 makeRow(3, "TOM  HALL (Wyvern)")));
         when(lapTimingService.peek(1L)).thenReturn(Optional.of(liveState));
         when(raceRepository.findById(1L)).thenReturn(Optional.of(runningRace));
-        when(clubProfileRepository.findAll()).thenReturn(List.of(clubProfile));
+        when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(clubProfile));
 
         Entry first = new Entry();
         first.setCompetitorId(10L);

@@ -5,6 +5,8 @@ import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 import static dev.monkeypatch.rctiming.jooq.generated.tables.ClubProfiles.CLUB_PROFILES;
 
 /** The club profile. There is at most one; {@link ClubProfileService} keeps it that way. */
@@ -15,6 +17,11 @@ public class ClubProfileRepository extends JooqRepository<ClubProfile, ClubProfi
 
     public ClubProfileRepository(DSLContext dsl) {
         super(dsl, CLUB_PROFILES, CLUB_PROFILES.ID);
+    }
+
+    /** The club's profile, or empty before the setup wizard has saved one. */
+    public Optional<ClubProfile> findCurrent() {
+        return dsl.selectFrom(CLUB_PROFILES).orderBy(CLUB_PROFILES.ID).limit(1).fetchOptional().map(this::toEntity);
     }
 
     @Override

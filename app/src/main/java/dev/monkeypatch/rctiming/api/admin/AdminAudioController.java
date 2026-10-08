@@ -2,8 +2,6 @@ package dev.monkeypatch.rctiming.api.admin;
 
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
-import dev.monkeypatch.rctiming.domain.club.ClubProfile;
-import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
@@ -27,12 +25,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/admin/audio")
 public class AdminAudioController {
 
-    private final ClubProfileRepository clubProfileRepository;
     private final ClubProfileService clubProfileService;
 
-    public AdminAudioController(ClubProfileRepository clubProfileRepository,
-                                ClubProfileService clubProfileService) {
-        this.clubProfileRepository = clubProfileRepository;
+    public AdminAudioController(ClubProfileService clubProfileService) {
         this.clubProfileService = clubProfileService;
     }
 
@@ -47,23 +42,18 @@ public class AdminAudioController {
             boolean announceRunningOrder,
             @Min(1) @Max(20) int runningOrderDepth,
             String defaultVoiceId
-    ) {}
+    ) {
+        static AudioSettingsDto of(ClubAudioSettings s, String defaultVoiceId) {
+            return new AudioSettingsDto(s.announceCountdown(), s.announceStagger(), s.announceLapBeep(),
+                    s.announceFinish(), s.announceRunningOrder(), s.runningOrderDepth(), defaultVoiceId);
+        }
+    }
 
     @GetMapping("/settings")
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<AudioSettingsDto> getAudioSettings() {
-        Long profileId = clubProfileService.getSingletonProfileId();
-        ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
-        ClubAudioSettings s = profile.getAudioSettings();
-        return ResponseEntity.ok(new AudioSettingsDto(
-                s.announceCountdown(),
-                s.announceStagger(),
-                s.announceLapBeep(),
-                s.announceFinish(),
-                s.announceRunningOrder(),
-                s.runningOrderDepth(),
-                profile.getDefaultVoiceId()
-        ));
+        return ResponseEntity.ok(AudioSettingsDto.of(
+                clubProfileService.audioSettings(), clubProfileService.defaultVoiceId().orElse(null)));
     }
 
     @Audited("audit_log")

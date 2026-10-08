@@ -96,11 +96,10 @@ public class AudioPreGenerationService {
             return;
         }
 
-        // Resolve club default voice
-        String voiceId = clubProfileRepository.findAll().stream()
-                .findFirst()
+        // The club's voice; null leaves the choice to TtsClipService, which uses the Piper default
+        String voiceId = clubProfileRepository.findCurrent()
                 .map(ClubProfile::getDefaultVoiceId)
-                .orElse("en_GB-alan-medium");
+                .orElse(null);
 
         Map<String, String> clips = new HashMap<>();
 

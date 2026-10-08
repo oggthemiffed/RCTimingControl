@@ -3,7 +3,6 @@ package dev.monkeypatch.rctiming.api.racecontrol;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
-import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
@@ -30,12 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("hasAnyRole('RACE_DIRECTOR', 'ADMIN')")
 public class AudioSettingsController {
 
-    private final ClubProfileRepository clubProfileRepository;
     private final ClubProfileService clubProfileService;
 
-    public AudioSettingsController(ClubProfileRepository clubProfileRepository,
-                                   ClubProfileService clubProfileService) {
-        this.clubProfileRepository = clubProfileRepository;
+    public AudioSettingsController(ClubProfileService clubProfileService) {
         this.clubProfileService = clubProfileService;
     }
 
@@ -48,7 +44,12 @@ public class AudioSettingsController {
             boolean announceRunningOrder,
             int runningOrderDepth,
             int[] countdownIntervals
-    ) {}
+    ) {
+        static AudioSettingsDto of(ClubAudioSettings s) {
+            return new AudioSettingsDto(s.announceCountdown(), s.announceStagger(), s.announceLapBeep(),
+                    s.announceFinish(), s.announceRunningOrder(), s.runningOrderDepth(), s.countdownIntervals());
+        }
+    }
 
     /**
      * A change to the settings. A field left out (null) keeps its saved value, so a client can send just the
@@ -69,18 +70,7 @@ public class AudioSettingsController {
      */
     @GetMapping
     public ResponseEntity<AudioSettingsDto> getSettings() {
-        Long profileId = clubProfileService.getSingletonProfileId();
-        ClubProfile profile = clubProfileRepository.findById(profileId).orElseThrow();
-        ClubAudioSettings s = profile.getAudioSettings();
-        return ResponseEntity.ok(new AudioSettingsDto(
-                s.announceCountdown(),
-                s.announceStagger(),
-                s.announceLapBeep(),
-                s.announceFinish(),
-                s.announceRunningOrder(),
-                s.runningOrderDepth(),
-                s.countdownIntervals()
-        ));
+        return ResponseEntity.ok(AudioSettingsDto.of(clubProfileService.audioSettings()));
     }
 
     /**
@@ -104,15 +94,6 @@ public class AudioSettingsController {
                             patch.countdownIntervals() != null ? patch.countdownIntervals() : s.countdownIntervals()
                     ));
                 });
-        ClubAudioSettings newSettings = saved.getAudioSettings();
-        return ResponseEntity.ok(new AudioSettingsDto(
-                newSettings.announceCountdown(),
-                newSettings.announceStagger(),
-                newSettings.announceLapBeep(),
-                newSettings.announceFinish(),
-                newSettings.announceRunningOrder(),
-                newSettings.runningOrderDepth(),
-                newSettings.countdownIntervals()
-        ));
+        return ResponseEntity.ok(AudioSettingsDto.of(saved.getAudioSettings()));
     }
 }

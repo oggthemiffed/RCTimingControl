@@ -204,8 +204,7 @@ public class RunningOrderAnnouncementService {
     }
 
     private int resolveAnnouncementDepth() {
-        return clubProfileRepository.findAll().stream()
-                .findFirst()
+        return clubProfileRepository.findCurrent()
                 .map(ClubProfile::getAudioSettings)
                 .map(s -> s.runningOrderDepth())
                 .orElse(3);
