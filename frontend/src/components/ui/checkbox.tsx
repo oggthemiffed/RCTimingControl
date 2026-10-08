@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Checkbox as CheckboxPrimitive } from "radix-ui"
-import { RiCheckLine } from "@remixicon/react"
+import { CheckIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -21,7 +21,7 @@ function Checkbox({
         data-slot="checkbox-indicator"
         className={cn("flex items-center justify-center text-current")}
       >
-        <RiCheckLine className="size-3" />
+        <CheckIcon className="size-3" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )
