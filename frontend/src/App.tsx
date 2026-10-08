@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthProvider } from '@/providers/AuthProvider';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { RaceControlErrorBoundary } from '@/components/RaceControlErrorBoundary';
 import SetupGuard from '@/pages/setup/SetupGuard';
 import LoginPage from '@/pages/auth/LoginPage';
 import NotFoundPage from '@/pages/NotFoundPage';
@@ -119,7 +120,9 @@ const router = createBrowserRouter([
         path: '/race-control/practice/:sessionId',
         element: (
           <ProtectedRoute roles={['RACE_DIRECTOR', 'ADMIN']}>
-            <PracticeSessionPage />
+            <RaceControlErrorBoundary>
+              <PracticeSessionPage />
+            </RaceControlErrorBoundary>
           </ProtectedRoute>
         ),
       },

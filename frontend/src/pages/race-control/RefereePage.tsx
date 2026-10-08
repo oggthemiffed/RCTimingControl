@@ -25,7 +25,7 @@ export default function RefereePage() {
 
   useHelpContent(RefereeHelp);
 
-  const { data: runOrder = [] } = useRunOrder(eventId || null);
+  const { data: runOrder = [], isLoading: runOrderLoading, isError: runOrderFailed } = useRunOrder(eventId || null);
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);
   const [incidentOpen, setIncidentOpen] = useState(false);
   const [penaltyOpen, setPenaltyOpen] = useState(false);
@@ -86,11 +86,19 @@ export default function RefereePage() {
             Run Order
           </p>
         </div>
-        <RunOrderPanel
-          items={runOrder}
-          selectedRaceId={selectedRaceId}
-          onSelect={setSelectedRaceId}
-        />
+        {runOrderLoading ? (
+          <p className="p-4 text-sm text-muted-foreground">Loading the run order…</p>
+        ) : runOrderFailed && runOrder.length === 0 ? (
+          <p className="p-4 text-sm text-muted-foreground">
+            The run order could not be loaded. It will try again shortly.
+          </p>
+        ) : (
+          <RunOrderPanel
+            items={runOrder}
+            selectedRaceId={selectedRaceId}
+            onSelect={setSelectedRaceId}
+          />
+        )}
       </aside>
 
       <Separator orientation="vertical" />

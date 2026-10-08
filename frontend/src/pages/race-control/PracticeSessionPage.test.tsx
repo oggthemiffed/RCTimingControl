@@ -88,6 +88,25 @@ describe('PracticeSessionPage', () => {
     expect(screen.getByText(/press start to begin timing/i)).toBeInTheDocument();
   });
 
+  it('offers to try again when the session cannot be loaded, rather than saying it does not exist', async () => {
+    vi.mocked(practiceApi.getSession).mockRejectedValueOnce(new Error('Network Error'));
+    vi.mocked(practiceApi.getSession).mockResolvedValueOnce(idleSession as never);
+
+    render(<PracticeSessionPage />, { wrapper });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(screen.queryByText('Session not found.')).not.toBeInTheDocument();
+    expect(await screen.findByText('Session not started')).toBeInTheDocument();
+  });
+
+  it('says so when the session does not exist', async () => {
+    vi.mocked(practiceApi.getSession).mockRejectedValue({ isAxiosError: true, response: { status: 404 } });
+
+    render(<PracticeSessionPage />, { wrapper });
+
+    expect(await screen.findByText('Session not found.')).toBeInTheDocument();
+  });
+
   it('STOMP subscription updates live table on running session', async () => {
     vi.mocked(practiceApi.getSession).mockResolvedValue(runningSession as never);
     mockUsePracticeTiming.mockReturnValue({

@@ -13,7 +13,7 @@ import { useBoardRace } from './useBoardRace';
 export default function NowNextBoard() {
   const [searchParams] = useSearchParams();
   const eventId = parseEventParam(searchParams.get('event'));
-  const { nowNext, isPending, currentRace, rows } = useBoardRace(eventId);
+  const { nowNext, isPending, isError, currentRace, rows } = useBoardRace(eventId);
   const nextRace = nowNext?.nextRace ?? null;
   const lastCompletedRace = nowNext?.lastCompletedRace ?? null;
 
@@ -28,6 +28,14 @@ export default function NowNextBoard() {
     return (
       <BoardShell>
         <BoardMessage>Loading…</BoardMessage>
+      </BoardShell>
+    );
+  }
+
+  if (isError && !nowNext) {
+    return (
+      <BoardShell>
+        <BoardMessage>Can’t reach the timing system. Trying again…</BoardMessage>
       </BoardShell>
     );
   }

@@ -15,7 +15,7 @@ import {
   type PracticeSessionDto,
 } from '@/lib/practiceApi';
 import { toast } from 'sonner';
-import { getApiErrorMessage } from '@/lib/errors';
+import { getApiErrorMessage, getApiErrorStatus } from '@/lib/errors';
 
 function statusBadgeVariant(
   status: PracticeSessionDto['status'],
@@ -35,6 +35,8 @@ export function PracticeSessionPage() {
   const {
     data: session,
     isLoading: sessionLoading,
+    error: sessionError,
+    refetch: refetchSession,
   } = useQuery({
     queryKey: ['practice-session', id],
     queryFn: () => getSession(id),
@@ -70,6 +72,15 @@ export function PracticeSessionPage() {
       toast.error(getApiErrorMessage(err, 'Failed to stop session.'));
     },
   });
+
+  if (!session && sessionError && getApiErrorStatus(sessionError) !== 404) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 h-48 text-muted-foreground text-sm">
+        <p>The session could not be loaded. Check the connection and try again.</p>
+        <Button size="sm" variant="outline" onClick={() => void refetchSession()}>Try again</Button>
+      </div>
+    );
+  }
 
   if (sessionLoading || !session) {
     return (

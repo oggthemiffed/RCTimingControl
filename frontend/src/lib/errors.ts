@@ -12,3 +12,8 @@ export function getApiErrorMessage(err: unknown, fallback: string): string {
   if (typeof data?.message === 'string' && data.message) return data.message;
   return fallback;
 }
+
+/** The HTTP status the server answered with, or undefined when there was no answer, such as a network failure. */
+export function getApiErrorStatus(err: unknown): number | undefined {
+  return isAxiosError(err) ? err.response?.status : undefined;
+}

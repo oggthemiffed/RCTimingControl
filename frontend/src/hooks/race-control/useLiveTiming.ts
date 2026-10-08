@@ -16,7 +16,7 @@ export function useLiveTiming(raceId: number | null) {
   const topic = raceId ? `/topic/race/${raceId}/timing` : null;
   const { data: stompRows, status: wsStatus } = useStomp<LiveTimingRowDto[]>(topic);
 
-  const { data: snapshot } = useQuery({
+  const { data: snapshot, isError: snapshotFailed } = useQuery({
     queryKey: ['live-timing-snapshot', raceId],
     queryFn: () => getLiveTimingSnapshot(raceId!),
     enabled: (raceId ?? 0) > 0,
@@ -30,5 +30,6 @@ export function useLiveTiming(raceId: number | null) {
     [rows],
   );
 
-  return { rows: sorted, wsStatus };
+  // The snapshot failing matters only until the first timing update arrives
+  return { rows: sorted, wsStatus, snapshotFailed: snapshotFailed && !stompRows };
 }

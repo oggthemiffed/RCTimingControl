@@ -21,6 +21,7 @@ import KeyboardWedgeInput from './KeyboardWedgeInput';
 import RosterSearch from './RosterSearch';
 import { useRoles } from '@/hooks/useRoles';
 import { formatTime } from '@/lib/dates';
+import { getApiErrorStatus } from '@/lib/errors';
 
 type ResolveState =
   | { kind: 'idle' }
@@ -28,10 +29,6 @@ type ResolveState =
   | { kind: 'resolved'; entries: CheckInEntry[] }
   | { kind: 'not_found'; query: string }
   | { kind: 'error' };
-
-function statusFrom(err: unknown): number | undefined {
-  return (err as { response?: { status?: number } })?.response?.status;
-}
 
 export default function CheckInDesk({ eventId }: { eventId: number }) {
   const queryClient = useQueryClient();
@@ -59,7 +56,7 @@ export default function CheckInDesk({ eventId }: { eventId: number }) {
         setResolveState({ kind: 'resolved', entries });
       } catch (err) {
         if (lookup !== latestLookup.current) return;
-        if (statusFrom(err) === 404) {
+        if (getApiErrorStatus(err) === 404) {
           setResolveState({ kind: 'not_found', query: code });
         } else {
           setResolveState({ kind: 'error' });
@@ -102,7 +99,7 @@ export default function CheckInDesk({ eventId }: { eventId: number }) {
       });
     } catch (err) {
       setConfirmError(
-        statusFrom(err) === 409
+        getApiErrorStatus(err) === 409
           ? 'That entry was withdrawn, so it cannot check in.'
           : 'Check-in failed. Please try again.',
       );

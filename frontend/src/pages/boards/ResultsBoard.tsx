@@ -11,7 +11,7 @@ export default function ResultsBoard() {
   const [searchParams] = useSearchParams();
   const eventId = parseEventParam(searchParams.get('event'));
 
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: ['boards', 'results', eventId],
     queryFn: () => getResultsBoard(eventId),
     refetchInterval: BOARD_POLL_MS,
@@ -21,6 +21,14 @@ export default function ResultsBoard() {
     return (
       <BoardShell>
         <BoardMessage>Loading…</BoardMessage>
+      </BoardShell>
+    );
+  }
+
+  if (isError && !data) {
+    return (
+      <BoardShell>
+        <BoardMessage>Can’t reach the timing system. Trying again…</BoardMessage>
       </BoardShell>
     );
   }

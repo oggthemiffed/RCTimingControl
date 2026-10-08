@@ -94,4 +94,13 @@ describe('ResultsBoard', () => {
     expect(await screen.findByText('No results yet.')).toBeInTheDocument();
     expect(getResultsBoard).toHaveBeenCalledWith(5);
   });
+
+  it('says it cannot reach the server rather than that nothing has finished', async () => {
+    vi.mocked(getResultsBoard).mockRejectedValue(new Error('Network Error'));
+
+    renderBoard();
+
+    expect(await screen.findByText('Can’t reach the timing system. Trying again…')).toBeInTheDocument();
+    expect(screen.queryByText('No results yet.')).not.toBeInTheDocument();
+  });
 });
