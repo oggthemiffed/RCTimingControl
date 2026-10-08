@@ -65,7 +65,6 @@ import java.util.stream.Collectors;
 @Service
 public class CsvImportService {
 
-
     private final EventRepository eventRepository;
     private final EventClassRepository eventClassRepository;
     private final RacingClassRepository racingClassRepository;
@@ -477,7 +476,8 @@ public class CsvImportService {
         }
 
         String mappingKey(RcTimingCsvParser.Row row) {
-            return row.className() != null ? "CSV:" + normalise(row.className()) : "CSV:#" + row.classNumber();
+            String prefix = ExternalSources.CSV + ":";
+            return row.className() != null ? prefix + normalise(row.className()) : prefix + "#" + row.classNumber();
         }
 
         /**

@@ -7,7 +7,6 @@ import dev.monkeypatch.rctiming.domain.checkin.TransponderSlot;
 import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
-import dev.monkeypatch.rctiming.domain.csvimport.CsvImportService;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
