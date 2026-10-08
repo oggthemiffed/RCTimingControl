@@ -1,10 +1,9 @@
 package dev.monkeypatch.rctiming.livefeed;
 
-import dev.monkeypatch.rctiming.config.LoopbackHosts;
+import dev.monkeypatch.rctiming.config.SecureEndpoint;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,17 +20,8 @@ public record LiveFeedProperties(URI relayUrl, String token) {
     static final String TOKEN_SETTING = "rctiming.livefeed.token";
 
     public LiveFeedProperties {
-        if (relayUrl != null && relayUrl.toString().isBlank()) {
-            relayUrl = null;
-        }
-        if (relayUrl != null && !"wss".equalsIgnoreCase(relayUrl.getScheme())
-                && !("ws".equalsIgnoreCase(relayUrl.getScheme()) && LoopbackHosts.isLoopback(relayUrl.getHost()))) {
-            throw new IllegalArgumentException(URL_SETTING + " must be a wss address, so the club's key isn't "
-                    + "sent in the clear (plain ws works only to this machine), not " + relayUrl);
-        }
-        if (token != null && token.isBlank()) {
-            token = null;
-        }
+        relayUrl = SecureEndpoint.url(relayUrl, URL_SETTING, "wss", "ws");
+        token = SecureEndpoint.token(token);
     }
 
     /** Whether the feed can run: both the relay address and the key are set. */
@@ -41,13 +31,6 @@ public record LiveFeedProperties(URI relayUrl, String token) {
 
     /** The settings still needed before the feed can run, empty when it can. */
     public List<String> missingSettings() {
-        List<String> missing = new ArrayList<>();
-        if (relayUrl == null) {
-            missing.add(URL_SETTING);
-        }
-        if (token == null) {
-            missing.add(TOKEN_SETTING);
-        }
-        return missing;
+        return SecureEndpoint.missingSettings(relayUrl, URL_SETTING, token, TOKEN_SETTING);
     }
 }
