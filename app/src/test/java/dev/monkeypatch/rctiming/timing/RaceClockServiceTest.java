@@ -156,6 +156,17 @@ class RaceClockServiceTest {
     }
 
     @Test
+    void aClockWorkedOutFromStoredTimesCountsOnlyIfTheStoredRaceIsRunning() {
+        race.setStatus(RaceStatus.STOPPED);
+        race.setStartedAt(clock.instant().minusSeconds(50));
+
+        RaceClockDto seen = service.clockOf(RACE_ID, RaceStatus.RUNNING, null);
+
+        assertThat(seen.elapsedMs()).isEqualTo(50_000);
+        assertThat(seen.running()).isFalse();
+    }
+
+    @Test
     void anUnknownRaceHasNoClock() {
         assertThat(service.clock(99)).isEmpty();
     }

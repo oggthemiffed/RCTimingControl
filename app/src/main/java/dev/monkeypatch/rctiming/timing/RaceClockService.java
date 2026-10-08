@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Keeps each race's clock from its status changes: it resets when the race is called to the grid, counts while it
- * runs and pauses while it is stopped. The live feed (#28) and the streaming overlay (#29) read it.
+ * runs and pauses while it is stopped. The boards, the live feed (#28) and the streaming overlay (#29) read it.
  *
  * <p>Clocks are kept in memory only. A race already under way when the app started gets a clock worked out from
  * its start and finish times the first time it is needed, which counts any stop before then as race time.
@@ -65,14 +65,26 @@ public class RaceClockService {
         }
     }
 
-    /** The race's kept clock, or one worked out from its times for a race under way before the app started. */
+    /**
+     * The race's kept clock, or one worked out from its stored times for a race under way before the app
+     * started, counting if the stored race is running.
+     */
     private RaceClock clockFor(long raceId, Instant now) {
         return clocks.computeIfAbsent(raceId, id -> raceRepository.findById(id)
-                .map(race -> RaceClock.fromTimes(race, now))
+                .map(race -> {
+                    RaceClock fromTimes = RaceClock.fromTimes(race, now);
+                    if (race.getStatus() == RaceStatus.RUNNING) {
+                        fromTimes.start(now);
+                    }
+                    return fromTimes;
+                })
                 .orElseGet(RaceClock::new));
     }
 
-    /** The race's clock with its length, or empty for an unknown race. */
+    /**
+     * The race's clock with its length, or empty for an unknown race. On the write connection, not the read pool,
+     * so it waits for a status change in progress and never shows the new clock with the old status.
+     */
     @Transactional(readOnly = true)
     public Optional<RaceClockDto> clock(long raceId) {
         return raceRepository.findById(raceId)
@@ -81,7 +93,9 @@ public class RaceClockService {
 
     /**
      * The clock of a race the caller has already looked up, with the length its format gives it (null for
-     * none). Shared by the boards, the overlay and the live feed so they all show the same time.
+     * none). Shared by the boards, the overlay and the live feed so they all show the same time. The first time
+     * a race is asked for since the app started, its stored times are read to work out its clock, so
+     * {@code raceId} must be a real race.
      */
     public RaceClockDto clockOf(long raceId, RaceStatus status, Long durationMs) {
         Instant now = clock.instant();
@@ -92,15 +106,7 @@ public class RaceClockService {
             elapsed = 0;
             running = false;
         } else {
-            RaceClock kept = clocks.computeIfAbsent(raceId, id -> {
-                RaceClock fromTimes = raceRepository.findById(id)
-                        .map(race -> RaceClock.fromTimes(race, now))
-                        .orElseGet(RaceClock::new);
-                if (status == RaceStatus.RUNNING) {
-                    fromTimes.start(now);
-                }
-                return fromTimes;
-            });
+            RaceClock kept = clockFor(raceId, now);
             elapsed = kept.elapsedMs(now);
             running = kept.running();
         }

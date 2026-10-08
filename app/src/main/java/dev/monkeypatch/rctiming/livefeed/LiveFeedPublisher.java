@@ -284,9 +284,10 @@ public class LiveFeedPublisher implements SmartLifecycle {
                         0, null, null, null, null, leaderLaps));
             }
         }
-        RaceClockDto clock = raceClocks.clockOf(race.raceId(), RaceStatus.valueOf(race.status()), race.durationMs());
-        LiveFeedV1.Clock raceTime = new LiveFeedV1.Clock(clock.elapsedMs(), clock.durationMs(), clock.remainingMs(),
-                clock.running());
+        RaceClockDto raceClock =
+                raceClocks.clockOf(race.raceId(), RaceStatus.valueOf(race.status()), race.durationMs());
+        LiveFeedV1.Clock raceTime = new LiveFeedV1.Clock(raceClock.elapsedMs(), raceClock.durationMs(),
+                raceClock.remainingMs(), raceClock.running());
         return new Content(race.status(), standings, raceTime);
     }
 
