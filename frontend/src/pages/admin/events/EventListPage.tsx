@@ -39,6 +39,7 @@ import { useRoles } from '@/hooks/useRoles';
 import type { AdminEventListDto, EventStatus } from '@/lib/adminApi';
 import { useHelp } from '@/context/HelpContext';
 import { EntryManagementHelp } from '@/help/EntryManagementHelp';
+import { parseLocalDate } from '@/lib/utils';
 
 // ── Status badge colors (D-06 / UI-SPEC.md) ───────────────────────────────
 
@@ -127,7 +128,7 @@ export default function EventListPage() {
           year: 'numeric',
           month: 'short',
           day: 'numeric',
-        }).format(new Date(info.getValue())),
+        }).format(parseLocalDate(info.getValue())),
     }),
     columnHelper.accessor('status', {
       header: 'Status',

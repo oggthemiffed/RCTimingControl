@@ -44,6 +44,7 @@ import RaceHubImportDialog from './RaceHubImportDialog';
 import CsvImportDialog from './CsvImportDialog';
 import EntryFeedSection from './EntryFeedSection';
 import DownloadResultsButton from './DownloadResultsButton';
+import { parseLocalDate } from '@/lib/utils';
 
 // ── Status colors ──────────────────────────────────────────────────────────
 
@@ -100,13 +101,13 @@ type ConfirmCopy = { title: string; body: string; confirmLabel: string; destruct
 const transitionConfirmCopy: Partial<Record<EventStatus, ConfirmCopy>> = {
   DRAFT: {
     title: 'Re-open as Draft?',
-    body: 'This will unpublish the event. It will no longer be visible to racers until re-published.',
+    body: 'This will unpublish the event. It will no longer be on the public schedule until re-published.',
     confirmLabel: 'Re-open as Draft',
     destructive: false,
   },
   ENTRIES_CLOSED: {
     title: 'Close entries?',
-    body: 'This will prevent new entries from being submitted. Racers already entered will not be affected.',
+    body: 'The public schedule will show entries as closed. Entries already made are not affected, and you can still import entries or add walk-ins.',
     confirmLabel: 'Close Entries',
     destructive: true,
   },
@@ -255,7 +256,7 @@ export default function EventDetailPage() {
           </div>
           <p className="text-sm text-muted-foreground mt-1">
             {new Intl.DateTimeFormat('en-GB', { dateStyle: 'long' }).format(
-              new Date(data.eventDate)
+              parseLocalDate(data.eventDate)
             )}
             {trackName && <span> · {trackName}</span>}
           </p>

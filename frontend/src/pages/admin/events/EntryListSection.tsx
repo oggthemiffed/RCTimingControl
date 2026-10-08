@@ -87,7 +87,7 @@ function WithdrawDialog({
           <DialogTitle>Withdraw entry?</DialogTitle>
           <DialogDescription>
             {entry &&
-              `This will withdraw ${entry.displayName ?? 'Unknown driver'}'s entry for this class. The racer will need to re-enter if entries are still open.`}
+              `This will withdraw ${entry.displayName ?? 'Unknown driver'}'s entry for this class. To enter them again, add a walk-in or import a newer entry file.`}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-1.5">
@@ -158,7 +158,7 @@ function EntriesTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Racer</TableHead>
+            <TableHead>Driver</TableHead>
             <TableHead>Transponder</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Submitted</TableHead>
