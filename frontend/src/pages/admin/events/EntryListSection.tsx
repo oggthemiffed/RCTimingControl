@@ -24,10 +24,10 @@ import { Label } from '@/components/ui/label';
 import { useEntriesForClass, useWithdrawEntry } from '@/hooks/admin/useAdminEntries';
 import { useRacingClasses } from '@/hooks/admin/useAdminEventClasses';
 import type { AdminEntryDto, EventClassDto } from '@/lib/adminApi';
-import { useAuth } from '@/hooks/useAuth';
 import AddWalkInEntryDialog from './AddWalkInEntryDialog';
 import EntryHistoryDialog from './EntryHistoryDialog';
 import { ImportedTransponderDifference } from '@/pages/race-control/check-in/CheckInStatus';
+import { useRoles } from '@/hooks/useRoles';
 
 // ── Entry status colors ───────────────────────────────────────────────────
 
@@ -250,12 +250,11 @@ interface EntryListSectionProps {
 export default function EntryListSection({ eventId, classes }: EntryListSectionProps) {
   const [selectedClassIdx, setSelectedClassIdx] = useState(0);
   const [addOpen, setAddOpen] = useState(false);
-  const { user } = useAuth();
   const { data: racingClasses = [] } = useRacingClasses();
   // The add-entry endpoint is for admins and race directors; referees can see entries but not add them
-  const canAddEntries = !!user?.roles.some(r => r === 'ADMIN' || r === 'RACE_DIRECTOR');
+  const { isAdmin, canRunEvent: canAddEntries } = useRoles();
   // The history names the officials who acted, so it is for admins only
-  const canSeeHistory = !!user?.roles.includes('ADMIN');
+  const canSeeHistory = isAdmin;
 
   if (classes.length === 0) {
     return (

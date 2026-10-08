@@ -1,4 +1,5 @@
 import api from './api';
+import type { OfficialRole } from './adminApi';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -25,7 +26,7 @@ export type AuthResponse = {
   email: string;
   firstName: string;
   lastName: string;
-  roles: string[];
+  roles: OfficialRole[];
 };
 
 export type DecoderConfigUpdateRequest = {
@@ -46,7 +47,7 @@ export type SetupStaffRequest = {
   lastName: string;
   email: string;
   password: string;
-  roles: string[];
+  roles: OfficialRole[];
 };
 
 // ── API functions ──────────────────────────────────────────────────────────

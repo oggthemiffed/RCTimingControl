@@ -21,13 +21,13 @@ import { FinishedPanel } from './panels/FinishedPanel';
 import { AudioSettingsPanel } from './panels/AudioSettingsPanel';
 import { UnknownTransponderLinkDialog } from './dialogs/UnknownTransponderLinkDialog';
 import { RoundGeneratorWizard } from './RoundGeneratorWizard';
-import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { RunOrderItemDto } from '@/lib/raceControlApi';
 import { roundName } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/errors';
 import { useConfirm } from '@/components/ConfirmDialog';
+import { useRoles } from '@/hooks/useRoles';
 
 function raceTitle(item: RunOrderItemDto | undefined) {
   if (!item) return 'No race selected';
@@ -52,8 +52,7 @@ export default function CockpitPage() {
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);
 
   // Generating rounds and finishing races are race director commands; referees also see the cockpit
-  const { user } = useAuth();
-  const canControlRace = !!user?.roles.some((r) => r === 'ADMIN' || r === 'RACE_DIRECTOR');
+  const { canRunEvent: canControlRace } = useRoles();
   const [generatorOpen, setGeneratorOpen] = useState(false);
 
   // Unknown transponder link dialog state

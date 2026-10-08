@@ -6,7 +6,6 @@ import { useCallback, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import SpokenNameEditor from '@/components/SpokenNameEditor';
-import { useAuth } from '@/hooks/useAuth';
 import { Card } from '@/components/ui/card';
 import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 import {
@@ -20,6 +19,7 @@ import { CheckInBadge, ImportedTransponderDifference, RaceHubArrival } from './C
 import { transponderLabel } from './transponderLabel';
 import KeyboardWedgeInput from './KeyboardWedgeInput';
 import RosterSearch from './RosterSearch';
+import { useRoles } from '@/hooks/useRoles';
 
 type ResolveState =
   | { kind: 'idle' }
@@ -181,10 +181,8 @@ function ResolvedEntryPanel({
   onConfirm: () => void;
 }) {
   const shown = confirmResult?.entry ?? entry;
-  const roles = useAuth().user?.roles ?? [];
-  const isAdmin = roles.includes('ADMIN');
-  const canSetSpokenName =
-    isAdmin || roles.includes('RACE_DIRECTOR') || roles.includes('REFEREE');
+  // Any official can fix how a name is said; only admins see who changed it
+  const { isAdmin } = useRoles();
   const [editing, setEditing] = useState(false);
   // What the editor saved, so the panel shows it without another lookup
   const [saved, setSaved] = useState<{ spokenName: string | null; speechName: string } | null>(null);
@@ -196,7 +194,7 @@ function ResolvedEntryPanel({
         <p className="font-medium">{shown.competitorName}</p>
         <CheckInBadge checkedIn={shown.checkedIn} />
       </div>
-      {canSetSpokenName && shown.competitorId != null && (
+      {shown.competitorId != null && (
         editing ? (
           <SpokenNameEditor
             competitorId={shown.competitorId}

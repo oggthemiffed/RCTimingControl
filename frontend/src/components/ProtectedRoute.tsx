@@ -1,11 +1,11 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import type { AuthUser } from '@/providers/AuthProvider';
+import type { OfficialRole } from '@/lib/adminApi';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  roles?: AuthUser['roles'][number][];
+  roles?: OfficialRole[];
 }
 
 export default function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
