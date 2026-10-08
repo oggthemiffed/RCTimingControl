@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.security;
 
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,13 @@ class JwtAuthenticationFilterTest {
 
         assertThat(auth.getName()).isEqualTo("42");
         assertThat(auth.getAuthorities()).isEmpty();
+    }
+
+    @Test
+    void anInvalidToken_leavesTheRequestAnonymous() throws Exception {
+        when(jwtTokenService.parseToken("token")).thenThrow(new JwtException("bad signature"));
+
+        assertThat(filterWithBearer("token")).isNull();
     }
 
     private Authentication filterWithBearer(String token) throws Exception {

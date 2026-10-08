@@ -18,7 +18,7 @@ class SecurityConfigTest {
 
     @Test
     void serverPaths_areNotFrontendRequests() {
-        for (String path : new String[] {"/api", "/api/v1/admin/club/profile", "/ws/timing", "/storage/logo.png",
+        for (String path : new String[] {"/api", "/ws", "/api/v1/admin/club/profile", "/ws/timing", "/storage/logo.png",
                 "/actuator/health", "/error"}) {
             assertThat(SecurityConfig.isFrontendRequest(get(path))).as(path).isFalse();
         }
@@ -32,7 +32,10 @@ class SecurityConfigTest {
 
     @Test
     void writes_areNeverFrontendRequests() {
-        assertThat(SecurityConfig.isFrontendRequest(new MockHttpServletRequest("POST", "/"))).isFalse();
+        for (String method : new String[] {"POST", "PUT", "DELETE"}) {
+            MockHttpServletRequest request = new MockHttpServletRequest(method, "/boards");
+            assertThat(SecurityConfig.isFrontendRequest(request)).as(method).isFalse();
+        }
     }
 
     private static MockHttpServletRequest get(String path) {

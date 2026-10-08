@@ -24,7 +24,6 @@ import org.springframework.web.util.UrlPathHelper;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    /** Only officials sign in (L10, #18). */
     private static final String[] OFFICIAL_ROLES = Role.OFFICIAL_ROLES.stream().map(Role::name).toArray(String[]::new);
 
     @Bean
@@ -65,7 +64,7 @@ public class SecurityConfig {
         // Decoded, as Spring MVC routes it, so an encoded /api path is not taken for a page
         String path = UrlPathHelper.defaultInstance.getPathWithinApplication(request);
         return (HttpMethod.GET.matches(request.getMethod()) || HttpMethod.HEAD.matches(request.getMethod()))
-                && !SpaConfig.isServerPath(path.startsWith("/") ? path.substring(1) : path);
+                && !SpaConfig.isServerPath(path);
     }
 
     @Bean

@@ -75,7 +75,7 @@ public class JwtTokenService {
 
     /**
      * The Spring Security authorities for a parsed token's {@code roles} claim, one {@code ROLE_} per role.
-     * A token without the claim gets none, so it can reach only what anonymous visitors can.
+     * A token without the claim gets none, so every rule that asks for an official role refuses it.
      */
     public static List<GrantedAuthority> authorities(Claims claims) {
         List<?> roles = claims.get("roles", List.class);
