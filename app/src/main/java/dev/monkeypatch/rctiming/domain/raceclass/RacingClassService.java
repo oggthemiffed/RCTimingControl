@@ -2,7 +2,6 @@ package dev.monkeypatch.rctiming.domain.raceclass;
 
 import dev.monkeypatch.rctiming.api.admin.dto.CreateRacingClassRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.RacingClassDto;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 
@@ -81,7 +80,6 @@ public class RacingClassService {
     }
 
     private RacingClass getRacingClassOrThrow(Long id) {
-        return racingClassRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Racing class not found: " + id));
+        return racingClassRepository.getOrThrow(id);
     }
 }

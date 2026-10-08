@@ -7,7 +7,6 @@ import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.livefeed.LiveFeedPublisher;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.timing.dto.LiveFeedStatusDto;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -73,7 +72,6 @@ public class LiveFeedController {
     }
 
     private Event event(long eventId) {
-        return eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + eventId));
+        return eventRepository.getOrThrow(eventId);
     }
 }

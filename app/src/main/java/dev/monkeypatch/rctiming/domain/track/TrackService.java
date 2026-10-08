@@ -8,7 +8,6 @@ import dev.monkeypatch.rctiming.api.admin.dto.TrackDto;
 import dev.monkeypatch.rctiming.api.admin.dto.TrackLapThresholdDto;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 
@@ -109,8 +108,7 @@ public class TrackService {
     }
 
     public DecoderLoopDto updateDecoderLoop(Actor actor, Long loopId, CreateDecoderLoopRequest request) {
-        DecoderLoop loop = decoderLoopRepository.findById(loopId)
-                .orElseThrow(() -> new EntityNotFoundException("Decoder loop not found: " + loopId));
+        DecoderLoop loop = decoderLoopRepository.getOrThrow(loopId);
         Map<String, Object> before = loopValues(loop);
         loop.setLoopId(request.loopId());
         loop.setDisplayName(request.displayName());
@@ -124,8 +122,7 @@ public class TrackService {
     }
 
     public void deleteDecoderLoop(Actor actor, Long loopId) {
-        DecoderLoop loop = decoderLoopRepository.findById(loopId)
-                .orElseThrow(() -> new EntityNotFoundException("Decoder loop not found: " + loopId));
+        DecoderLoop loop = decoderLoopRepository.getOrThrow(loopId);
         decoderLoopRepository.deleteById(loopId);
         audit.entry(actor, "DECODER_LOOP_DELETED").entity("decoder_loop", loopId)
                 .summary("Removed decoder loop " + loopLabel(loop) + " from " + trackName(loop.getTrackId()))
@@ -153,8 +150,7 @@ public class TrackService {
         threshold.setMaxLastLapMs(request.maxLastLapMs());
 
         if (request.racingClassId() != null) {
-            RacingClass racingClass = racingClassRepository.findById(request.racingClassId())
-                    .orElseThrow(() -> new EntityNotFoundException("Racing class not found: " + request.racingClassId()));
+            RacingClass racingClass = racingClassRepository.getOrThrow(request.racingClassId());
             threshold.setRacingClassId(racingClass.getId());
             threshold.setRacingClassName(racingClass.getName());
         } else {
@@ -176,8 +172,7 @@ public class TrackService {
     }
 
     public void deleteLapThreshold(Actor actor, Long thresholdId) {
-        TrackLapThreshold threshold = thresholdRepository.findById(thresholdId)
-                .orElseThrow(() -> new EntityNotFoundException("Lap threshold not found: " + thresholdId));
+        TrackLapThreshold threshold = thresholdRepository.getOrThrow(thresholdId);
         thresholdRepository.deleteById(thresholdId);
         audit.entry(actor, "LAP_THRESHOLD_DELETED").entity("lap_threshold", thresholdId)
                 .summary("Removed the lap thresholds for " + (threshold.getRacingClassName() == null ? "every class"
@@ -223,7 +218,6 @@ public class TrackService {
     }
 
     private Track getTrackOrThrow(Long id) {
-        return trackRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Track not found: " + id));
+        return trackRepository.getOrThrow(id);
     }
 }

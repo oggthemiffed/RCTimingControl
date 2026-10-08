@@ -57,8 +57,7 @@ public class CompetitorService {
             throw new IllegalArgumentException(
                     "The spoken name can be at most " + MAX_SPOKEN_NAME_LENGTH + " characters");
         }
-        Competitor competitor = competitorRepository.findById(competitorId)
-                .orElseThrow(() -> new EntityNotFoundException("Competitor not found: " + competitorId));
+        Competitor competitor = competitorRepository.getOrThrow(competitorId);
         String before = competitor.getSpokenName();
         String after = text.isEmpty() ? null : text;
         if (java.util.Objects.equals(before, after)) {

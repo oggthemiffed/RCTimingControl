@@ -10,7 +10,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -143,7 +142,7 @@ class OfficialServiceTest {
         user.setRoles(new HashSet<>(Set.of(roles)));
         user.setCreatedAt(NOW.minusSeconds(3600));
         user.setUpdatedAt(NOW.minusSeconds(3600));
-        when(users.findById(id)).thenReturn(Optional.of(user));
+        when(users.getOrThrow(id)).thenReturn(user);
         return user;
     }
 }

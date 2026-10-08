@@ -11,7 +11,6 @@ import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,9 +48,7 @@ public class EventClassService {
 
     @Transactional(readOnly = true)
     public List<EventClassDto> listClassesForEvent(Long eventId) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new EntityNotFoundException("Event not found: " + eventId);
-        }
+        eventRepository.requireExists(eventId);
         return eventClassRepository.findAll().stream()
                 .filter(ec -> eventId.equals(ec.getEventId()))
                 .map(EventClassDto::from)
@@ -59,12 +56,9 @@ public class EventClassService {
     }
 
     public EventClassDto addClassToEvent(Actor actor, Long eventId, AddEventClassRequest request) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + eventId));
-        RacingClass racingClass = racingClassRepository.findById(request.racingClassId())
-                .orElseThrow(() -> new EntityNotFoundException("Racing class not found: " + request.racingClassId()));
-        RaceFormatTemplate template = templateRepository.findById(request.templateId())
-                .orElseThrow(() -> new EntityNotFoundException("Template not found: " + request.templateId()));
+        Event event = eventRepository.getOrThrow(eventId);
+        RacingClass racingClass = racingClassRepository.getOrThrow(request.racingClassId());
+        RaceFormatTemplate template = templateRepository.getOrThrow(request.templateId());
 
         // Snapshot via ObjectMapper deep-copy — same pattern as RaceFormatService.assignTemplateToEventClass
         RaceFormatConfig snapshot = objectMapper.convertValue(template.getConfig(), RaceFormatConfig.class);
@@ -158,7 +152,6 @@ public class EventClassService {
     }
 
     private EventClass getEventClassOrThrow(Long id) {
-        return eventClassRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Event class not found: " + id));
+        return eventClassRepository.getOrThrow(id);
     }
 }

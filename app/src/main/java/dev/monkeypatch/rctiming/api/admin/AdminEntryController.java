@@ -5,7 +5,6 @@ import dev.monkeypatch.rctiming.api.admin.dto.AdminCreateEntryRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.AdminWithdrawRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.EntryDto;
 import dev.monkeypatch.rctiming.api.admin.dto.EntryResult;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryService;
 import dev.monkeypatch.rctiming.query.entry.AdminEntryDto;
@@ -57,9 +56,7 @@ public class AdminEntryController {
     @GetMapping("/{id}/history")
     @PreAuthorize("hasRole('ADMIN')")
     public List<EntryHistoryDto> getHistory(@PathVariable long id) {
-        if (!entryRepository.existsById(id)) {
-            throw new EntityNotFoundException("Entry not found: " + id);
-        }
+        entryRepository.requireExists(id);
         return entryHistoryQuery.forEntry(id);
     }
 

@@ -23,6 +23,11 @@ public class UserRepository extends JooqRepository<User, UsersRecord> {
         super(dsl, USERS, USERS.ID);
     }
 
+    @Override
+    protected String entityName() {
+        return "Official";
+    }
+
     public Optional<User> findByEmail(String email) {
         return findOne(USERS.EMAIL.eq(email));
     }

@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.domain.csvimport;
 
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.ExternalSources;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
@@ -101,8 +100,7 @@ public class CsvImportService {
 
     @Transactional
     public CsvImportResult importCsv(Actor actor, Long eventId, String content, boolean dryRun, Selection selection) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+        Event event = eventRepository.getOrThrow(eventId);
         Selection picked = selection == null ? Selection.NONE : selection;
         ParsedCsv parsed = RcTimingCsvParser.parse(content);
         List<String> errors = new ArrayList<>(parsed.errors());

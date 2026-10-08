@@ -4,7 +4,6 @@ import dev.monkeypatch.rctiming.api.admin.dto.ClubProfileDto;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateClubProfileRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateGoverningBodyRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.GoverningBodyAffiliationDto;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import org.springframework.context.ApplicationEventPublisher;
@@ -141,8 +140,7 @@ public class ClubProfileService {
     }
 
     public GoverningBodyAffiliationDto updateAffiliation(Actor actor, Long id, CreateGoverningBodyRequest request) {
-        GoverningBodyAffiliation affiliation = affiliationRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Governing body affiliation not found: " + id));
+        GoverningBodyAffiliation affiliation = affiliationRepository.getOrThrow(id);
         Map<String, Object> before = affiliationValues(affiliation);
         affiliation.setCode(request.code());
         affiliation.setDisplayName(request.displayName());
@@ -155,8 +153,7 @@ public class ClubProfileService {
     }
 
     public void deleteAffiliation(Actor actor, Long id) {
-        GoverningBodyAffiliation affiliation = affiliationRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Governing body affiliation not found: " + id));
+        GoverningBodyAffiliation affiliation = affiliationRepository.getOrThrow(id);
         affiliationRepository.deleteById(id);
         audit.entry(actor, "AFFILIATION_DELETED").entity("affiliation", id)
                 .summary("Removed the governing body " + affiliation.getDisplayName())

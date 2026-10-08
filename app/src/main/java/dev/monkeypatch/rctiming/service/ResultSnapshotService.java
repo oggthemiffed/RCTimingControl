@@ -25,7 +25,6 @@ import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.LiveRacePosition;
 import dev.monkeypatch.rctiming.timing.LiveRaceState;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.resultsexport.FinishedRaceCorrected;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,8 +89,7 @@ public class ResultSnapshotService {
      * marshal lap adjustments given during the race are already in the timed laps.
      */
     public void snapshot(long raceId) {
-        Race race = raceRepository.findById(raceId)
-                .orElseThrow(() -> new EntityNotFoundException("Race not found: " + raceId));
+        Race race = raceRepository.getOrThrow(raceId);
         Round round = roundRepository.findById(race.getRoundId()).orElse(null);
 
         List<ResultSnapshotDto.ResultRow> positions;
@@ -167,8 +165,7 @@ public class ResultSnapshotService {
             log.warn("Race {} has no result snapshot to correct", raceId);
             return;
         }
-        Race race = raceRepository.findById(raceId)
-                .orElseThrow(() -> new EntityNotFoundException("Race not found: " + raceId));
+        Race race = raceRepository.getOrThrow(raceId);
         ResultSnapshot snapshot = found.get();
         String timedJson = snapshot.getTimedPositionsJson() != null
                 ? snapshot.getTimedPositionsJson() : snapshot.getPositionsJson();

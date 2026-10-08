@@ -61,8 +61,7 @@ public class EntryService {
      * warning, not an error. Class membership rules are not checked: staff add walk-ins on the day.
      */
     public EntryResult adminCreateEntry(Long adminUserId, AdminCreateEntryRequest req) {
-        Event event = eventRepository.findById(req.eventId())
-                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + req.eventId()));
+        Event event = eventRepository.getOrThrow(req.eventId());
         if (event.getStatus() == EventStatus.COMPLETED) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Event is completed");
         }
@@ -88,8 +87,7 @@ public class EntryService {
         }
         Competitor competitor;
         if (req.competitorId() != null) {
-            competitor = competitorRepository.findById(req.competitorId())
-                    .orElseThrow(() -> new EntityNotFoundException("Competitor not found: " + req.competitorId()));
+            competitor = competitorRepository.getOrThrow(req.competitorId());
         } else if (hasName) {
             List<Competitor> possible = competitorService.findPossibleDuplicates(req.competitorName());
             if (!possible.isEmpty() && !Boolean.TRUE.equals(req.confirmNewCompetitor())) {
@@ -144,8 +142,7 @@ public class EntryService {
     }
 
     public EntryDto adminWithdraw(Long entryId, Long adminUserId, String reason) {
-        Entry entry = entryRepository.findById(entryId)
-                .orElseThrow(() -> new EntityNotFoundException("Entry not found: " + entryId));
+        Entry entry = entryRepository.getOrThrow(entryId);
         if (entry.getStatus() == EntryStatus.WITHDRAWN) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Entry already withdrawn");
         }

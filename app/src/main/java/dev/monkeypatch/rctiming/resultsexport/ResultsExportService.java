@@ -137,16 +137,14 @@ public class ResultsExportService {
     /** The event's results as they stand now, for download. Carries the last revision handed out; queues nothing. */
     @Transactional(readOnly = true)
     public ResultsExportV1 current(long eventId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event not found: " + eventId));
+        Event event = eventRepository.getOrThrow(eventId);
         return exportQuery.build(eventId, event.getResultsExportRevision(), Instant.now());
     }
 
     /** Sends a queued or failed export on the sender's next pass instead of waiting for its retry time. */
     @Transactional
     public ResultsOutboxItem retryNow(Actor actor, long itemId) {
-        ResultsOutboxItem item = outboxRepository.findById(itemId)
-                .orElseThrow(() -> new EntityNotFoundException("Results export not found: " + itemId));
+        ResultsOutboxItem item = outboxRepository.getOrThrow(itemId);
         if (outboxRepository.makeDue(itemId, Instant.now()) == 0) {
             return item;
         }

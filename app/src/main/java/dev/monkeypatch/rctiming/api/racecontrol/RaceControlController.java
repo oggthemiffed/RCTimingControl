@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalAdjustmentRequest;
@@ -20,7 +21,6 @@ import dev.monkeypatch.rctiming.resultsexport.FinishedRaceCorrected;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
@@ -232,6 +232,7 @@ public class RaceControlController {
     public ResponseEntity<Map<String, Long>> skipTo(@PathVariable long raceId,
                                                      @Valid @RequestBody SkipToRaceRequest req) {
         Race sourceRace = loadRace(raceId);
+        // Named apart from the race in the path, so a bad target in the body is clear
         Race targetRace = raceRepository.findById(req.targetRaceId())
                 .orElseThrow(() -> new EntityNotFoundException("Target race not found: " + req.targetRaceId()));
 
@@ -284,8 +285,7 @@ public class RaceControlController {
     }
 
     private Race loadRace(long raceId) {
-        return raceRepository.findById(raceId)
-                .orElseThrow(() -> new EntityNotFoundException("Race not found: " + raceId));
+        return raceRepository.getOrThrow(raceId);
     }
 
     private String resolveUserName(long userId) {
@@ -299,8 +299,7 @@ public class RaceControlController {
     }
 
     private long resolveEventId(Race race) {
-        Round round = roundRepository.findById(race.getRoundId())
-                .orElseThrow(() -> new EntityNotFoundException("Round not found: " + race.getRoundId()));
+        Round round = roundRepository.getOrThrow(race.getRoundId());
         return round.getEventId();
     }
 }

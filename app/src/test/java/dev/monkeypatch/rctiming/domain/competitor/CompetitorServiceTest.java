@@ -4,7 +4,6 @@ import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +40,7 @@ class CompetitorServiceTest {
     void setSpokenName_savesATrimmedValue() {
         CompetitorRepository repo = mock(CompetitorRepository.class);
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
-        when(repo.findById(7L)).thenReturn(Optional.of(existing()));
+        when(repo.getOrThrow(7L)).thenReturn(existing());
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Competitor c = new CompetitorService(repo, audit).setSpokenName(7L, "  Shiv-awn Keen ", 3L);
@@ -58,7 +57,7 @@ class CompetitorServiceTest {
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         Competitor before = existing();
         before.setSpokenName("Old say-as");
-        when(repo.findById(7L)).thenReturn(Optional.of(before));
+        when(repo.getOrThrow(7L)).thenReturn(before);
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         new CompetitorService(repo, audit).setSpokenName(7L, "New say-as", 42L);
@@ -79,7 +78,7 @@ class CompetitorServiceTest {
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         Competitor before = existing();
         before.setSpokenName("Old say-as");
-        when(repo.findById(7L)).thenReturn(Optional.of(before));
+        when(repo.getOrThrow(7L)).thenReturn(before);
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         new CompetitorService(repo, audit).setSpokenName(7L, "  ", 42L);
@@ -96,7 +95,7 @@ class CompetitorServiceTest {
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         Competitor before = existing();
         before.setSpokenName("Same say-as");
-        when(repo.findById(7L)).thenReturn(Optional.of(before));
+        when(repo.getOrThrow(7L)).thenReturn(before);
 
         new CompetitorService(repo, audit).setSpokenName(7L, " Same say-as ", 42L);
 
@@ -110,7 +109,7 @@ class CompetitorServiceTest {
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
         Competitor withSpoken = existing();
         withSpoken.setSpokenName("Shiv-awn Keen");
-        when(repo.findById(7L)).thenReturn(Optional.of(withSpoken));
+        when(repo.getOrThrow(7L)).thenReturn(withSpoken);
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Competitor c = new CompetitorService(repo, audit).setSpokenName(7L, "   ", 3L);
@@ -134,7 +133,7 @@ class CompetitorServiceTest {
     void setSpokenName_unknownCompetitorIsNotFound() {
         CompetitorRepository repo = mock(CompetitorRepository.class);
         CompetitorAuditLogRepository audit = mock(CompetitorAuditLogRepository.class);
-        when(repo.findById(99L)).thenReturn(Optional.empty());
+        when(repo.getOrThrow(99L)).thenThrow(new EntityNotFoundException("Competitor not found: 99"));
 
         assertThatThrownBy(() -> new CompetitorService(repo, audit).setSpokenName(99L, "x", 3L))
                 .isInstanceOf(EntityNotFoundException.class);

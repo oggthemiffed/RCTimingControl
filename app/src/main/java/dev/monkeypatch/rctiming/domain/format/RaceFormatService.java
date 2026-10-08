@@ -3,7 +3,6 @@ package dev.monkeypatch.rctiming.domain.format;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 
@@ -108,8 +107,7 @@ public class RaceFormatService {
 
     @Transactional(readOnly = true)
     public RaceFormatTemplate findById(Long id) {
-        return templateRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Race format template not found: " + id));
+        return templateRepository.getOrThrow(id);
     }
 
     public RaceFormatTemplate create(Actor actor, String name, RaceFormatConfig config) {
