@@ -112,6 +112,10 @@
 - [x] **CTRL-09**: Race director can skip to or re-run a specific race and round number
 - [x] **CTRL-10**: Every race lifecycle command (call the grid, start, stop, resume, finish, abandon, restart) is audit-logged with the official who gave it and the status before and after; a restart also records what it discards (the race's times, its stored result and the live timing) (#139)
 
+### Audit
+
+- [ ] **AUDIT-01**: Every action an official takes that changes data, and the system's own background changes, is written to the audit log with who did it (or `system`), when, what it was done to and, where it applies, the value before and after. The row is written in the same transaction as the change, so a refused change leaves no row, and `AuditCoverageIT` fails when a data-changing endpoint is neither audited nor listed with a reason. Recorded so far: sign-in, sign-out and refresh (#152), race control (#165), and championships, their classes, events, points scale and exclusions (#139). **In progress**: the remaining groups on #139 (events, imports, competitor merge, check-in, config, backup and restore, results export, bump-ups, practice sessions)
+
 ### Audio Announcements
 
 - [x] **AUDIO-01**: Race control browser produces voice announcements throughout the meeting using the Web Speech API; all announcement types are individually configurable on/off

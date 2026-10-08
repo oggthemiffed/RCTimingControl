@@ -4,9 +4,6 @@
 #   GAP      nothing records who did it. Fixed under #139.
 #   PARTIAL  something records who, but without what changed. See #139 and #140.
 #   READ-ONLY  a POST that changes nothing.
-DELETE /api/v1/admin/championships/{id}/classes/{racingClassId} | GAP #139: config and event changes
-DELETE /api/v1/admin/championships/{id}/events/{eventId} | GAP #139: config and event changes
-DELETE /api/v1/admin/championships/{id}/exclusions/{exclusionId} | GAP #139: config and event changes
 DELETE /api/v1/admin/classes/{id} | GAP #139: config and event changes
 DELETE /api/v1/admin/club/affiliations/{id} | GAP #139: config and event changes
 DELETE /api/v1/admin/events/{eventId}/entry-feed | GAP #139: imports and entry feed
@@ -17,10 +14,6 @@ DELETE /api/v1/admin/tracks/{id} | GAP #139: config and event changes
 PATCH /api/v1/race-control/settings/audio | GAP #139: config and event changes
 PATCH /api/v1/setup/decoder-config | GAP #139: config and event changes
 POST /api/v1/admin/backups | GAP #139: backup and results export
-POST /api/v1/admin/championships | GAP #139: config and event changes
-POST /api/v1/admin/championships/{id}/classes | GAP #139: config and event changes
-POST /api/v1/admin/championships/{id}/events | GAP #139: config and event changes
-POST /api/v1/admin/championships/{id}/exclusions | GAP #139: config and event changes
 POST /api/v1/admin/classes | GAP #139: config and event changes
 POST /api/v1/admin/club/affiliations | GAP #139: config and event changes
 POST /api/v1/admin/competitors/merge | PARTIAL: per-entry rows in entry_audit_log only (#139)
@@ -56,8 +49,6 @@ POST /api/v1/race-control/referee/race/{raceId}/marshal-absent | PARTIAL: applie
 POST /api/v1/race-control/referee/race/{raceId}/penalty | PARTIAL: applied_by/raised_by on the row only (#140)
 POST /api/v1/setup/decoder-config/test | READ-ONLY: tries a decoder address, saves nothing
 PUT /api/v1/admin/audio/settings | GAP #139: config and event changes
-PUT /api/v1/admin/championships/{id} | GAP #139: config and event changes
-PUT /api/v1/admin/championships/{id}/points-scale | GAP #139: config and event changes
 PUT /api/v1/admin/classes/{id} | GAP #139: config and event changes
 PUT /api/v1/admin/club/affiliations/{id} | GAP #139: config and event changes
 PUT /api/v1/admin/club/logo | GAP #139: config and event changes
