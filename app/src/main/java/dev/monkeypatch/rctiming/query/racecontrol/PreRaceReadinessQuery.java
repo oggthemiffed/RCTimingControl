@@ -5,6 +5,7 @@ import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalDutyRowDto;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.PreRaceReadinessDto;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.race.RaceLabel;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
@@ -83,7 +84,7 @@ public class PreRaceReadinessQuery {
         String className = targetRow.get("className", String.class);
 
         // Step 2: Build raceLabel from round type
-        String raceLabel = buildRaceLabel(roundType, roundNumber, className, heatNumber, finalLetter);
+        String raceLabel = RaceLabel.of(roundType, roundNumber, className, heatNumber, finalLetter);
 
         // Step 3: Resolve the previous race in the event run order
         // "Previous" = highest (sequence_in_event, sequence_in_round) tuple strictly less than target
@@ -168,15 +169,5 @@ public class PreRaceReadinessQuery {
                 ));
 
         return new PreRaceReadinessDto(raceId, raceLabel, firstRaceOfEvent, gridCall, marshalDuty);
-    }
-
-    private String buildRaceLabel(String roundType, int roundNumber, String className,
-                                  int heatNumber, String finalLetter) {
-        return switch (roundType) {
-            case "PRACTICE" -> "Practice " + roundNumber + " — " + className + " — Heat " + heatNumber;
-            case "QUALIFIER" -> "Qualifying " + roundNumber + " — " + className + " — Heat " + heatNumber;
-            case "FINAL" -> (finalLetter != null ? finalLetter : "A") + " Final — " + className;
-            default -> roundType + " " + roundNumber + " — " + className + " — Heat " + heatNumber;
-        };
     }
 }
