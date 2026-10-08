@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,6 +22,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { adminApi } from '@/lib/adminApi';
+import { useClubProfile } from '@/hooks/admin/useAdminClub';
+import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 
 const TIMEZONES = Intl.supportedValuesOf('timeZone');
 const BROWSER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -54,6 +57,21 @@ export default function ClubProfileStep({ onNext }: Props) {
     },
   });
 
+  // Coming back to this step once the club is set up: start from what is saved, not a blank form. The saved
+  // position and logo have no field here, so they are sent back as they are rather than cleared.
+  const { data: saved } = useClubProfile();
+  useEffect(() => {
+    if (saved?.name) {
+      form.reset({
+        name: saved.name,
+        timezone: saved.timezone || BROWSER_TZ,
+        email: saved.email ?? '',
+        phone: saved.phone ?? '',
+        websiteUrl: saved.websiteUrl ?? '',
+      });
+    }
+  }, [saved, form]);
+
   async function onSave(values: FormValues) {
     try {
       await adminApi.club.updateProfile({
@@ -61,11 +79,12 @@ export default function ClubProfileStep({ onNext }: Props) {
         email: values.email || null,
         phone: values.phone || null,
         websiteUrl: values.websiteUrl || null,
-        latitude: null,
-        longitude: null,
+        latitude: saved?.latitude ?? null,
+        longitude: saved?.longitude ?? null,
         timezone: values.timezone,
-        logoType: null,
+        logoType: saved?.logoType ?? null,
       });
+      queryClient.invalidateQueries({ queryKey: adminQueryKeys.club.profile() });
       queryClient.invalidateQueries({ queryKey: ['setup-status'] });
       queryClient.invalidateQueries({ queryKey: ['setup-progress'] });
       toast.success('Club profile saved');
