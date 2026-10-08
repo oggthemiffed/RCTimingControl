@@ -10,6 +10,8 @@ import UnauthorizedPage from '@/pages/UnauthorizedPage';
 import { Toaster } from '@/components/ui/sonner';
 import { HelpProvider } from '@/context/HelpContext';
 import PageLoading from '@/components/PageLoading';
+// The overlay sits over a live stream, so it loads with the app: a loading spinner would show on air
+import OverlayBoard from '@/pages/boards/OverlayBoard';
 
 // Every page but sign-in and the error pages loads on demand, so a board or the overlay doesn't download
 // the admin panel and the print guides. The layouts wrap their outlets in Suspense to keep their chrome.
@@ -49,7 +51,6 @@ const AdminGuidePage = lazy(() => import('@/pages/print/AdminGuidePage'));
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
 const NowNextBoard = lazy(() => import('@/pages/boards/NowNextBoard'));
 const ResultsBoard = lazy(() => import('@/pages/boards/ResultsBoard'));
-const OverlayBoard = lazy(() => import('@/pages/boards/OverlayBoard'));
 
 function RootLayout() {
   return (
