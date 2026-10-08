@@ -1,0 +1,45 @@
+import { useEffect, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useStomp } from '@/hooks/race-control/useStomp';
+import type { LiveTimingRowDto, RaceStateChangeDto } from '@/lib/raceControlApi';
+import { getBoardLiveTiming, getNowNext } from '@/lib/boardsApi';
+import { BOARD_POLL_MS } from './boardFormat';
+
+/**
+ * What a board shows: the event's now-and-next, polled, and while a race is on track its running order,
+ * sorted by position. The order is seeded from the board endpoint, so a board opened mid-race shows the field
+ * before the next passing, then follows the race's STOMP timing topic, which anonymous sessions may subscribe to.
+ * A stop, resume or finish on the state topic refreshes every board query rather than waiting for the next poll.
+ */
+export function useBoardRace(eventId: number | null) {
+  const queryClient = useQueryClient();
+
+  const { data: nowNext, isPending } = useQuery({
+    queryKey: ['boards', 'now-next', eventId],
+    queryFn: () => getNowNext(eventId),
+    refetchInterval: BOARD_POLL_MS,
+  });
+  const currentRace = nowNext?.currentRace ?? null;
+  const raceId = currentRace?.raceId ?? null;
+
+  const { data: liveRows } = useStomp<LiveTimingRowDto[]>(raceId ? `/topic/race/${raceId}/timing` : null);
+  const { data: stateChange } = useStomp<RaceStateChangeDto>(raceId ? `/topic/race/${raceId}/state` : null);
+  const { data: seedRows } = useQuery({
+    queryKey: ['boards', 'live-timing', raceId],
+    queryFn: () => getBoardLiveTiming(raceId!),
+    enabled: raceId !== null,
+  });
+
+  useEffect(() => {
+    if (stateChange) {
+      void queryClient.invalidateQueries({ queryKey: ['boards'] });
+    }
+  }, [stateChange, queryClient]);
+
+  const rows = useMemo(() => {
+    const source = liveRows ?? seedRows ?? [];
+    return [...source].sort((a, b) => a.position - b.position);
+  }, [liveRows, seedRows]);
+
+  return { nowNext, isPending, currentRace, raceId, rows };
+}

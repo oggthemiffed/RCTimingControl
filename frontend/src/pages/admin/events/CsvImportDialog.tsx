@@ -14,20 +14,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 import { useRacingClasses } from '@/hooks/admin/useAdminEventClasses';
-import {
-  useCsvImport,
-  useRaceHubClassMappings,
-  useReplaceRaceHubClassMappings,
-} from '@/hooks/admin/useRaceHubImport';
+import { useCsvImport, useImportClassMappings } from '@/hooks/admin/useRaceHubImport';
 import type { CsvImportResult, CsvImportRow, EventClassDto } from '@/lib/adminApi';
 import {
   confirmPayload,
@@ -38,6 +27,7 @@ import {
   toggled,
   type CsvImportSelection,
 } from './csvImportSelection';
+import { ClassMappingPanel, ImportProblems, ImportWarnings } from './ImportPanels';
 
 interface CsvImportDialogProps {
   eventId: number;
@@ -58,8 +48,7 @@ export default function CsvImportDialog({ eventId, classes, open, onOpenChange }
   const [classChoices, setClassChoices] = useState<Record<string, string>>({});
 
   const importMutation = useCsvImport(eventId);
-  const replaceMappings = useReplaceRaceHubClassMappings(eventId);
-  const mappingsQuery = useRaceHubClassMappings(eventId, open);
+  const classMappings = useImportClassMappings(eventId, open);
   // As in the RaceHub import: a preview answering an older file choice is ignored
   const generation = useRef(0);
   const { data: racingClasses = [] } = useRacingClasses();
@@ -113,17 +102,10 @@ export default function CsvImportDialog({ eventId, classes, open, onOpenChange }
   }
 
   async function saveMappingsAndRecheck() {
-    // The PUT replaces every mapping, so never send it without the saved ones loaded
-    if (!mappingsQuery.isSuccess || !file) return;
-    const byKey = new Map(mappingsQuery.data.map(m => [m.racehubEventClassId, m.eventClassId]));
-    Object.entries(classChoices)
-      .filter(([, eventClassId]) => eventClassId)
-      .forEach(([key, eventClassId]) => byKey.set(key, Number(eventClassId)));
+    if (!file) return;
     const requestGeneration = generation.current;
     try {
-      await replaceMappings.mutateAsync(
-        [...byKey].map(([racehubEventClassId, eventClassId]) => ({ racehubEventClassId, eventClassId })),
-      );
+      if (!(await classMappings.save(classChoices))) return;
       // The dialog was closed or another file chosen while the mappings saved
       if (requestGeneration !== generation.current) return;
       setClassChoices({});
@@ -154,9 +136,12 @@ export default function CsvImportDialog({ eventId, classes, open, onOpenChange }
   }
 
   const groups = groupRows(preview?.rows ?? []);
-  const unmapped = preview?.unmappedClasses ?? [];
-  const allUnmappedChosen = unmapped.length > 0 && unmapped.every(u => classChoices[u.key]);
-  const busy = importMutation.isPending || replaceMappings.isPending;
+  const unmapped = (preview?.unmappedClasses ?? []).map(u => ({
+    key: u.key,
+    name: u.className ?? `Class number ${u.classNumber}`,
+    entryCount: u.entryCount,
+  }));
+  const busy = importMutation.isPending || classMappings.isSaving;
 
   function rowLabel(row: CsvImportRow) {
     const info = Object.entries(row.info ?? {});
@@ -209,75 +194,21 @@ export default function CsvImportDialog({ eventId, classes, open, onOpenChange }
 
         {preview && selection && (
           <div className="space-y-4" data-testid="csv-preview">
-            {preview.errors.length > 0 && (
-              <div className="rounded-md border border-destructive/50 p-3">
-                <h3 className="text-sm font-semibold text-destructive mb-1">Problems that block the import</h3>
-                <ul className="list-disc pl-5 text-sm space-y-0.5">
-                  {preview.errors.map(e => <li key={e}>{e}</li>)}
-                </ul>
-              </div>
-            )}
+            <ImportProblems errors={preview.errors} />
 
-            {unmapped.length > 0 && (
-              <div className="rounded-md border border-amber-500/50 p-3 space-y-3">
-                <div>
-                  <h3 className="text-sm font-semibold">Classes to map</h3>
-                  <p className="text-xs text-muted-foreground">
-                    These classes in the file do not match a class in this event. Choose one for each.
-                  </p>
-                </div>
-                {unmapped.map(u => {
-                  const name = u.className ?? `Class number ${u.classNumber}`;
-                  return (
-                    <div key={u.key} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <div className="flex-1 text-sm">
-                        <span className="font-medium">{name}</span>
-                        <span className="text-muted-foreground">
-                          {' '}· {u.entryCount} {u.entryCount === 1 ? 'entry' : 'entries'}
-                        </span>
-                      </div>
-                      <Select
-                        value={classChoices[u.key] ?? ''}
-                        onValueChange={v => setClassChoices(c => ({ ...c, [u.key]: v }))}
-                      >
-                        <SelectTrigger className="sm:w-56" aria-label={`Event class for ${name}`}>
-                          <SelectValue placeholder="Choose a class" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {classes.map(cls => (
-                            <SelectItem key={cls.id} value={String(cls.id)}>
-                              {classLabel(cls.id)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  );
-                })}
-                {mappingsQuery.isError && (
-                  <p className="text-xs text-destructive">
-                    Could not load this event&apos;s saved class mappings, so new ones cannot be saved yet. Close and
-                    try again.
-                  </p>
-                )}
-                <Button
-                  size="sm"
-                  onClick={() => void saveMappingsAndRecheck()}
-                  disabled={!allUnmappedChosen || !mappingsQuery.isSuccess || busy}
-                >
-                  Save mappings and check again
-                </Button>
-              </div>
-            )}
+            <ClassMappingPanel
+              unmapped={unmapped}
+              intro="These classes in the file do not match a class in this event. Choose one for each."
+              classes={classes}
+              classLabel={cls => classLabel(cls.id)}
+              choices={classChoices}
+              onChoose={(key, value) => setClassChoices(c => ({ ...c, [key]: value }))}
+              mappingsLoadFailed={classMappings.loadFailed}
+              canSave={classMappings.ready && !busy}
+              onSave={() => void saveMappingsAndRecheck()}
+            />
 
-            {preview.warnings.length > 0 && (
-              <div className="rounded-md border p-3">
-                <h3 className="text-sm font-semibold mb-1">Warnings</h3>
-                <ul className="list-disc pl-5 text-sm space-y-0.5">
-                  {preview.warnings.map(w => <li key={w}>{w}</li>)}
-                </ul>
-              </div>
-            )}
+            <ImportWarnings warnings={preview.warnings} />
 
             <section data-testid="group-NEW">
               <h3 className="text-sm font-semibold">New ({groups.NEW.length})</h3>

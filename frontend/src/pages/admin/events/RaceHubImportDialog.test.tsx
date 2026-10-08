@@ -152,6 +152,31 @@ describe('RaceHubImportDialog', () => {
     expect(screen.queryByText('Buggy 2WD')).not.toBeInTheDocument();
   });
 
+  it('does not preview again when the dialog is closed while the class mappings save', async () => {
+    api.importRaceHubEntries.mockResolvedValue(result({
+      blocked: true,
+      unmappedClasses: [{ racehubEventClassId: 'rh-buggy', rcClassName: 'Buggy 2WD', className: '2WD', entryCount: 2 }],
+    }));
+    let finishSave: () => void = () => {};
+    api.replaceRaceHubClassMappings.mockReturnValue(new Promise<never[]>(resolve => { finishSave = () => resolve([]); }));
+    renderDialog();
+    chooseFile(exportFile());
+
+    await waitFor(() => expect(screen.getByRole('option', { name: '2WD Buggy' })).toBeInTheDocument());
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: '11' } });
+    const save = screen.getByRole('button', { name: 'Save mappings and check again' });
+    await waitFor(() => expect(save).toBeEnabled());
+    fireEvent.click(save);
+    await waitFor(() => expect(api.replaceRaceHubClassMappings).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    finishSave();
+
+    await waitFor(() => expect(screen.queryByTestId('racehub-preview')).not.toBeInTheDocument());
+    await new Promise(r => setTimeout(r, 50));
+    expect(api.importRaceHubEntries).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('racehub-preview')).not.toBeInTheDocument();
+  });
+
   it('ignores a preview that arrives after a different file was chosen', async () => {
     let resolveFirst: (r: RaceHubImportResult) => void = () => {};
     api.importRaceHubEntries

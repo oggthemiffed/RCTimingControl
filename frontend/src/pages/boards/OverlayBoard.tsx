@@ -1,15 +1,14 @@
 // Streaming overlay for an OBS browser source (#29): the race in progress on a transparent page, with its
 // running order, laps, last lap and race clock. Anonymous, like the other boards. It follows the race's STOMP
-// timing and state topics, and shows nothing while no race is on track so the stream stays clear.
-import { useEffect, useMemo, useState } from 'react';
+// timing and state topics (useBoardRace), and shows nothing while no race is on track so the stream stays clear.
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useStomp } from '@/hooks/race-control/useStomp';
+import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import type { LiveTimingRowDto, RaceStateChangeDto } from '@/lib/raceControlApi';
-import { getBoardLiveTiming, getNowNext, getRaceClock } from '@/lib/boardsApi';
+import { getRaceClock } from '@/lib/boardsApi';
 import { fmtMs } from '@/lib/format';
 import { BOARD_POLL_MS, fmtClock, parseOverlayOptions } from './boardFormat';
+import { useBoardRace } from './useBoardRace';
 
 const THEMES = {
   dark: {
@@ -56,24 +55,9 @@ export default function OverlayBoard() {
   const [searchParams] = useSearchParams();
   const { eventId, top, showClass, theme } = parseOverlayOptions(searchParams);
   const colours = THEMES[theme];
-  const queryClient = useQueryClient();
   useTransparentPage();
 
-  const { data: nowNext } = useQuery({
-    queryKey: ['boards', 'now-next', eventId],
-    queryFn: () => getNowNext(eventId),
-    refetchInterval: BOARD_POLL_MS,
-  });
-  const race = nowNext?.currentRace ?? null;
-  const raceId = race?.raceId ?? null;
-
-  const { data: liveRows } = useStomp<LiveTimingRowDto[]>(raceId ? `/topic/race/${raceId}/timing` : null);
-  const { data: stateChange } = useStomp<RaceStateChangeDto>(raceId ? `/topic/race/${raceId}/state` : null);
-  const { data: seedRows } = useQuery({
-    queryKey: ['boards', 'live-timing', raceId],
-    queryFn: () => getBoardLiveTiming(raceId!),
-    enabled: raceId !== null,
-  });
+  const { currentRace: race, raceId, rows: allRows } = useBoardRace(eventId);
   const { data: clock, dataUpdatedAt: clockReadAt } = useQuery({
     queryKey: ['boards', 'clock', raceId],
     queryFn: () => getRaceClock(raceId!),
@@ -81,18 +65,8 @@ export default function OverlayBoard() {
     refetchInterval: BOARD_POLL_MS,
   });
 
-  // A stop, resume or finish changes the clock and what's on track, so don't wait for the next poll
-  useEffect(() => {
-    if (stateChange) {
-      void queryClient.invalidateQueries({ queryKey: ['boards'] });
-    }
-  }, [stateChange, queryClient]);
-
   const now = useNow(!!clock?.running);
-  const rows = useMemo(() => {
-    const source = liveRows ?? seedRows ?? [];
-    return [...source].sort((a, b) => a.position - b.position).slice(0, top);
-  }, [liveRows, seedRows, top]);
+  const rows = allRows.slice(0, top);
 
   if (!race) return null;
 
