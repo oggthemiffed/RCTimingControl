@@ -12,7 +12,7 @@ public final class RaceLabel {
     /** "Qualifying 2 — Stock Buggy — Heat 1", or "A Final — Stock Buggy" for a final. */
     public static String of(String roundType, int roundNumber, String className, int heatNumber, String finalLetter) {
         String round = round(roundType, roundNumber, finalLetter) + " — " + className;
-        return RoundType.FINAL.name().equals(roundType) ? round : round + " — Heat " + heatNumber;
+        return "FINAL".equals(roundType) ? round : round + " — Heat " + heatNumber;
     }
 
     /** "Practice 1", "Qualifying 2" or "B Final"; a final without a letter is the A final. */
