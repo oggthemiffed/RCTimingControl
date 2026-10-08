@@ -8,6 +8,8 @@ import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import dev.monkeypatch.rctiming.timing.dto.RaceStateChangeDto;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.Map;
@@ -33,9 +35,12 @@ public class LiveTimingHub {
         messagingTemplate.convertAndSend("/topic/race/" + raceId + "/timing", rows);
     }
 
+    /**
+     * Sent once the change commits: boards refetch on this message from the read pool, which only sees
+     * committed data, so sent earlier they would fetch the race as it was. Nothing is sent on a rollback.
+     */
     public void broadcastStateChange(long raceId, RaceStatus newStatus) {
-        messagingTemplate.convertAndSend("/topic/race/" + raceId + "/state",
-                new RaceStateChangeDto(raceId, newStatus.name()));
+        sendAfterCommit("/topic/race/" + raceId + "/state", new RaceStateChangeDto(raceId, newStatus.name()));
     }
 
     public void broadcastMarshalAdjustment(long raceId, MarshalAdjustmentDto dto) {
@@ -60,12 +65,29 @@ public class LiveTimingHub {
      * Race director UI subscribes to be notified before starting the next final.
      */
     public void broadcastBumpUpAlert(long finishedRaceId, List<Long> promotedEntryIds) {
-        messagingTemplate.convertAndSend("/topic/race/" + finishedRaceId + "/bump-up-alert",
+        sendAfterCommit("/topic/race/" + finishedRaceId + "/bump-up-alert",
                 Map.of("finishedRaceId", finishedRaceId, "promotedEntryIds", promotedEntryIds));
     }
 
     /** The live feed's connection to the relay, for the race-control status bar (#28). */
     public void broadcastLiveFeedStatus(LiveFeedStatusDto status) {
         messagingTemplate.convertAndSend("/topic/system/live-feed-status", status);
+    }
+
+    /**
+     * Sends when the current transaction commits, or now outside one. Callers are race-control commands in a
+     * write transaction; called from another transaction's after-commit callback the message would be lost.
+     */
+    private void sendAfterCommit(String destination, Object payload) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            messagingTemplate.convertAndSend(destination, payload);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                messagingTemplate.convertAndSend(destination, payload);
+            }
+        });
     }
 }

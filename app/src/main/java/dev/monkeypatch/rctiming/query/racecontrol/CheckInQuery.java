@@ -2,12 +2,12 @@ package dev.monkeypatch.rctiming.query.racecontrol;
 
 import dev.monkeypatch.rctiming.api.racecontrol.dto.CheckInEntryDto;
 import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -23,7 +23,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACIN
  * or by the competitor's name. Withdrawn entries are never returned.
  */
 @Component
-@Transactional(readOnly = true)
+@ReadTransaction
 public class CheckInQuery {
 
     static final int SEARCH_LIMIT = 25;

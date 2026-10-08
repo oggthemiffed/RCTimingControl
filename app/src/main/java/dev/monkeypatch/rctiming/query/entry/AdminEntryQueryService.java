@@ -1,8 +1,8 @@
 package dev.monkeypatch.rctiming.query.entry;
 
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETI
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Entries.ENTRIES;
 
 @Service
-@Transactional(readOnly = true)
+@ReadTransaction
 public class AdminEntryQueryService {
 
     private final DSLContext dsl;

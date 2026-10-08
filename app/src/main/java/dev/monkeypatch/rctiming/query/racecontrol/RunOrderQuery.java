@@ -1,9 +1,9 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
 import dev.monkeypatch.rctiming.api.racecontrol.dto.RunOrderItemDto;
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Rounds.ROUNDS;
  * for the cockpit left panel.
  */
 @Component
-@Transactional(readOnly = true)
+@ReadTransaction
 public class RunOrderQuery {
 
     private final DSLContext dsl;

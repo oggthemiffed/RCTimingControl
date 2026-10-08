@@ -7,6 +7,7 @@ import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.AuditLog.AUDIT_LOG;
 
 /** Reads the audit log (#138). Rows are only ever added, so this is the whole of what can be done with them. */
 @Service
+@ReadTransaction
 public class AuditQueryService {
 
     /** The most rows one page may hold. */

@@ -2,10 +2,10 @@ package dev.monkeypatch.rctiming.query.competitor;
 
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,7 +20,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETI
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Users.USERS;
 
 @Service
-@Transactional(readOnly = true)
+@ReadTransaction
 public class CompetitorQueryService {
 
     private final DSLContext dsl;

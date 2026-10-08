@@ -1,10 +1,10 @@
 package dev.monkeypatch.rctiming.query.official;
 
 import dev.monkeypatch.rctiming.jooq.generated.tables.Users;
+import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -17,7 +17,7 @@ import static dev.monkeypatch.rctiming.jooq.generated.Tables.USER_ROLES;
 
 /** Officials and the changes made to them, for the Officials page (#61). */
 @Service
-@Transactional(readOnly = true)
+@ReadTransaction
 public class OfficialQueryService {
 
     private final DSLContext dsl;
