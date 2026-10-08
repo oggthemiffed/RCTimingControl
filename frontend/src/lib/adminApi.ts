@@ -193,6 +193,13 @@ export interface RaceHubClassMappingDto {
   eventClassId: number;
 }
 
+export interface EntryHistoryItem {
+  at: string;
+  actor: string | null;
+  summary: string;
+  reason: string | null;
+}
+
 export interface AdminEntryDto {
   id: number;
   userId: number | null;
@@ -680,6 +687,10 @@ export const adminApi = {
 
   createWalkInEntry: (body: CreateWalkInEntryRequest) =>
     api.post<CreateWalkInEntryResult>('/api/v1/admin/entries', body).then(r => r.data),
+
+  /** What has happened to one entry, oldest first (admins only). */
+  entryHistory: (entryId: number) =>
+    api.get<EntryHistoryItem[]>(`/api/v1/admin/entries/${entryId}/history`).then(r => r.data),
 
   withdrawEntry: (entryId: number, reason: string) =>
     api

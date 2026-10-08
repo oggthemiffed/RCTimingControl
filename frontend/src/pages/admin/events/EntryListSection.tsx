@@ -26,6 +26,7 @@ import { useRacingClasses } from '@/hooks/admin/useAdminEventClasses';
 import type { AdminEntryDto, EventClassDto } from '@/lib/adminApi';
 import { useAuth } from '@/hooks/useAuth';
 import AddWalkInEntryDialog from './AddWalkInEntryDialog';
+import EntryHistoryDialog from './EntryHistoryDialog';
 import { ImportedTransponderDifference } from '@/pages/race-control/check-in/CheckInStatus';
 
 // ── Entry status colors ───────────────────────────────────────────────────
@@ -124,13 +125,16 @@ function WithdrawDialog({
 function EntriesTable({
   eventId,
   classId,
+  canSeeHistory,
 }: {
   eventId: number;
   classId: number;
+  canSeeHistory: boolean;
 }) {
   const { data: entries, isLoading } = useEntriesForClass(eventId, classId);
   const [withdrawTarget, setWithdrawTarget] = useState<AdminEntryDto | null>(null);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [historyTarget, setHistoryTarget] = useState<AdminEntryDto | null>(null);
 
   if (isLoading) {
     return (
@@ -162,7 +166,7 @@ function EntriesTable({
             <TableHead>Transponder</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Submitted</TableHead>
-            <TableHead className="w-24" />
+            <TableHead className="w-44" />
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -194,7 +198,12 @@ function EntriesTable({
                   timeStyle: 'short',
                 }).format(new Date(entry.submittedAt))}
               </TableCell>
-              <TableCell>
+              <TableCell className="space-x-2">
+                {canSeeHistory && (
+                  <Button size="sm" variant="outline" onClick={() => setHistoryTarget(entry)}>
+                    History
+                  </Button>
+                )}
                 {(entry.status === 'PENDING' || entry.status === 'CONFIRMED') && (
                   <Button
                     size="sm"
@@ -212,6 +221,10 @@ function EntriesTable({
           ))}
         </TableBody>
       </Table>
+
+      {historyTarget && (
+        <EntryHistoryDialog entry={historyTarget} onClose={() => setHistoryTarget(null)} />
+      )}
 
       <WithdrawDialog
         eventId={eventId}
@@ -241,6 +254,8 @@ export default function EntryListSection({ eventId, classes }: EntryListSectionP
   const { data: racingClasses = [] } = useRacingClasses();
   // The add-entry endpoint is for admins and race directors; referees can see entries but not add them
   const canAddEntries = !!user?.roles.some(r => r === 'ADMIN' || r === 'RACE_DIRECTOR');
+  // The history names the officials who acted, so it is for admins only
+  const canSeeHistory = !!user?.roles.includes('ADMIN');
 
   if (classes.length === 0) {
     return (
@@ -283,7 +298,7 @@ export default function EntryListSection({ eventId, classes }: EntryListSectionP
             </div>
           )}
           <div className="rounded-lg border">
-            <EntriesTable eventId={eventId} classId={selectedClass.id} />
+            <EntriesTable eventId={eventId} classId={selectedClass.id} canSeeHistory={canSeeHistory} />
           </div>
           {canAddEntries && (
             <AddWalkInEntryDialog
