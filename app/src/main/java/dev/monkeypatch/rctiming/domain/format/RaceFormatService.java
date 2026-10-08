@@ -4,10 +4,14 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,14 +22,17 @@ public class RaceFormatService {
     private final RaceFormatTemplateRepository templateRepository;
     private final EventClassRepository eventClassRepository;
     private final ObjectMapper objectMapper;
+    private final AuditService audit;
 
     public RaceFormatService(
             RaceFormatTemplateRepository templateRepository,
             EventClassRepository eventClassRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            AuditService audit) {
         this.templateRepository = templateRepository;
         this.eventClassRepository = eventClassRepository;
         this.objectMapper = objectMapper;
+        this.audit = audit;
     }
 
     /**
@@ -105,36 +112,60 @@ public class RaceFormatService {
                 .orElseThrow(() -> new EntityNotFoundException("Race format template not found: " + id));
     }
 
-    public RaceFormatTemplate create(String name, RaceFormatConfig config) {
+    public RaceFormatTemplate create(Actor actor, String name, RaceFormatConfig config) {
+        return create(actor, "FORMAT_CREATED", "Added the race format ", name, config);
+    }
+
+    private RaceFormatTemplate create(Actor actor, String action, String summary, String name,
+                                      RaceFormatConfig config) {
         RaceFormatTemplate template = new RaceFormatTemplate();
         template.setName(name);
         template.setConfig(config);
         Instant now = Instant.now();
         template.setCreatedAt(now);
         template.setUpdatedAt(now);
-        return templateRepository.save(template);
+        RaceFormatTemplate saved = templateRepository.save(template);
+        audit.entry(actor, action).entity("race_format", saved.getId())
+                .summary(summary + saved.getName())
+                .after(values(saved)).record();
+        return saved;
     }
 
-    public RaceFormatTemplate update(Long id, String name, RaceFormatConfig config) {
+    /** Changes a template. Events that already use it keep their own snapshot (FORMAT-06). */
+    public RaceFormatTemplate update(Actor actor, Long id, String name, RaceFormatConfig config) {
         RaceFormatTemplate template = findById(id);
+        Map<String, Object> before = values(template);
         template.setName(name);
         template.setConfig(config);
         template.setUpdatedAt(Instant.now());
-        return templateRepository.save(template);
+        RaceFormatTemplate saved = templateRepository.save(template);
+        audit.entry(actor, "FORMAT_UPDATED").entity("race_format", id)
+                .summary("Changed the race format " + saved.getName())
+                .before(before).after(values(saved)).record();
+        return saved;
     }
 
-    public void delete(Long id) {
-        if (!templateRepository.existsById(id)) {
-            throw new EntityNotFoundException("Race format template not found: " + id);
-        }
+    public void delete(Actor actor, Long id) {
+        RaceFormatTemplate template = findById(id);
+        Map<String, Object> before = values(template);
         templateRepository.deleteById(id);
+        audit.entry(actor, "FORMAT_DELETED").entity("race_format", id)
+                .summary("Removed the race format " + template.getName())
+                .before(before).record();
+    }
+
+    private static Map<String, Object> values(RaceFormatTemplate t) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("name", t.getName());
+        m.put("config", t.getConfig());
+        return m;
     }
 
     public RaceFormatConfig exportConfig(Long id) {
         return findById(id).getConfig();
     }
 
-    public RaceFormatTemplate importConfig(String name, RaceFormatConfig config) {
-        return create(name, config);
+    public RaceFormatTemplate importConfig(Actor actor, String name, RaceFormatConfig config) {
+        return create(actor, "FORMAT_IMPORTED", "Imported the race format ", name, config);
     }
 }

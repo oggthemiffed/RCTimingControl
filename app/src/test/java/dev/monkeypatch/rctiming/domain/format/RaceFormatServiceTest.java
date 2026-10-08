@@ -20,7 +20,8 @@ class RaceFormatServiceTest {
         service = new RaceFormatService(
                 mock(RaceFormatTemplateRepository.class),
                 mock(EventClassRepository.class),
-                objectMapper
+                objectMapper,
+                mock(dev.monkeypatch.rctiming.domain.audit.AuditService.class)
         );
     }
 
