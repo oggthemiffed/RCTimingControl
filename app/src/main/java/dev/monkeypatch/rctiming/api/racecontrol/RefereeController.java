@@ -20,13 +20,13 @@ import dev.monkeypatch.rctiming.domain.race.PenaltyRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.resultsexport.FinishedRaceCorrected;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.LiveTimingHub;
 import jakarta.validation.Valid;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -86,7 +86,7 @@ public class RefereeController {
     @Transactional
     public ResponseEntity<IncidentReport> raiseIncident(@PathVariable long raceId,
                                                          @Valid @RequestBody IncidentReportRequest req) {
-        long userId = resolveUserId();
+        long userId = CurrentOfficial.id();
         IncidentReport report = new IncidentReport();
         report.setRaceId(raceId);
         report.setEntryId(req.entryId());
@@ -124,7 +124,7 @@ public class RefereeController {
             throw new IllegalArgumentException("A LAP penalty must be a whole number of laps, got: " + req.value());
         }
 
-        long userId = resolveUserId();
+        long userId = CurrentOfficial.id();
         Penalty penalty = new Penalty();
         penalty.setRaceId(raceId);
         penalty.setEntryId(req.entryId());
@@ -172,7 +172,7 @@ public class RefereeController {
     @Transactional
     public ResponseEntity<MarshalAbsence> recordMarshalAbsent(@PathVariable long raceId,
                                                      @Valid @RequestBody MarshalAbsenceRequest req) {
-        long userId = resolveUserId();
+        long userId = CurrentOfficial.id();
         MarshalAbsence absence = new MarshalAbsence();
         absence.setRaceId(raceId);
         absence.setEntryId(req.entryId());
@@ -197,7 +197,7 @@ public class RefereeController {
     @Transactional
     public ResponseEntity<MarshalPenalty> applyMarshalPenalty(@PathVariable long raceId,
                                                                @Valid @RequestBody MarshalPenaltyRequest req) {
-        long userId = resolveUserId();
+        long userId = CurrentOfficial.id();
         Long absenceId = absenceFor(req);
 
         MarshalPenalty mp = new MarshalPenalty();
@@ -234,9 +234,5 @@ public class RefereeController {
                 .max(Comparator.comparing(MarshalAbsence::getId))
                 .map(MarshalAbsence::getId)
                 .orElse(null);
-    }
-
-    private long resolveUserId() {
-        return Long.parseLong(SecurityContextHolder.getContext().getAuthentication().getName());
     }
 }

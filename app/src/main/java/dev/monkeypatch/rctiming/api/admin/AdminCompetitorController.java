@@ -12,6 +12,7 @@ import dev.monkeypatch.rctiming.query.competitor.CompetitorChangeDto;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorDuplicateGroupDto;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorQueryService;
 import dev.monkeypatch.rctiming.query.competitor.CompetitorSummaryDto;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -88,7 +89,7 @@ public class AdminCompetitorController {
     @PostMapping("/merge")
     @PreAuthorize("hasRole('ADMIN')")
     public CompetitorMergeService.Result merge(Authentication auth, @Valid @RequestBody MergeRequest body) {
-        return mergeService.merge(body.keepId(), body.duplicateId(), Long.parseLong(auth.getName()));
+        return mergeService.merge(body.keepId(), body.duplicateId(), CurrentOfficial.id(auth));
     }
 
     /** Who changed how a competitor's name is said aloud, and when (admin only). */
@@ -113,7 +114,7 @@ public class AdminCompetitorController {
     @PutMapping("/{id}/spoken-name")
     public CompetitorSummaryDto setSpokenName(Authentication auth, @PathVariable Long id,
                                               @RequestBody SpokenNameRequest body) {
-        Competitor c = competitorService.setSpokenName(id, body.spokenName(), Long.parseLong(auth.getName()));
+        Competitor c = competitorService.setSpokenName(id, body.spokenName(), CurrentOfficial.id(auth));
         return new CompetitorSummaryDto(c.getId(), c.getDisplayName(), c.getBrcaNumber(), c.getHomeClub(),
                 c.getSpokenName(), c.speechName());
     }

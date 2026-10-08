@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.api.admin;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -8,6 +7,7 @@ import dev.monkeypatch.rctiming.api.admin.dto.CreateRaceFormatTemplateRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.RaceFormatTemplateDto;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatConfig;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -63,7 +63,7 @@ public class RaceFormatController {
     @ResponseStatus(HttpStatus.CREATED)
     public RaceFormatTemplateDto createFormat(Authentication auth, @RequestBody @Valid CreateRaceFormatTemplateRequest request) {
         return RaceFormatTemplateDto.from(
-                raceFormatService.create(actor(auth), request.name(), request.config()));
+                raceFormatService.create(CurrentOfficial.actor(auth), request.name(), request.config()));
     }
 
     @Audited("audit_log")
@@ -72,7 +72,7 @@ public class RaceFormatController {
     public RaceFormatTemplateDto updateFormat(Authentication auth, @PathVariable Long id,
                                                @RequestBody @Valid CreateRaceFormatTemplateRequest request) {
         return RaceFormatTemplateDto.from(
-                raceFormatService.update(actor(auth), id, request.name(), request.config()));
+                raceFormatService.update(CurrentOfficial.actor(auth), id, request.name(), request.config()));
     }
 
     @Audited("audit_log")
@@ -80,7 +80,7 @@ public class RaceFormatController {
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFormat(Authentication auth, @PathVariable Long id) {
-        raceFormatService.delete(actor(auth), id);
+        raceFormatService.delete(CurrentOfficial.actor(auth), id);
     }
 
     @GetMapping(value = "/{id}/export",
@@ -114,14 +114,10 @@ public class RaceFormatController {
         try {
             ObjectMapper mapper = contentType.contains("yaml") ? YAML_MAPPER : jsonObjectMapper;
             RaceFormatConfig config = mapper.readValue(body, RaceFormatConfig.class);
-            return RaceFormatTemplateDto.from(raceFormatService.importConfig(actor(auth), name, config));
+            return RaceFormatTemplateDto.from(
+                    raceFormatService.importConfig(CurrentOfficial.actor(auth), name, config));
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to parse format config: " + e.getMessage(), e);
         }
-    }
-
-    /** The signed-in official, taken from the token and never from the request body. */
-    private static Actor actor(Authentication auth) {
-        return Actor.official(Long.parseLong(auth.getName()));
     }
 }

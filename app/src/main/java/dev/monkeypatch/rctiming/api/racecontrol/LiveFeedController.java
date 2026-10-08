@@ -1,11 +1,11 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.livefeed.LiveFeedPublisher;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.timing.dto.LiveFeedStatusDto;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -64,7 +64,7 @@ public class LiveFeedController {
         event.setLiveFeedEnabled(request.enabled());
         eventRepository.save(event);
         if (before != request.enabled()) {
-            audit.entry(Actor.official(Long.parseLong(auth.getName())), "LIVE_FEED_SWITCHED")
+            audit.entry(CurrentOfficial.actor(auth), "LIVE_FEED_SWITCHED")
                     .entity("event", eventId).event(eventId)
                     .summary("Turned the live feed " + (request.enabled() ? "on" : "off") + " for " + event.getName())
                     .before(before).after(request.enabled()).record();

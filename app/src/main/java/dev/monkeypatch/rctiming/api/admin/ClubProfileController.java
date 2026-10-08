@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.api.admin;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.admin.dto.ClubProfileDto;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateClubProfileRequest;
@@ -9,6 +8,7 @@ import dev.monkeypatch.rctiming.api.admin.dto.GoverningBodyAffiliationDto;
 import dev.monkeypatch.rctiming.api.admin.dto.LogoUploadResponse;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
 import dev.monkeypatch.rctiming.domain.club.LogoUploadService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -51,7 +51,7 @@ public class ClubProfileController {
     @PutMapping("/profile")
     @PreAuthorize("hasRole('ADMIN')")
     public ClubProfileDto createOrUpdateProfile(Authentication auth, @RequestBody @Valid CreateClubProfileRequest request) {
-        return clubProfileService.createOrUpdateProfile(actor(auth), request);
+        return clubProfileService.createOrUpdateProfile(CurrentOfficial.actor(auth), request);
     }
 
     @GetMapping("/affiliations")
@@ -65,7 +65,7 @@ public class ClubProfileController {
     @ResponseStatus(HttpStatus.CREATED)
     public GoverningBodyAffiliationDto createAffiliation(Authentication auth,
                                                           @RequestBody @Valid CreateGoverningBodyRequest request) {
-        return clubProfileService.createAffiliation(actor(auth), request);
+        return clubProfileService.createAffiliation(CurrentOfficial.actor(auth), request);
     }
 
     @Audited("audit_log")
@@ -73,7 +73,7 @@ public class ClubProfileController {
     @PreAuthorize("hasRole('ADMIN')")
     public GoverningBodyAffiliationDto updateAffiliation(Authentication auth, @PathVariable Long id,
                                                           @RequestBody @Valid CreateGoverningBodyRequest request) {
-        return clubProfileService.updateAffiliation(actor(auth), id, request);
+        return clubProfileService.updateAffiliation(CurrentOfficial.actor(auth), id, request);
     }
 
     @Audited("audit_log")
@@ -81,7 +81,7 @@ public class ClubProfileController {
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteAffiliation(Authentication auth, @PathVariable Long id) {
-        clubProfileService.deleteAffiliation(actor(auth), id);
+        clubProfileService.deleteAffiliation(CurrentOfficial.actor(auth), id);
     }
 
     @Audited("audit_log")
@@ -89,12 +89,7 @@ public class ClubProfileController {
     @PreAuthorize("hasRole('ADMIN')")
     public LogoUploadResponse uploadLogo(Authentication auth, @RequestPart("file") MultipartFile file) {
         Long profileId = clubProfileService.getSingletonProfileId();
-        String url = logoUploadService.uploadLogo(actor(auth), profileId, file);
+        String url = logoUploadService.uploadLogo(CurrentOfficial.actor(auth), profileId, file);
         return new LogoUploadResponse(url);
-    }
-
-    /** The signed-in official, taken from the token and never from the request body. */
-    private static Actor actor(Authentication auth) {
-        return Actor.official(Long.parseLong(auth.getName()));
     }
 }

@@ -7,6 +7,7 @@ import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.query.official.OfficialChangeDto;
 import dev.monkeypatch.rctiming.query.official.OfficialDto;
 import dev.monkeypatch.rctiming.query.official.OfficialQueryService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -110,7 +111,7 @@ public class OfficialController {
     }
 
     private static long actorId(Authentication auth) {
-        return Long.parseLong(auth.getName());
+        return CurrentOfficial.id(auth);
     }
 
     private static OfficialDto toDto(User user) {

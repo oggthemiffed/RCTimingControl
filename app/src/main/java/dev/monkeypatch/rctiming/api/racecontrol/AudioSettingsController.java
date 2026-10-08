@@ -1,11 +1,11 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -91,7 +91,7 @@ public class AudioSettingsController {
     @PatchMapping
     public ResponseEntity<AudioSettingsDto> updateSettings(Authentication auth,
                                                            @RequestBody @Valid AudioSettingsPatch patch) {
-        ClubProfile saved = clubProfileService.changeAudioSettings(Actor.official(Long.parseLong(auth.getName())),
+        ClubProfile saved = clubProfileService.changeAudioSettings(CurrentOfficial.actor(auth),
                 profile -> {
                     ClubAudioSettings s = profile.getAudioSettings();
                     profile.setAudioSettings(new ClubAudioSettings(

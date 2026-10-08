@@ -1,11 +1,11 @@
 package dev.monkeypatch.rctiming.api.admin;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.club.ClubAudioSettings;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileService;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -71,7 +71,7 @@ public class AdminAudioController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<AudioSettingsDto> saveAudioSettings(Authentication auth,
                                                               @RequestBody @Valid AudioSettingsDto dto) {
-        clubProfileService.changeAudioSettings(Actor.official(Long.parseLong(auth.getName())), profile -> {
+        clubProfileService.changeAudioSettings(CurrentOfficial.actor(auth), profile -> {
             profile.setAudioSettings(new ClubAudioSettings(
                     dto.announceCountdown(),
                     dto.announceStagger(),

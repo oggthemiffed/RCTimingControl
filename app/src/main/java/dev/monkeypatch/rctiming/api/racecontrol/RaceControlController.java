@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalAdjustmentRequest;
@@ -18,6 +17,7 @@ import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.query.racecontrol.RunOrderQuery;
 import dev.monkeypatch.rctiming.resultsexport.FinishedRaceCorrected;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
@@ -148,7 +148,7 @@ public class RaceControlController {
         Map<String, Object> lost = whatARestartDiscards(race);
         stateMachine.restart(race);
         raceRepository.save(race);
-        audit.entry(actor(), "RACE_RESTARTED")
+        audit.entry(CurrentOfficial.actor(), "RACE_RESTARTED")
                 .entity("race", race.getId()).race(race.getId()).event(resolveEventId(race))
                 .summary("Restarted " + describe(race) + ", discarding its timing and any result")
                 .before(lost).after(Map.of("status", RaceStatus.PENDING))
@@ -196,7 +196,7 @@ public class RaceControlController {
                                                    @Valid @RequestBody MarshalAdjustmentRequest req) {
         Race race = loadRace(raceId);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        long actingUserId = Long.parseLong(auth.getName());
+        long actingUserId = CurrentOfficial.id(auth);
         String actingUserName = resolveUserName(actingUserId);
 
         MarshalAdjustment adjustment = new MarshalAdjustment();
@@ -253,7 +253,7 @@ public class RaceControlController {
 
     /** Writes the audit row for a state change, in the transaction of the change. */
     private void recordLifecycle(Race race, String action, String verb, RaceStatus before) {
-        audit.entry(actor(), action)
+        audit.entry(CurrentOfficial.actor(), action)
                 .entity("race", race.getId()).race(race.getId()).event(resolveEventId(race))
                 .summary(verb + " " + describe(race))
                 .before(before).after(race.getStatus())
@@ -284,12 +284,6 @@ public class RaceControlController {
                 ? race.getFinalLetter() + " final"
                 : "heat " + race.getHeatNumber();
         return what + " (race " + race.getId() + ")";
-    }
-
-    /** The signed-in official; every endpoint here needs a role, so there is always one. */
-    private static Actor actor() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return Actor.official(Long.parseLong(auth.getName()));
     }
 
     private Race loadRace(long raceId) {

@@ -1,11 +1,11 @@
 package dev.monkeypatch.rctiming.api.admin;
 
-import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.entryfeed.EntryFeed;
 import dev.monkeypatch.rctiming.domain.entryfeed.EntryFeedService;
 import dev.monkeypatch.rctiming.domain.entryfeed.EntryFeedStatus;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult;
+import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -44,14 +44,14 @@ public class EntryFeedController {
     @Audited("audit_log")
     @PutMapping
     public EntryFeedDto save(Authentication auth, @PathVariable long eventId, @RequestBody SaveRequest request) {
-        return EntryFeedDto.of(feedService.save(actor(auth), eventId, request.url(), request.token(),
+        return EntryFeedDto.of(feedService.save(CurrentOfficial.actor(auth), eventId, request.url(), request.token(),
                 Boolean.TRUE.equals(request.autoFetch())));
     }
 
     @Audited("audit_log")
     @DeleteMapping
     public ResponseEntity<Void> delete(Authentication auth, @PathVariable long eventId) {
-        feedService.delete(actor(auth), eventId);
+        feedService.delete(CurrentOfficial.actor(auth), eventId);
         return ResponseEntity.noContent().build();
     }
 
@@ -71,13 +71,8 @@ public class EntryFeedController {
     @Audited("audit_log")
     @PostMapping("/apply")
     public ResponseEntity<RaceHubImportResult> apply(Authentication auth, @PathVariable long eventId) {
-        RaceHubImportResult result = feedService.applyHeld(actor(auth), eventId);
+        RaceHubImportResult result = feedService.applyHeld(CurrentOfficial.actor(auth), eventId);
         return ResponseEntity.status(result.blocked() ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.OK).body(result);
-    }
-
-    /** The signed-in official, taken from the token and never from the request body. */
-    private static Actor actor(Authentication auth) {
-        return Actor.official(Long.parseLong(auth.getName()));
     }
 
     public record SaveRequest(String url, String token, Boolean autoFetch) {
