@@ -77,6 +77,7 @@ class CsvImportIT extends AbstractIntegrationTest {
     /** The tests share one database, so each removes what it made, children first. */
     @AfterEach
     void tearDown() {
+        jdbc.update("delete from audit_log where event_id = ?", eventId);
         List<Long> competitorIds = jdbc.queryForList(
                 "select distinct competitor_id from entries where event_id = ?", Long.class, eventId);
         jdbc.update("delete from entries where event_id = ?", eventId);
@@ -139,6 +140,22 @@ class CsvImportIT extends AbstractIntegrationTest {
         assertThat(tim.get("reason").asText()).contains("update");
         assertThat(entries().stream().map(this::competitorName)).doesNotContain("Tim Berners-Lee");
         assertThat(texts(body.get("warnings"))).noneMatch(w -> w.contains("71" + run));
+    }
+
+    @Test
+    void anAppliedImportIsRecordedButAPreviewAndAReplayAreNot() {
+        importFile("initial.csv", true);
+        assertThat(auditRows()).isEmpty();
+
+        importFile("initial.csv", false);
+        importFile("initial.csv", false);
+
+        List<Map<String, Object>> rows = auditRows();
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).get("action")).isEqualTo("ENTRIES_IMPORTED");
+        assertThat(((Number) rows.get(0).get("actor_user_id")).longValue()).isEqualTo(adminUserId);
+        assertThat(rows.get(0).get("summary").toString()).contains("5 new").contains("RC-Timing CSV");
+        assertThat(rows.get(0).get("after_json").toString()).contains("Ada Lovelace");
     }
 
     @Test
@@ -358,6 +375,10 @@ class CsvImportIT extends AbstractIntegrationTest {
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────────────
+
+    private List<Map<String, Object>> auditRows() {
+        return jdbc.queryForList("select * from audit_log where event_id = ? order by id", eventId);
+    }
 
     private ResponseEntity<JsonNode> importFile(String name, boolean dryRun) {
         return importFile(name, dryRun, Map.of());

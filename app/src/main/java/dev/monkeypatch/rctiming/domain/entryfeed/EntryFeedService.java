@@ -4,6 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.config.LoopbackHosts;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.AuditService;
+import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubEntryExport;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult;
@@ -12,11 +15,14 @@ import dev.monkeypatch.rctiming.security.TokenCipher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -46,10 +52,12 @@ public class EntryFeedService {
     private final TokenCipher tokenCipher;
     private final ObjectMapper objectMapper;
     private final TransactionTemplate transactions;
+    private final AuditService audit;
 
     public EntryFeedService(EntryFeedRepository feedRepository, EventRepository eventRepository,
                             EntryFeedClient client, RaceHubImportService importService, TokenCipher tokenCipher,
-                            ObjectMapper objectMapper, TransactionTemplate transactions) {
+                            ObjectMapper objectMapper, TransactionTemplate transactions,
+                            AuditService audit) {
         this.feedRepository = feedRepository;
         this.eventRepository = eventRepository;
         this.client = client;
@@ -57,6 +65,7 @@ public class EntryFeedService {
         this.tokenCipher = tokenCipher;
         this.objectMapper = objectMapper;
         this.transactions = transactions;
+        this.audit = audit;
     }
 
     public Optional<EntryFeed> find(long eventId) {
@@ -69,11 +78,14 @@ public class EntryFeedService {
      *
      * @param token the access token: null keeps the saved one, blank removes it
      */
-    public EntryFeed save(long eventId, String url, String token, boolean autoFetch) {
-        requireEvent(eventId);
+    @Transactional
+    public EntryFeed save(Actor actor, long eventId, String url, String token, boolean autoFetch) {
+        Event event = requireEvent(eventId);
         String checkedUrl = checkUrl(url).toString();
         Instant now = Instant.now();
-        EntryFeed feed = feedRepository.findByEventId(eventId).orElseGet(() -> {
+        Optional<EntryFeed> existing = feedRepository.findByEventId(eventId);
+        Map<String, Object> before = existing.map(EntryFeedService::settingsOf).orElse(null);
+        EntryFeed feed = existing.orElseGet(() -> {
             EntryFeed created = new EntryFeed();
             created.setEventId(eventId);
             created.setCreatedAt(now);
@@ -96,12 +108,34 @@ public class EntryFeedService {
         }
         feed.setAutoFetch(autoFetch);
         feed.setUpdatedAt(now);
-        return feedRepository.save(feed);
+        EntryFeed saved = feedRepository.save(feed);
+        // The token itself is never recorded, only whether one is saved and whether this save changed it
+        Map<String, Object> after = settingsOf(saved);
+        after.put("tokenChanged", token != null);
+        audit.entry(actor, before == null ? "ENTRY_FEED_CREATED" : "ENTRY_FEED_UPDATED")
+                .entity("entry_feed", saved.getId()).event(eventId)
+                .summary("Saved the entry feed settings of " + event.getName())
+                .before(before).after(after).record();
+        return saved;
     }
 
-    public void delete(long eventId) {
-        requireEvent(eventId);
+    @Transactional
+    public void delete(Actor actor, long eventId) {
+        Event event = requireEvent(eventId);
+        Optional<EntryFeed> existing = feedRepository.findByEventId(eventId);
         feedRepository.deleteByEventId(eventId);
+        existing.ifPresent(feed -> audit.entry(actor, "ENTRY_FEED_DELETED").entity("entry_feed", feed.getId())
+                .event(eventId).summary("Removed the entry feed of " + event.getName())
+                .before(settingsOf(feed)).record());
+    }
+
+    /** The feed's settings for an audit row: never the token, only whether one is saved. */
+    private static Map<String, Object> settingsOf(EntryFeed feed) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("url", feed.getUrl());
+        m.put("autoFetch", feed.isAutoFetch());
+        m.put("tokenSaved", feed.getTokenEncrypted() != null);
+        return m;
     }
 
     /**
@@ -120,7 +154,7 @@ public class EntryFeedService {
         }
         try {
             // Checks the file can be imported at all (schema version, source) before holding it
-            importService.importEntries(eventId, export, true);
+            importService.preview(eventId, export);
         } catch (IllegalArgumentException e) {
             return removedWhileFetching(recordFailure(feed, new Problem(EntryFeedStatus.FAILED, e.getMessage())));
         }
@@ -131,14 +165,14 @@ public class EntryFeedService {
     /** The import the held file would make, without saving anything. */
     public RaceHubImportResult previewHeld(long eventId) {
         EntryFeed feed = requireFeed(eventId);
-        return importService.importEntries(eventId, heldExport(feed), true);
+        return importService.preview(eventId, heldExport(feed));
     }
 
     /** Imports the held file. When something blocks it, nothing is saved and the file stays held. */
-    public RaceHubImportResult applyHeld(long eventId) {
+    public RaceHubImportResult applyHeld(Actor actor, long eventId) {
         EntryFeed feed = requireFeed(eventId);
         RaceHubEntryExport export = heldExport(feed);
-        RaceHubImportResult result = importService.importEntries(eventId, export, false);
+        RaceHubImportResult result = importService.importEntries(actor, eventId, export, false);
         if (result.applied()) {
             recordApplied(feed, export.revision());
         }
@@ -163,7 +197,7 @@ public class EntryFeedService {
             }
             RaceHubImportResult result;
             try {
-                result = importService.importEntries(feed.getEventId(), export, false);
+                result = importService.importEntries(Actor.system("entry-feed"), feed.getEventId(), export, false);
             } catch (IllegalArgumentException e) {
                 recordFailure(feed, new Problem(EntryFeedStatus.FAILED, e.getMessage()));
                 return;
@@ -315,10 +349,9 @@ public class EntryFeedService {
         return result.errors().isEmpty() ? "the import is blocked" : result.errors().get(0);
     }
 
-    private void requireEvent(long eventId) {
-        if (!eventRepository.existsById(eventId)) {
-            throw new EntityNotFoundException("Event not found");
-        }
+    private Event requireEvent(long eventId) {
+        return eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
     }
 
     private EntryFeed requireFeed(long eventId) {

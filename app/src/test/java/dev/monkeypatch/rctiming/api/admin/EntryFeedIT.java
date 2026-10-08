@@ -106,6 +106,7 @@ class EntryFeedIT extends AbstractIntegrationTest {
     @AfterEach
     void tearDown() {
         feedServer.stop(0);
+        jdbc.update("delete from audit_log where event_id = ?", eventId);
         jdbc.update("delete from entry_feeds where event_id = ?", eventId);
         List<Long> competitorIds = jdbc.queryForList(
                 "select distinct competitor_id from entries where event_id = ?", Long.class, eventId);
@@ -340,6 +341,46 @@ class EntryFeedIT extends AbstractIntegrationTest {
         headers.setBearerAuth(refereeToken);
         var resp = restTemplate.exchange(feedPath(""), HttpMethod.GET, new HttpEntity<>(headers), String.class);
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void settingsFetchAndApplyAreRecordedWithoutTheToken() {
+        feedBody = fixture("entries-v1-initial.json");
+        saveFeed(feedUrl(), TOKEN, false);
+        saveFeed(feedUrl(), null, true);
+        post("/fetch");
+        assertThat(post("/apply").getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(restTemplate.exchange(feedPath(""), HttpMethod.DELETE, new HttpEntity<>(headers()), Void.class)
+                .getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        List<Map<String, Object>> rows = jdbc.queryForList(
+                "select * from audit_log where event_id = ? order by id", eventId);
+        assertThat(rows).extracting(r -> r.get("action")).containsExactly(
+                "ENTRY_FEED_CREATED", "ENTRY_FEED_UPDATED", "ENTRIES_IMPORTED", "ENTRY_FEED_DELETED");
+        assertThat(rows).allSatisfy(r ->
+                assertThat(((Number) r.get("actor_user_id")).longValue()).isEqualTo(adminUserId));
+        assertThat(rows.get(0).get("before_json")).isNull();
+        assertThat(rows.get(0).get("after_json").toString()).contains("\"tokenSaved\":true").contains("\"autoFetch\":false");
+        assertThat(rows.get(1).get("before_json").toString()).contains("\"autoFetch\":false");
+        assertThat(rows.get(1).get("after_json").toString()).contains("\"autoFetch\":true").contains("\"tokenChanged\":false");
+        assertThat(rows.get(2).get("summary").toString()).contains("2 new");
+        assertThat(rows.get(3).get("before_json").toString()).contains(feedUrl());
+        // The token is never written to the log
+        assertThat(rows.toString()).doesNotContain(TOKEN);
+    }
+
+    @Test
+    void anAutomaticImportIsRecordedAsTheSystem() {
+        feedBody = fixture("entries-v1-initial.json");
+        saveFeed(feedUrl(), TOKEN, true);
+        scheduler.fetchAll();
+
+        Map<String, Object> row = jdbc.queryForList(
+                "select * from audit_log where event_id = ? and action = 'ENTRIES_IMPORTED'", eventId).get(0);
+
+        assertThat(row.get("actor_user_id")).isNull();
+        assertThat(row.get("source").toString()).isEqualToIgnoringCase("system");
+        assertThat(row.get("actor_label").toString()).contains("entry-feed");
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────

@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.api.admin;
 
+import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubClassMapping;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubEntryExport;
 import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportResult;
@@ -7,6 +9,7 @@ import dev.monkeypatch.rctiming.domain.racehub.RaceHubImportService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,11 +39,12 @@ public class RaceHubImportController {
      * Imports the export. With {@code dryRun=true} it returns the preview and saves nothing.
      * An import blocked by unmapped classes or invalid rows returns 422 with the preview.
      */
+    @Audited("audit_log")
     @PostMapping("/racehub-import")
-    public ResponseEntity<RaceHubImportResult> importEntries(@PathVariable Long eventId,
+    public ResponseEntity<RaceHubImportResult> importEntries(Authentication auth, @PathVariable Long eventId,
                                                              @RequestParam(defaultValue = "false") boolean dryRun,
                                                              @RequestBody RaceHubEntryExport export) {
-        RaceHubImportResult result = importService.importEntries(eventId, export, dryRun);
+        RaceHubImportResult result = importService.importEntries(actor(auth), eventId, export, dryRun);
         HttpStatus status = !dryRun && result.blocked() ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.OK;
         return ResponseEntity.status(status).body(result);
     }
@@ -51,8 +55,9 @@ public class RaceHubImportController {
     }
 
     /** Replaces all of the event's class mappings. */
+    @Audited("audit_log")
     @PutMapping("/racehub-class-mappings")
-    public List<ClassMappingDto> replaceMappings(@PathVariable Long eventId,
+    public List<ClassMappingDto> replaceMappings(Authentication auth, @PathVariable Long eventId,
                                                  @RequestBody List<ClassMappingDto> mappings) {
         Map<String, Long> byRaceHubId = new LinkedHashMap<>();
         for (ClassMappingDto m : mappings) {
@@ -60,7 +65,12 @@ public class RaceHubImportController {
                 throw new IllegalArgumentException("RaceHub event class " + m.racehubEventClassId() + " is mapped twice");
             }
         }
-        return importService.replaceMappings(eventId, byRaceHubId).stream().map(ClassMappingDto::of).toList();
+        return importService.replaceMappings(actor(auth), eventId, byRaceHubId).stream().map(ClassMappingDto::of).toList();
+    }
+
+    /** The signed-in official, taken from the token and never from the request body. */
+    private static Actor actor(Authentication auth) {
+        return Actor.official(Long.parseLong(auth.getName()));
     }
 
     public record ClassMappingDto(String racehubEventClassId, Long eventClassId) {
