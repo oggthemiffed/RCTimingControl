@@ -54,6 +54,7 @@ class SqliteConcurrencyIT extends AbstractIntegrationTest {
 
     @Test
     void lapWritesAndPollingReadersRunTogetherWithoutLockErrors() throws Exception {
+        finishLeftoverRunningRaces();
         practiceSessionRepository.findRunningSession()
                 .ifPresent(running -> practiceSessionService.stop(dev.monkeypatch.rctiming.domain.audit.Actor.system("test"), running.getId()));
         long sessionId = practiceSessionService

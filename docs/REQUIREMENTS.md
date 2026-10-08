@@ -147,6 +147,7 @@
 
 - [x] **PRACTICE-01**: System supports timed open practice sessions using the decoder; live lap times are displayed and results are printable after the session
 - [x] **PRACTICE-02**: Practice display shows each racer's best run of N consecutive laps (configurable) to indicate sustained pace, not just best single lap
+- [x] **PRACTICE-03**: Practice and a live race share the one decoder, so they never run together: a practice session can't be started while a race is running, and a race starting or resuming stops any running practice session (recorded in the audit log as the system)
 
 ### Championship & Scoring
 

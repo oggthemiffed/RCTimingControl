@@ -1,6 +1,8 @@
 package dev.monkeypatch.rctiming;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
@@ -29,8 +31,19 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
+    @Autowired
+    private JdbcTemplate sharedJdbc;
+
     @DynamicPropertySource
     static void database(DynamicPropertyRegistry registry) {
         registry.add("rctiming.database.data-directory", DATA_DIRECTORY::toString);
+    }
+
+    /**
+     * A practice session cannot start while a race is running. The database is shared by every test class, so
+     * a test that starts practice first finishes any race an earlier class left running.
+     */
+    protected void finishLeftoverRunningRaces() {
+        sharedJdbc.update("update races set status = 'FINISHED' where status = 'RUNNING'");
     }
 }

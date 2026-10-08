@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { PracticeSessionPage } from './PracticeSessionPage';
 
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
+
 // Mock practiceApi
 vi.mock('@/lib/practiceApi', () => ({
   getSession: vi.fn(),
@@ -19,6 +21,8 @@ vi.mock('@/hooks/race-control/usePracticeTiming', () => ({
 }));
 
 import * as practiceApi from '@/lib/practiceApi';
+import { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
 const idleSession = {
   id: 42,
@@ -148,5 +152,44 @@ describe('PracticeSessionPage', () => {
     await waitFor(() =>
       expect(vi.mocked(practiceApi.stopSession)).toHaveBeenCalledWith(42),
     );
+  });
+
+  it('tells the official why practice could not start, using the server\'s reason', async () => {
+    vi.mocked(practiceApi.getSession).mockResolvedValue({ data: idleSession } as never);
+    vi.mocked(practiceApi.startSession).mockRejectedValue(
+      new AxiosError('Request failed', 'ERR_BAD_REQUEST', undefined, undefined, {
+        status: 409,
+        statusText: 'Conflict',
+        headers: {},
+        config: {} as never,
+        data: { detail: "A race is running, so practice can't start until it has finished or been stopped" },
+      }),
+    );
+
+    render(<PracticeSessionPage />, { wrapper });
+    fireEvent.click((await screen.findAllByRole('button', { name: /start practice/i }))[0]);
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "A race is running, so practice can't start until it has finished or been stopped",
+      ),
+    );
+  });
+
+  it('keeps checking the session, since a race starting stops practice from the server', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      vi.mocked(practiceApi.getSession).mockResolvedValue({ data: runningSession } as never);
+      render(<PracticeSessionPage />, { wrapper });
+      await waitFor(() => expect(practiceApi.getSession).toHaveBeenCalledTimes(1));
+
+      vi.mocked(practiceApi.getSession).mockResolvedValue({ data: { ...runningSession, status: 'STOPPED' } } as never);
+      await vi.advanceTimersByTimeAsync(5100);
+
+      await waitFor(() => expect(practiceApi.getSession).toHaveBeenCalledTimes(2));
+      expect(await screen.findByText('STOPPED')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

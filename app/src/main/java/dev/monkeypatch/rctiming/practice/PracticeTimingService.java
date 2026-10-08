@@ -32,8 +32,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * Listens to the same LapPassingEvent as LapTimingService, but only acts when a practice session is
  * RUNNING. Practice is meant for the time between races: LapTimingService ignores a passing with no running
- * race ({@link LapPassingEvent#NO_RACE}), so then only practice counts it. Nothing stops a practice session
- * running while a race does, and then a passing is counted by both.
+ * race ({@link LapPassingEvent#NO_RACE}), so then only practice counts it. A running race stops practice
+ * and blocks it starting (PRACTICE-03), and a passing made during a race is ignored here as well, so a
+ * practice session left running by a restart can't count the race's laps.
  *
  * Runs on the single timing thread, like LapTimingService, so passings arrive in decoder order. Lap time
  * is the difference between a transponder's consecutive rtcTimeMicros (UTC epoch microseconds, as in
@@ -96,12 +97,15 @@ public class PracticeTimingService {
     // ---------------------------------------------------------------------------
 
     /**
-     * Handle LapPassingEvent. Processes only when a practice session is RUNNING.
-     * Fires alongside LapTimingService — both can coexist without interference.
+     * Handle LapPassingEvent. Processes only when a practice session is RUNNING and no race is: a passing
+     * with a race id belongs to the race and LapTimingService.
      */
     @EventListener
     @Transactional
     public void onLapPassing(LapPassingEvent event) {
+        if (event.raceId() != LapPassingEvent.NO_RACE) {
+            return;
+        }
         // Check for a running practice session
         PracticeSession session = sessionRepository.findRunningSession().orElse(null);
         if (session == null) {
