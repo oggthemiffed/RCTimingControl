@@ -312,6 +312,19 @@ class CsvImportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void aDriverWithNoBrcaNumber_isFoundByNameIgnoringCapitalsAndSpacing() {
+        long walkIn = jdbc.queryForObject("""
+                insert into competitors (display_name) values (?) returning id""",
+                Long.class, "GRACE  HOPPER " + run);
+
+        importFile("initial.csv", false);
+
+        // One entry, on the competitor already there, under the name they already had
+        assertThat(entryFor("GRACE  HOPPER " + run, truckClassId).getCompetitorId()).isEqualTo(walkIn);
+        assertThat(entries().stream().filter(e -> e.getEventClassId() == truckClassId)).hasSize(1);
+    }
+
+    @Test
     void aDriverRaceHubAlreadyEnteredInTheClass_blocks() {
         long raceHubDriver = jdbc.queryForObject("""
                 insert into competitors (display_name, brca_number, external_source, external_id)

@@ -10,7 +10,8 @@ class NamesTest {
     void namesMatchIgnoringCapitalsAndSpacing() {
         assertThat(Names.matchKey("  Alex\t Rowe ")).isEqualTo(Names.matchKey("alexrowe"));
         assertThat(Names.matchKey("Stock  Buggy")).isEqualTo(Names.matchKey("stock buggy"));
-        assertThat(Names.matchKey("Alex Rowe")).isEqualTo("alexrowe");
+        assertThat(Names.matchKey("Alex\u00a0Rowe")).isEqualTo("alexrowe");
+        assertThat(Names.matchKey("Alex\u2003Rowe")).isEqualTo("alexrowe");
     }
 
     @Test

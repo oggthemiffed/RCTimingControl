@@ -110,6 +110,7 @@ public class CsvImportService {
         Classes classes = new Classes(eventId);
         Map<String, UnmappedAccumulator> unmapped = new TreeMap<>();
         Map<String, Competitor> competitors = new HashMap<>();
+        Map<String, List<Competitor>> withoutBrcaNumber = competitorRepository.findWithoutBrcaNumberByMatchKey();
         Map<String, Integer> lineByKey = new HashMap<>();
         List<Planned> plan = new ArrayList<>();
         List<CsvImportResult.Row> skipped = new ArrayList<>();
@@ -134,7 +135,7 @@ public class CsvImportService {
                 continue;
             }
             String competitorKey = competitorKey(row);
-            competitors.computeIfAbsent(competitorKey, k -> findCompetitor(k, row));
+            competitors.computeIfAbsent(competitorKey, k -> findCompetitor(k, row, withoutBrcaNumber));
             Entry existing = eventClassId.isEmpty() ? null
                     : entryRepository.findByExternalSourceAndExternalEntryId(ExternalSources.CSV, key).orElse(null);
             plan.add(new Planned(key, row, competitorKey, eventClassId.orElse(null), existing,
@@ -244,7 +245,8 @@ public class CsvImportService {
      * Finds the driver's competitor: one an earlier CSV import made, or else the one competitor from
      * any source with the same BRCA number, or, without one, the same name and no BRCA number.
      */
-    private Competitor findCompetitor(String competitorKey, RcTimingCsvParser.Row row) {
+    private Competitor findCompetitor(String competitorKey, RcTimingCsvParser.Row row,
+                                      Map<String, List<Competitor>> withoutBrcaNumber) {
         Optional<Competitor> fromCsv =
                 competitorRepository.findByExternalSourceAndExternalId(ExternalSources.CSV, competitorKey);
         if (fromCsv.isPresent()) {
@@ -252,7 +254,7 @@ public class CsvImportService {
         }
         List<Competitor> others = row.brcaNumber() != null
                 ? competitorRepository.findByBrcaNumber(row.brcaNumber().toString())
-                : competitorRepository.findWithoutBrcaNumberByName(row.name());
+                : withoutBrcaNumber.getOrDefault(Names.matchKey(row.name()), List.of());
         return others.size() == 1 ? others.get(0) : null;
     }
 

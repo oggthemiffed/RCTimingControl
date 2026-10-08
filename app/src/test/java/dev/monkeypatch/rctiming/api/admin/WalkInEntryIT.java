@@ -188,7 +188,7 @@ class WalkInEntryIT extends AbstractIntegrationTest {
         assertThat(resp.getBody().get("matches").get(0).get("id").asLong()).isEqualTo(existing);
         assertThat(resp.getBody().get("matches").get(0).get("displayName").asText()).isEqualTo("Alex Rowe " + run);
         assertThat(entryRepository.findByEventId(eventId)).isEmpty();
-        assertThat(competitorRepository.findByNormalizedName("Alex Rowe " + run)).hasSize(1);
+        assertThat(competitorRepository.findBySameName("Alex Rowe " + run)).hasSize(1);
     }
 
     @Test
@@ -201,7 +201,7 @@ class WalkInEntryIT extends AbstractIntegrationTest {
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         long entryId = resp.getBody().get("entry").get("id").asLong();
         assertThat(entryRepository.findById(entryId).orElseThrow().getCompetitorId()).isNotEqualTo(existing);
-        assertThat(competitorRepository.findByNormalizedName("Sam Ito " + run)).hasSize(2);
+        assertThat(competitorRepository.findBySameName("Sam Ito " + run)).hasSize(2);
     }
 
     @Test
@@ -213,7 +213,7 @@ class WalkInEntryIT extends AbstractIntegrationTest {
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         long entryId = resp.getBody().get("entry").get("id").asLong();
         assertThat(entryRepository.findById(entryId).orElseThrow().getCompetitorId()).isEqualTo(existing);
-        assertThat(competitorRepository.findByNormalizedName("Pat Lee " + run)).hasSize(1);
+        assertThat(competitorRepository.findBySameName("Pat Lee " + run)).hasSize(1);
     }
 
     @Test

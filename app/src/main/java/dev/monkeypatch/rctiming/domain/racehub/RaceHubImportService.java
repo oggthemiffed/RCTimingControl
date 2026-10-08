@@ -586,7 +586,7 @@ public class RaceHubImportService {
 
     /**
      * Finds the event class for a RaceHub class: a stored mapping first, then the one event class
-     * whose racing class name equals {@code rc_class_name}, ignoring case. Another source's mappings
+     * whose racing class has the same name as {@code rc_class_name} ({@link Names#matchKey}). Another source's mappings
      * are keyed by that source and its class id, so they never meet RaceHub's.
      */
     private final class ClassResolver {

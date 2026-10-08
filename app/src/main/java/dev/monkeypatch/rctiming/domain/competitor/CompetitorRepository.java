@@ -7,7 +7,9 @@ import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static dev.monkeypatch.rctiming.jooq.generated.tables.Competitors.COMPETITORS;
 
@@ -27,9 +29,13 @@ public class CompetitorRepository extends JooqRepository<Competitor, Competitors
         return findWhere(COMPETITORS.BRCA_NUMBER.eq(brcaNumber));
     }
 
-    /** Competitors from any source with no BRCA number and the same name as this one ({@link Names#matchKey}). */
-    public List<Competitor> findWithoutBrcaNumberByName(String displayName) {
-        return sameName(findWhere(COMPETITORS.BRCA_NUMBER.isNull()), displayName);
+    /**
+     * Competitors from any source with no BRCA number, by {@link Names#matchKey} of their name. Loaded once
+     * for a whole import rather than once for each of its rows.
+     */
+    public Map<String, List<Competitor>> findWithoutBrcaNumberByMatchKey() {
+        return findWhere(COMPETITORS.BRCA_NUMBER.isNull()).stream()
+                .collect(Collectors.groupingBy(c -> Names.matchKey(c.getDisplayName())));
     }
 
     /**
@@ -37,14 +43,10 @@ public class CompetitorRepository extends JooqRepository<Competitor, Competitors
      * finds "Alex Rowe". The rule a typed walk-in name is checked against (#123). The names are compared in
      * Java: a club has hundreds of competitors, and this runs once per typed walk-in.
      */
-    public List<Competitor> findByNormalizedName(String displayName) {
-        return sameName(findAll(), displayName);
-    }
-
-    private static List<Competitor> sameName(List<Competitor> competitors, String displayName) {
+    public List<Competitor> findBySameName(String displayName) {
         String target = Names.matchKey(displayName);
-        return competitors.stream()
-                .filter(c -> c.getDisplayName() != null && Names.matchKey(c.getDisplayName()).equals(target))
+        return findAll().stream()
+                .filter(c -> Names.matchKey(c.getDisplayName()).equals(target))
                 .toList();
     }
 

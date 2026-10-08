@@ -16,7 +16,7 @@ public final class Names {
 
     /**
      * The form two names are compared in: no spacing, and capitals folded for every letter, accented ones
-     * included, so "alex  rowe" is "Alex Rowe". Accents themselves are kept.
+     * included, so "alex  rowe" is "Alex Rowe". Accents themselves are kept. The name must not be null.
      *
      * <p>Compare names in Java with this, not in SQL: the database's own {@code lower()} only folds ASCII
      * and {@code replace()} only removes a literal space, and the rule must not depend on the vendor.
