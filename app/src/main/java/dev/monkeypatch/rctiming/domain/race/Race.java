@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.domain.race;
 
 
+import dev.monkeypatch.rctiming.domain.format.StartType;
 import dev.monkeypatch.rctiming.persistence.CreatedAt;
 import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;

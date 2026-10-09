@@ -6,6 +6,7 @@ import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
 import dev.monkeypatch.rctiming.domain.format.EventClass;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
+import dev.monkeypatch.rctiming.domain.format.RaceFormatService;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
@@ -16,7 +17,6 @@ import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundStatus;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
-import dev.monkeypatch.rctiming.domain.race.StartType;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest.ClassFinalsConfig;
 import dev.monkeypatch.rctiming.service.dto.RoundPreviewDto;
@@ -50,19 +50,22 @@ public class RoundGeneratorService {
     private final EntryRepository entryRepository;
     private final EventClassRepository eventClassRepository;
     private final BumpUpSeedingService bumpUpSeedingService;
+    private final RaceFormatService raceFormatService;
 
     public RoundGeneratorService(RoundRepository roundRepository,
                                   RaceRepository raceRepository,
                                   RaceEntryRepository raceEntryRepository,
                                   EntryRepository entryRepository,
                                   EventClassRepository eventClassRepository,
-                                  BumpUpSeedingService bumpUpSeedingService) {
+                                  BumpUpSeedingService bumpUpSeedingService,
+                                  RaceFormatService raceFormatService) {
         this.roundRepository = roundRepository;
         this.raceRepository = raceRepository;
         this.raceEntryRepository = raceEntryRepository;
         this.entryRepository = entryRepository;
         this.eventClassRepository = eventClassRepository;
         this.bumpUpSeedingService = bumpUpSeedingService;
+        this.raceFormatService = raceFormatService;
     }
 
     /**
@@ -299,7 +302,7 @@ public class RoundGeneratorService {
                     race.setHeatNumber(h + 1);
                     race.setSequenceInRound(seq++);
                     race.setFinalLetter(null);
-                    race.setStartType(StartType.STAGGER);
+                    race.setStartType(raceFormatService.startType(ec, type));
                     race.setStatus(RaceStatus.PENDING);
                     Race savedRace = raceRepository.save(race);
 
@@ -349,7 +352,7 @@ public class RoundGeneratorService {
                     race.setHeatNumber(1);
                     race.setSequenceInRound(1);
                     race.setFinalLetter(finalLetter);
-                    race.setStartType(StartType.GRID);
+                    race.setStartType(raceFormatService.startType(ec, RoundType.FINAL));
                     race.setStatus(RaceStatus.PENDING);
                     // Finals start with an empty grid: BumpUpSeedingService seeds it from the
                     // qualifying standings and reserves its bump slots. No placeholder rows, since

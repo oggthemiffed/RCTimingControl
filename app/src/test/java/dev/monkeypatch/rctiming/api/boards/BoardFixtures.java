@@ -112,7 +112,7 @@ class BoardFixtures {
         race.setEventClassId(eventClass.getId());
         race.setHeatNumber(heatNumber);
         race.setSequenceInRound(heatNumber);
-        race.setStartType(dev.monkeypatch.rctiming.domain.race.StartType.GRID);
+        race.setStartType(dev.monkeypatch.rctiming.domain.format.StartType.GRID);
         race.setStatus(status);
         if (status != RaceStatus.PENDING && status != RaceStatus.GRID) {
             race.setStartedAt(now);

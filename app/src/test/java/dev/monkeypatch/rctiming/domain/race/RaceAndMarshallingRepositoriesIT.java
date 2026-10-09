@@ -11,6 +11,7 @@ import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.QualifyingType;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatTemplate;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatTemplateRepository;
+import dev.monkeypatch.rctiming.domain.format.StartType;
 import dev.monkeypatch.rctiming.domain.format.TimedRaceConfig;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;

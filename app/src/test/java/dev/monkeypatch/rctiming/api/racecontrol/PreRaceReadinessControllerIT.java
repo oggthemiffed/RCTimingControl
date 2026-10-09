@@ -12,6 +12,7 @@ import dev.monkeypatch.rctiming.domain.event.EventStatus;
 import dev.monkeypatch.rctiming.domain.format.EventClass;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.QualifyingType;
+import dev.monkeypatch.rctiming.domain.format.StartType;
 import dev.monkeypatch.rctiming.domain.format.TimedRaceConfig;
 import dev.monkeypatch.rctiming.domain.race.MarshalAbsence;
 import dev.monkeypatch.rctiming.domain.race.MarshalAbsenceRepository;
@@ -264,10 +265,7 @@ public class PreRaceReadinessControllerIT extends AbstractIntegrationTest {
         EventClass ec = new EventClass();
         ec.setEventId(eventId);
         ec.setRacingClassId(racingClassId);
-        // Use fully-qualified name to distinguish from domain.race.StartType (STAGGER/GRID only)
-        ec.setConfigSnapshot(new TimedRaceConfig(5,
-                dev.monkeypatch.rctiming.domain.format.StartType.ROLLING,
-                QualifyingType.FASTEST_LAP, 1, 3));
+        ec.setConfigSnapshot(new TimedRaceConfig(5, StartType.ROLLING, QualifyingType.FASTEST_LAP, 1, 3));
         ec.setCreatedAt(now);
         ec.setUpdatedAt(now);
         return eventClassRepository.save(ec);
@@ -291,8 +289,7 @@ public class PreRaceReadinessControllerIT extends AbstractIntegrationTest {
         race.setEventClassId(eventClassId);
         race.setHeatNumber(heatNumber);
         race.setSequenceInRound(sequenceInRound);
-        // domain.race.StartType has STAGGER and GRID (no ROLLING)
-        race.setStartType(dev.monkeypatch.rctiming.domain.race.StartType.GRID);
+        race.setStartType(StartType.GRID);
         race.setStatus(RaceStatus.PENDING);
         race.setCreatedAt(now);
         race.setUpdatedAt(now);
