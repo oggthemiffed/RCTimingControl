@@ -6,13 +6,14 @@ import { getResultsBoard } from '@/lib/boardsApi';
 import { BoardShell, BoardMessage, BoardUnreachable } from './BoardShell';
 import { BoardResultsTable } from './BoardResultsTable';
 import { BOARD_POLL_MS, parseEventParam } from './boardFormat';
+import { publicQueryKeys } from '@/hooks/publicQueryKeys';
 
 export default function ResultsBoard() {
   const [searchParams] = useSearchParams();
   const eventId = parseEventParam(searchParams.get('event'));
 
   const { data, isPending, isError } = useQuery({
-    queryKey: ['boards', 'results', eventId],
+    queryKey: publicQueryKeys.boards.results(eventId),
     queryFn: () => getResultsBoard(eventId),
     refetchInterval: BOARD_POLL_MS,
   });

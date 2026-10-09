@@ -9,6 +9,7 @@ import { BoardLiveTable } from './BoardLiveTable';
 import { BoardResultsTable } from './BoardResultsTable';
 import { BOARD_POLL_MS, parseEventParam } from './boardFormat';
 import { useBoardRace } from './useBoardRace';
+import { publicQueryKeys } from '@/hooks/publicQueryKeys';
 
 export default function NowNextBoard() {
   const [searchParams] = useSearchParams();
@@ -18,7 +19,7 @@ export default function NowNextBoard() {
   const lastCompletedRace = nowNext?.lastCompletedRace ?? null;
 
   const { data: results } = useQuery({
-    queryKey: ['boards', 'results', eventId],
+    queryKey: publicQueryKeys.boards.results(eventId),
     queryFn: () => getResultsBoard(eventId),
     enabled: !currentRace && lastCompletedRace !== null,
     refetchInterval: BOARD_POLL_MS,

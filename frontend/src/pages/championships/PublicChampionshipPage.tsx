@@ -1,13 +1,14 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getPublicChampionshipStandings } from '@/lib/raceControlApi';
+import { publicQueryKeys } from '@/hooks/publicQueryKeys';
 
 export default function PublicChampionshipPage() {
   const { id } = useParams<{ id: string }>();
   const championshipId = Number(id);
 
   const { data: rows, isLoading, isError } = useQuery({
-    queryKey: ['public', 'championships', championshipId],
+    queryKey: publicQueryKeys.championship(championshipId),
     queryFn: () => getPublicChampionshipStandings(championshipId),
     enabled: Number.isFinite(championshipId) && championshipId > 0,
   });

@@ -25,6 +25,7 @@ import {
 import { adminApi } from '@/lib/adminApi';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 import { useFormatsList } from '@/hooks/admin/useAdminFormats';
+import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
 
 const schema = z.object({
   name: z.string().min(1, 'Format name is required').max(200),
@@ -107,8 +108,8 @@ export default function FormatStep({ onNext, onBack }: Props) {
 
       await adminApi.formats.create({ name: values.name, config });
       queryClient.invalidateQueries({ queryKey: adminQueryKeys.formats.all() });
-      queryClient.invalidateQueries({ queryKey: ['setup-status'] });
-      queryClient.invalidateQueries({ queryKey: ['setup-progress'] });
+      queryClient.invalidateQueries({ queryKey: setupQueryKeys.status() });
+      queryClient.invalidateQueries({ queryKey: setupQueryKeys.progress() });
       toast.success('Race format saved');
       onNext();
     } catch {

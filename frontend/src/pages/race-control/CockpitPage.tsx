@@ -29,6 +29,7 @@ import { roundName } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/errors';
 import { useConfirm } from '@/components/ConfirmDialog';
 import { useRoles } from '@/hooks/useRoles';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 function raceTitle(item: RunOrderItemDto | undefined) {
   if (!item) return 'No race selected';
@@ -80,7 +81,7 @@ export default function CockpitPage() {
 
   // Fetch audio settings — shared query key with AudioSettingsPanel so only one request fires
   const { data: audioSettings } = useQuery({
-    queryKey: ['audio-settings'],
+    queryKey: raceControlQueryKeys.audioSettings(),
     queryFn: () => getAudioSettings(),
   });
 
@@ -93,7 +94,7 @@ export default function CockpitPage() {
   // The race clock tells the countdown announcements when the race ends. It is read again when the race
   // starts or resumes (the status is part of the key), since a stoppage moves the end.
   const { data: raceClock, dataUpdatedAt: raceClockReadAt } = useQuery({
-    queryKey: ['race-clock', selectedRaceId, selectedRace?.status],
+    queryKey: raceControlQueryKeys.raceClock(selectedRaceId, selectedRace?.status),
     queryFn: () => getRaceClock(selectedRaceId!),
     enabled: selectedRaceId != null && selectedRace?.status === 'RUNNING',
   });

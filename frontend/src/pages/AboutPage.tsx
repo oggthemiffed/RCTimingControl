@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { getAboutInfo } from '@/lib/api';
 import { Link } from 'react-router-dom';
 import { formatDate } from '@/lib/dates';
+import { publicQueryKeys } from '@/hooks/publicQueryKeys';
 
 export default function AboutPage() {
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['about'],
+    queryKey: publicQueryKeys.about(),
     queryFn: getAboutInfo,
     staleTime: Infinity,
   });

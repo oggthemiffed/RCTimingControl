@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useStomp } from './useStomp';
 import { getLiveTimingSnapshot } from '@/lib/raceControlApi';
 import type { LiveTimingRowDto } from '@/lib/raceControlApi';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 /**
  * Subscribes to live timing for a race via STOMP and seeds from a REST snapshot
@@ -17,7 +18,7 @@ export function useLiveTiming(raceId: number | null) {
   const { data: stompRows, status: wsStatus } = useStomp<LiveTimingRowDto[]>(topic);
 
   const { data: snapshot, isError: snapshotFailed } = useQuery({
-    queryKey: ['live-timing-snapshot', raceId],
+    queryKey: raceControlQueryKeys.liveTimingSnapshot(raceId),
     queryFn: () => getLiveTimingSnapshot(raceId!),
     enabled: (raceId ?? 0) > 0,
   });

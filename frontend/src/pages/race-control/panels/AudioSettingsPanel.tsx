@@ -13,6 +13,7 @@ import {
   patchAudioSettings,
   type AudioSettingsDto,
 } from '@/lib/audioApi';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 export function AudioSettingsPanel() {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,13 +21,13 @@ export function AudioSettingsPanel() {
   const queryClient = useQueryClient();
 
   const { data: settings, isLoading } = useQuery({
-    queryKey: ['audio-settings'],
+    queryKey: raceControlQueryKeys.audioSettings(),
     queryFn: () => getAudioSettings(),
   });
 
   const mutation = useMutation({
     mutationFn: (s: AudioSettingsDto) => patchAudioSettings(s),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['audio-settings'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: raceControlQueryKeys.audioSettings() }),
   });
 
   // Test audio: speak a sample sentence through the browser voice (AUDIO-11)

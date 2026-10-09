@@ -8,6 +8,7 @@ import { useHelpContent } from '@/context/HelpContext';
 import { PracticeHelp } from '@/help/PracticeHelp';
 import { PracticeCreateDialog } from './dialogs/PracticeCreateDialog';
 import { listSessions, type PracticeSessionDto } from '@/lib/practiceApi';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 function statusBadge(status: PracticeSessionDto['status']) {
   if (status === 'RUNNING')
@@ -26,7 +27,7 @@ export function PracticeLandingPage() {
   useHelpContent(PracticeHelp);
 
   const { data: sessions, isLoading } = useQuery({
-    queryKey: ['practice-sessions'],
+    queryKey: raceControlQueryKeys.practice.sessions(),
     queryFn: () => listSessions(20),
   });
 

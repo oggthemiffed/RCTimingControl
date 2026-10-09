@@ -5,4 +5,17 @@ export const raceControlQueryKeys = {
   runOrder: (eventId: number) => ['race-control', 'run-order', eventId] as const,
   raceHistory: (raceId: number) => ['race-control', 'race-history', raceId] as const,
   resultSnapshot: (raceId: number) => ['race-control', 'result-snapshot', raceId] as const,
+  raceEntries: (raceId: number | null) => ['race-control', 'race-entries', raceId] as const,
+  liveTimingSnapshot: (raceId: number | null) => ['race-control', 'live-timing-snapshot', raceId] as const,
+  raceClock: (raceId: number | null, status: string | undefined) =>
+    ['race-control', 'race-clock', raceId, status] as const,
+  audioSettings: () => ['race-control', 'audio-settings'] as const,
+  decoderStatus: () => ['race-control', 'decoder-status'] as const,
+  liveFeedStatus: () => ['race-control', 'live-feed-status'] as const,
+  practice: {
+    sessions: () => ['race-control', 'practice', 'sessions'] as const,
+    session: (id: number) => ['race-control', 'practice', 'session', id] as const,
+    snapshot: (id: number | null) => ['race-control', 'practice', 'snapshot', id] as const,
+    results: (id: number) => ['race-control', 'practice', 'results', id] as const,
+  },
 };

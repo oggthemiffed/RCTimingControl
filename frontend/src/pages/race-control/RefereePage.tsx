@@ -18,6 +18,7 @@ import { useProximityAlerts } from './referee/useProximityAlerts';
 import { getRaceEntries } from '@/lib/raceControlApi';
 import type { IncidentReportRequest, PenaltyRequest } from '@/lib/raceControlApi';
 import { getApiErrorMessage } from '@/lib/errors';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 export default function RefereePage() {
   const { eventId: eventIdStr } = useParams<{ eventId: string }>();
@@ -48,7 +49,7 @@ export default function RefereePage() {
   // Drivers to pick from come from the race's entries, not live timing: live timing is empty once
   // the race has finished, and leaves out a car that has not been timed yet (#107)
   const { data: raceEntries = [] } = useQuery({
-    queryKey: ['race-entries', selectedRaceId],
+    queryKey: raceControlQueryKeys.raceEntries(selectedRaceId),
     queryFn: () => getRaceEntries(selectedRaceId!),
     enabled: selectedRaceId !== null,
   });

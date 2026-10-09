@@ -1,4 +1,5 @@
 export const adminQueryKeys = {
+  all: ['admin'] as const,
   events: {
     all: () => ['admin', 'events'] as const,
     detail: (id: number) => ['admin', 'events', id] as const,
@@ -46,4 +47,7 @@ export const adminQueryKeys = {
     all: () => ['admin', 'officials'] as const,
     changes: () => ['admin', 'officials', 'changes'] as const,
   },
+  audioSettings: () => ['admin', 'audio-settings'] as const,
+  voices: () => ['admin', 'voices'] as const,
+  decoderConfig: () => ['admin', 'decoder-config'] as const,
 };

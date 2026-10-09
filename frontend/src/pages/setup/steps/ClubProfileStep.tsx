@@ -24,6 +24,7 @@ import {
 import { adminApi } from '@/lib/adminApi';
 import { useClubProfile } from '@/hooks/admin/useAdminClub';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
+import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
 
 const TIMEZONES = Intl.supportedValuesOf('timeZone');
 const BROWSER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -85,8 +86,8 @@ export default function ClubProfileStep({ onNext }: Props) {
         logoType: saved?.logoType ?? null,
       });
       queryClient.invalidateQueries({ queryKey: adminQueryKeys.club.profile() });
-      queryClient.invalidateQueries({ queryKey: ['setup-status'] });
-      queryClient.invalidateQueries({ queryKey: ['setup-progress'] });
+      queryClient.invalidateQueries({ queryKey: setupQueryKeys.status() });
+      queryClient.invalidateQueries({ queryKey: setupQueryKeys.progress() });
       toast.success('Club profile saved');
       onNext();
     } catch {

@@ -13,6 +13,7 @@ import {
   type LiveFeedState,
   type LiveFeedStatusDto,
 } from '@/lib/raceControlApi';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 const LABEL: Record<Exclude<LiveFeedState, 'NOT_SET_UP'>, string> = {
   IDLE: 'LIVE FEED ready',
@@ -42,7 +43,7 @@ export function LiveFeedStatus({ eventId }: { eventId: number }) {
   const { canRunEvent: canChange } = useRoles();
 
   const { data: status } = useQuery({
-    queryKey: ['live-feed-status'],
+    queryKey: raceControlQueryKeys.liveFeedStatus(),
     queryFn: fetchLiveFeedStatus,
     staleTime: 0,
     refetchInterval: 10000,
@@ -51,7 +52,7 @@ export function LiveFeedStatus({ eventId }: { eventId: number }) {
   // A change pushed by the server replaces the polled status straight away
   const { data: pushed } = useStomp<LiveFeedStatusDto>('/topic/system/live-feed-status');
   useEffect(() => {
-    if (pushed) queryClient.setQueryData(['live-feed-status'], pushed);
+    if (pushed) queryClient.setQueryData(raceControlQueryKeys.liveFeedStatus(), pushed);
   }, [pushed, queryClient]);
 
   const setUp = !!status && status.state !== 'NOT_SET_UP';

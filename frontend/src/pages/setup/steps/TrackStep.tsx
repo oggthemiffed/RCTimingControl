@@ -18,6 +18,7 @@ import {
 import { adminApi } from '@/lib/adminApi';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 import { useTracksList } from '@/hooks/admin/useAdminTracks';
+import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
 
 const schema = z.object({
   name: z.string().min(1, 'Track name is required').max(200),
@@ -57,8 +58,8 @@ export default function TrackStep({ onNext, onBack }: Props) {
         trackLength: values.lengthMeters ?? null,
       });
       queryClient.invalidateQueries({ queryKey: adminQueryKeys.tracks.all() });
-      queryClient.invalidateQueries({ queryKey: ['setup-status'] });
-      queryClient.invalidateQueries({ queryKey: ['setup-progress'] });
+      queryClient.invalidateQueries({ queryKey: setupQueryKeys.status() });
+      queryClient.invalidateQueries({ queryKey: setupQueryKeys.progress() });
       toast.success('Track saved');
       onNext();
     } catch {

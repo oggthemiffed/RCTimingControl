@@ -4,6 +4,7 @@ import { useStomp } from '@/hooks/race-control/useStomp';
 import type { LiveTimingRowDto, RaceStateChangeDto } from '@/lib/raceControlApi';
 import { getBoardLiveTiming, getNowNext } from '@/lib/boardsApi';
 import { BOARD_POLL_MS } from './boardFormat';
+import { publicQueryKeys } from '@/hooks/publicQueryKeys';
 
 /**
  * What a board shows: the event's now-and-next, polled, and while a race is on track its running order,
@@ -17,7 +18,7 @@ export function useBoardRace(eventId: number | null) {
   // Polling keeps retrying, so a board that lost the server shows the last answer it had; before its first
   // answer it reports isError
   const { data: nowNext, isPending, isError } = useQuery({
-    queryKey: ['boards', 'now-next', eventId],
+    queryKey: publicQueryKeys.boards.nowNext(eventId),
     queryFn: () => getNowNext(eventId),
     refetchInterval: BOARD_POLL_MS,
   });
@@ -27,14 +28,14 @@ export function useBoardRace(eventId: number | null) {
   const { data: liveRows } = useStomp<LiveTimingRowDto[]>(raceId ? `/topic/race/${raceId}/timing` : null);
   const { data: stateChange } = useStomp<RaceStateChangeDto>(raceId ? `/topic/race/${raceId}/state` : null);
   const { data: seedRows } = useQuery({
-    queryKey: ['boards', 'live-timing', raceId],
+    queryKey: publicQueryKeys.boards.liveTiming(raceId),
     queryFn: () => getBoardLiveTiming(raceId!),
     enabled: raceId !== null,
   });
 
   useEffect(() => {
     if (stateChange) {
-      void queryClient.invalidateQueries({ queryKey: ['boards'] });
+      void queryClient.invalidateQueries({ queryKey: publicQueryKeys.boards.all() });
     }
   }, [stateChange, queryClient]);
 

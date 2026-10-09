@@ -20,6 +20,7 @@ import {
   listVoices,
   type AudioSettingsDto,
 } from '@/lib/audioApi';
+import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 
 export default function AdminAudioSettingsPage() {
   const queryClient = useQueryClient();
@@ -27,14 +28,14 @@ export default function AdminAudioSettingsPage() {
 
   // ── Fetch audio settings ───────────────────────────────────────────────────
   const { data: settings, isLoading: settingsLoading } = useQuery({
-    queryKey: ['admin-audio-settings'],
+    queryKey: adminQueryKeys.audioSettings(),
     queryFn: () => getAdminAudioSettings(),
   });
 
   const saveSettingsMutation = useMutation({
     mutationFn: (s: AudioSettingsDto) => saveAdminAudioSettings(s),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-audio-settings'] });
+      queryClient.invalidateQueries({ queryKey: adminQueryKeys.audioSettings() });
       toast.success('Audio settings saved.');
     },
     onError: () => toast.error('Failed to save settings.'),
@@ -42,7 +43,7 @@ export default function AdminAudioSettingsPage() {
 
   // ── Fetch voices ───────────────────────────────────────────────────────────
   const { data: voices, isLoading: voicesLoading } = useQuery({
-    queryKey: ['voices'],
+    queryKey: adminQueryKeys.voices(),
     queryFn: () => listVoices(),
   });
 
