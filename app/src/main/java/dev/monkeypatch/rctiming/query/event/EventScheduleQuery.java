@@ -1,12 +1,14 @@
 package dev.monkeypatch.rctiming.query.event;
 
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
+import dev.monkeypatch.rctiming.query.event.EventScheduleDto.EntryAvailability;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,85 +31,73 @@ public class EventScheduleQuery {
 
     public List<EventScheduleDto> getPublicSchedule() {
         Instant now = Instant.now();
-
-        // Main events fetch — initial pass; finishedRaceIds and championshipId populated in two-pass enrichment
-        List<EventScheduleDto> events = dsl
+        var events = dsl
                 .select(EVENTS.ID, EVENTS.NAME, EVENTS.EVENT_DATE,
                         EVENTS.STATUS, EVENTS.ENTRY_OPENS_AT, EVENTS.ENTRY_CLOSES_AT)
                 .from(EVENTS)
                 .where(EVENTS.STATUS.in("PUBLISHED", "OPEN", "ENTRIES_CLOSED", "IN_PROGRESS"))
-                .orderBy(EVENTS.EVENT_DATE.asc())
-                .fetch(r -> {
-                    String status = r.get(EVENTS.STATUS);
-                    Instant opensAt = r.get(EVENTS.ENTRY_OPENS_AT);
-                    Instant closesAt = r.get(EVENTS.ENTRY_CLOSES_AT);
-
-                    EventScheduleDto.EntryAvailability avail;
-                    if ("ENTRIES_CLOSED".equals(status) || "IN_PROGRESS".equals(status)
-                            || (closesAt != null && closesAt.isBefore(now))) {
-                        avail = EventScheduleDto.EntryAvailability.ENTRY_CLOSED;
-                    } else if ("OPEN".equals(status)
-                            || ("PUBLISHED".equals(status)
-                                && (opensAt == null || opensAt.isBefore(now))
-                                && (closesAt == null || closesAt.isAfter(now)))) {
-                        avail = EventScheduleDto.EntryAvailability.ENTRY_OPEN;
-                    } else if (opensAt != null && opensAt.isAfter(now)) {
-                        avail = EventScheduleDto.EntryAvailability.ENTRY_NOT_YET_OPEN;
-                    } else {
-                        avail = EventScheduleDto.EntryAvailability.ENTRY_CLOSED;
-                    }
-
-                    return new EventScheduleDto(
-                            r.get(EVENTS.ID),
-                            r.get(EVENTS.NAME),
-                            r.get(EVENTS.EVENT_DATE),
-                            avail,
-                            List.of(),   // populated in enrichment pass below
-                            null);       // populated in enrichment pass below
-                });
-
+                .orderBy(EVENTS.EVENT_DATE.asc(), EVENTS.ID.asc())
+                .fetch();
         if (events.isEmpty()) {
-            return events;
+            return List.of();
         }
 
-        List<Long> eventIds = events.stream().map(EventScheduleDto::id).toList();
+        List<Long> eventIds = events.getValues(EVENTS.ID);
+        Map<Long, List<Long>> finishedRacesByEvent = finishedRacesByEvent(eventIds);
+        Map<Long, Long> championshipByEvent = championshipByEvent(eventIds);
 
-        // Pass 1 — finished race IDs per event: rounds.event_id → races.id where status=FINISHED
-        Map<Long, List<Long>> finishedRacesByEvent = dsl
-                .select(ROUNDS.EVENT_ID, RACES.ID)
+        return events.stream().map(r -> new EventScheduleDto(
+                r.get(EVENTS.ID),
+                r.get(EVENTS.NAME),
+                r.get(EVENTS.EVENT_DATE),
+                entryAvailability(r.get(EVENTS.STATUS), r.get(EVENTS.ENTRY_OPENS_AT),
+                        r.get(EVENTS.ENTRY_CLOSES_AT), now),
+                finishedRacesByEvent.getOrDefault(r.get(EVENTS.ID), List.of()),
+                championshipByEvent.get(r.get(EVENTS.ID))
+        )).toList();
+    }
+
+    static EntryAvailability entryAvailability(String status, Instant opensAt, Instant closesAt, Instant now) {
+        if ("ENTRIES_CLOSED".equals(status) || "IN_PROGRESS".equals(status)
+                || (closesAt != null && closesAt.isBefore(now))) {
+            return EntryAvailability.ENTRY_CLOSED;
+        }
+        if ("OPEN".equals(status)
+                || ("PUBLISHED".equals(status)
+                    && (opensAt == null || opensAt.isBefore(now))
+                    && (closesAt == null || closesAt.isAfter(now)))) {
+            return EntryAvailability.ENTRY_OPEN;
+        }
+        if (opensAt != null && opensAt.isAfter(now)) {
+            return EntryAvailability.ENTRY_NOT_YET_OPEN;
+        }
+        return EntryAvailability.ENTRY_CLOSED;
+    }
+
+    private Map<Long, List<Long>> finishedRacesByEvent(List<Long> eventIds) {
+        return dsl.select(ROUNDS.EVENT_ID, RACES.ID)
                 .from(RACES)
                 .join(ROUNDS).on(ROUNDS.ID.eq(RACES.ROUND_ID))
                 .where(ROUNDS.EVENT_ID.in(eventIds))
                 .and(RACES.STATUS.eq("FINISHED"))
                 .fetchGroups(ROUNDS.EVENT_ID, RACES.ID);
+    }
 
-        // Pass 2 — championship ID per event (one championship per event by convention;
-        // fetchGroups + first-element avoids fetchMap's duplicate-key exception).
-        Map<Long, Long> championshipByEvent = dsl
-                .select(CHAMPIONSHIP_EVENT_LINKS.EVENT_ID, CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID)
+    /** One championship per event by convention; if an event has more, the schedule shows the lowest id. */
+    private Map<Long, Long> championshipByEvent(List<Long> eventIds) {
+        Map<Long, Long> byEvent = new HashMap<>();
+        dsl.select(CHAMPIONSHIP_EVENT_LINKS.EVENT_ID, CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID)
                 .from(CHAMPIONSHIP_EVENT_LINKS)
                 .where(CHAMPIONSHIP_EVENT_LINKS.EVENT_ID.in(eventIds))
+                .orderBy(CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID.asc())
                 .fetchGroups(CHAMPIONSHIP_EVENT_LINKS.EVENT_ID, CHAMPIONSHIP_EVENT_LINKS.CHAMPIONSHIP_ID)
-                .entrySet().stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        java.util.Map.Entry::getKey,
-                        e -> {
-                            if (e.getValue().size() > 1) {
-                                log.warn("Event {} is linked to {} championships; only the first is shown on the schedule",
-                                        e.getKey(), e.getValue().size());
-                            }
-                            return e.getValue().get(0);
-                        }
-                ));
-
-        // Re-map the events list with the two enrichment fields populated
-        return events.stream().map(e -> new EventScheduleDto(
-                e.id(),
-                e.name(),
-                e.eventDate(),
-                e.entryAvailability(),
-                finishedRacesByEvent.getOrDefault(e.id(), List.of()),
-                championshipByEvent.get(e.id())  // null if not found
-        )).toList();
+                .forEach((eventId, championshipIds) -> {
+                    if (championshipIds.size() > 1) {
+                        log.warn("Event {} is linked to {} championships; only the first is shown on the schedule",
+                                eventId, championshipIds.size());
+                    }
+                    byEvent.put(eventId, championshipIds.get(0));
+                });
+        return byEvent;
     }
 }
