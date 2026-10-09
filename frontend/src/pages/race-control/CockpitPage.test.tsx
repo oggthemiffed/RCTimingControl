@@ -16,7 +16,7 @@ vi.mock('@/hooks/race-control/useRaceStateMutations', () => ({
     new Proxy({}, { get: () => ({ mutate: vi.fn(), isPending: false }) }),
 }));
 vi.mock('./panels/LiveTimingPanel', () => ({ LiveTimingPanel: () => null }));
-const mockUseStomp = vi.fn((_topic: string | null) => ({ data: null as unknown, status: 'connected' }));
+const mockUseStomp = vi.fn<(topic: string | null) => { data: unknown; status: string }>(() => ({ data: null, status: 'connected' }));
 vi.mock('@/hooks/race-control/useStomp', () => ({ useStomp: (topic: string | null) => mockUseStomp(topic) }));
 vi.mock('@/hooks/race-control/useLiveTiming', () => ({ useLiveTiming: () => ({ rows: [] }) }));
 vi.mock('@/hooks/race-control/useAnnouncements', () => ({
