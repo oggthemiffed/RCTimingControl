@@ -248,7 +248,7 @@ public class RaceStateMachineService {
                 .map(LiveTimingRowDto::entryId)
                 .toList();
 
-        // Not caught, as above: no higher final is an empty result, not an error
+        // Not caught, as above; with no higher final it returns no one rather than throwing
         List<Long> promoted = bumpUpSeedingService.applyBumpUpResults(finishedFinalRace.getId(), finishers);
         log.info("Bump-up: promoted {} from {}-final race {}", promoted, letter, finishedFinalRace.getId());
         if (!promoted.isEmpty()) {
