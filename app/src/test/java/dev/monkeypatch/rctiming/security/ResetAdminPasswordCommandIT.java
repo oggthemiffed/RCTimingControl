@@ -3,11 +3,11 @@ package dev.monkeypatch.rctiming.security;
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.auth.LoginRequest;
-import dev.monkeypatch.rctiming.domain.user.OfficialAuditLog;
-import dev.monkeypatch.rctiming.domain.user.OfficialAuditLogRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.OfficialAuditLogRecord;
+import org.jooq.DSLContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.OfficialAuditLog.OFFICIAL_AUDIT_LOG;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** {@code RCTimingControl reset-admin-password} (#61), run against the test database while the app is up. */
@@ -39,7 +40,7 @@ class ResetAdminPasswordCommandIT extends AbstractIntegrationTest {
     UserRepository userRepository;
 
     @Autowired
-    OfficialAuditLogRepository auditLogRepository;
+    DSLContext dsl;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -66,8 +67,8 @@ class ResetAdminPasswordCommandIT extends AbstractIntegrationTest {
         assertThat(reset.getRoles()).containsExactlyInAnyOrder(Role.REFEREE, Role.ADMIN);
         assertThat(login(email, "forgotten1").getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(login(email, "rescued123").getStatusCode()).isEqualTo(HttpStatus.OK);
-        List<OfficialAuditLog> log = auditLogRepository.findByOfficialUserIdOrderByCreatedAtAsc(reset.getId());
-        assertThat(log).extracting(OfficialAuditLog::getAction)
+        List<OfficialAuditLogRecord> log = officialLog(reset.getId());
+        assertThat(log).extracting(OfficialAuditLogRecord::getAction)
                 .containsExactlyInAnyOrder("PASSWORD_SET", "ROLES_CHANGED", "ENABLED");
         assertThat(log).allSatisfy(entry -> assertThat(entry.getActorUserId()).isNull());
 
@@ -95,8 +96,8 @@ class ResetAdminPasswordCommandIT extends AbstractIntegrationTest {
         assertThat(exit).isZero();
         User reset = userRepository.findByEmail(email).orElseThrow();
         assertThat(reset.getRoles()).containsExactly(Role.ADMIN);
-        assertThat(auditLogRepository.findByOfficialUserIdOrderByCreatedAtAsc(reset.getId()))
-                .extracting(OfficialAuditLog::getAction).containsExactly("PASSWORD_SET");
+        assertThat(officialLog(reset.getId()))
+                .extracting(OfficialAuditLogRecord::getAction).containsExactly("PASSWORD_SET");
         Map<String, Object> row = jdbc.queryForMap(
                 "select summary, after_json from audit_log where entity_type = 'official' and entity_id = ?"
                         + " and action = 'ADMIN_PASSWORD_RESET'", String.valueOf(reset.getId()));
@@ -159,5 +160,12 @@ class ResetAdminPasswordCommandIT extends AbstractIntegrationTest {
 
     private ResponseEntity<AuthResponse> login(String email, String password) {
         return rest.postForEntity("/api/v1/auth/login", new LoginRequest(email, password), AuthResponse.class);
+    }
+
+    private List<OfficialAuditLogRecord> officialLog(Long officialUserId) {
+        return dsl.selectFrom(OFFICIAL_AUDIT_LOG)
+                .where(OFFICIAL_AUDIT_LOG.OFFICIAL_USER_ID.eq(officialUserId))
+                .orderBy(OFFICIAL_AUDIT_LOG.CREATED_AT, OFFICIAL_AUDIT_LOG.ID)
+                .fetch();
     }
 }

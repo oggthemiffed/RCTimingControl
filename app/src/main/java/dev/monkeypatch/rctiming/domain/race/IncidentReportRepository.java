@@ -5,8 +5,6 @@ import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 import static dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports.INCIDENT_REPORTS;
 
 @Repository
@@ -14,10 +12,6 @@ public class IncidentReportRepository extends JooqRepository<IncidentReport, Inc
 
     public IncidentReportRepository(DSLContext dsl) {
         super(dsl, INCIDENT_REPORTS, INCIDENT_REPORTS.ID);
-    }
-
-    public List<IncidentReport> findByRaceIdOrderByRaisedAt(Long raceId) {
-        return findWhere(INCIDENT_REPORTS.RACE_ID.eq(raceId), INCIDENT_REPORTS.RAISED_AT.asc(), INCIDENT_REPORTS.ID.asc());
     }
 
     @Override

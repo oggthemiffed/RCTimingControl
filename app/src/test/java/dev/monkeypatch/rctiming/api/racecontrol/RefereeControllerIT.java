@@ -13,9 +13,7 @@ import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.QualifyingType;
 import dev.monkeypatch.rctiming.domain.format.StartType;
 import dev.monkeypatch.rctiming.domain.format.TimedRaceConfig;
-import dev.monkeypatch.rctiming.domain.race.IncidentReportRepository;
 import dev.monkeypatch.rctiming.domain.race.MarshalAbsenceRepository;
-import dev.monkeypatch.rctiming.domain.race.MarshalPenaltyRepository;
 import dev.monkeypatch.rctiming.domain.race.PenaltyRepository;
 import dev.monkeypatch.rctiming.domain.race.PenaltyType;
 import dev.monkeypatch.rctiming.domain.race.Race;
@@ -32,7 +30,9 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.MarshalPenaltiesRecord;
 import dev.monkeypatch.rctiming.query.racecontrol.RaceEntryDto;
+import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -51,6 +51,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.IncidentReports.INCIDENT_REPORTS;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.MarshalPenalties.MARSHAL_PENALTIES;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RefereeControllerIT extends AbstractIntegrationTest {
@@ -65,11 +67,10 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
     @Autowired RacingClassRepository racingClassRepository;
     @Autowired EventClassRepository eventClassRepository;
     @Autowired EventRepository eventRepository;
-    @Autowired IncidentReportRepository incidentReportRepository;
     @Autowired PenaltyRepository penaltyRepository;
     @Autowired MarshalAbsenceRepository marshalAbsenceRepository;
-    @Autowired MarshalPenaltyRepository marshalPenaltyRepository;
     @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
+    @Autowired DSLContext dsl;
 
     private String refereeToken;
 
@@ -112,7 +113,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
                 Map.class);
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(incidentReportRepository.findByRaceIdOrderByRaisedAt(re.race().getId())).hasSize(1);
+        assertThat(dsl.fetchCount(INCIDENT_REPORTS, INCIDENT_REPORTS.RACE_ID.eq(re.race().getId()))).isEqualTo(1);
 
         Map<String, Object> row = onlyAuditRow(re.race().getId(), "INCIDENT_RAISED");
         assertThat(row.get("summary").toString()).contains("Contact").contains("race " + re.race().getId());
@@ -297,7 +298,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
 
         assertThat(absentResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(marshalAbsenceRepository.findByEventId(eventId)).hasSize(1);
-        assertThat(marshalPenaltyRepository.findByEntryIdAndEventId(re.entry().getId(), eventId)).isEmpty();
+        assertThat(marshalPenalties(re.entry().getId(), eventId)).isEmpty();
 
         // Now apply the penalty as a separate action
         ResponseEntity<Map> penaltyResp = restTemplate.exchange(
@@ -307,7 +308,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
                 Map.class);
 
         assertThat(penaltyResp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(marshalPenaltyRepository.findByEntryIdAndEventId(re.entry().getId(), eventId)).hasSize(1);
+        assertThat(marshalPenalties(re.entry().getId(), eventId)).hasSize(1);
 
         assertThat(onlyAuditRow(re.race().getId(), "MARSHAL_ABSENCE_RECORDED").get("summary").toString())
                 .contains("missed their marshal duty");
@@ -355,7 +356,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
         assertThat(byDefault.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(byName.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        assertThat(marshalPenaltyRepository.findByEntryIdAndEventId(re.entry().getId(), eventId))
+        assertThat(marshalPenalties(re.entry().getId(), eventId))
                 .hasSize(2).allSatisfy(p -> assertThat(p.getAbsenceId()).isEqualTo(absenceId));
     }
 
@@ -379,7 +380,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
 
         assertThat(otherEvent.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(missing.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(marshalPenaltyRepository.findByEntryIdAndEventId(re.entry().getId(), eventId)).isEmpty();
+        assertThat(marshalPenalties(re.entry().getId(), eventId)).isEmpty();
     }
 
     @Test
@@ -552,5 +553,11 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
     private Long resolveEventId(Race race) {
         Round round = roundRepository.findById(race.getRoundId()).orElseThrow();
         return round.getEventId();
+    }
+
+    private List<MarshalPenaltiesRecord> marshalPenalties(Long entryId, Long eventId) {
+        return dsl.selectFrom(MARSHAL_PENALTIES)
+                .where(MARSHAL_PENALTIES.ENTRY_ID.eq(entryId).and(MARSHAL_PENALTIES.EVENT_ID.eq(eventId)))
+                .fetch();
     }
 }

@@ -8,8 +8,6 @@ import dev.monkeypatch.rctiming.domain.checkin.TransponderSlot;
 import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
-import dev.monkeypatch.rctiming.domain.entry.EntryAuditLog;
-import dev.monkeypatch.rctiming.domain.entry.EntryAuditLogRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
 import dev.monkeypatch.rctiming.domain.event.Event;
@@ -24,7 +22,9 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.EntryAuditLogRecord;
 import dev.monkeypatch.rctiming.security.JwtTokenService;
+import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +49,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.ENTRY_AUDIT_LOG;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** Check-in desk and transponder swap end to end (L11). */
@@ -61,7 +62,7 @@ class CheckInControllerIT extends AbstractIntegrationTest {
     @Autowired RacingClassRepository racingClassRepository;
     @Autowired EventClassRepository eventClassRepository;
     @Autowired EntryRepository entryRepository;
-    @Autowired EntryAuditLogRepository auditLogRepository;
+    @Autowired DSLContext dsl;
     @Autowired CompetitorService competitorService;
     @Autowired CheckInService checkInService;
     @Autowired org.springframework.jdbc.core.JdbcTemplate jdbc;
@@ -202,8 +203,8 @@ class CheckInControllerIT extends AbstractIntegrationTest {
         assertThat(entryRepository.findById(entry.getId()).orElseThrow().getTransponderNumberSnapshot())
                 .isEqualTo("G" + suffix);
 
-        List<EntryAuditLog> audit = auditLogRepository.findByEntryIdOrderByCreatedAtAsc(entry.getId());
-        assertThat(audit).extracting(EntryAuditLog::getAction).containsExactly("TRANSPONDER_SWAP");
+        List<EntryAuditLogRecord> audit = entryLog(entry.getId());
+        assertThat(audit).extracting(EntryAuditLogRecord::getAction).containsExactly("TRANSPONDER_SWAP");
 
         // The new number now resolves at the desk
         assertThat(post(directorToken, checkIn("/resolve"),
@@ -378,5 +379,12 @@ class CheckInControllerIT extends AbstractIntegrationTest {
         entry.setSubmittedAt(now);
         entry.setUpdatedAt(now);
         return entryRepository.save(entry);
+    }
+
+    private List<EntryAuditLogRecord> entryLog(Long entryId) {
+        return dsl.selectFrom(ENTRY_AUDIT_LOG)
+                .where(ENTRY_AUDIT_LOG.ENTRY_ID.eq(entryId))
+                .orderBy(ENTRY_AUDIT_LOG.CREATED_AT, ENTRY_AUDIT_LOG.ID)
+                .fetch();
     }
 }

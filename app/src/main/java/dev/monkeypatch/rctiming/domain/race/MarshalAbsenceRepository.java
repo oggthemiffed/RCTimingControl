@@ -16,10 +16,6 @@ public class MarshalAbsenceRepository extends JooqRepository<MarshalAbsence, Mar
         super(dsl, MARSHAL_ABSENCES, MARSHAL_ABSENCES.ID);
     }
 
-    public long countByEntryIdAndEventId(Long entryId, Long eventId) {
-        return dsl.fetchCount(MARSHAL_ABSENCES, MARSHAL_ABSENCES.ENTRY_ID.eq(entryId).and(MARSHAL_ABSENCES.EVENT_ID.eq(eventId)));
-    }
-
     public List<MarshalAbsence> findByEventId(Long eventId) {
         return findWhere(MARSHAL_ABSENCES.EVENT_ID.eq(eventId));
     }

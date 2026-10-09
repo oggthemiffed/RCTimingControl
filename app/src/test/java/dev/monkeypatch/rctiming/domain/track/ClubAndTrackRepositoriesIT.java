@@ -97,10 +97,6 @@ class ClubAndTrackRepositoriesIT extends AbstractIntegrationTest {
             return c;
         }, GoverningBodyAffiliation::getId);
         cleanup.add(() -> affiliations.deleteById(saved.getId()));
-
-        assertThat(affiliations.findByCode(saved.getCode())).isPresent();
-        assertThat(affiliations.existsByCode(saved.getCode())).isTrue();
-        assertThat(affiliations.existsByCode("missing")).isFalse();
     }
 
     @Test

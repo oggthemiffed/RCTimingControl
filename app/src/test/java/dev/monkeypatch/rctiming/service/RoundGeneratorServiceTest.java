@@ -6,11 +6,14 @@ import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
 import dev.monkeypatch.rctiming.domain.format.EventClass;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
+import dev.monkeypatch.rctiming.domain.format.RaceFormatService;
+import dev.monkeypatch.rctiming.domain.race.Race;
+import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
+import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest;
-import dev.monkeypatch.rctiming.service.dto.RoundPreviewDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,11 +22,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,7 +44,7 @@ class RoundGeneratorServiceTest {
     @Mock
     private EventClassRepository eventClassRepository;
     @Mock
-    private BumpUpSeedingService bumpUpSeedingService;
+    private RaceFormatService raceFormatService;
 
     @InjectMocks
     private RoundGeneratorService service;
@@ -81,7 +84,28 @@ class RoundGeneratorServiceTest {
         when(entryRepository.findByEventClassIdAndStatus(eventClassId, EntryStatus.CONFIRMED))
                 .thenReturn(entries);
 
-        // Act: preview with maxCarsPerHeat=8, 0 practice, 1 qualifying
+        // Hand out ids as the repositories would, and keep what is saved
+        AtomicLong ids = new AtomicLong();
+        when(roundRepository.save(any(Round.class))).thenAnswer(inv -> {
+            Round round = inv.getArgument(0);
+            round.setId(ids.incrementAndGet());
+            return round;
+        });
+        List<Race> races = new ArrayList<>();
+        when(raceRepository.save(any(Race.class))).thenAnswer(inv -> {
+            Race race = inv.getArgument(0);
+            race.setId(ids.incrementAndGet());
+            races.add(race);
+            return race;
+        });
+        List<RaceEntry> raceEntries = new ArrayList<>();
+        when(raceEntryRepository.save(any(RaceEntry.class))).thenAnswer(inv -> {
+            RaceEntry raceEntry = inv.getArgument(0);
+            raceEntries.add(raceEntry);
+            return raceEntry;
+        });
+
+        // Act: generate with maxCarsPerHeat=8, 0 practice, 1 qualifying
         RoundGenerationRequest request = new RoundGenerationRequest(
                 eventId,
                 0,          // practiceRoundsCount
@@ -89,21 +113,17 @@ class RoundGeneratorServiceTest {
                 8,          // maxCarsPerHeat
                 List.of()   // no class finals overrides
         );
-        List<RoundPreviewDto> previews = service.preview(request);
+        service.generate(request);
 
         // Assert: exactly 2 heats for the qualifying round
         // (ceil(15 / 8) = 2)
-        Set<Integer> heatNumbers = previews.stream()
-                .filter(p -> p.finalLetter() == null) // exclude finals
-                .map(RoundPreviewDto::heatNumber)
-                .collect(Collectors.toSet());
-        assertThat(heatNumbers).containsExactlyInAnyOrder(1, 2);
+        List<Race> heats = races.stream()
+                .filter(r -> r.getFinalLetter() == null) // exclude finals
+                .toList();
+        assertThat(heats).extracting(Race::getHeatNumber).containsExactlyInAnyOrder(1, 2);
 
-        // Total driver count across heats = 15
-        long totalDrivers = previews.stream()
-                .filter(p -> p.finalLetter() == null)
-                .mapToLong(p -> p.driverNames().size())
-                .sum();
-        assertThat(totalDrivers).isEqualTo(15);
+        // Every driver is in exactly one heat
+        assertThat(raceEntries).extracting(RaceEntry::getEntryId)
+                .containsExactlyInAnyOrderElementsOf(entries.stream().map(Entry::getId).toList());
     }
 }

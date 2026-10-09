@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.domain.user;
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.domain.auth.RefreshToken;
 import dev.monkeypatch.rctiming.domain.auth.RefreshTokenRepository;
+import org.jooq.DSLContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.OfficialAuditLog.OFFICIAL_AUDIT_LOG;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.RefreshTokens.REFRESH_TOKENS;
 import static dev.monkeypatch.rctiming.persistence.RoundTrip.assertSavedAndReloaded;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,6 +29,7 @@ class OfficialRepositoriesIT extends AbstractIntegrationTest {
     @Autowired UserRepository users;
     @Autowired RefreshTokenRepository refreshTokens;
     @Autowired OfficialAuditLogRepository auditLogs;
+    @Autowired DSLContext dsl;
 
     private final List<Runnable> cleanup = new ArrayList<>();
 
@@ -107,11 +111,10 @@ class OfficialRepositoriesIT extends AbstractIntegrationTest {
         RefreshToken first = refreshTokens.save(token(official.getId(), T2));
         RefreshToken second = refreshTokens.save(token(official.getId(), T2));
         RefreshToken othersToken = refreshTokens.save(token(other.getId(), T2));
-        assertThat(refreshTokens.findByUserIdAndRevokedFalse(official.getId()))
-                .extracting(RefreshToken::getId).containsExactly(first.getId(), second.getId());
+        assertThat(activeTokenIds(official.getId())).containsExactly(first.getId(), second.getId());
 
         assertThat(refreshTokens.revokeAllForUser(official.getId())).isEqualTo(2);
-        assertThat(refreshTokens.findByUserIdAndRevokedFalse(official.getId())).isEmpty();
+        assertThat(activeTokenIds(official.getId())).isEmpty();
         assertThat(refreshTokens.findById(othersToken.getId()).orElseThrow().isRevoked())
                 .as("another official's sessions are left alone").isFalse();
     }
@@ -129,10 +132,8 @@ class OfficialRepositoriesIT extends AbstractIntegrationTest {
                 a -> new OfficialAuditLog(a.getId(), admin.getId(), null, "PASSWORD_SET", null, T1),
                 OfficialAuditLog::getId);
 
-        assertThat(auditLogs.findByOfficialUserIdOrderByCreatedAtAsc(official.getId()))
-                .extracting(OfficialAuditLog::getId).containsExactly(later.getId());
-        assertThat(auditLogs.findByOfficialUserIdOrderByCreatedAtAsc(admin.getId()))
-                .extracting(OfficialAuditLog::getId).containsExactly(first.getId());
+        assertThat(auditLogIds(official.getId())).containsExactly(later.getId());
+        assertThat(auditLogIds(admin.getId())).containsExactly(first.getId());
         cleanup.add(() -> auditLogs.deleteById(first.getId()));
         cleanup.add(() -> auditLogs.deleteById(later.getId()));
     }
@@ -167,5 +168,19 @@ class OfficialRepositoriesIT extends AbstractIntegrationTest {
 
     private static String hash() {
         return String.format("%064x", System.nanoTime());
+    }
+
+    private List<Long> activeTokenIds(Long userId) {
+        return dsl.select(REFRESH_TOKENS.ID).from(REFRESH_TOKENS)
+                .where(REFRESH_TOKENS.USER_ID.eq(userId).and(REFRESH_TOKENS.REVOKED.isFalse()))
+                .orderBy(REFRESH_TOKENS.ID)
+                .fetch(REFRESH_TOKENS.ID);
+    }
+
+    private List<Long> auditLogIds(Long officialUserId) {
+        return dsl.select(OFFICIAL_AUDIT_LOG.ID).from(OFFICIAL_AUDIT_LOG)
+                .where(OFFICIAL_AUDIT_LOG.OFFICIAL_USER_ID.eq(officialUserId))
+                .orderBy(OFFICIAL_AUDIT_LOG.CREATED_AT, OFFICIAL_AUDIT_LOG.ID)
+                .fetch(OFFICIAL_AUDIT_LOG.ID);
     }
 }

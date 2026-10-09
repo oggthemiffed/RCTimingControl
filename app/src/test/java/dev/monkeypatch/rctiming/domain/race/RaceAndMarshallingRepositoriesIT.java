@@ -157,7 +157,6 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
         }, RaceEntry::getId);
         assertThat(raceEntries.findByRaceIdOrderByGridPosition(race.getId())).extracting(RaceEntry::getId)
                 .containsExactly(saved.getId());
-        assertThat(raceEntries.findByEntryId(entry.getId())).extracting(RaceEntry::getId).containsExactly(saved.getId());
         raceEntries.deleteAll(List.of(saved));
         assertThat(raceEntries.existsById(saved.getId())).isFalse();
 
@@ -218,7 +217,6 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
             return c;
         }, MarshalAbsence::getId);
         cleanup.add(() -> absences.deleteById(absence.getId()));
-        assertThat(absences.countByEntryIdAndEventId(entry.getId(), event.getId())).isEqualTo(1);
         assertThat(absences.findByEventId(event.getId())).extracting(MarshalAbsence::getId)
                 .containsExactly(absence.getId());
 
@@ -236,8 +234,6 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
             return c;
         }, MarshalPenalty::getId);
         cleanup.add(() -> marshalPenalties.deleteById(marshalPenalty.getId()));
-        assertThat(marshalPenalties.findByEntryIdAndEventId(entry.getId(), event.getId()))
-                .extracting(MarshalPenalty::getId).containsExactly(marshalPenalty.getId());
 
         Penalty p = new Penalty();
         p.setRaceId(race.getId());
@@ -271,8 +267,6 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
             return c;
         }, IncidentReport::getId);
         cleanup.add(() -> incidents.deleteById(incident.getId()));
-        assertThat(incidents.findByRaceIdOrderByRaisedAt(race.getId())).extracting(IncidentReport::getId)
-                .containsExactly(incident.getId());
     }
 
     @Test

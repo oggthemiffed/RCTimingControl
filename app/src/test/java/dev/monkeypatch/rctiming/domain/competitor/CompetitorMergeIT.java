@@ -63,7 +63,6 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
 
     @Autowired CompetitorMergeService mergeService;
     @Autowired CompetitorService competitorService;
-    @Autowired CompetitorAuditLogRepository competitorAuditLogRepository;
     @Autowired CompetitorRepository competitorRepository;
     @Autowired EntryRepository entryRepository;
     @Autowired EntryAuditLogRepository auditLogRepository;
@@ -188,7 +187,9 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
 
         mergeService.merge(keep.getId(), duplicate.getId(), adminId);
 
-        List<CompetitorAuditLog> history = competitorAuditLogRepository.findByCompetitorIdOrderByCreatedAtAsc(keep.getId());
+        var history = dsl.selectFrom(COMPETITOR_AUDIT_LOG)
+                .where(COMPETITOR_AUDIT_LOG.COMPETITOR_ID.eq(keep.getId()))
+                .fetch();
         assertThat(history).singleElement().satisfies(log -> {
             assertThat(log.getAction()).isEqualTo(CompetitorAuditLog.SPOKEN_NAME_CHANGED);
             assertThat(log.getAfterValue()).isEqualTo("Dup say-as");

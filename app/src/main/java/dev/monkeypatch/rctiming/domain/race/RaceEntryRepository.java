@@ -20,10 +20,6 @@ public class RaceEntryRepository extends JooqRepository<RaceEntry, RaceEntriesRe
         return findWhere(RACE_ENTRIES.RACE_ID.eq(raceId), RACE_ENTRIES.GRID_POSITION.asc().nullsFirst(), RACE_ENTRIES.ID.asc());
     }
 
-    public List<RaceEntry> findByEntryId(Long entryId) {
-        return findWhere(RACE_ENTRIES.ENTRY_ID.eq(entryId));
-    }
-
     @Override
     protected RaceEntry toEntity(RaceEntriesRecord r) {
         RaceEntry raceEntry = new RaceEntry();
