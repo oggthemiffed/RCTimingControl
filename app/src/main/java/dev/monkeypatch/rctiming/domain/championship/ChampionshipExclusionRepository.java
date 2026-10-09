@@ -5,6 +5,7 @@ import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,11 +29,13 @@ public class ChampionshipExclusionRepository extends JooqRepository<Championship
                 .and(CHAMPIONSHIP_EXCLUSIONS.EVENT_ID.eq(eventId)));
     }
 
-    public long countByDriverId(Long driverId) {
+    /** How many exclusions name the competitor. */
+    public int countByDriverId(Long driverId) {
         return dsl.fetchCount(CHAMPIONSHIP_EXCLUSIONS, CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID.eq(driverId));
     }
 
     /** Moves one competitor's exclusions to another, as a merge does (#123). Returns how many moved. */
+    @Transactional
     public int moveDriver(Long fromDriverId, Long toDriverId) {
         return dsl.update(CHAMPIONSHIP_EXCLUSIONS)
                 .set(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID, toDriverId)

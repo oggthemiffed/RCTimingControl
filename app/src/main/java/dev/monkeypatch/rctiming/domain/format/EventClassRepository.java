@@ -8,7 +8,6 @@ import org.jooq.Field;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,18 +47,17 @@ public class EventClassRepository extends JooqRepository<EventClass, EventClasse
                 .fetchOptional(EVENT_CLASSES.EVENT_ID);
     }
 
-    /** "Racing class at event" for each of the given classes, by id; a class that doesn't exist is left out. */
-    public Map<Long, String> labelsByIds(Collection<Long> eventClassIds) {
-        Map<Long, String> labels = new LinkedHashMap<>();
-        dsl.select(EVENT_CLASSES.ID, EVENTS.NAME, RACING_CLASSES.NAME)
+    /** The racing class and event names of each of the given classes, by id; a class that doesn't exist is left out. */
+    public Map<Long, EventClassNames> namesByIds(Collection<Long> eventClassIds) {
+        return dsl.select(EVENT_CLASSES.ID, RACING_CLASSES.NAME, EVENTS.NAME)
                 .from(EVENT_CLASSES)
                 .join(EVENTS).on(EVENTS.ID.eq(EVENT_CLASSES.EVENT_ID))
                 .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
                 .where(EVENT_CLASSES.ID.in(eventClassIds))
-                .fetch()
-                .forEach(r -> labels.put(r.get(EVENT_CLASSES.ID), r.get(RACING_CLASSES.NAME) + " at " + r.get(EVENTS.NAME)));
-        return labels;
+                .fetchMap(EVENT_CLASSES.ID, r -> new EventClassNames(r.value2(), r.value3()));
     }
+
+    public record EventClassNames(String racingClassName, String eventName) {}
 
     public record EventClassRef(Long id, Long racingClassId) {
         public Long getId() {

@@ -5,6 +5,7 @@ import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,7 +25,8 @@ public class CompetitorAuditLogRepository extends JooqRepository<CompetitorAudit
     }
 
     /** Moves one competitor's change history to another, as a merge does (#123). */
-    public void moveToCompetitor(Long fromCompetitorId, Long toCompetitorId) {
+    @Transactional
+    public void moveCompetitor(Long fromCompetitorId, Long toCompetitorId) {
         dsl.update(COMPETITOR_AUDIT_LOG)
                 .set(COMPETITOR_AUDIT_LOG.COMPETITOR_ID, toCompetitorId)
                 .where(COMPETITOR_AUDIT_LOG.COMPETITOR_ID.eq(fromCompetitorId))

@@ -26,7 +26,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-
 /**
  * Merges a duplicate competitor into the one to keep (#123). Results, live timing and championship
  * standings group by competitor, so a driver who exists twice has their history and points split; a
@@ -125,7 +124,7 @@ public class CompetitorMergeService {
         int exclusions = exclusionRepository.moveDriver(duplicateId, keepId);
 
         // The duplicate's change history goes with the competitor that is kept
-        competitorAuditLogRepository.moveToCompetitor(duplicateId, keepId);
+        competitorAuditLogRepository.moveCompetitor(duplicateId, keepId);
 
         // The external id is unique, so the duplicate lets go of it before the kept competitor takes it
         boolean takesIdentity = duplicateIdentityWins(keep, duplicate);
@@ -205,7 +204,7 @@ public class CompetitorMergeService {
         }
 
         int events = (int) moving.stream().map(Entry::getEventId).distinct().count();
-        int exclusions = (int) exclusionRepository.countByDriverId(duplicate.getId());
+        int exclusions = exclusionRepository.countByDriverId(duplicate.getId());
         String spoken = isBlank(keep.getSpokenName()) ? duplicate.getSpokenName() : keep.getSpokenName();
         String source = duplicateIdentityWins(keep, duplicate) ? duplicate.getExternalSource() : keep.getExternalSource();
         return new Preview(side(keep, keepEntries.size()), side(duplicate, moving.size()), moving.size(), events,
@@ -228,11 +227,14 @@ public class CompetitorMergeService {
         if (conflictingClasses.isEmpty()) {
             return List.of();
         }
-        Map<Long, String> labels = eventClassRepository.labelsByIds(conflictingClasses);
+        Map<Long, EventClassRepository.EventClassNames> names = eventClassRepository.namesByIds(conflictingClasses);
         return conflictingClasses.stream()
-                .map(id -> "Both have an active entry in " + labels.getOrDefault(id, "class " + id)
-                        + ". Withdraw one of them first.")
+                .map(id -> "Both have an active entry in " + label(names.get(id), id) + ". Withdraw one of them first.")
                 .toList();
+    }
+
+    private static String label(EventClassRepository.EventClassNames names, Long eventClassId) {
+        return names == null ? "class " + eventClassId : names.racingClassName() + " at " + names.eventName();
     }
 
     /** True when the duplicate's external id should end up on the kept competitor. */
