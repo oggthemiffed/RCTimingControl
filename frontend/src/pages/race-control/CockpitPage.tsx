@@ -169,8 +169,11 @@ export default function CockpitPage() {
     selectedRace?.roundType === 'FINAL' ? `/topic/race/${selectedRace.raceId}/bump-up-alert` : null;
   const { data: bumpUpAlert } = useStomp<{ finishedRaceId: number; promotedEntryIds: number[] }>(bumpUpTopic);
 
+  // useStomp hands back the last frame again when a final is reselected, so toast each finished race only once
+  const toastedBumpUps = useRef(new Set<number>());
   useEffect(() => {
-    if (bumpUpAlert) {
+    if (bumpUpAlert && !toastedBumpUps.current.has(bumpUpAlert.finishedRaceId)) {
+      toastedBumpUps.current.add(bumpUpAlert.finishedRaceId);
       toast.success(
         `Bump-up applied — ${bumpUpAlert.promotedEntryIds.length} driver(s) promoted to next final. Check the grid before starting.`,
         { duration: 8000 },
