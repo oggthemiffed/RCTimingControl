@@ -1,14 +1,16 @@
 package dev.monkeypatch.rctiming.domain.format;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 
-public class RaceFormatTemplate {
+public class RaceFormatTemplate implements CreatedAt, UpdatedAt {
 
     private Long id;
     private String name;
     private RaceFormatConfig config;
-    private Instant createdAt = Instant.now();
-    private Instant updatedAt = Instant.now();
+    private Instant createdAt;
+    private Instant updatedAt;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

@@ -3,6 +3,7 @@ package dev.monkeypatch.rctiming.domain.entry;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
 import java.time.Instant;
 import java.util.Map;
 
@@ -10,7 +11,7 @@ import java.util.Map;
  * One change to an entry, by an official, with what it was before and after as JSON. The entry history
  * ({@code EntryHistoryQuery}) reads these rows back.
  */
-public class EntryAuditLog {
+public class EntryAuditLog implements CreatedAt {
 
     private Long id;
     private Long entryId;

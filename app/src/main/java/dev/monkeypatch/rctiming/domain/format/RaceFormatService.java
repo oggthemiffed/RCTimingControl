@@ -9,7 +9,6 @@ import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,9 +118,6 @@ public class RaceFormatService {
         RaceFormatTemplate template = new RaceFormatTemplate();
         template.setName(name);
         template.setConfig(config);
-        Instant now = Instant.now();
-        template.setCreatedAt(now);
-        template.setUpdatedAt(now);
         RaceFormatTemplate saved = templateRepository.save(template);
         audit.entry(actor, action).entity("race_format", saved.getId())
                 .summary(summary + saved.getName())
@@ -135,7 +131,6 @@ public class RaceFormatService {
         Map<String, Object> before = values(template);
         template.setName(name);
         template.setConfig(config);
-        template.setUpdatedAt(Instant.now());
         RaceFormatTemplate saved = templateRepository.save(template);
         audit.entry(actor, "FORMAT_UPDATED").entity("race_format", id)
                 .summary("Changed the race format " + saved.getName())

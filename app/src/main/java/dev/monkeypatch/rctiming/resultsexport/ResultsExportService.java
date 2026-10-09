@@ -128,7 +128,6 @@ public class ResultsExportService {
         item.setPayload(toJson(exportQuery.build(eventId, revision, now)));
         item.setStatus(OutboxStatus.QUEUED);
         item.setNextAttemptAt(now);
-        item.setCreatedAt(now);
         ResultsOutboxItem saved = outboxRepository.save(item);
         log.info("Queued results export revision {} of event {} ({})", revision, eventId, reason);
         return Optional.of(saved);

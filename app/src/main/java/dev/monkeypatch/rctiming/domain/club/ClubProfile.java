@@ -1,8 +1,10 @@
 package dev.monkeypatch.rctiming.domain.club;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 
-public class ClubProfile {
+public class ClubProfile implements CreatedAt, UpdatedAt {
 
     private Long id;
     private String name;

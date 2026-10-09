@@ -51,7 +51,6 @@ public class CheckInService {
         Instant now = Instant.now();
         entry.setCheckedInAt(now);
         entry.setCheckedInByUserId(actingUserId);
-        entry.setUpdatedAt(now);
         Entry saved = entryRepository.save(entry);
         // Only the first check-in is a change; a repeat confirm keeps it and records nothing
         String name = entry.getCompetitorId() == null ? null

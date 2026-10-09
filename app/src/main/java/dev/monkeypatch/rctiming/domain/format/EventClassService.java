@@ -69,9 +69,6 @@ public class EventClassService {
         ec.setTemplateId(template.getId());
         ec.setConfigSnapshot(snapshot);
         ec.setConfigOverride(null);
-        Instant now = Instant.now();
-        ec.setCreatedAt(now);
-        ec.setUpdatedAt(now);
         EventClass saved = eventClassRepository.save(ec);
         Map<String, Object> after = new LinkedHashMap<>();
         after.put("racingClassId", racingClass.getId());
@@ -91,7 +88,6 @@ public class EventClassService {
                 ? null
                 : new HashMap<>(request.override());
         ec.setConfigOverride(override);
-        ec.setUpdatedAt(Instant.now());
         EventClass saved = eventClassRepository.save(ec);
         audit.entry(actor, "EVENT_CLASS_OVERRIDES_CHANGED").entity("event_class", classId).event(ec.getEventId())
                 .summary((override == null ? "Cleared the format overrides of " : "Changed the format overrides of ")
@@ -119,7 +115,6 @@ public class EventClassService {
                 throw new IllegalArgumentException("EventClass " + id + " does not belong to event " + eventId);
             }
             ec.setCombinedRaceGroup(groupId);
-            ec.setUpdatedAt(Instant.now());
             result.add(EventClassDto.from(eventClassRepository.save(ec)));
             names.add(describe(ec));
         }

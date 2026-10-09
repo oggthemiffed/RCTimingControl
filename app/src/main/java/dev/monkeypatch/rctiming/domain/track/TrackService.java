@@ -14,7 +14,6 @@ import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,9 +57,6 @@ public class TrackService {
         track.setName(request.name());
         track.setVenueNotes(request.venueNotes());
         track.setTrackLength(request.trackLength());
-        Instant now = Instant.now();
-        track.setCreatedAt(now);
-        track.setUpdatedAt(now);
         Track saved = trackRepository.save(track);
         audit.entry(actor, "TRACK_CREATED").entity("track", saved.getId())
                 .summary("Added the track " + saved.getName())
@@ -74,7 +70,6 @@ public class TrackService {
         track.setName(request.name());
         track.setVenueNotes(request.venueNotes());
         track.setTrackLength(request.trackLength());
-        track.setUpdatedAt(Instant.now());
         Track saved = trackRepository.save(track);
         audit.entry(actor, "TRACK_UPDATED").entity("track", id)
                 .summary("Changed the track " + saved.getName())
@@ -99,7 +94,6 @@ public class TrackService {
         loop.setDisplayName(request.displayName());
         loop.setLoopType(request.loopType());
         loop.setScoringLoop(request.isScoringLoop());
-        loop.setCreatedAt(Instant.now());
         DecoderLoop saved = decoderLoopRepository.save(loop);
         audit.entry(actor, "DECODER_LOOP_ADDED").entity("decoder_loop", saved.getId())
                 .summary("Added decoder loop " + loopLabel(saved) + " to " + track.getName())
@@ -159,7 +153,6 @@ public class TrackService {
         }
 
         if (isNew) {
-            threshold.setCreatedAt(Instant.now());
         }
 
         TrackLapThreshold saved = thresholdRepository.save(threshold);

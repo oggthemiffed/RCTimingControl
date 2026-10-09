@@ -8,7 +8,6 @@ import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,9 +40,6 @@ public class RacingClassService {
         RacingClass racingClass = new RacingClass();
         racingClass.setName(request.name());
         racingClass.setDescription(request.description());
-        Instant now = Instant.now();
-        racingClass.setCreatedAt(now);
-        racingClass.setUpdatedAt(now);
         RacingClass saved = racingClassRepository.save(racingClass);
         audit.entry(actor, "CLASS_CREATED").entity("racing_class", saved.getId())
                 .summary("Added the class " + saved.getName())
@@ -56,7 +52,6 @@ public class RacingClassService {
         Map<String, Object> before = values(racingClass);
         racingClass.setName(request.name());
         racingClass.setDescription(request.description());
-        racingClass.setUpdatedAt(Instant.now());
         RacingClass saved = racingClassRepository.save(racingClass);
         audit.entry(actor, "CLASS_UPDATED").entity("racing_class", id)
                 .summary("Changed the class " + saved.getName())

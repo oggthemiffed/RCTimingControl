@@ -1,9 +1,11 @@
 package dev.monkeypatch.rctiming.domain.entryfeed;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 
 /** Where an event's entries are pulled from, and how the latest fetch went (#42). See V13. */
-public class EntryFeed {
+public class EntryFeed implements CreatedAt, UpdatedAt {
 
     private Long id;
     private Long eventId;

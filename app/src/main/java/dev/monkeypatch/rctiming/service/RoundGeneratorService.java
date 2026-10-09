@@ -23,7 +23,6 @@ import dev.monkeypatch.rctiming.service.dto.RoundPreviewDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -213,21 +212,20 @@ public class RoundGeneratorService {
         }
 
         void persist() {
-            Instant now = Instant.now();
             int sequence = 1;
 
             // Practice rounds
             for (int r = 1; r <= request.practiceRoundsCount(); r++) {
-                sequence = persistRound(RoundType.PRACTICE, r, sequence, now,
+                sequence = persistRound(RoundType.PRACTICE, r, sequence,
                         r == 1 && request.practiceRoundsCount() >= 1);
             }
             // Qualifying rounds
             for (int r = 1; r <= request.qualifyingRoundsCount(); r++) {
                 boolean isFirstRound = (r == 1 && request.practiceRoundsCount() == 0);
-                sequence = persistRound(RoundType.QUALIFIER, r, sequence, now, isFirstRound);
+                sequence = persistRound(RoundType.QUALIFIER, r, sequence, isFirstRound);
             }
             // Finals (empty grids — seeded by BumpUpSeedingService after qualifying)
-            persistFinals(sequence, now);
+            persistFinals(sequence);
         }
 
         // --- Preview helpers ---
@@ -282,16 +280,13 @@ public class RoundGeneratorService {
 
         // --- Persist helpers ---
 
-        private int persistRound(RoundType type, int roundNumber, int sequenceStart,
-                                  Instant now, boolean isFirstRound) {
+        private int persistRound(RoundType type, int roundNumber, int sequenceStart, boolean isFirstRound) {
             Round round = new Round();
             round.setEventId(request.eventId());
             round.setType(type);
             round.setRoundNumber(roundNumber);
             round.setSequenceInEvent(sequenceStart);
             round.setStatus(RoundStatus.PENDING);
-            round.setCreatedAt(now);
-            round.setUpdatedAt(now);
             Round savedRound = roundRepository.save(round);
 
             int seq = sequenceStart;
@@ -306,8 +301,6 @@ public class RoundGeneratorService {
                     race.setFinalLetter(null);
                     race.setStartType(StartType.STAGGER);
                     race.setStatus(RaceStatus.PENDING);
-                    race.setCreatedAt(now);
-                    race.setUpdatedAt(now);
                     Race savedRace = raceRepository.save(race);
 
                     List<Long> entryIds = heats.get(h);
@@ -328,7 +321,7 @@ public class RoundGeneratorService {
             return seq;
         }
 
-        private void persistFinals(int sequenceStart, Instant now) {
+        private void persistFinals(int sequenceStart) {
             // Finals: one round per final "level" (A, B, C).
             // Run order: lowest final first (C runs before B before A).
             // We create rounds in A→B→C order here; the sequenceInEvent determines run order.
@@ -342,15 +335,12 @@ public class RoundGeneratorService {
                 // We create rounds in reverse letter order so sequenceInEvent matches run order.
                 for (int f = finalsCount - 1; f >= 0; f--) {
                     String finalLetter = String.valueOf((char) ('A' + f));
-                    Instant roundNow = Instant.now();
                     Round round = new Round();
                     round.setEventId(request.eventId());
                     round.setType(RoundType.FINAL);
                     round.setRoundNumber(f + 1);
                     round.setSequenceInEvent(sequenceStart++);
                     round.setStatus(RoundStatus.PENDING);
-                    round.setCreatedAt(roundNow);
-                    round.setUpdatedAt(roundNow);
                     Round savedRound = roundRepository.save(round);
 
                     Race race = new Race();
@@ -361,8 +351,6 @@ public class RoundGeneratorService {
                     race.setFinalLetter(finalLetter);
                     race.setStartType(StartType.GRID);
                     race.setStatus(RaceStatus.PENDING);
-                    race.setCreatedAt(roundNow);
-                    race.setUpdatedAt(roundNow);
                     // Finals start with an empty grid: BumpUpSeedingService seeds it from the
                     // qualifying standings and reserves its bump slots. No placeholder rows, since
                     // every race_entries row must point at a real entry (#45).

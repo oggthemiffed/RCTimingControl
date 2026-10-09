@@ -1,8 +1,10 @@
 package dev.monkeypatch.rctiming.domain.raceclass;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 
-public class RacingClass {
+public class RacingClass implements CreatedAt, UpdatedAt {
 
     private Long id;
     private String name;

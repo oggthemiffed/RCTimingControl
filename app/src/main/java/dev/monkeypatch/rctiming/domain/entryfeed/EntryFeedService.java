@@ -82,13 +82,11 @@ public class EntryFeedService {
     public EntryFeed save(Actor actor, long eventId, String url, String token, boolean autoFetch) {
         Event event = requireEvent(eventId);
         String checkedUrl = checkUrl(url).toString();
-        Instant now = Instant.now();
         Optional<EntryFeed> existing = feedRepository.findByEventId(eventId);
         Map<String, Object> before = existing.map(EntryFeedService::settingsOf).orElse(null);
         EntryFeed feed = existing.orElseGet(() -> {
             EntryFeed created = new EntryFeed();
             created.setEventId(eventId);
-            created.setCreatedAt(now);
             return created;
         });
         if (!checkedUrl.equals(feed.getUrl())) {
@@ -107,7 +105,6 @@ public class EntryFeedService {
             feed.setTokenHint(trimmed.length() < 8 ? null : trimmed.substring(trimmed.length() - 4));
         }
         feed.setAutoFetch(autoFetch);
-        feed.setUpdatedAt(now);
         EntryFeed saved = feedRepository.save(feed);
         // The token itself is never recorded, only whether one is saved and whether this save changed it
         Map<String, Object> after = settingsOf(saved);
@@ -318,7 +315,6 @@ public class EntryFeedService {
             Instant now = Instant.now();
             change.accept(feed);
             feed.setLastFetchAt(now);
-            feed.setUpdatedAt(now);
             return Optional.of(feedRepository.save(feed));
         });
     }

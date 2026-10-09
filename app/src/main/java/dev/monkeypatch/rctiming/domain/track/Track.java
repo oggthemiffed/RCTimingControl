@@ -1,10 +1,12 @@
 package dev.monkeypatch.rctiming.domain.track;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Track {
+public class Track implements CreatedAt, UpdatedAt {
 
     private Long id;
     private String name;

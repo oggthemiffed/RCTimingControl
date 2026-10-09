@@ -1,0 +1,9 @@
+package dev.monkeypatch.rctiming.persistence;
+
+import java.time.Instant;
+
+/** An entity whose row records when it last changed. {@link JooqRepository#save} sets the time on every save. */
+public interface UpdatedAt {
+
+    void setUpdatedAt(Instant updatedAt);
+}

@@ -118,7 +118,6 @@ public class EntryService {
         entry.setStatus(EntryStatus.CONFIRMED);
         entry.setSubmittedAt(now);
         entry.setConfirmedAt(now);
-        entry.setUpdatedAt(now);
         Entry persisted = entryRepository.save(entry);
 
         List<String> warnings = new ArrayList<>();
@@ -150,7 +149,6 @@ public class EntryService {
         Instant now = Instant.now();
         entry.setStatus(EntryStatus.WITHDRAWN);
         entry.setWithdrawnAt(now);
-        entry.setUpdatedAt(now);
         entryRepository.save(entry);
         String afterJson = EntryAuditLog.snapshot(objectMapper, Map.of("status", EntryStatus.WITHDRAWN.name()));
         auditLogRepository.save(EntryAuditLog.of(entry.getId(), adminUserId, "ADMIN_WITHDRAW", reason,

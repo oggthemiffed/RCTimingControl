@@ -26,7 +26,6 @@ class CompetitorServiceTest {
         assertThat(competitor.getDisplayName()).isEqualTo("Ada Lovelace");
         assertThat(competitor.getExternalSource()).isNull();
         assertThat(competitor.getExternalId()).isNull();
-        assertThat(competitor.getCreatedAt()).isNotNull();
     }
 
     private static Competitor existing() {
@@ -48,7 +47,6 @@ class CompetitorServiceTest {
         assertThat(c.getSpokenName()).isEqualTo("Shiv-awn Keen");
         assertThat(c.speechName()).isEqualTo("Shiv-awn Keen");
         assertThat(c.getDisplayName()).isEqualTo("Siobhan Keane");
-        assertThat(c.getUpdatedAt()).isNotNull();
     }
 
     @Test
@@ -69,7 +67,6 @@ class CompetitorServiceTest {
         assertThat(logged.getValue().getAction()).isEqualTo(CompetitorAuditLog.SPOKEN_NAME_CHANGED);
         assertThat(logged.getValue().getBeforeValue()).isEqualTo("Old say-as");
         assertThat(logged.getValue().getAfterValue()).isEqualTo("New say-as");
-        assertThat(logged.getValue().getCreatedAt()).isNotNull();
     }
 
     @Test
