@@ -66,7 +66,10 @@ public class AdminEntryController {
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public EntryResult createEntry(Authentication auth, @RequestBody @Valid AdminCreateEntryRequest req) {
-        return entryService.adminCreateEntry(CurrentOfficial.id(auth), req);
+        EntryService.WalkInResult result = entryService.adminCreateEntry(CurrentOfficial.id(auth),
+                new EntryService.WalkIn(req.eventId(), req.eventClassId(), req.competitorId(), req.competitorName(),
+                        req.primaryTransponder(), req.secondaryTransponder(), req.confirmNewCompetitor()));
+        return new EntryResult(EntryDto.from(result.entry()), result.warnings());
     }
 
     @Audited("entry_audit_log")
@@ -75,6 +78,6 @@ public class AdminEntryController {
     public EntryDto withdrawEntry(@PathVariable Long id,
                                   Authentication auth,
                                   @RequestBody @Valid AdminWithdrawRequest req) {
-        return entryService.adminWithdraw(id, CurrentOfficial.id(auth), req.reason());
+        return EntryDto.from(entryService.adminWithdraw(id, CurrentOfficial.id(auth), req.reason()));
     }
 }

@@ -1,9 +1,6 @@
 package dev.monkeypatch.rctiming.domain.entry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.monkeypatch.rctiming.api.admin.dto.AdminCreateEntryRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.EntryDto;
-import dev.monkeypatch.rctiming.api.admin.dto.EntryResult;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
@@ -26,6 +23,16 @@ import java.util.Map;
 @Service
 @Transactional
 public class EntryService {
+
+    /**
+     * A walk-in to add: an existing {@code competitorId} or a {@code competitorName} for a new competitor, and
+     * {@code confirmNewCompetitor} when a new name that matches someone is a different person (#123).
+     */
+    public record WalkIn(Long eventId, Long eventClassId, Long competitorId, String competitorName,
+                         String primaryTransponder, String secondaryTransponder, Boolean confirmNewCompetitor) {}
+
+    /** The walk-in's entry, and warnings such as a transponder already used in the event. */
+    public record WalkInResult(Entry entry, List<String> warnings) {}
 
     private final EntryRepository entryRepository;
     private final EventRepository eventRepository;
@@ -57,37 +64,37 @@ public class EntryService {
      * no external source. A transponder another active entry in the event already uses is a
      * warning, not an error. Class membership rules are not checked: staff add walk-ins on the day.
      */
-    public EntryResult adminCreateEntry(Long adminUserId, AdminCreateEntryRequest req) {
-        Event event = eventRepository.getOrThrow(req.eventId());
+    public WalkInResult adminCreateEntry(Long adminUserId, WalkIn walkIn) {
+        Event event = eventRepository.getOrThrow(walkIn.eventId());
         if (event.getStatus() == EventStatus.COMPLETED) {
             throw new StateConflictException("Event is completed");
         }
-        Long ecEventId = eventClassRepository.findEventIdById(req.eventClassId())
-                .orElseThrow(() -> new EntityNotFoundException("Event class not found: " + req.eventClassId()));
-        if (!req.eventId().equals(ecEventId)) {
+        Long ecEventId = eventClassRepository.findEventIdById(walkIn.eventClassId())
+                .orElseThrow(() -> new EntityNotFoundException("Event class not found: " + walkIn.eventClassId()));
+        if (!walkIn.eventId().equals(ecEventId)) {
             throw new IllegalArgumentException("Event class does not belong to the event");
         }
 
-        String primary = req.primaryTransponder().trim();
-        String secondary = req.secondaryTransponder() == null || req.secondaryTransponder().isBlank()
-                ? null : req.secondaryTransponder().trim();
+        String primary = walkIn.primaryTransponder().trim();
+        String secondary = walkIn.secondaryTransponder() == null || walkIn.secondaryTransponder().isBlank()
+                ? null : walkIn.secondaryTransponder().trim();
         if (primary.equals(secondary)) {
             throw new IllegalArgumentException("The secondary transponder must differ from the primary");
         }
 
-        boolean hasName = req.competitorName() != null && !req.competitorName().isBlank();
-        if (req.competitorId() != null && hasName) {
+        boolean hasName = walkIn.competitorName() != null && !walkIn.competitorName().isBlank();
+        if (walkIn.competitorId() != null && hasName) {
             throw new IllegalArgumentException("Give either an existing competitor or a new name, not both");
         }
         Competitor competitor;
-        if (req.competitorId() != null) {
-            competitor = competitorRepository.getOrThrow(req.competitorId());
+        if (walkIn.competitorId() != null) {
+            competitor = competitorRepository.getOrThrow(walkIn.competitorId());
         } else if (hasName) {
-            List<Competitor> possible = competitorService.findPossibleDuplicates(req.competitorName());
-            if (!possible.isEmpty() && !Boolean.TRUE.equals(req.confirmNewCompetitor())) {
+            List<Competitor> possible = competitorService.findPossibleDuplicates(walkIn.competitorName());
+            if (!possible.isEmpty() && !Boolean.TRUE.equals(walkIn.confirmNewCompetitor())) {
                 throw new PossibleDuplicateCompetitorException(possible);
             }
-            competitor = competitorService.createWalkIn(req.competitorName());
+            competitor = competitorService.createWalkIn(walkIn.competitorName());
         } else {
             throw new IllegalArgumentException("Choose a competitor or enter a name");
         }
@@ -96,7 +103,7 @@ public class EntryService {
                 .filter(e -> e.getStatus() != EntryStatus.WITHDRAWN)
                 .toList();
         boolean duplicate = eventEntries.stream().anyMatch(e ->
-                competitor.getId().equals(e.getCompetitorId()) && req.eventClassId().equals(e.getEventClassId()));
+                competitor.getId().equals(e.getCompetitorId()) && walkIn.eventClassId().equals(e.getEventClassId()));
         if (duplicate) {
             throw new StateConflictException(competitor.getDisplayName() + " already has an entry in this class");
         }
@@ -105,7 +112,7 @@ public class EntryService {
         Entry entry = new Entry();
         entry.setCompetitorId(competitor.getId());
         entry.setEventId(event.getId());
-        entry.setEventClassId(req.eventClassId());
+        entry.setEventClassId(walkIn.eventClassId());
         entry.setTransponderNumberSnapshot(primary);
         entry.setSecondaryTransponderNumber(secondary);
         entry.setStatus(EntryStatus.CONFIRMED);
@@ -124,16 +131,16 @@ public class EntryService {
 
         Map<String, Object> created = new LinkedHashMap<>();
         created.put("competitorId", String.valueOf(competitor.getId()));
-        created.put("eventClassId", String.valueOf(req.eventClassId()));
+        created.put("eventClassId", String.valueOf(walkIn.eventClassId()));
         created.put("transponderNumberSnapshot", primary);
         created.put("secondaryTransponderNumber", secondary);
         String afterJson = EntryAuditLog.snapshot(objectMapper, created);
         auditLogRepository.save(
                 EntryAuditLog.of(persisted.getId(), adminUserId, "ADMIN_CREATE", null, null, afterJson, now));
-        return new EntryResult(EntryDto.from(persisted), warnings);
+        return new WalkInResult(persisted, warnings);
     }
 
-    public EntryDto adminWithdraw(Long entryId, Long adminUserId, String reason) {
+    public Entry adminWithdraw(Long entryId, Long adminUserId, String reason) {
         Entry entry = entryRepository.getOrThrow(entryId);
         if (entry.getStatus() == EntryStatus.WITHDRAWN) {
             throw new StateConflictException("Entry already withdrawn");
@@ -146,6 +153,6 @@ public class EntryService {
         String afterJson = EntryAuditLog.snapshot(objectMapper, Map.of("status", EntryStatus.WITHDRAWN.name()));
         auditLogRepository.save(EntryAuditLog.of(entry.getId(), adminUserId, "ADMIN_WITHDRAW", reason,
                 beforeJson, afterJson, now));
-        return EntryDto.from(entry);
+        return entry;
     }
 }

@@ -2,9 +2,6 @@ package dev.monkeypatch.rctiming.domain.format;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.monkeypatch.rctiming.api.admin.dto.AddEventClassRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.EventClassDto;
-import dev.monkeypatch.rctiming.api.admin.dto.UpdateEventClassOverrideRequest;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import dev.monkeypatch.rctiming.domain.event.Event;
@@ -47,25 +44,22 @@ public class EventClassService {
     }
 
     @Transactional(readOnly = true)
-    public List<EventClassDto> listClassesForEvent(Long eventId) {
+    public List<EventClass> listClassesForEvent(Long eventId) {
         eventRepository.requireExists(eventId);
-        return eventClassRepository.findAll().stream()
-                .filter(ec -> eventId.equals(ec.getEventId()))
-                .map(EventClassDto::from)
-                .toList();
+        return eventClassRepository.findByEventId(eventId);
     }
 
-    public EventClassDto addClassToEvent(Actor actor, Long eventId, AddEventClassRequest request) {
+    public EventClass addClassToEvent(Actor actor, Long eventId, Long racingClassId, Long templateId) {
         Event event = eventRepository.getOrThrow(eventId);
-        RacingClass racingClass = racingClassRepository.getOrThrow(request.racingClassId());
-        RaceFormatTemplate template = templateRepository.getOrThrow(request.templateId());
+        RacingClass racingClass = racingClassRepository.getOrThrow(racingClassId);
+        RaceFormatTemplate template = templateRepository.getOrThrow(templateId);
 
         // Snapshot via ObjectMapper deep-copy — same pattern as RaceFormatService.assignTemplateToEventClass
         RaceFormatConfig snapshot = objectMapper.convertValue(template.getConfig(), RaceFormatConfig.class);
 
         EventClass ec = new EventClass();
         ec.setEventId(eventId);
-        ec.setRacingClassId(request.racingClassId());
+        ec.setRacingClassId(racingClassId);
         ec.setTemplateId(template.getId());
         ec.setConfigSnapshot(snapshot);
         ec.setConfigOverride(null);
@@ -78,15 +72,16 @@ public class EventClassService {
                 .summary("Added " + racingClass.getName() + " to " + event.getName()
                         + " using the format " + template.getName())
                 .after(after).record();
-        return EventClassDto.from(saved);
+        return saved;
     }
 
-    public EventClassDto updateOverrides(Actor actor, Long classId, UpdateEventClassOverrideRequest request) {
+    public EventClass updateOverrides(Actor actor, Long eventId, Long classId, Map<String, Object> requested) {
         EventClass ec = getEventClassOrThrow(classId);
+        if (!eventId.equals(ec.getEventId())) {
+            throw new IllegalArgumentException("EventClass " + classId + " does not belong to event " + eventId);
+        }
         Map<String, Object> before = ec.getConfigOverride();
-        Map<String, Object> override = request.override() == null || request.override().isEmpty()
-                ? null
-                : new HashMap<>(request.override());
+        Map<String, Object> override = requested == null || requested.isEmpty() ? null : new HashMap<>(requested);
         ec.setConfigOverride(override);
         effectiveConfig(ec); // refuse an override that does not fit the format, before races are generated from it
         EventClass saved = eventClassRepository.save(ec);
@@ -94,21 +89,21 @@ public class EventClassService {
                 .summary((override == null ? "Cleared the format overrides of " : "Changed the format overrides of ")
                         + describe(ec))
                 .before(before).after(override).record();
-        return EventClassDto.from(saved);
+        return saved;
     }
 
     /**
      * EVENT-06: Assigns the same non-null combined_race_group to every supplied event class
      * so they race together but score separately.
      */
-    public List<EventClassDto> combineClasses(Actor actor, Long eventId, List<Long> eventClassIds) {
+    public List<EventClass> combineClasses(Actor actor, Long eventId, List<Long> eventClassIds) {
         if (eventClassIds == null || eventClassIds.size() < 2) {
             throw new IllegalArgumentException("At least 2 event class ids required to combine");
         }
         // Generate a shared group id — uses current time ms for monotonic uniqueness per JVM run
         long groupId = Instant.now().toEpochMilli();
 
-        List<EventClassDto> result = new ArrayList<>();
+        List<EventClass> result = new ArrayList<>();
         List<String> names = new ArrayList<>();
         for (Long id : eventClassIds) {
             EventClass ec = getEventClassOrThrow(id);
@@ -116,7 +111,7 @@ public class EventClassService {
                 throw new IllegalArgumentException("EventClass " + id + " does not belong to event " + eventId);
             }
             ec.setCombinedRaceGroup(groupId);
-            result.add(EventClassDto.from(eventClassRepository.save(ec)));
+            result.add(eventClassRepository.save(ec));
             names.add(describe(ec));
         }
         Map<String, Object> after = new LinkedHashMap<>();
