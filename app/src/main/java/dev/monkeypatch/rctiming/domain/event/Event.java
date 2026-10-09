@@ -1,9 +1,11 @@
 package dev.monkeypatch.rctiming.domain.event;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 import java.time.LocalDate;
 
-public class Event {
+public class Event implements CreatedAt, UpdatedAt {
 
     private Long id;
     private String name;

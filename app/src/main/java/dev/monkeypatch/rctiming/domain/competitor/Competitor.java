@@ -1,12 +1,14 @@
 package dev.monkeypatch.rctiming.domain.competitor;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 
 /**
  * A driver who races, independent of any login. Entries point at a competitor, so a racing
  * history can outlive a single meeting and does not depend on an account (L4, #12).
  */
-public class Competitor {
+public class Competitor implements CreatedAt, UpdatedAt {
 
     private Long id;
     private String displayName;

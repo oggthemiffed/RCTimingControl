@@ -1,11 +1,13 @@
 package dev.monkeypatch.rctiming.domain.user;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
 /** An official who can sign in. Their roles are stored in {@code user_roles}. */
-public class User {
+public class User implements CreatedAt, UpdatedAt {
 
     private Long id;
 

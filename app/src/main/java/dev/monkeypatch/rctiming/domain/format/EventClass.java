@@ -1,17 +1,19 @@
 package dev.monkeypatch.rctiming.domain.format;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 import java.util.Map;
 
-public class EventClass {
+public class EventClass implements CreatedAt, UpdatedAt {
 
     private Long id;
     private RaceFormatConfig configSnapshot;
     private Map<String, Object> configOverride;
     /** The template the config was copied from; null when the template has been deleted. */
     private Long templateId;
-    private Instant createdAt = Instant.now();
-    private Instant updatedAt = Instant.now();
+    private Instant createdAt;
+    private Instant updatedAt;
     private Long eventId;
     private Long racingClassId;
     private Long combinedRaceGroup;

@@ -170,7 +170,6 @@ public class CsvImportService {
             if (withdraw) {
                 e.setStatus(EntryStatus.WITHDRAWN);
                 e.setWithdrawnAt(now);
-                e.setUpdatedAt(now);
                 entryRepository.save(e);
                 withdrawn++;
             }
@@ -361,14 +360,12 @@ public class CsvImportService {
             competitor = new Competitor();
             competitor.setExternalSource(ExternalSources.CSV);
             competitor.setExternalId(p.competitorKey);
-            competitor.setCreatedAt(now);
         }
         boolean ours = ExternalSources.CSV.equals(competitor.getExternalSource());
         if (ours && (!p.row.name().equals(competitor.getDisplayName())
                 || !Objects.equals(text(p.row.brcaNumber()), competitor.getBrcaNumber()))) {
             competitor.setDisplayName(p.row.name());
             competitor.setBrcaNumber(text(p.row.brcaNumber()));
-            competitor.setUpdatedAt(now);
             competitor = competitorRepository.save(competitor);
         }
         competitors.put(p.competitorKey, competitor);
@@ -390,7 +387,6 @@ public class CsvImportService {
             e.setConfirmedAt(now);
             e.setWithdrawnAt(null);
         }
-        e.setUpdatedAt(now);
         return entryRepository.save(e);
     }
 

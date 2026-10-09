@@ -4,18 +4,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AudioSettingsPanel } from './AudioSettingsPanel';
 
 // Mock audioApi
-vi.mock('@/lib/audioApi', () => ({
+vi.mock('@/lib/audioApi', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/audioApi')>()),
   getAudioSettings: vi.fn(),
   patchAudioSettings: vi.fn(),
 }));
 
-// Mock useAnnouncements (avoids AudioContext / speechSynthesis setup)
-const mockTestAudio = vi.fn();
-vi.mock('@/hooks/race-control/useAnnouncements', () => ({
-  useAnnouncements: () => ({ testAudio: mockTestAudio, fallbackSpeak: vi.fn(), playBeep: vi.fn() }),
-}));
+// Mock the browser voice (jsdom has no speechSynthesis)
+vi.mock('@/lib/speech', () => ({ speakWithBrowser: vi.fn() }));
 
 import * as audioApi from '@/lib/audioApi';
+import { speakWithBrowser } from '@/lib/speech';
 
 const defaultSettings = {
   announceCountdown: true,
@@ -36,16 +35,12 @@ describe('AudioSettingsPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
-    vi.mocked(audioApi.getAudioSettings).mockResolvedValue({
-      data: defaultSettings,
-    } as never);
-    vi.mocked(audioApi.patchAudioSettings).mockResolvedValue({
-      data: defaultSettings,
-    } as never);
+    vi.mocked(audioApi.getAudioSettings).mockResolvedValue(defaultSettings as never);
+    vi.mocked(audioApi.patchAudioSettings).mockResolvedValue(defaultSettings as never);
   });
 
   it('renders toggle switches for each announcement type after opening', async () => {
-    render(<AudioSettingsPanel raceId={1} />, { wrapper });
+    render(<AudioSettingsPanel />, { wrapper });
 
     // Open the panel
     fireEvent.click(screen.getByRole('button', { name: /audio settings/i }));
@@ -61,7 +56,7 @@ describe('AudioSettingsPanel', () => {
   });
 
   it('volume slider adjusts localStorage rc-audio-volume', async () => {
-    render(<AudioSettingsPanel raceId={1} />, { wrapper });
+    render(<AudioSettingsPanel />, { wrapper });
 
     // Open the panel
     fireEvent.click(screen.getByRole('button', { name: /audio settings/i }));
@@ -71,13 +66,15 @@ describe('AudioSettingsPanel', () => {
       expect(screen.getByLabelText('Countdown intervals')).toBeInTheDocument(),
     );
 
-    // Default volume (80) is stored and displayed
-    expect(localStorage.getItem('rc-audio-volume')).toBe('80');
+    // Default volume (80) is displayed; a step up is saved
     expect(screen.getByText('80%')).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('slider'), { key: 'ArrowRight' });
+    expect(localStorage.getItem('rc-audio-volume')).toBe('85');
+    expect(screen.getByText('85%')).toBeInTheDocument();
   });
 
-  it('test audio button calls testAudio', async () => {
-    render(<AudioSettingsPanel raceId={1} />, { wrapper });
+  it('test audio button speaks a sample at the chosen volume', async () => {
+    render(<AudioSettingsPanel />, { wrapper });
     fireEvent.click(screen.getByRole('button', { name: /audio settings/i }));
 
     await waitFor(() =>
@@ -85,12 +82,13 @@ describe('AudioSettingsPanel', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /test audio/i }));
-    expect(mockTestAudio).toHaveBeenCalledOnce();
+    expect(speakWithBrowser).toHaveBeenCalledOnce();
+    expect(vi.mocked(speakWithBrowser).mock.calls[0][1]).toBe(0.8);
   });
 
   it('status dot reflects toggle states — yellow when some enabled', async () => {
     // Some toggles on, some off → yellow
-    render(<AudioSettingsPanel raceId={1} />, { wrapper });
+    render(<AudioSettingsPanel />, { wrapper });
 
     // Open panel to trigger settings load
     fireEvent.click(screen.getByRole('button', { name: /audio settings/i }));
@@ -107,17 +105,15 @@ describe('AudioSettingsPanel', () => {
 
   it('status dot is green when all toggles enabled', async () => {
     vi.mocked(audioApi.getAudioSettings).mockResolvedValue({
-      data: {
-        ...defaultSettings,
-        announceCountdown: true,
-        announceStagger: true,
-        announceLapBeep: true,
-        announceFinish: true,
-        announceRunningOrder: true,
-      },
+      ...defaultSettings,
+      announceCountdown: true,
+      announceStagger: true,
+      announceLapBeep: true,
+      announceFinish: true,
+      announceRunningOrder: true,
     } as never);
 
-    render(<AudioSettingsPanel raceId={1} />, { wrapper });
+    render(<AudioSettingsPanel />, { wrapper });
 
     // Open panel to trigger settings load
     fireEvent.click(screen.getByRole('button', { name: /audio settings/i }));

@@ -1,9 +1,11 @@
 package dev.monkeypatch.rctiming.domain.racehub;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 
 /** Maps a RaceHub event class to an event class here, when the names do not match (L7). */
-public class RaceHubClassMapping {
+public class RaceHubClassMapping implements CreatedAt, UpdatedAt {
 
     private Long id;
     private Long eventId;

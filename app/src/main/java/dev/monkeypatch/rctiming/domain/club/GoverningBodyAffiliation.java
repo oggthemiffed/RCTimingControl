@@ -1,8 +1,9 @@
 package dev.monkeypatch.rctiming.domain.club;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
 import java.time.Instant;
 
-public class GoverningBodyAffiliation {
+public class GoverningBodyAffiliation implements CreatedAt {
 
     private Long id;
     private String code;

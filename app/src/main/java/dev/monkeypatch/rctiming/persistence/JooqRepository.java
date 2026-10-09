@@ -11,6 +11,8 @@ import org.jooq.UpdatableRecord;
 import org.jooq.impl.DSL;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,9 @@ import java.util.Optional;
  * <p>Unlike Hibernate there is no dirty checking: a changed entity reaches the database only when
  * it is passed to {@link #save}. Writes run in a transaction, joining the caller's if there is
  * one, so they use the write connection. Reads outside a transaction use the read pool.
+ *
+ * <p>{@link #save} stamps the creation time of a {@link CreatedAt} entity that has none, and the update time of
+ * an {@link UpdatedAt} entity every time, so callers don't.
  *
  * <p>{@link #getOrThrow} and {@link #requireExists} raise the domain's {@link EntityNotFoundException},
  * which the API answers with 404, so callers need not repeat the lookup.
@@ -114,6 +119,7 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
     /** Inserts the entity when it has no id, setting the new id on it, and updates it otherwise. */
     @Transactional
     public E save(E entity) {
+        stamp(entity);
         R record = dsl.newRecord(table);
         toRecord(entity, record);
         Long entityId = idOf(entity);
@@ -134,6 +140,17 @@ public abstract class JooqRepository<E, R extends UpdatableRecord<R>> {
             dsl.insertInto(table).set(record).execute();
         }
         return entity;
+    }
+
+    /** Stamped to the microsecond, as the columns store it, so a saved entity equals the row read back. */
+    private static void stamp(Object entity) {
+        Instant now = Instant.now().truncatedTo(ChronoUnit.MICROS);
+        if (entity instanceof CreatedAt created && created.getCreatedAt() == null) {
+            created.setCreatedAt(now);
+        }
+        if (entity instanceof UpdatedAt updated) {
+            updated.setUpdatedAt(now);
+        }
     }
 
     @Transactional

@@ -9,7 +9,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -38,9 +37,6 @@ public class EventService {
         event.setEventDate(request.eventDate());
         event.setTrackId(request.trackId());
         event.setStatus(EventStatus.DRAFT);
-        Instant now = Instant.now();
-        event.setCreatedAt(now);
-        event.setUpdatedAt(now);
         Event saved = eventRepository.save(event);
         audit.entry(actor, "EVENT_CREATED").entity("event", saved.getId()).event(saved.getId())
                 .summary("Created event " + saved.getName())
@@ -58,7 +54,6 @@ public class EventService {
         event.setName(request.name());
         event.setEventDate(request.eventDate());
         event.setTrackId(request.trackId());
-        event.setUpdatedAt(Instant.now());
         Event saved = eventRepository.save(event);
         audit.entry(actor, "EVENT_UPDATED").entity("event", id).event(id)
                 .summary("Changed the details of event " + saved.getName())
@@ -70,7 +65,6 @@ public class EventService {
         Event event = getEventOrThrow(id);
         EventStatus from = event.getStatus();
         stateMachineService.transition(event, targetStatus);
-        event.setUpdatedAt(Instant.now());
         Event saved = eventRepository.save(event);
         boolean completed = targetStatus == EventStatus.COMPLETED;
         // Closing the day starts a backup and a results export that name nobody, so the reason is recorded here

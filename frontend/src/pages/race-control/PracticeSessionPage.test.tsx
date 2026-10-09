@@ -11,7 +11,7 @@ vi.mock('@/lib/practiceApi', () => ({
   getSession: vi.fn(),
   startSession: vi.fn(),
   stopSession: vi.fn(),
-  getSnapshot: vi.fn().mockResolvedValue({ data: [] }),
+  getSnapshot: vi.fn().mockResolvedValue([]),
 }));
 
 // Mock usePracticeTiming (avoids double STOMP client creation in tests)
@@ -78,7 +78,7 @@ describe('PracticeSessionPage', () => {
   });
 
   it('shows IDLE empty state before session starts', async () => {
-    vi.mocked(practiceApi.getSession).mockResolvedValue({ data: idleSession } as never);
+    vi.mocked(practiceApi.getSession).mockResolvedValue(idleSession as never);
 
     render(<PracticeSessionPage />, { wrapper });
 
@@ -89,7 +89,7 @@ describe('PracticeSessionPage', () => {
   });
 
   it('STOMP subscription updates live table on running session', async () => {
-    vi.mocked(practiceApi.getSession).mockResolvedValue({ data: runningSession } as never);
+    vi.mocked(practiceApi.getSession).mockResolvedValue(runningSession as never);
     mockUsePracticeTiming.mockReturnValue({
       rows: [timingRow],
       unknownTransponders: [],
@@ -105,7 +105,7 @@ describe('PracticeSessionPage', () => {
   });
 
   it('unknown transponder banner appears when unknown detected', async () => {
-    vi.mocked(practiceApi.getSession).mockResolvedValue({ data: runningSession } as never);
+    vi.mocked(practiceApi.getSession).mockResolvedValue(runningSession as never);
     mockUsePracticeTiming.mockReturnValue({
       rows: [],
       unknownTransponders: ['T999'],
@@ -121,7 +121,7 @@ describe('PracticeSessionPage', () => {
   });
 
   it('best N consecutive column displays formatted lap time', async () => {
-    vi.mocked(practiceApi.getSession).mockResolvedValue({ data: runningSession } as never);
+    vi.mocked(practiceApi.getSession).mockResolvedValue(runningSession as never);
     mockUsePracticeTiming.mockReturnValue({
       rows: [timingRow],
       unknownTransponders: [],
@@ -138,8 +138,8 @@ describe('PracticeSessionPage', () => {
   });
 
   it('stop button triggers stopSession mutation', async () => {
-    vi.mocked(practiceApi.getSession).mockResolvedValue({ data: runningSession } as never);
-    vi.mocked(practiceApi.stopSession).mockResolvedValue({ data: { ...runningSession, status: 'STOPPED' } } as never);
+    vi.mocked(practiceApi.getSession).mockResolvedValue(runningSession as never);
+    vi.mocked(practiceApi.stopSession).mockResolvedValue({ ...runningSession, status: 'STOPPED' } as never);
 
     render(<PracticeSessionPage />, { wrapper });
 
@@ -155,7 +155,7 @@ describe('PracticeSessionPage', () => {
   });
 
   it('tells the official why practice could not start, using the server\'s reason', async () => {
-    vi.mocked(practiceApi.getSession).mockResolvedValue({ data: idleSession } as never);
+    vi.mocked(practiceApi.getSession).mockResolvedValue(idleSession as never);
     vi.mocked(practiceApi.startSession).mockRejectedValue(
       new AxiosError('Request failed', 'ERR_BAD_REQUEST', undefined, undefined, {
         status: 409,
@@ -179,11 +179,11 @@ describe('PracticeSessionPage', () => {
   it('keeps checking the session, since a race starting stops practice from the server', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
-      vi.mocked(practiceApi.getSession).mockResolvedValue({ data: runningSession } as never);
+      vi.mocked(practiceApi.getSession).mockResolvedValue(runningSession as never);
       render(<PracticeSessionPage />, { wrapper });
       await waitFor(() => expect(practiceApi.getSession).toHaveBeenCalledTimes(1));
 
-      vi.mocked(practiceApi.getSession).mockResolvedValue({ data: { ...runningSession, status: 'STOPPED' } } as never);
+      vi.mocked(practiceApi.getSession).mockResolvedValue({ ...runningSession, status: 'STOPPED' } as never);
       await vi.advanceTimersByTimeAsync(5100);
 
       await waitFor(() => expect(practiceApi.getSession).toHaveBeenCalledTimes(2));

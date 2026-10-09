@@ -77,8 +77,6 @@ public class OfficialService {
         user.setLastName(requireText(lastName, "Last name"));
         user.setPasswordHash(passwordEncoder.encode(password));
         user.setRoles(new HashSet<>(granted));
-        user.setCreatedAt(now);
-        user.setUpdatedAt(now);
         userRepository.save(user);
         log(user, actorId, OfficialAuditLog.Action.ADDED, "Roles: " + describe(granted), now);
         return user;
@@ -98,7 +96,6 @@ public class OfficialService {
         }
         Instant now = clock.instant();
         user.setRoles(new HashSet<>(granted));
-        user.setUpdatedAt(now);
         userRepository.save(user);
         log(user, actorId, OfficialAuditLog.Action.ROLES_CHANGED,
                 describe(before) + " → " + describe(granted), now);
@@ -110,7 +107,6 @@ public class OfficialService {
         requirePassword(password);
         Instant now = clock.instant();
         user.setPasswordHash(passwordEncoder.encode(password));
-        user.setUpdatedAt(now);
         userRepository.save(user);
         revokeSessions(user);
         log(user, actorId, OfficialAuditLog.Action.PASSWORD_SET, null, now);
@@ -131,7 +127,6 @@ public class OfficialService {
         }
         Instant now = clock.instant();
         user.setDisabledAt(now);
-        user.setUpdatedAt(now);
         userRepository.save(user);
         revokeSessions(user);
         log(user, actorId, OfficialAuditLog.Action.DISABLED, null, now);
@@ -145,7 +140,6 @@ public class OfficialService {
         }
         Instant now = clock.instant();
         user.setDisabledAt(null);
-        user.setUpdatedAt(now);
         userRepository.save(user);
         log(user, actorId, OfficialAuditLog.Action.ENABLED, null, now);
         return user;

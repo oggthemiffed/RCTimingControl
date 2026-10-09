@@ -1,59 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronUp, Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAnnouncements } from '@/hooks/race-control/useAnnouncements';
+import { useAudioVolume } from '@/hooks/race-control/useAudioVolume';
+import { speakWithBrowser } from '@/lib/speech';
 import {
+  ANNOUNCEMENT_TOGGLES,
   getAudioSettings,
   patchAudioSettings,
   type AudioSettingsDto,
 } from '@/lib/audioApi';
 
-interface AudioSettingsPanelProps {
-  raceId: number | null;
-}
-
-const TOGGLE_ITEMS: { key: keyof AudioSettingsDto; label: string }[] = [
-  { key: 'announceCountdown', label: 'Countdown intervals' },
-  { key: 'announceStagger', label: 'Stagger car calls' },
-  { key: 'announceLapBeep', label: 'Lap improvement beeps' },
-  { key: 'announceFinish', label: 'Finish announcements' },
-  { key: 'announceRunningOrder', label: 'Running order' },
-];
-
-const BOOLEAN_KEYS = TOGGLE_ITEMS.map((t) => t.key);
-
-export function AudioSettingsPanel({ raceId }: AudioSettingsPanelProps) {
+export function AudioSettingsPanel() {
   const [isOpen, setIsOpen] = useState(false);
-  const [volume, setVolume] = useState<number>(() => {
-    const stored = localStorage.getItem('rc-audio-volume');
-    return stored ? parseInt(stored, 10) : 80;
-  });
+  const [volume, setVolume] = useAudioVolume();
   const queryClient = useQueryClient();
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['audio-settings'],
-    queryFn: () => getAudioSettings().then((r) => r.data),
+    queryFn: () => getAudioSettings(),
   });
 
   const mutation = useMutation({
-    mutationFn: (s: AudioSettingsDto) => patchAudioSettings(s).then((r) => r.data),
+    mutationFn: (s: AudioSettingsDto) => patchAudioSettings(s),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['audio-settings'] }),
   });
 
-  const { testAudio } = useAnnouncements({
-    raceId,
-    settings: settings ?? null,
-    volume: volume / 100,
-  });
-
-  // Persist volume to localStorage whenever it changes
-  useEffect(() => {
-    localStorage.setItem('rc-audio-volume', String(volume));
-  }, [volume]);
+  // Test audio: speak a sample sentence through the browser voice (AUDIO-11)
+  const testAudio = () => speakWithBrowser(
+    'Testing audio. Race control online. First place, Car 12. Second place, Car 7.',
+    volume / 100,
+  );
 
   const toggleSetting = (key: keyof AudioSettingsDto) => {
     if (!settings) return;
@@ -68,10 +48,10 @@ export function AudioSettingsPanel({ raceId }: AudioSettingsPanelProps) {
 
   const allEnabled =
     settings !== undefined &&
-    BOOLEAN_KEYS.every((k) => settings[k] as boolean);
+    ANNOUNCEMENT_TOGGLES.every(({ key }) => settings[key]);
   const someEnabled =
     settings !== undefined &&
-    BOOLEAN_KEYS.some((k) => settings[k] as boolean);
+    ANNOUNCEMENT_TOGGLES.some(({ key }) => settings[key]);
 
   const statusDot = allEnabled
     ? 'bg-[var(--flag-green)]'
@@ -121,14 +101,14 @@ export function AudioSettingsPanel({ raceId }: AudioSettingsPanelProps) {
                 Announcement Types
               </p>
 
-              {TOGGLE_ITEMS.map(({ key, label }) => (
+              {ANNOUNCEMENT_TOGGLES.map(({ key, label }) => (
                 <div key={key} className="flex items-center justify-between h-10">
                   <label className="text-sm" htmlFor={`toggle-${key}`}>
                     {label}
                   </label>
                   <Switch
                     id={`toggle-${key}`}
-                    checked={settings[key] as boolean}
+                    checked={settings[key]}
                     onCheckedChange={() => toggleSetting(key)}
                     aria-label={label}
                   />

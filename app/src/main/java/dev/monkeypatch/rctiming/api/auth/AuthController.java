@@ -225,7 +225,6 @@ public class AuthController {
         refreshToken.setUserId(user.getId());
         refreshToken.setTokenHash(sha256Hex(rawToken));
         refreshToken.setExpiresAt(Instant.now().plusMillis(jwtTokenService.getRefreshTokenTtlMs()));
-        refreshToken.setCreatedAt(Instant.now());
         refreshToken.setRevoked(false);
         refreshToken.setFamilyId(familyId);
         return new NewRefreshToken(rawToken, refreshToken);

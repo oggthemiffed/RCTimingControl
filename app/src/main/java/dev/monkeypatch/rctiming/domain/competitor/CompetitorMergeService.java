@@ -117,7 +117,6 @@ public class CompetitorMergeService {
                 + ") into " + keep.getDisplayName() + " (#" + keep.getId() + ")";
         for (Entry entry : moving) {
             entry.setCompetitorId(keepId);
-            entry.setUpdatedAt(now);
             entryRepository.save(entry);
             writeAudit(entry.getId(), adminUserId, reason, snapshot(duplicate), snapshot(keep), now);
         }
@@ -152,7 +151,6 @@ public class CompetitorMergeService {
         if (isBlank(keep.getSpokenName())) {
             keep.setSpokenName(duplicate.getSpokenName());
         }
-        keep.setUpdatedAt(now);
         competitorRepository.save(keep);
         competitorRepository.deleteById(duplicateId);
 

@@ -1,8 +1,9 @@
 package dev.monkeypatch.rctiming.domain.auth;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
 import java.time.Instant;
 
-public class RefreshToken {
+public class RefreshToken implements CreatedAt {
 
     private Long id;
 

@@ -277,11 +277,6 @@ export interface RaceFormatTemplateDto {
   config: RaceFormatConfig;
 }
 
-export interface TrackSummaryDto {
-  id: number;
-  name: string;
-}
-
 export interface TrackDto {
   id: number;
   name: string;
@@ -649,17 +644,9 @@ export const adminApi = {
       })
       .then(r => r.data),
 
-  // Tracks (summary — for selects/dropdowns)
-  listTracks: () =>
-    api.get<TrackSummaryDto[]>('/api/v1/admin/tracks').then(r => r.data),
-
   // Racing classes
   listRacingClasses: () =>
     api.get<RacingClassDto[]>('/api/v1/admin/classes').then(r => r.data),
-
-  // Format templates (list only — full CRUD via adminApi.formats below)
-  listFormatTemplates: () =>
-    api.get<RaceFormatTemplateDto[]>('/api/v1/admin/formats').then(r => r.data),
 
   // Entries
   listEntriesForClass: (eventId: number, classId: number) =>

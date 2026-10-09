@@ -292,15 +292,12 @@ public class RaceHubImportService {
             }
         });
         mappingRepository.deleteByEventId(eventId);
-        Instant now = Instant.now();
         List<RaceHubClassMapping> saved = new ArrayList<>();
         new TreeMap<>(mappings).forEach((racehubId, eventClassId) -> {
             RaceHubClassMapping m = new RaceHubClassMapping();
             m.setEventId(eventId);
             m.setRacehubEventClassId(racehubId);
             m.setEventClassId(eventClassId);
-            m.setCreatedAt(now);
-            m.setUpdatedAt(now);
             saved.add(mappingRepository.save(m));
         });
         audit.entry(actor, "CLASS_MAPPINGS_REPLACED").entity("event", eventId).event(eventId)
@@ -451,11 +448,10 @@ public class RaceHubImportService {
                 e.setWithdrawnAt(now);
                 e.setExternalEntryVersion(row.entryVersion());
                 e.setRacehubArrival(row.raceDayStatus());
-                e.setUpdatedAt(now);
                 return entryRepository.save(e).getId();
             }
             default -> {
-                Competitor competitor = upsertCompetitor(row, competitors, now, source);
+                Competitor competitor = upsertCompetitor(row, competitors, source);
                 Entry e = p.existing;
                 if (e == null) {
                     e = new Entry();
@@ -479,27 +475,23 @@ public class RaceHubImportService {
                 }
                 e.setExternalEntryVersion(row.entryVersion());
                 e.setRacehubArrival(row.raceDayStatus());
-                e.setUpdatedAt(now);
                 return entryRepository.save(e).getId();
             }
         }
     }
 
-    private Competitor upsertCompetitor(ExportEntry row, Map<String, Competitor> competitors, Instant now,
-                                        String source) {
+    private Competitor upsertCompetitor(ExportEntry row, Map<String, Competitor> competitors, String source) {
         Competitor c = competitors.get(row.driverProfileId());
         if (c == null) {
             c = new Competitor();
             c.setExternalSource(source);
             c.setExternalId(row.driverProfileId());
-            c.setCreatedAt(now);
         }
         String name = row.driverDisplayName();
         String unnamed = ExternalSources.RACEHUB.equals(source) ? "RaceHub driver " : "Driver ";
         c.setDisplayName(name == null || name.isBlank() ? unnamed + row.driverProfileId() : name.trim());
         c.setBrcaNumber(blankToNull(row.brcaNumber()));
         c.setHomeClub(blankToNull(row.homeClub()));
-        c.setUpdatedAt(now);
         c = competitorRepository.save(c);
         competitors.put(row.driverProfileId(), c);
         return c;

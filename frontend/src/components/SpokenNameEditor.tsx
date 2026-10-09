@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useCompetitorChanges, useSetSpokenName } from '@/hooks/admin/useAdminCompetitors';
 import { adminApi, type CompetitorSummaryDto } from '@/lib/adminApi';
 import { formatDate } from '@/lib/dates';
+import { speakWithBrowser } from '@/lib/speech';
 
 const MAX_SPOKEN_NAME = 100;
 
@@ -23,9 +24,7 @@ async function speak(text: string): Promise<'piper' | 'browser'> {
   } catch {
     // The clip never started, so nothing will fire 'ended' to release it
     if (url) URL.revokeObjectURL(url);
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-    }
+    speakWithBrowser(text);
     return 'browser';
   }
 }

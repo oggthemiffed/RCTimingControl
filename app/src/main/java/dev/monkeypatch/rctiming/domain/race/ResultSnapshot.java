@@ -1,9 +1,10 @@
 package dev.monkeypatch.rctiming.domain.race;
 
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
 import java.time.Instant;
 
-public class ResultSnapshot {
+public class ResultSnapshot implements CreatedAt {
 
     private Long id;
 

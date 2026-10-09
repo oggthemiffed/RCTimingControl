@@ -1,8 +1,9 @@
 package dev.monkeypatch.rctiming.domain.practice;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
 import java.time.Instant;
 
-public class PracticeLap {
+public class PracticeLap implements CreatedAt {
 
     private Long id;
 
@@ -18,7 +19,7 @@ public class PracticeLap {
 
     private Instant crossingTime;
 
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
 
     // Getters and setters
     public Long getId() { return id; }
