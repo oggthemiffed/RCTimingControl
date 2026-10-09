@@ -5,5 +5,7 @@ import java.time.Instant;
 /** An entity whose row records when it last changed. {@link JooqRepository#save} sets the time on every save. */
 public interface UpdatedAt {
 
+    Instant getUpdatedAt();
+
     void setUpdatedAt(Instant updatedAt);
 }

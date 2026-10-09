@@ -101,9 +101,6 @@ public class ClubProfileService {
         profile.setTimezone(request.timezone());
         profile.setLogoType(request.logoType());
 
-        if (isNew) {
-        }
-
         ClubProfile saved = clubProfileRepository.save(profile);
         audit.entry(actor, isNew ? "CLUB_PROFILE_CREATED" : "CLUB_PROFILE_UPDATED")
                 .entity("club_profile", saved.getId())

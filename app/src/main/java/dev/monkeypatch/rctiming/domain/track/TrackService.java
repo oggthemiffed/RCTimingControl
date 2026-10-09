@@ -152,9 +152,6 @@ public class TrackService {
             threshold.setRacingClassName(null);
         }
 
-        if (isNew) {
-        }
-
         TrackLapThreshold saved = thresholdRepository.save(threshold);
         audit.entry(actor, isNew ? "LAP_THRESHOLD_ADDED" : "LAP_THRESHOLD_CHANGED")
                 .entity("lap_threshold", saved.getId())

@@ -53,4 +53,20 @@ class TimestampsIT extends AbstractIntegrationTest {
             racingClasses.deleteById(saved.getId());
         }
     }
+
+    @Test
+    void anEntityWhoseRowHasGoneIsInsertedAgainWithItsCreationTime() {
+        RacingClass racingClass = new RacingClass();
+        racingClass.setName("Timestamps reinsert " + System.nanoTime());
+        RacingClass saved = racingClasses.save(racingClass);
+        Instant created = saved.getCreatedAt();
+        racingClasses.deleteById(saved.getId());
+
+        racingClasses.save(saved);
+        try {
+            assertThat(racingClasses.getOrThrow(saved.getId()).getCreatedAt()).isEqualTo(created);
+        } finally {
+            racingClasses.deleteById(saved.getId());
+        }
+    }
 }
