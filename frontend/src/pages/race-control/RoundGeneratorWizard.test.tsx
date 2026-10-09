@@ -9,17 +9,20 @@ vi.mock('@/lib/adminApi', () => ({
   adminApi: { getEvent: vi.fn(), listRacingClasses: vi.fn(), generateRounds: vi.fn() },
 }));
 
+let client: QueryClient;
+const onOpenChange = vi.fn();
+
 function wizard(open: boolean) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={client}>
-      <RoundGeneratorWizard open={open} onOpenChange={vi.fn()} eventId={5} />
+      <RoundGeneratorWizard open={open} onOpenChange={onOpenChange} eventId={5} />
     </QueryClientProvider>
   );
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   vi.mocked(adminApi.getEvent).mockResolvedValue({
     id: 5,
     classes: [{ id: 11, racingClassId: 3, configSnapshot: { type: 'TIMED', durationMinutes: 5 } }],
@@ -60,6 +63,8 @@ describe('RoundGeneratorWizard', () => {
       maxCarsPerHeat: 10,
       classFinalsConfigs: [{ eventClassId: 11, finalsCount: 3, carsPerFinal: 10, bumpCount: 2 }],
     }));
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+    expect(adminApi.generateRounds).toHaveBeenCalledTimes(1);
   });
 
   it('says which count is out of range rather than sending it', async () => {

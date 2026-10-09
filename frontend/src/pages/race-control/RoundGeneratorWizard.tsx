@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
-import type { FieldPath } from 'react-hook-form';
+import { get, useFieldArray, useForm } from 'react-hook-form';
+import type { FieldError, FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/errors';
 import { adminApi, type EventClassDto, type BumpUpConfig } from '@/lib/adminApi';
 import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
@@ -26,7 +27,8 @@ type Props = {
   eventId: number;
 };
 
-// Whole numbers in the ranges the inputs offer; the overall counts match what the server accepts
+// Whole numbers in the ranges the inputs offer. The overall counts match what the server accepts; the per-class
+// ranges are this form's own. Not z.coerce, which would turn an emptied box into 0 and say "At least 1".
 const count = (min: number, max: number) => z.preprocess(
   (v) => (v === '' || v == null ? undefined : Number(v)),
   z.number({ required_error: 'Enter a number', invalid_type_error: 'Enter a number' })
@@ -42,7 +44,7 @@ const schema = z.object({
     label: z.string(),
     finalsCount: count(1, 3),
     carsPerFinal: count(1, 64),
-    bumpCount: count(1, 10),
+    bumpCount: count(0, 10),
   })),
 });
 type FormInput = z.input<typeof schema>;
@@ -65,25 +67,26 @@ export function RoundGeneratorWizard({ open, onOpenChange, eventId }: Props) {
     resolver: zodResolver(schema),
     defaultValues: { ...GLOBAL_DEFAULTS, classes: [] },
   });
-  const { fields: classRows } = useFieldArray({ control: form.control, name: 'classes', keyName: 'key' });
+  const { fields: classRows } = useFieldArray({ control: form.control, name: 'classes' });
   const [initialised, setInitialised] = useState(false);
 
   // The event's classes come with its detail; there is no separate list endpoint
-  const { data: eventDetail } = useQuery({
+  const { data: eventDetail, isSuccess: eventLoaded } = useQuery({
     queryKey: adminQueryKeys.events.detail(eventId),
     queryFn: () => adminApi.getEvent(eventId),
     enabled: open && eventId > 0,
   });
   const eventClasses = eventDetail?.classes ?? [];
 
-  const { data: racingClasses = [] } = useQuery({
+  const { data: racingClasses = [], isSuccess: classesLoaded } = useQuery({
     queryKey: adminQueryKeys.racingClasses.all(),
     queryFn: () => adminApi.listRacingClasses(),
     enabled: open,
   });
 
-  // Start from the event's classes each time the wizard opens (adjusting state while rendering, not in an effect)
-  if (open && eventClasses.length > 0 && racingClasses.length > 0 && !initialised) {
+  // Start from the event's classes each time the wizard opens (adjusting state while rendering, not in an effect;
+  // the reset only touches this form, and doing it twice changes nothing)
+  if (open && eventLoaded && classesLoaded && !initialised) {
     setInitialised(true);
     form.reset({
       ...GLOBAL_DEFAULTS,
@@ -119,18 +122,26 @@ export function RoundGeneratorWizard({ open, onOpenChange, eventId }: Props) {
       queryClient.invalidateQueries({ queryKey: raceControlQueryKeys.runOrder(eventId) });
       close();
     },
-    onError: () => toast.error('Failed to generate rounds'),
+    onError: (err) => toast.error(getApiErrorMessage(err, 'Failed to generate rounds')),
   });
 
   function numberField(name: FieldPath<FormInput>, label: string, min: number, max: number) {
     const id = `round-gen-${name.replaceAll('.', '-')}`;
-    const error = form.getFieldState(name, form.formState).error;
+    const error: FieldError | undefined = get(form.formState.errors, name);
+    const errorId = `${id}-error`;
     return (
       <div className="space-y-1">
         <Label htmlFor={id} className="text-xs">{label}</Label>
-        <Input id={id} type="number" min={min} max={max} aria-invalid={error ? true : undefined}
-          {...form.register(name)} />
-        {error && <p className="text-xs text-destructive">{error.message}</p>}
+        <Input
+          id={id}
+          type="number"
+          min={min}
+          max={max}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          {...form.register(name)}
+        />
+        {error && <p id={errorId} className="text-xs text-destructive">{error.message}</p>}
       </div>
     );
   }
@@ -145,8 +156,13 @@ export function RoundGeneratorWizard({ open, onOpenChange, eventId }: Props) {
           </DialogDescription>
         </DialogHeader>
 
-        <form id="round-generator" noValidate onSubmit={form.handleSubmit(values => generate.mutate(values))}
-          className="space-y-4 py-2">
+        <form
+          id="round-generator"
+          noValidate
+          // Awaiting the request keeps isSubmitting on until it settles, so a second click can't generate twice
+          onSubmit={form.handleSubmit(values => generate.mutateAsync(values).catch(() => undefined))}
+          className="space-y-4 py-2"
+        >
           {/* Global settings */}
           <div className="grid grid-cols-3 gap-3">
             {numberField('practiceRounds', 'Practice rounds', 0, 10)}
@@ -159,14 +175,14 @@ export function RoundGeneratorWizard({ open, onOpenChange, eventId }: Props) {
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Finals per class</p>
               {classRows.map((row, idx) => (
-                <div key={row.key} className="rounded border p-3 space-y-2">
-                  <p className="text-sm font-medium">{row.label}</p>
+                <fieldset key={row.id} className="rounded border p-3 space-y-2">
+                  <legend className="px-1 text-sm font-medium">{row.label}</legend>
                   <div className="grid grid-cols-3 gap-2">
                     {numberField(`classes.${idx}.finalsCount`, 'Finals', 1, 3)}
                     {numberField(`classes.${idx}.carsPerFinal`, 'Cars/final', 1, 64)}
-                    {numberField(`classes.${idx}.bumpCount`, 'Bump spots', 1, 10)}
+                    {numberField(`classes.${idx}.bumpCount`, 'Bump spots', 0, 10)}
                   </div>
-                </div>
+                </fieldset>
               ))}
             </div>
           )}
@@ -174,8 +190,8 @@ export function RoundGeneratorWizard({ open, onOpenChange, eventId }: Props) {
 
         <DialogFooter>
           <Button variant="outline" onClick={close}>Cancel</Button>
-          <Button type="submit" form="round-generator" disabled={generate.isPending}>
-            {generate.isPending ? 'Generating…' : 'Generate Rounds'}
+          <Button type="submit" form="round-generator" disabled={!initialised || form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? 'Generating…' : 'Generate Rounds'}
           </Button>
         </DialogFooter>
       </DialogContent>

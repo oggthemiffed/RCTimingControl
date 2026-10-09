@@ -43,8 +43,8 @@ const DEFAULT_CONFIG: RaceFormatConfig = {
 };
 
 const formatSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required'),
-  // FormatConfigFields only offers valid settings, and the server checks them on save
+  name: z.string().trim().min(1, 'Name is required').max(255, 'Use at most 255 characters'),
+  // FormatConfigFields builds the settings; this form only checks the name
   config: z.custom<RaceFormatConfig>(),
 });
 type FormatFormValues = z.infer<typeof formatSchema>;
@@ -109,6 +109,8 @@ export default function FormatsPage() {
   const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [createOpen, setCreateOpen] = useState(false);
+  // A new key after each save, so the next new template starts from an empty form
+  const [createKey, setCreateKey] = useState(0);
   const [editTarget, setEditTarget] = useState<RaceFormatTemplateDto | null>(null);
 
   async function handleCreate(name: string, config: RaceFormatConfig) {
@@ -116,6 +118,7 @@ export default function FormatsPage() {
       await createMutation.mutateAsync({ name, config });
       toast.success('Format template created');
       setCreateOpen(false);
+      setCreateKey(k => k + 1);
     } catch {
       toast.error('Could not create format template. Try again.');
     }
@@ -224,6 +227,7 @@ export default function FormatsPage() {
       )}
 
       <FormatDialog
+        key={createKey}
         open={createOpen}
         onOpenChange={setCreateOpen}
         onSubmit={handleCreate}

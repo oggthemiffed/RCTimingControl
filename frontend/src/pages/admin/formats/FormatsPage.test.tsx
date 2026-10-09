@@ -38,4 +38,15 @@ describe('FormatsPage', () => {
       config: expect.objectContaining({ type: 'TIMED', durationMinutes: 5 }),
     }));
   });
+
+  it('starts the next new template from an empty form', async () => {
+    render(<FormatsPage />);
+    fireEvent.click(screen.getAllByRole('button', { name: /Create Template/ })[0]);
+    fireEvent.change(screen.getByLabelText('Template Name'), { target: { value: 'Club Timed' } });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getAllByRole('button', { name: /Create Template/ })[0]);
+    expect(screen.getByLabelText('Template Name')).toHaveValue('');
+  });
 });
