@@ -48,7 +48,7 @@ public class EventClassController {
     public EventClassDto updateOverrides(Authentication auth, @PathVariable Long eventId,
                                           @PathVariable Long classId,
                                           @RequestBody @Valid UpdateEventClassOverrideRequest request) {
-        return EventClassDto.from(eventClassService.updateOverrides(CurrentOfficial.actor(auth), classId,
+        return EventClassDto.from(eventClassService.updateOverrides(CurrentOfficial.actor(auth), eventId, classId,
                 request.override()));
     }
 

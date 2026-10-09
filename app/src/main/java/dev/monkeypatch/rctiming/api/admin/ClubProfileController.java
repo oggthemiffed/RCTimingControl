@@ -54,8 +54,9 @@ public class ClubProfileController {
     @PreAuthorize("hasRole('ADMIN')")
     public ClubProfileDto createOrUpdateProfile(Authentication auth, @RequestBody @Valid CreateClubProfileRequest request) {
         return ClubProfileDto.from(clubProfileService.createOrUpdateProfile(CurrentOfficial.actor(auth),
-                new ClubProfileService.ClubDetails(request.name(), request.email(), request.phone(), request.websiteUrl(),
-                        request.latitude(), request.longitude(), request.timezone(), request.logoType())));
+                new ClubProfileService.ClubDetails(request.name(), request.email(), request.phone(),
+                        request.websiteUrl(), request.latitude(), request.longitude(), request.timezone(),
+                        request.logoType())));
     }
 
     @GetMapping("/affiliations")

@@ -148,6 +148,22 @@ class EventClassControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void updateOverrides_throughAnotherEventsUrl_isRefusedAndChangesNothing() {
+        Long eventId = createEventInDb();
+        Long otherEventId = createEventInDb();
+        Long classId = addClassToEvent(eventId, createTemplateInDb(10), createRacingClassInDb());
+
+        ResponseEntity<String> refused = restTemplate.exchange(
+                "/api/v1/admin/events/" + otherEventId + "/classes/" + classId + "/overrides",
+                HttpMethod.PUT,
+                new HttpEntity<>(Map.of("override", Map.of("durationMinutes", 15)), adminHeaders()),
+                String.class);
+
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(eventClassRepository.findById(classId).orElseThrow().getConfigOverride()).isNull();
+    }
+
+    @Test
     void updateOverrides_emptyMap_clearsOverride() {
         Long eventId = createEventInDb();
         Long templateId = createTemplateInDb(10);

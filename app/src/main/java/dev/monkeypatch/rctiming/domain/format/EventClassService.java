@@ -75,8 +75,11 @@ public class EventClassService {
         return saved;
     }
 
-    public EventClass updateOverrides(Actor actor, Long classId, Map<String, Object> requested) {
+    public EventClass updateOverrides(Actor actor, Long eventId, Long classId, Map<String, Object> requested) {
         EventClass ec = getEventClassOrThrow(classId);
+        if (!eventId.equals(ec.getEventId())) {
+            throw new IllegalArgumentException("EventClass " + classId + " does not belong to event " + eventId);
+        }
         Map<String, Object> before = ec.getConfigOverride();
         Map<String, Object> override = requested == null || requested.isEmpty() ? null : new HashMap<>(requested);
         ec.setConfigOverride(override);

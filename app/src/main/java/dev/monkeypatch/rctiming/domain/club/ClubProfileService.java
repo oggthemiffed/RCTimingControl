@@ -45,8 +45,8 @@ public class ClubProfileService {
                 .orElseGet(() -> new DecoderSettings(null, null, null));
     }
 
-    @Transactional(readOnly = true)
     /** The club's profile; empty until the setup wizard saves one. */
+    @Transactional(readOnly = true)
     public Optional<ClubProfile> getProfile() {
         return clubProfileRepository.findCurrent();
     }
@@ -82,11 +82,11 @@ public class ClubProfileService {
                 });
     }
 
-    public ClubProfile createOrUpdateProfile(Actor actor, ClubDetails request) {
+    public ClubProfile createOrUpdateProfile(Actor actor, ClubDetails details) {
         try {
-            ZoneId.of(request.timezone());
+            ZoneId.of(details.timezone());
         } catch (DateTimeException e) {
-            throw new IllegalArgumentException("Invalid timezone: " + request.timezone(), e);
+            throw new IllegalArgumentException("Invalid timezone: " + details.timezone(), e);
         }
 
         ClubProfile profile = clubProfileRepository.findCurrent().orElseGet(ClubProfile::new);
@@ -94,15 +94,15 @@ public class ClubProfileService {
         boolean isNew = profile.getId() == null;
         Map<String, Object> before = isNew ? null : profileValues(profile);
 
-        profile.setName(request.name());
-        profile.setEmail(request.email());
-        profile.setPhone(request.phone());
-        profile.setWebsiteUrl(request.websiteUrl());
-        profile.setLatitude(request.latitude());
-        profile.setLongitude(request.longitude());
+        profile.setName(details.name());
+        profile.setEmail(details.email());
+        profile.setPhone(details.phone());
+        profile.setWebsiteUrl(details.websiteUrl());
+        profile.setLatitude(details.latitude());
+        profile.setLongitude(details.longitude());
         // Use the raw field setter to avoid double-validation
-        profile.setTimezone(request.timezone());
-        profile.setLogoType(request.logoType());
+        profile.setTimezone(details.timezone());
+        profile.setLogoType(details.logoType());
 
         ClubProfile saved = clubProfileRepository.save(profile);
         audit.entry(actor, isNew ? "CLUB_PROFILE_CREATED" : "CLUB_PROFILE_UPDATED")
