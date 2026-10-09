@@ -80,6 +80,26 @@ public class RaceFormatService {
     }
 
     /**
+     * How a race in this class starts, from its format by round type: heats and practice take the qualifying start
+     * and finals the finals start, while a timed format has one start for both. With no format, or none set in it,
+     * heats are staggered and finals start on the grid, as rounds were generated before the format was read (#142).
+     */
+    @Transactional(readOnly = true)
+    public StartType startType(EventClass eventClass, RoundType roundType) {
+        boolean isFinal = roundType == RoundType.FINAL;
+        StartType fromFormat = eventClass == null || eventClass.getConfigSnapshot() == null ? null
+                : switch (getEffectiveConfig(eventClass)) {
+                    case TimedRaceConfig timed -> timed.startType();
+                    case BumpUpConfig bumpUp -> isFinal ? bumpUp.finalsStartType() : bumpUp.qualifyingStartType();
+                    case PointsFinalsConfig points -> isFinal ? points.finalsStartType() : points.qualifyingStartType();
+                };
+        if (fromFormat != null) {
+            return fromFormat;
+        }
+        return isFinal ? StartType.GRID : StartType.STAGGER;
+    }
+
+    /**
      * Creates a new EventClass with a deep copy of the template's config as the
      * configSnapshot. The template reference is stored for audit purposes (FORMAT-06).
      * Template edits do not affect the snapshot after assignment.

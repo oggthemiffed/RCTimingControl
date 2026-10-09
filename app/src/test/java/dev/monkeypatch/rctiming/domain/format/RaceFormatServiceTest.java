@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.domain.format;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.monkeypatch.rctiming.domain.race.RoundType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -81,5 +82,47 @@ class RaceFormatServiceTest {
         assertThat(eventClass.getConfigSnapshot()).isEqualTo(originalConfig);
         assertThat(eventClass.getConfigSnapshot()).isNotSameAs(originalConfig);
         assertThat(eventClass.getTemplateId()).isEqualTo(42L);
+    }
+
+    @Test
+    void startType_comesFromTheFormatByRoundType() {
+        EventClass timed = classWith(new TimedRaceConfig(5, StartType.ROLLING, QualifyingType.FTQ, 2, 0));
+        assertThat(service.startType(timed, RoundType.QUALIFIER)).isEqualTo(StartType.ROLLING);
+        assertThat(service.startType(timed, RoundType.FINAL)).isEqualTo(StartType.ROLLING);
+
+        EventClass bumpUp = classWith(new BumpUpConfig(3, 5, 2, 10, 2, StartType.GRID, StartType.ROLLING,
+                QualifyingType.FTQ, 2, 0));
+        assertThat(service.startType(bumpUp, RoundType.PRACTICE)).isEqualTo(StartType.GRID);
+        assertThat(service.startType(bumpUp, RoundType.FINAL)).isEqualTo(StartType.ROLLING);
+
+        EventClass points = classWith(new PointsFinalsConfig(3, 2, 8, 5, StartType.ROLLING, StartType.STAGGER,
+                QualifyingType.FTQ, 2, 0));
+        assertThat(service.startType(points, RoundType.QUALIFIER)).isEqualTo(StartType.ROLLING);
+        assertThat(service.startType(points, RoundType.FINAL)).isEqualTo(StartType.STAGGER);
+    }
+
+    @Test
+    void startType_withNoneInTheFormat_isStaggeredForHeatsAndGridForFinals() {
+        EventClass unset = classWith(new TimedRaceConfig(5, null, QualifyingType.FTQ, 2, 0));
+        assertThat(service.startType(unset, RoundType.QUALIFIER)).isEqualTo(StartType.STAGGER);
+        assertThat(service.startType(unset, RoundType.FINAL)).isEqualTo(StartType.GRID);
+
+        EventClass noFormat = new EventClass();
+        assertThat(service.startType(noFormat, RoundType.PRACTICE)).isEqualTo(StartType.STAGGER);
+        assertThat(service.startType(noFormat, RoundType.FINAL)).isEqualTo(StartType.GRID);
+    }
+
+    @Test
+    void startType_followsAnOverride() {
+        EventClass eventClass = classWith(new TimedRaceConfig(5, StartType.STAGGER, QualifyingType.FTQ, 2, 0));
+        eventClass.setConfigOverride(Map.of("startType", "ROLLING"));
+
+        assertThat(service.startType(eventClass, RoundType.QUALIFIER)).isEqualTo(StartType.ROLLING);
+    }
+
+    private static EventClass classWith(RaceFormatConfig config) {
+        EventClass eventClass = new EventClass();
+        eventClass.setConfigSnapshot(config);
+        return eventClass;
     }
 }
