@@ -1,9 +1,10 @@
 package dev.monkeypatch.rctiming.domain.competitor;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
 import java.time.Instant;
 
 /** One change to a competitor and who made it: today, how their name is said aloud. */
-public class CompetitorAuditLog {
+public class CompetitorAuditLog implements CreatedAt {
 
     public static final String SPOKEN_NAME_CHANGED = "SPOKEN_NAME_CHANGED";
 

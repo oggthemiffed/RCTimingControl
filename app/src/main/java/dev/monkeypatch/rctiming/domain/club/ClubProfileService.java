@@ -10,7 +10,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -76,12 +75,9 @@ public class ClubProfileService {
         return clubProfileRepository.findCurrent()
                 .map(ClubProfile::getId)
                 .orElseGet(() -> {
-                    Instant now = Instant.now();
                     ClubProfile blank = new ClubProfile();
                     blank.setName("");
                     blank.setTimezone("UTC");
-                    blank.setCreatedAt(now);
-                    blank.setUpdatedAt(now);
                     return clubProfileRepository.save(blank).getId();
                 });
     }
@@ -105,12 +101,6 @@ public class ClubProfileService {
         profile.setTimezone(request.timezone());
         profile.setLogoType(request.logoType());
 
-        Instant now = Instant.now();
-        if (isNew) {
-            profile.setCreatedAt(now);
-        }
-        profile.setUpdatedAt(now);
-
         ClubProfile saved = clubProfileRepository.save(profile);
         audit.entry(actor, isNew ? "CLUB_PROFILE_CREATED" : "CLUB_PROFILE_UPDATED")
                 .entity("club_profile", saved.getId())
@@ -131,7 +121,6 @@ public class ClubProfileService {
         affiliation.setCode(request.code());
         affiliation.setDisplayName(request.displayName());
         affiliation.setMembershipRequired(request.membershipRequired());
-        affiliation.setCreatedAt(Instant.now());
         GoverningBodyAffiliation saved = affiliationRepository.save(affiliation);
         audit.entry(actor, "AFFILIATION_CREATED").entity("affiliation", saved.getId())
                 .summary("Added the governing body " + saved.getDisplayName())
@@ -183,7 +172,6 @@ public class ClubProfileService {
         profile.setDecoderHost(host);
         profile.setDecoderPort(port);
         profile.setDecoderProtocol(protocol);
-        profile.setUpdatedAt(Instant.now());
         ClubProfile saved = clubProfileRepository.save(profile);
         audit.entry(actor, "DECODER_CONFIG_CHANGED").entity("club_profile", saved.getId())
                 .summary(host == null || host.isBlank() ? "Cleared the decoder address"

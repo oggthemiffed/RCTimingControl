@@ -1,8 +1,9 @@
 package dev.monkeypatch.rctiming.domain.track;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
 import java.time.Instant;
 
-public class DecoderLoop {
+public class DecoderLoop implements CreatedAt {
 
     private Long id;
     private Long trackId;

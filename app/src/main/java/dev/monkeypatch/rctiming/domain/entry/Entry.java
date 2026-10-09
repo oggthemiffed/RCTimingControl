@@ -1,8 +1,9 @@
 package dev.monkeypatch.rctiming.domain.entry;
 
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 
-public class Entry {
+public class Entry implements UpdatedAt {
 
     private Long id;
 

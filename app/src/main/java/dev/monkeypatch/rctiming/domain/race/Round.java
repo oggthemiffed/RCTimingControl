@@ -1,9 +1,11 @@
 package dev.monkeypatch.rctiming.domain.race;
 
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 
-public class Round {
+public class Round implements CreatedAt, UpdatedAt {
 
     private Long id;
 

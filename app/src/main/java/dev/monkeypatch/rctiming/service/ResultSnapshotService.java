@@ -135,7 +135,6 @@ public class ResultSnapshotService {
                 .orElseGet(ResultSnapshot::new);
         snapshot.setRaceId(raceId);
         snapshot.setFinishedAt(race.getFinishedAt() != null ? race.getFinishedAt() : Instant.now());
-        snapshot.setCreatedAt(Instant.now());
 
         snapshot.setTimedPositionsJson(snapshotJson.write(raceId, positions));
         snapshot.setPositionsJson(snapshotJson.write(raceId, corrected(race, snapshot.getFinishedAt(), positions)));

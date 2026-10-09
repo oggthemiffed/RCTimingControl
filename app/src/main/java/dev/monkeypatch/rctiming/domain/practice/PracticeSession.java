@@ -1,9 +1,11 @@
 package dev.monkeypatch.rctiming.domain.practice;
 
 import dev.monkeypatch.rctiming.domain.StateConflictException;
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
+import dev.monkeypatch.rctiming.persistence.UpdatedAt;
 import java.time.Instant;
 
-public class PracticeSession {
+public class PracticeSession implements CreatedAt, UpdatedAt {
 
     private Long id;
 
@@ -21,34 +23,34 @@ public class PracticeSession {
 
     private Instant stoppedAt;
 
-    private Instant createdAt = Instant.now();
+    private Instant createdAt;
 
-    private Instant updatedAt = Instant.now();
+    private Instant updatedAt;
 
     // Getters and setters
     public Long getId() { return id; }
     void setId(Long id) { this.id = id; }
 
     public String getName() { return name; }
-    public void setName(String name) { this.name = name; this.updatedAt = Instant.now(); }
+    public void setName(String name) { this.name = name; }
 
     public Long getEventId() { return eventId; }
-    public void setEventId(Long eventId) { this.eventId = eventId; this.updatedAt = Instant.now(); }
+    public void setEventId(Long eventId) { this.eventId = eventId; }
 
     public PracticeStatus getStatus() { return status; }
-    public void setStatus(PracticeStatus status) { this.status = status; this.updatedAt = Instant.now(); }
+    public void setStatus(PracticeStatus status) { this.status = status; }
 
     public Integer getBestLapN() { return bestLapN; }
-    public void setBestLapN(Integer bestLapN) { this.bestLapN = bestLapN; this.updatedAt = Instant.now(); }
+    public void setBestLapN(Integer bestLapN) { this.bestLapN = bestLapN; }
 
     public Long getCreatedByUserId() { return createdByUserId; }
     public void setCreatedByUserId(Long createdByUserId) { this.createdByUserId = createdByUserId; }
 
     public Instant getStartedAt() { return startedAt; }
-    public void setStartedAt(Instant startedAt) { this.startedAt = startedAt; this.updatedAt = Instant.now(); }
+    public void setStartedAt(Instant startedAt) { this.startedAt = startedAt; }
 
     public Instant getStoppedAt() { return stoppedAt; }
-    public void setStoppedAt(Instant stoppedAt) { this.stoppedAt = stoppedAt; this.updatedAt = Instant.now(); }
+    public void setStoppedAt(Instant stoppedAt) { this.stoppedAt = stoppedAt; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
@@ -63,7 +65,6 @@ public class PracticeSession {
         }
         this.status = PracticeStatus.RUNNING;
         this.startedAt = Instant.now();
-        this.updatedAt = Instant.now();
     }
 
     public void stop() {
@@ -72,6 +73,5 @@ public class PracticeSession {
         }
         this.status = PracticeStatus.STOPPED;
         this.stoppedAt = Instant.now();
-        this.updatedAt = Instant.now();
     }
 }

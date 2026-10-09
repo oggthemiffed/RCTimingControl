@@ -48,7 +48,6 @@ public class PracticeSessionRepository extends JooqRepository<PracticeSession, P
         s.setStartedAt(r.getStartedAt());
         s.setStoppedAt(r.getStoppedAt());
         s.setCreatedAt(r.getCreatedAt());
-        // Last: the setters above stamp the update time
         s.setUpdatedAt(r.getUpdatedAt());
         return s;
     }

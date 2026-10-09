@@ -4,7 +4,6 @@ import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -22,11 +21,8 @@ public class CompetitorService {
     /** Creates a competitor with no external identity, for a walk-in entered by hand (L9). */
     @Transactional
     public Competitor createWalkIn(String displayName) {
-        Instant now = Instant.now();
         Competitor competitor = new Competitor();
         competitor.setDisplayName(displayName.trim());
-        competitor.setCreatedAt(now);
-        competitor.setUpdatedAt(now);
         return competitorRepository.save(competitor);
     }
 
@@ -63,9 +59,7 @@ public class CompetitorService {
         if (java.util.Objects.equals(before, after)) {
             return competitor;
         }
-        Instant now = Instant.now();
         competitor.setSpokenName(after);
-        competitor.setUpdatedAt(now);
         Competitor saved = competitorRepository.save(competitor);
 
         CompetitorAuditLog log = new CompetitorAuditLog();
@@ -74,7 +68,6 @@ public class CompetitorService {
         log.setAction(CompetitorAuditLog.SPOKEN_NAME_CHANGED);
         log.setBeforeValue(before);
         log.setAfterValue(after);
-        log.setCreatedAt(now);
         auditLogRepository.save(log);
         return saved;
     }

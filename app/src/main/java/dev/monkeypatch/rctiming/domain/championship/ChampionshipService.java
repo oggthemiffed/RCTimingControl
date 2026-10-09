@@ -24,7 +24,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -76,9 +75,6 @@ public class ChampionshipService {
         c.setScoringSource(request.scoringSource());
         c.setTqBonusPoints(request.tqBonusPoints());
         c.setAfinalWinnerBonusPoints(request.afinalWinnerBonusPoints());
-        Instant now = Instant.now();
-        c.setCreatedAt(now);
-        c.setUpdatedAt(now);
         Championship saved = championshipRepository.save(c);
         audit.entry(actor, "CHAMPIONSHIP_CREATED").entity("championship", saved.getId())
                 .summary("Created championship " + saved.getName())
@@ -95,7 +91,6 @@ public class ChampionshipService {
         c.setScoringSource(request.scoringSource());
         c.setTqBonusPoints(request.tqBonusPoints());
         c.setAfinalWinnerBonusPoints(request.afinalWinnerBonusPoints());
-        c.setUpdatedAt(Instant.now());
         Championship saved = championshipRepository.save(c);
         audit.entry(actor, "CHAMPIONSHIP_UPDATED").entity("championship", id)
                 .summary("Changed the settings of championship " + saved.getName())
@@ -134,7 +129,6 @@ public class ChampionshipService {
         cc.setRacingClassId(request.racingClassId());
         cc.setBestXFromYX(request.bestXFromYX());
         cc.setBestXFromYY(request.bestXFromYY());
-        cc.setCreatedAt(Instant.now());
         ChampionshipClass saved = classRepository.save(cc);
         audit.entry(actor, "CHAMPIONSHIP_CLASS_ADDED").entity("championship", championshipId)
                 .summary("Added class " + className(saved.getRacingClassId()) + " to championship "
@@ -172,7 +166,6 @@ public class ChampionshipService {
         link.setChampionshipId(championshipId);
         link.setEventId(request.eventId());
         link.setRoundNumber(request.roundNumber());
-        link.setCreatedAt(Instant.now());
         ChampionshipEventLink saved = eventLinkRepository.save(link);
         audit.entry(actor, "CHAMPIONSHIP_EVENT_LINKED").entity("championship", championshipId).event(saved.getEventId())
                 .summary("Linked " + eventName(saved.getEventId()) + " to championship "
@@ -239,7 +232,6 @@ public class ChampionshipService {
         x.setEventId(request.eventId());
         x.setReason(request.reason());
         x.setCreatedBy(actor.userId());
-        x.setCreatedAt(Instant.now());
         ChampionshipExclusion saved = exclusionRepository.save(x);
         audit.entry(actor, "CHAMPIONSHIP_EXCLUSION_ADDED").entity("championship", championshipId).event(saved.getEventId())
                 .summary("Excluded " + competitorName(saved.getDriverId()) + " from " + eventName(saved.getEventId())

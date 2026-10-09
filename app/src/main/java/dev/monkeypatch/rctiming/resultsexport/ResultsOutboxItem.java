@@ -1,9 +1,10 @@
 package dev.monkeypatch.rctiming.resultsexport;
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
 import java.time.Instant;
 
 /** A results export waiting to go to RaceHub, or already sent (#27). */
-public class ResultsOutboxItem {
+public class ResultsOutboxItem implements CreatedAt {
 
     private Long id;
 

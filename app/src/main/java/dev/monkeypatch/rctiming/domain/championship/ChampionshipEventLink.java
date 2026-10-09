@@ -1,9 +1,10 @@
 package dev.monkeypatch.rctiming.domain.championship;
 
 
+import dev.monkeypatch.rctiming.persistence.CreatedAt;
 import java.time.Instant;
 
-public class ChampionshipEventLink {
+public class ChampionshipEventLink implements CreatedAt {
 
     private Long id;
 

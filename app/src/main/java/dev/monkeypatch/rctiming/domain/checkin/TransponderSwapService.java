@@ -100,7 +100,6 @@ public class TransponderSwapService {
             }
         }
         Instant now = Instant.now();
-        entry.setUpdatedAt(now);
         entryRepository.save(entry);
         writeAudit(entry.getId(), actingUserId, slot, oldNumber, normalized, now);
         return new SwapResult.Success(entry, slot, oldNumber, normalized);
