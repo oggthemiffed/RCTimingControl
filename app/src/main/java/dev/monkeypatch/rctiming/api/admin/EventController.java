@@ -14,7 +14,6 @@ import dev.monkeypatch.rctiming.query.event.AdminEventListDto;
 import dev.monkeypatch.rctiming.query.event.AdminEventQueryService;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.service.EventRunOrderService;
-import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -93,17 +92,7 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public ResponseEntity<Void> generateRounds(Authentication auth, @PathVariable Long id,
                                                @Valid @RequestBody GenerateRoundsRequest req) {
-        RoundGenerationRequest serviceReq = new RoundGenerationRequest(
-                id,
-                req.practiceRoundsCount(),
-                req.qualifyingRoundsCount(),
-                req.maxCarsPerHeat(),
-                req.classFinalsConfigs().stream()
-                   .map(c -> new RoundGenerationRequest.ClassFinalsConfig(
-                           c.eventClassId(), c.finalsCount(), c.carsPerFinal(), c.bumpCount()))
-                   .toList()
-        );
-        runOrderService.generateRounds(CurrentOfficial.actor(auth), serviceReq);
+        runOrderService.generateRounds(CurrentOfficial.actor(auth), req.toServiceRequest(id));
         return ResponseEntity.noContent().build();
     }
 
