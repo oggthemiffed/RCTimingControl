@@ -11,6 +11,8 @@ import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,8 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class BumpUpSeedingService {
+
+    private static final Logger log = LoggerFactory.getLogger(BumpUpSeedingService.class);
 
     private final RaceRepository raceRepository;
     private final RaceEntryRepository raceEntryRepository;
@@ -171,7 +175,7 @@ public class BumpUpSeedingService {
      *
      * @param finishedFinalRaceId the Race ID of the final that just finished
      * @param finishingOrder      entry IDs of the finished final's drivers, best first
-     * @return the entry IDs promoted by this call, best first
+     * @return the entry IDs promoted by this call, best first; none when there is no higher final
      */
     public List<Long> applyBumpUpResults(Long finishedFinalRaceId, List<Long> finishingOrder) {
         Race finishedRace = raceRepository.findById(finishedFinalRaceId)
@@ -184,12 +188,11 @@ public class BumpUpSeedingService {
                     "Race " + finishedFinalRaceId + " is not a final");
         }
 
-        // Next higher final: 'C' → 'B', 'B' → 'A'
+        // Next higher final: 'C' → 'B', 'B' → 'A'. With none there is nobody to move up; this runs inside the
+        // finish, so it must not throw for that (the finish would be rolled back, #217)
         char nextChar = (char) (currentLetter.charAt(0) - 1);
         if (nextChar < 'A') {
-            throw new IllegalArgumentException(
-                    "No higher final above " + currentLetter
-                    + " for race " + finishedFinalRaceId);
+            return List.of();
         }
         String nextFinalLetter = String.valueOf(nextChar);
 
@@ -197,9 +200,9 @@ public class BumpUpSeedingService {
         List<Race> nextFinals = raceRepository.findByEventClassIdAndFinalLetter(
                 finishedRace.getEventClassId(), nextFinalLetter);
         if (nextFinals.isEmpty()) {
-            throw new IllegalStateException(
-                    "No " + nextFinalLetter + "-final found for event class "
-                    + finishedRace.getEventClassId());
+            log.warn("Bump-up: no {} final for event class {}, so nobody moves up from race {}",
+                    nextFinalLetter, finishedRace.getEventClassId(), finishedFinalRaceId);
+            return List.of();
         }
         Race nextFinal = nextFinals.get(0);
 

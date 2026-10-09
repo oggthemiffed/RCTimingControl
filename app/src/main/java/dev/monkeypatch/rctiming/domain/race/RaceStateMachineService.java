@@ -218,13 +218,10 @@ public class RaceStateMachineService {
             return;
         }
 
-        try {
-            roundGeneratorService.applyPreviousRoundFinishingOrder(nextRace.get().getId(), finishingEntryIds);
-            log.info("Applied finishing order from race {} to next race {}", finishedRace.getId(), nextRace.get().getId());
-        } catch (Exception e) {
-            log.warn("Failed to apply finishing order from race {} to next race {}: {}",
-                    finishedRace.getId(), nextRace.get().getId(), e.getMessage());
-        }
+        // Not caught: the service joins the finish's transaction, so a failure there already marks it for
+        // rollback, and catching it would only turn the error into a failed commit (#217)
+        roundGeneratorService.applyPreviousRoundFinishingOrder(nextRace.get().getId(), finishingEntryIds);
+        log.info("Applied finishing order from race {} to next race {}", finishedRace.getId(), nextRace.get().getId());
     }
 
     /**
@@ -251,14 +248,11 @@ public class RaceStateMachineService {
                 .map(LiveTimingRowDto::entryId)
                 .toList();
 
-        try {
-            List<Long> promoted = bumpUpSeedingService.applyBumpUpResults(finishedFinalRace.getId(), finishers);
-            log.info("Bump-up: promoted {} from {}-final race {}", promoted, letter, finishedFinalRace.getId());
-            if (!promoted.isEmpty()) {
-                liveTimingHub.broadcastBumpUpAlert(finishedFinalRace.getId(), promoted);
-            }
-        } catch (Exception e) {
-            log.warn("Bump-up promotion failed for final race {}: {}", finishedFinalRace.getId(), e.getMessage());
+        // Not caught, as above: no higher final is an empty result, not an error
+        List<Long> promoted = bumpUpSeedingService.applyBumpUpResults(finishedFinalRace.getId(), finishers);
+        log.info("Bump-up: promoted {} from {}-final race {}", promoted, letter, finishedFinalRace.getId());
+        if (!promoted.isEmpty()) {
+            liveTimingHub.broadcastBumpUpAlert(finishedFinalRace.getId(), promoted);
         }
     }
 }

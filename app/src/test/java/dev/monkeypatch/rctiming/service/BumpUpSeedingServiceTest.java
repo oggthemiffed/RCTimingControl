@@ -216,6 +216,19 @@ class BumpUpSeedingServiceTest {
                 .containsExactly(502L);
     }
 
+    @Test
+    void applyBumpUpResults_withNoHigherFinal_promotesNobodyAndDoesNotThrow() {
+        Race aFinal = finalRace(201L, "A");
+        Race bFinal = finalRace(200L, "B");
+        when(raceRepository.findById(aFinal.getId())).thenReturn(Optional.of(aFinal));
+        when(raceRepository.findById(bFinal.getId())).thenReturn(Optional.of(bFinal));
+        when(raceRepository.findByEventClassIdAndFinalLetter(10L, "A")).thenReturn(List.of());
+
+        assertThat(service().applyBumpUpResults(aFinal.getId(), List.of(501L))).isEmpty();
+        assertThat(service().applyBumpUpResults(bFinal.getId(), List.of(501L))).as("no A final in the class").isEmpty();
+        verify(raceEntryRepository, never()).save(any());
+    }
+
     private static Race finalRace(long id, String letter) {
         Race race = new Race();
         race.setId(id);
