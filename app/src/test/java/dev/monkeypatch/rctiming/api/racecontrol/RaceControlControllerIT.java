@@ -30,6 +30,7 @@ import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
+import dev.monkeypatch.rctiming.timing.LapTimingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,7 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
     @Autowired RacingClassRepository racingClassRepository;
     @Autowired EventClassRepository eventClassRepository;
     @Autowired EventRepository eventRepository;
+    @Autowired LapTimingService lapTimingService;
 
     private String directorToken;
 
@@ -187,6 +189,31 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
                 "/api/v1/race-control/race/" + race.getId() + "/result-snapshot",
                 HttpMethod.GET, new HttpEntity<>(directorHeaders()), Map.class);
         assertThat(snapshot.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    /**
+     * Finishing a B final runs the bump-up inside the finish's transaction. With no A final in the class
+     * there is nobody to move up, and the finish must still commit rather than be rolled back (#217).
+     */
+    @Test
+    void finishRace_ofABFinalWithNoAFinal_stillFinishes() {
+        RoundWithClass rwc = seedRoundWithClass();
+        Round finals = rwc.round();
+        finals.setType(RoundType.FINAL);
+        roundRepository.save(finals);
+        Race bFinal = seedRaceInRound(finals, rwc.eventClassId(), 1, RaceStatus.RUNNING);
+        bFinal.setFinalLetter("B");
+        raceRepository.save(bFinal);
+        lapTimingService.stateFor(bFinal.getId()); // the bump-up only runs for a race with live timing
+
+        ResponseEntity<Void> resp = restTemplate.exchange(
+                "/api/v1/race-control/race/" + bFinal.getId() + "/finish",
+                HttpMethod.POST, new HttpEntity<>(directorHeaders()), Void.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
+        Race reloaded = raceRepository.findById(bFinal.getId()).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(RaceStatus.FINISHED);
+        assertThat(reloaded.getFinishedAt()).isNotNull();
     }
 
     @Test
