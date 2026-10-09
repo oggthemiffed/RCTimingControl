@@ -233,7 +233,7 @@ public class RoundGeneratorService {
             // Run order: lowest final first (C runs before B before A).
             // We create rounds in A→B→C order here; the sequenceInEvent determines run order.
             for (EventClass ec : eventClasses) {
-                int finalsCount = resolveFinalsConfig(ec).finalsCount();
+                int finalsCount = resolveFinalsCount(ec);
                 // finals run lowest-first (C→B→A), so we persist C first with lower sequence
                 // Actually we store them A=1, B=2, C=3 in finalLetter, but run C first by
                 // assigning sequenceInEvent in reverse (C gets lower seq than B, B lower than A).
@@ -267,27 +267,13 @@ public class RoundGeneratorService {
 
         // --- Config helpers ---
 
-        private FinalsConfig resolveFinalsConfig(EventClass ec) {
-            // Look for per-class override in request first
+        /** A class's finals count, from the request's override, then the class, then one final. */
+        private int resolveFinalsCount(EventClass ec) {
             ClassFinalsConfig override = request.classFinalsConfigs().stream()
                     .filter(c -> ec.getId().equals(c.eventClassId()))
                     .findFirst()
                     .orElse(null);
-
-            int finalsCount = coalesce(
-                    override != null ? override.finalsCount() : null,
-                    ec.getFinalsCount(),
-                    1);
-            int carsPerFinal = coalesce(
-                    override != null ? override.carsPerFinal() : null,
-                    ec.getCarsPerFinal(),
-                    request.maxCarsPerHeat());
-            int bumpCount = coalesce(
-                    override != null ? override.bumpCount() : null,
-                    ec.getBumpCount(),
-                    0);
-
-            return new FinalsConfig(finalsCount, carsPerFinal, bumpCount);
+            return coalesce(override != null ? override.finalsCount() : null, ec.getFinalsCount(), 1);
         }
 
         private int coalesce(Integer... values) {
@@ -296,9 +282,5 @@ public class RoundGeneratorService {
             }
             return 0;
         }
-    }
-
-    /** A class's finals, from the request's override, then the class, then the defaults. */
-    private record FinalsConfig(int finalsCount, int carsPerFinal, int bumpCount) {
     }
 }
