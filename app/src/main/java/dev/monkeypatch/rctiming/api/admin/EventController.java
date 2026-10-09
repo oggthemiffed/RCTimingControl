@@ -69,7 +69,8 @@ public class EventController {
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public EventDto createEvent(Authentication auth, @RequestBody @Valid CreateEventRequest request) {
-        return eventService.create(CurrentOfficial.actor(auth), request);
+        return EventDto.from(eventService.create(CurrentOfficial.actor(auth),
+                request.name(), request.eventDate(), request.trackId()));
     }
 
     @Audited("audit_log")
@@ -77,7 +78,8 @@ public class EventController {
     @PreAuthorize("hasRole('ADMIN')")
     public EventDto updateEvent(Authentication auth, @PathVariable Long id,
                                  @RequestBody @Valid UpdateEventRequest request) {
-        return eventService.update(CurrentOfficial.actor(auth), id, request);
+        return EventDto.from(eventService.update(CurrentOfficial.actor(auth), id,
+                request.name(), request.eventDate(), request.trackId()));
     }
 
     @Audited("audit_log")
@@ -85,7 +87,7 @@ public class EventController {
     @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR')")
     public EventDto transitionEvent(Authentication auth, @PathVariable Long id,
                                      @RequestBody @Valid TransitionEventRequest request) {
-        return eventService.transition(CurrentOfficial.actor(auth), id, request.targetStatus());
+        return EventDto.from(eventService.transition(CurrentOfficial.actor(auth), id, request.targetStatus()));
     }
 
     @Audited("audit_log")
