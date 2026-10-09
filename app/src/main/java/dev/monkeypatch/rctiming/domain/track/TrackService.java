@@ -108,10 +108,10 @@ public class TrackService {
         return saved;
     }
 
-    public void deleteDecoderLoop(Actor actor, Long loopId) {
-        DecoderLoop loop = decoderLoopRepository.getOrThrow(loopId);
-        decoderLoopRepository.deleteById(loopId);
-        audit.entry(actor, "DECODER_LOOP_DELETED").entity("decoder_loop", loopId)
+    public void deleteDecoderLoop(Actor actor, Long id) {
+        DecoderLoop loop = decoderLoopRepository.getOrThrow(id);
+        decoderLoopRepository.deleteById(id);
+        audit.entry(actor, "DECODER_LOOP_DELETED").entity("decoder_loop", id)
                 .summary("Removed decoder loop " + loopLabel(loop) + " from " + trackName(loop.getTrackId()))
                 .before(loopValues(loop)).record();
     }
