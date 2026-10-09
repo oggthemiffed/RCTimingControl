@@ -1,9 +1,6 @@
 package dev.monkeypatch.rctiming.domain.entry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.monkeypatch.rctiming.api.admin.dto.AdminCreateEntryRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.EntryDto;
-import dev.monkeypatch.rctiming.api.admin.dto.EntryResult;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorService;
@@ -26,6 +23,16 @@ import java.util.Map;
 @Service
 @Transactional
 public class EntryService {
+
+    /**
+     * A walk-in to add: an existing {@code competitorId} or a {@code competitorName} for a new competitor, and
+     * {@code confirmNewCompetitor} when a new name that matches someone is a different person (#123).
+     */
+    public record WalkIn(Long eventId, Long eventClassId, Long competitorId, String competitorName,
+                         String primaryTransponder, String secondaryTransponder, Boolean confirmNewCompetitor) {}
+
+    /** The walk-in's entry, and warnings such as a transponder already used in the event. */
+    public record WalkInResult(Entry entry, List<String> warnings) {}
 
     private final EntryRepository entryRepository;
     private final EventRepository eventRepository;
@@ -57,7 +64,7 @@ public class EntryService {
      * no external source. A transponder another active entry in the event already uses is a
      * warning, not an error. Class membership rules are not checked: staff add walk-ins on the day.
      */
-    public EntryResult adminCreateEntry(Long adminUserId, AdminCreateEntryRequest req) {
+    public WalkInResult adminCreateEntry(Long adminUserId, WalkIn req) {
         Event event = eventRepository.getOrThrow(req.eventId());
         if (event.getStatus() == EventStatus.COMPLETED) {
             throw new StateConflictException("Event is completed");
@@ -130,10 +137,10 @@ public class EntryService {
         String afterJson = EntryAuditLog.snapshot(objectMapper, created);
         auditLogRepository.save(
                 EntryAuditLog.of(persisted.getId(), adminUserId, "ADMIN_CREATE", null, null, afterJson, now));
-        return new EntryResult(EntryDto.from(persisted), warnings);
+        return new WalkInResult(persisted, warnings);
     }
 
-    public EntryDto adminWithdraw(Long entryId, Long adminUserId, String reason) {
+    public Entry adminWithdraw(Long entryId, Long adminUserId, String reason) {
         Entry entry = entryRepository.getOrThrow(entryId);
         if (entry.getStatus() == EntryStatus.WITHDRAWN) {
             throw new StateConflictException("Entry already withdrawn");
@@ -146,6 +153,6 @@ public class EntryService {
         String afterJson = EntryAuditLog.snapshot(objectMapper, Map.of("status", EntryStatus.WITHDRAWN.name()));
         auditLogRepository.save(EntryAuditLog.of(entry.getId(), adminUserId, "ADMIN_WITHDRAW", reason,
                 beforeJson, afterJson, now));
-        return EntryDto.from(entry);
+        return entry;
     }
 }

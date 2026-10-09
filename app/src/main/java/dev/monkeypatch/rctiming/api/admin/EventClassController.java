@@ -38,7 +38,8 @@ public class EventClassController {
     @ResponseStatus(HttpStatus.CREATED)
     public EventClassDto addClassToEvent(Authentication auth, @PathVariable Long eventId,
                                           @RequestBody @Valid AddEventClassRequest request) {
-        return eventClassService.addClassToEvent(CurrentOfficial.actor(auth), eventId, request);
+        return EventClassDto.from(eventClassService.addClassToEvent(CurrentOfficial.actor(auth), eventId,
+                request.racingClassId(), request.templateId()));
     }
 
     @Audited("audit_log")
@@ -47,7 +48,8 @@ public class EventClassController {
     public EventClassDto updateOverrides(Authentication auth, @PathVariable Long eventId,
                                           @PathVariable Long classId,
                                           @RequestBody @Valid UpdateEventClassOverrideRequest request) {
-        return eventClassService.updateOverrides(CurrentOfficial.actor(auth), classId, request);
+        return EventClassDto.from(eventClassService.updateOverrides(CurrentOfficial.actor(auth), classId,
+                request.override()));
     }
 
     @Audited("audit_log")
@@ -55,6 +57,8 @@ public class EventClassController {
     @PreAuthorize("hasRole('ADMIN')")
     public List<EventClassDto> combineClasses(Authentication auth, @PathVariable Long eventId,
                                                @RequestBody @Valid CombineClassesRequest request) {
-        return eventClassService.combineClasses(CurrentOfficial.actor(auth), eventId, request.eventClassIds());
+        return eventClassService.combineClasses(CurrentOfficial.actor(auth), eventId, request.eventClassIds()).stream()
+                .map(EventClassDto::from)
+                .toList();
     }
 }

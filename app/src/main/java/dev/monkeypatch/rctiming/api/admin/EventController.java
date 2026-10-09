@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.api.admin;
 
 import dev.monkeypatch.rctiming.api.admin.dto.CreateEventRequest;
+import dev.monkeypatch.rctiming.api.admin.dto.EventClassDto;
 import dev.monkeypatch.rctiming.api.admin.dto.EventDetailDto;
 import dev.monkeypatch.rctiming.api.admin.dto.EventDto;
 import dev.monkeypatch.rctiming.api.admin.dto.GenerateRoundsRequest;
@@ -59,7 +60,7 @@ public class EventController {
     public EventDetailDto getEvent(@PathVariable Long id) {
         return EventDetailDto.from(
             eventService.findByIdOrThrow(id),
-            eventClassService.listClassesForEvent(id)
+            eventClassService.listClassesForEvent(id).stream().map(EventClassDto::from).toList()
         );
     }
 
