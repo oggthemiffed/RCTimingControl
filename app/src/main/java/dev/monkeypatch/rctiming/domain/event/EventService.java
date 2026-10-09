@@ -1,14 +1,12 @@
 package dev.monkeypatch.rctiming.domain.event;
 
-import dev.monkeypatch.rctiming.api.admin.dto.CreateEventRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.EventDto;
-import dev.monkeypatch.rctiming.api.admin.dto.UpdateEventRequest;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -31,37 +29,37 @@ public class EventService {
         this.audit = audit;
     }
 
-    public EventDto create(Actor actor, CreateEventRequest request) {
+    public Event create(Actor actor, String name, LocalDate eventDate, Long trackId) {
         Event event = new Event();
-        event.setName(request.name());
-        event.setEventDate(request.eventDate());
-        event.setTrackId(request.trackId());
+        event.setName(name);
+        event.setEventDate(eventDate);
+        event.setTrackId(trackId);
         event.setStatus(EventStatus.DRAFT);
         Event saved = eventRepository.save(event);
         audit.entry(actor, "EVENT_CREATED").entity("event", saved.getId()).event(saved.getId())
                 .summary("Created event " + saved.getName())
                 .after(detailsOf(saved)).record();
-        return EventDto.from(saved);
+        return saved;
     }
 
-    public EventDto update(Actor actor, Long id, UpdateEventRequest request) {
+    public Event update(Actor actor, Long id, String name, LocalDate eventDate, Long trackId) {
         Event event = getEventOrThrow(id);
         if (event.getStatus() != EventStatus.DRAFT) {
             throw new IllegalStateTransitionException(
                 "Event details can only be updated while in DRAFT status");
         }
         Map<String, Object> before = detailsOf(event);
-        event.setName(request.name());
-        event.setEventDate(request.eventDate());
-        event.setTrackId(request.trackId());
+        event.setName(name);
+        event.setEventDate(eventDate);
+        event.setTrackId(trackId);
         Event saved = eventRepository.save(event);
         audit.entry(actor, "EVENT_UPDATED").entity("event", id).event(id)
                 .summary("Changed the details of event " + saved.getName())
                 .before(before).after(detailsOf(saved)).record();
-        return EventDto.from(saved);
+        return saved;
     }
 
-    public EventDto transition(Actor actor, Long id, EventStatus targetStatus) {
+    public Event transition(Actor actor, Long id, EventStatus targetStatus) {
         Event event = getEventOrThrow(id);
         EventStatus from = event.getStatus();
         stateMachineService.transition(event, targetStatus);
@@ -75,7 +73,7 @@ public class EventService {
         if (completed) {
             events.publishEvent(new EventCompleted(event.getId()));
         }
-        return EventDto.from(saved);
+        return saved;
     }
 
     /**
