@@ -1,6 +1,6 @@
 package dev.monkeypatch.rctiming.api.pub;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.query.racecontrol.ResultSnapshotQuery;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

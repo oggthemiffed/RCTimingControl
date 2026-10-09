@@ -1,8 +1,8 @@
 package dev.monkeypatch.rctiming.query.resultsexport;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.ExternalSources;
 import dev.monkeypatch.rctiming.domain.race.PenaltyType;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotJson;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import dev.monkeypatch.rctiming.query.championship.ChampionshipStandingsQuery;

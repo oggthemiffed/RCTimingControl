@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.service;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
@@ -9,6 +8,7 @@ import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotJson;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
