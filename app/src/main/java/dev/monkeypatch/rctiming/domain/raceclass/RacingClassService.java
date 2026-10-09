@@ -1,7 +1,5 @@
 package dev.monkeypatch.rctiming.domain.raceclass;
 
-import dev.monkeypatch.rctiming.api.admin.dto.CreateRacingClassRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.RacingClassDto;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 
@@ -25,38 +23,36 @@ public class RacingClassService {
     }
 
     @Transactional(readOnly = true)
-    public List<RacingClassDto> findAll() {
-        return racingClassRepository.findAll().stream()
-                .map(RacingClassDto::from)
-                .toList();
+    public List<RacingClass> findAll() {
+        return racingClassRepository.findAll();
     }
 
     @Transactional(readOnly = true)
-    public RacingClassDto findById(Long id) {
-        return RacingClassDto.from(getRacingClassOrThrow(id));
+    public RacingClass findById(Long id) {
+        return getRacingClassOrThrow(id);
     }
 
-    public RacingClassDto create(Actor actor, CreateRacingClassRequest request) {
+    public RacingClass create(Actor actor, String name, String description) {
         RacingClass racingClass = new RacingClass();
-        racingClass.setName(request.name());
-        racingClass.setDescription(request.description());
+        racingClass.setName(name);
+        racingClass.setDescription(description);
         RacingClass saved = racingClassRepository.save(racingClass);
         audit.entry(actor, "CLASS_CREATED").entity("racing_class", saved.getId())
                 .summary("Added the class " + saved.getName())
                 .after(values(saved)).record();
-        return RacingClassDto.from(saved);
+        return saved;
     }
 
-    public RacingClassDto update(Actor actor, Long id, CreateRacingClassRequest request) {
+    public RacingClass update(Actor actor, Long id, String name, String description) {
         RacingClass racingClass = getRacingClassOrThrow(id);
         Map<String, Object> before = values(racingClass);
-        racingClass.setName(request.name());
-        racingClass.setDescription(request.description());
+        racingClass.setName(name);
+        racingClass.setDescription(description);
         RacingClass saved = racingClassRepository.save(racingClass);
         audit.entry(actor, "CLASS_UPDATED").entity("racing_class", id)
                 .summary("Changed the class " + saved.getName())
                 .before(before).after(values(saved)).record();
-        return RacingClassDto.from(saved);
+        return saved;
     }
 
     public void delete(Actor actor, Long id) {

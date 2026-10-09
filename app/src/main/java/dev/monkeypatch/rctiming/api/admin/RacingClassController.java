@@ -34,12 +34,12 @@ public class RacingClassController {
 
     @GetMapping
     public List<RacingClassDto> listRacingClasses() {
-        return racingClassService.findAll();
+        return racingClassService.findAll().stream().map(RacingClassDto::from).toList();
     }
 
     @GetMapping("/{id}")
     public RacingClassDto getRacingClass(@PathVariable Long id) {
-        return racingClassService.findById(id);
+        return RacingClassDto.from(racingClassService.findById(id));
     }
 
     @Audited("audit_log")
@@ -47,7 +47,8 @@ public class RacingClassController {
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public RacingClassDto createRacingClass(Authentication auth, @RequestBody @Valid CreateRacingClassRequest request) {
-        return racingClassService.create(CurrentOfficial.actor(auth), request);
+        return RacingClassDto.from(
+                racingClassService.create(CurrentOfficial.actor(auth), request.name(), request.description()));
     }
 
     @Audited("audit_log")
@@ -55,7 +56,8 @@ public class RacingClassController {
     @PreAuthorize("hasRole('ADMIN')")
     public RacingClassDto updateRacingClass(Authentication auth, @PathVariable Long id,
                                              @RequestBody @Valid CreateRacingClassRequest request) {
-        return racingClassService.update(CurrentOfficial.actor(auth), id, request);
+        return RacingClassDto.from(
+                racingClassService.update(CurrentOfficial.actor(auth), id, request.name(), request.description()));
     }
 
     @Audited("audit_log")

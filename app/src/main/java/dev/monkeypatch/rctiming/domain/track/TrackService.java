@@ -1,16 +1,9 @@
 package dev.monkeypatch.rctiming.domain.track;
 
-import dev.monkeypatch.rctiming.api.admin.dto.CreateDecoderLoopRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.CreateThresholdRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.CreateTrackRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.DecoderLoopDto;
-import dev.monkeypatch.rctiming.api.admin.dto.TrackDto;
-import dev.monkeypatch.rctiming.api.admin.dto.TrackLapThresholdDto;
-import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
-import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
-
+import dev.monkeypatch.rctiming.domain.raceclass.RacingClass;
+import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,40 +34,38 @@ public class TrackService {
     }
 
     @Transactional(readOnly = true)
-    public List<TrackDto> findAll() {
-        return trackRepository.findAll().stream()
-                .map(TrackDto::from)
-                .toList();
+    public List<Track> findAll() {
+        return trackRepository.findAll();
     }
 
     @Transactional(readOnly = true)
-    public TrackDto findById(Long id) {
-        return TrackDto.from(getTrackOrThrow(id));
+    public Track findById(Long id) {
+        return getTrackOrThrow(id);
     }
 
-    public TrackDto create(Actor actor, CreateTrackRequest request) {
+    public Track create(Actor actor, String name, String venueNotes, Double trackLength) {
         Track track = new Track();
-        track.setName(request.name());
-        track.setVenueNotes(request.venueNotes());
-        track.setTrackLength(request.trackLength());
+        track.setName(name);
+        track.setVenueNotes(venueNotes);
+        track.setTrackLength(trackLength);
         Track saved = trackRepository.save(track);
         audit.entry(actor, "TRACK_CREATED").entity("track", saved.getId())
                 .summary("Added the track " + saved.getName())
                 .after(trackValues(saved)).record();
-        return TrackDto.from(saved);
+        return saved;
     }
 
-    public TrackDto update(Actor actor, Long id, CreateTrackRequest request) {
+    public Track update(Actor actor, Long id, String name, String venueNotes, Double trackLength) {
         Track track = getTrackOrThrow(id);
         Map<String, Object> before = trackValues(track);
-        track.setName(request.name());
-        track.setVenueNotes(request.venueNotes());
-        track.setTrackLength(request.trackLength());
+        track.setName(name);
+        track.setVenueNotes(venueNotes);
+        track.setTrackLength(trackLength);
         Track saved = trackRepository.save(track);
         audit.entry(actor, "TRACK_UPDATED").entity("track", id)
                 .summary("Changed the track " + saved.getName())
                 .before(before).after(trackValues(saved)).record();
-        return TrackDto.from(saved);
+        return saved;
     }
 
     public void delete(Actor actor, Long id) {
@@ -86,33 +77,35 @@ public class TrackService {
                 .before(before).record();
     }
 
-    public DecoderLoopDto addDecoderLoop(Actor actor, Long trackId, CreateDecoderLoopRequest request) {
+    public DecoderLoop addDecoderLoop(Actor actor, Long trackId, String loopId, String displayName,
+                                      LoopType loopType, boolean scoringLoop) {
         Track track = getTrackOrThrow(trackId);
         DecoderLoop loop = new DecoderLoop();
         loop.setTrackId(track.getId());
-        loop.setLoopId(request.loopId());
-        loop.setDisplayName(request.displayName());
-        loop.setLoopType(request.loopType());
-        loop.setScoringLoop(request.isScoringLoop());
+        loop.setLoopId(loopId);
+        loop.setDisplayName(displayName);
+        loop.setLoopType(loopType);
+        loop.setScoringLoop(scoringLoop);
         DecoderLoop saved = decoderLoopRepository.save(loop);
         audit.entry(actor, "DECODER_LOOP_ADDED").entity("decoder_loop", saved.getId())
                 .summary("Added decoder loop " + loopLabel(saved) + " to " + track.getName())
                 .after(loopValues(saved)).record();
-        return DecoderLoopDto.from(saved);
+        return saved;
     }
 
-    public DecoderLoopDto updateDecoderLoop(Actor actor, Long loopId, CreateDecoderLoopRequest request) {
-        DecoderLoop loop = decoderLoopRepository.getOrThrow(loopId);
+    public DecoderLoop updateDecoderLoop(Actor actor, Long id, String loopId, String displayName,
+                                         LoopType loopType, boolean scoringLoop) {
+        DecoderLoop loop = decoderLoopRepository.getOrThrow(id);
         Map<String, Object> before = loopValues(loop);
-        loop.setLoopId(request.loopId());
-        loop.setDisplayName(request.displayName());
-        loop.setLoopType(request.loopType());
-        loop.setScoringLoop(request.isScoringLoop());
+        loop.setLoopId(loopId);
+        loop.setDisplayName(displayName);
+        loop.setLoopType(loopType);
+        loop.setScoringLoop(scoringLoop);
         DecoderLoop saved = decoderLoopRepository.save(loop);
-        audit.entry(actor, "DECODER_LOOP_UPDATED").entity("decoder_loop", loopId)
+        audit.entry(actor, "DECODER_LOOP_UPDATED").entity("decoder_loop", id)
                 .summary("Changed decoder loop " + loopLabel(saved) + " of " + trackName(saved.getTrackId()))
                 .before(before).after(loopValues(saved)).record();
-        return DecoderLoopDto.from(saved);
+        return saved;
     }
 
     public void deleteDecoderLoop(Actor actor, Long loopId) {
@@ -123,28 +116,29 @@ public class TrackService {
                 .before(loopValues(loop)).record();
     }
 
-    public TrackLapThresholdDto setLapThreshold(Actor actor, Long trackId, CreateThresholdRequest request) {
+    public TrackLapThreshold setLapThreshold(Actor actor, Long trackId, Long racingClassId, Integer minLapMs,
+                                             Integer maxLastLapMs) {
         Track track = getTrackOrThrow(trackId);
 
         // Find existing threshold for this track + class combination (upsert)
         TrackLapThreshold threshold;
-        if (request.racingClassId() == null) {
+        if (racingClassId == null) {
             threshold = thresholdRepository.findByTrackIdAndRacingClassIsNull(trackId)
                     .orElseGet(TrackLapThreshold::new);
         } else {
             threshold = thresholdRepository
-                    .findByTrackIdAndRacingClassId(trackId, request.racingClassId())
+                    .findByTrackIdAndRacingClassId(trackId, racingClassId)
                     .orElseGet(TrackLapThreshold::new);
         }
 
         boolean isNew = threshold.getId() == null;
         Map<String, Object> before = isNew ? null : thresholdValues(threshold);
         threshold.setTrackId(track.getId());
-        threshold.setMinLapMs(request.minLapMs());
-        threshold.setMaxLastLapMs(request.maxLastLapMs());
+        threshold.setMinLapMs(minLapMs);
+        threshold.setMaxLastLapMs(maxLastLapMs);
 
-        if (request.racingClassId() != null) {
-            RacingClass racingClass = racingClassRepository.getOrThrow(request.racingClassId());
+        if (racingClassId != null) {
+            RacingClass racingClass = racingClassRepository.getOrThrow(racingClassId);
             threshold.setRacingClassId(racingClass.getId());
             threshold.setRacingClassName(racingClass.getName());
         } else {
@@ -158,7 +152,7 @@ public class TrackService {
                 .summary("Set the lap thresholds for " + (saved.getRacingClassName() == null ? "every class"
                         : saved.getRacingClassName()) + " on " + track.getName())
                 .before(before).after(thresholdValues(saved)).record();
-        return TrackLapThresholdDto.from(saved);
+        return saved;
     }
 
     public void deleteLapThreshold(Actor actor, Long thresholdId) {

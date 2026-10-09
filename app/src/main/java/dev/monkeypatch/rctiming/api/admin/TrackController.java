@@ -38,12 +38,12 @@ public class TrackController {
 
     @GetMapping
     public List<TrackDto> listTracks() {
-        return trackService.findAll();
+        return trackService.findAll().stream().map(TrackDto::from).toList();
     }
 
     @GetMapping("/{id}")
     public TrackDto getTrack(@PathVariable Long id) {
-        return trackService.findById(id);
+        return TrackDto.from(trackService.findById(id));
     }
 
     @Audited("audit_log")
@@ -51,14 +51,16 @@ public class TrackController {
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public TrackDto createTrack(Authentication auth, @RequestBody @Valid CreateTrackRequest request) {
-        return trackService.create(CurrentOfficial.actor(auth), request);
+        return TrackDto.from(trackService.create(CurrentOfficial.actor(auth),
+                request.name(), request.venueNotes(), request.trackLength()));
     }
 
     @Audited("audit_log")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public TrackDto updateTrack(Authentication auth, @PathVariable Long id, @RequestBody @Valid CreateTrackRequest request) {
-        return trackService.update(CurrentOfficial.actor(auth), id, request);
+        return TrackDto.from(trackService.update(CurrentOfficial.actor(auth), id,
+                request.name(), request.venueNotes(), request.trackLength()));
     }
 
     @Audited("audit_log")
@@ -75,7 +77,8 @@ public class TrackController {
     @ResponseStatus(HttpStatus.CREATED)
     public DecoderLoopDto addDecoderLoop(Authentication auth, @PathVariable Long trackId,
                                           @RequestBody @Valid CreateDecoderLoopRequest request) {
-        return trackService.addDecoderLoop(CurrentOfficial.actor(auth), trackId, request);
+        return DecoderLoopDto.from(trackService.addDecoderLoop(CurrentOfficial.actor(auth), trackId,
+                request.loopId(), request.displayName(), request.loopType(), request.isScoringLoop()));
     }
 
     @Audited("audit_log")
@@ -83,7 +86,8 @@ public class TrackController {
     @PreAuthorize("hasRole('ADMIN')")
     public DecoderLoopDto updateDecoderLoop(Authentication auth, @PathVariable Long loopId,
                                              @RequestBody @Valid CreateDecoderLoopRequest request) {
-        return trackService.updateDecoderLoop(CurrentOfficial.actor(auth), loopId, request);
+        return DecoderLoopDto.from(trackService.updateDecoderLoop(CurrentOfficial.actor(auth), loopId,
+                request.loopId(), request.displayName(), request.loopType(), request.isScoringLoop()));
     }
 
     @Audited("audit_log")
@@ -100,7 +104,8 @@ public class TrackController {
     @ResponseStatus(HttpStatus.CREATED)
     public TrackLapThresholdDto setLapThreshold(Authentication auth, @PathVariable Long trackId,
                                                  @RequestBody @Valid CreateThresholdRequest request) {
-        return trackService.setLapThreshold(CurrentOfficial.actor(auth), trackId, request);
+        return TrackLapThresholdDto.from(trackService.setLapThreshold(CurrentOfficial.actor(auth), trackId,
+                request.racingClassId(), request.minLapMs(), request.maxLastLapMs()));
     }
 
     @Audited("audit_log")
