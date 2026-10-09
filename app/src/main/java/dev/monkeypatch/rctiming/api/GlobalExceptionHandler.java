@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.api;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorMergeRefusedException;
 import dev.monkeypatch.rctiming.domain.competitor.PossibleDuplicateCompetitorException;
 import dev.monkeypatch.rctiming.domain.user.OfficialChangeRefusedException;
@@ -12,6 +13,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.DateTimeException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +78,22 @@ public class GlobalExceptionHandler {
                         fe -> fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "Invalid value",
                         (a, b) -> a)));
         return detail;
+    }
+
+    /**
+     * A request body that could not be read, such as a value that is not one of an enum's. The parser's own message
+     * names classes, so only the field and the values it takes are passed on.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ProblemDetail handleUnreadableBody(HttpMessageNotReadableException ex) {
+        if (ex.getCause() instanceof InvalidFormatException invalid && invalid.getTargetType().isEnum()
+                && !invalid.getPath().isEmpty()) {
+            String field = invalid.getPath().get(invalid.getPath().size() - 1).getFieldName();
+            return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, field + " must be one of "
+                    + Arrays.toString(invalid.getTargetType().getEnumConstants()) + ", got: " + invalid.getValue());
+        }
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "The request body could not be read");
     }
 
     /** A unique value is taken, such as a second racing class with the same name. */

@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.query.resultsexport;
 
 import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.ExternalSources;
+import dev.monkeypatch.rctiming.domain.race.PenaltyType;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotJson;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import dev.monkeypatch.rctiming.query.championship.ChampionshipStandingsQuery;
@@ -175,7 +176,7 @@ public class ResultsExportQuery {
             boolean sinceStart = p.appliedAt() != null && (startedAt == null || !p.appliedAt().isBefore(startedAt));
             boolean included = storedWithCorrections
                     ? sinceStart
-                    : "LAP".equals(p.type()) && startedAt != null && sinceStart
+                    : PenaltyType.LAP.name().equals(p.type()) && startedAt != null && sinceStart
                             && (finishedAt == null || !p.appliedAt().isAfter(finishedAt));
             byEntry.computeIfAbsent(p.entryId(), k -> new ArrayList<>())
                     .add(new ResultsExportV1.Penalty(p.type(), plain(p.value()), p.reason(), included));

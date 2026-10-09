@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
+import dev.monkeypatch.rctiming.domain.race.PenaltyType;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import dev.monkeypatch.rctiming.query.audit.AuditActors;
 import org.jooq.DSLContext;
@@ -71,7 +72,7 @@ public class RaceHistoryQuery {
                 .orderBy(PENALTIES.APPLIED_AT, PENALTIES.ID)
                 .fetch(r -> new RaceHistoryDto(r.value1(), "PENALTY", r.value2(), r.value3(),
                         r.value5().stripTrailingZeros().toPlainString()
-                                + ("LAP".equals(r.value4()) ? " lap penalty" : " second time penalty")
+                                + (PenaltyType.LAP.name().equals(r.value4()) ? " lap penalty" : " second time penalty")
                                 + reasonSuffix(r.value6())));
     }
 

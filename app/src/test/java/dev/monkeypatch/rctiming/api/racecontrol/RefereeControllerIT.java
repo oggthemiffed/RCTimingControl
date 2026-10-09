@@ -15,6 +15,7 @@ import dev.monkeypatch.rctiming.domain.race.IncidentReportRepository;
 import dev.monkeypatch.rctiming.domain.race.MarshalAbsenceRepository;
 import dev.monkeypatch.rctiming.domain.race.MarshalPenaltyRepository;
 import dev.monkeypatch.rctiming.domain.race.PenaltyRepository;
+import dev.monkeypatch.rctiming.domain.race.PenaltyType;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
@@ -138,7 +139,8 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(penaltyRepository.findByRaceId(re.race().getId())).hasSize(1);
-        assertThat(penaltyRepository.findByRaceId(re.race().getId()).get(0).getPenaltyType()).isEqualTo("LAP");
+        assertThat(penaltyRepository.findByRaceId(re.race().getId()).get(0).getPenaltyType())
+                .isEqualTo(PenaltyType.LAP);
 
         Map<String, Object> row = onlyAuditRow(re.race().getId(), "PENALTY_APPLIED");
         assertThat(row.get("summary").toString()).contains("LAP penalty of 1");
@@ -165,7 +167,53 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(penaltyRepository.findByRaceId(re.race().getId())).hasSize(1);
-        assertThat(penaltyRepository.findByRaceId(re.race().getId()).get(0).getPenaltyType()).isEqualTo("TIME");
+        assertThat(penaltyRepository.findByRaceId(re.race().getId()).get(0).getPenaltyType())
+                .isEqualTo(PenaltyType.TIME);
+    }
+
+    @Test
+    void applyPenalty_ofAnUnknownType_isRefusedAndRecordsNothing() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+
+        Map<String, Object> body = Map.of(
+                "entryId", re.entry().getId(),
+                "penaltyType", "SPEED",
+                "value", 5,
+                "reason", "Too fast in the pit lane"
+        );
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/race-control/referee/race/" + re.race().getId() + "/penalty",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(body, refereeHeaders()),
+                Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(resp.getBody().get("detail"))
+                .isEqualTo("penaltyType must be one of [LAP, TIME], got: SPEED");
+        assertThat(penaltyRepository.findByRaceId(re.race().getId())).isEmpty();
+        assertThat(jdbc.queryForList("select id from audit_log where race_id = ?", re.race().getId())).isEmpty();
+    }
+
+    @Test
+    void applyLapPenalty_ofMoreLapsThanARaceRuns_isRefusedAndRecordsNothing() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+
+        Map<String, Object> body = Map.of(
+                "entryId", re.entry().getId(),
+                "penaltyType", "LAP",
+                "value", 3_000_000_000L,
+                "reason", "Typed too many zeros"
+        );
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/race-control/referee/race/" + re.race().getId() + "/penalty",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(body, refereeHeaders()),
+                Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(penaltyRepository.findByRaceId(re.race().getId())).isEmpty();
     }
 
     @Test

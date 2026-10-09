@@ -26,7 +26,7 @@ public class PenaltyRepository extends JooqRepository<Penalty, PenaltiesRecord> 
         p.setId(r.getId());
         p.setRaceId(r.getRaceId());
         p.setEntryId(r.getEntryId());
-        p.setPenaltyType(r.getPenaltyType());
+        p.setPenaltyType(PenaltyType.valueOf(r.getPenaltyType()));
         p.setValue(r.getValue());
         p.setReason(r.getReason());
         p.setAppliedBy(r.getAppliedBy());
@@ -38,7 +38,7 @@ public class PenaltyRepository extends JooqRepository<Penalty, PenaltiesRecord> 
     protected void toRecord(Penalty p, PenaltiesRecord r) {
         r.setRaceId(p.getRaceId());
         r.setEntryId(p.getEntryId());
-        r.setPenaltyType(p.getPenaltyType());
+        r.setPenaltyType(p.getPenaltyType().name());
         r.setValue(p.getValue());
         r.setReason(p.getReason());
         r.setAppliedBy(p.getAppliedBy());
