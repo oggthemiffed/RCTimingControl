@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { toast } from 'sonner';
 import CockpitPage from './CockpitPage';
 
 const mockUser = vi.fn();
@@ -15,7 +16,8 @@ vi.mock('@/hooks/race-control/useRaceStateMutations', () => ({
     new Proxy({}, { get: () => ({ mutate: vi.fn(), isPending: false }) }),
 }));
 vi.mock('./panels/LiveTimingPanel', () => ({ LiveTimingPanel: () => null }));
-vi.mock('@/hooks/race-control/useStomp', () => ({ useStomp: () => ({ data: null }) }));
+const mockUseStomp = vi.fn<(topic: string | null) => { data: unknown; status: string }>(() => ({ data: null, status: 'connected' }));
+vi.mock('@/hooks/race-control/useStomp', () => ({ useStomp: (topic: string | null) => mockUseStomp(topic) }));
 vi.mock('@/hooks/race-control/useLiveTiming', () => ({ useLiveTiming: () => ({ rows: [] }) }));
 vi.mock('@/hooks/race-control/useAnnouncements', () => ({
   useAnnouncements: () => ({ playBeep: vi.fn(), setClipMap: vi.fn() }),
@@ -23,6 +25,7 @@ vi.mock('@/hooks/race-control/useAnnouncements', () => ({
 vi.mock('@/hooks/race-control/usePreRaceReadiness', () => ({ usePreRaceReadiness: () => ({ data: undefined }) }));
 vi.mock('@/hooks/race-control/usePregeneratedClips', () => ({ usePregeneratedClips: () => undefined }));
 vi.mock('@/lib/audioApi', () => ({ getAudioSettings: vi.fn().mockResolvedValue(null) }));
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('./panels/AudioSettingsPanel', () => ({ AudioSettingsPanel: () => null }));
 
 vi.mock('@/lib/adminApi', () => ({
@@ -38,17 +41,22 @@ vi.mock('@/lib/adminApi', () => ({
 
 import { adminApi } from '@/lib/adminApi';
 
-function renderCockpit() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+function cockpit(qc: QueryClient) {
+  return (
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={['/race-control/event/7']}>
         <Routes>
           <Route path="/race-control/event/:eventId" element={<CockpitPage />} />
         </Routes>
       </MemoryRouter>
-    </QueryClientProvider>,
+    </QueryClientProvider>
   );
+}
+
+function renderCockpit() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const result = render(cockpit(qc));
+  return { ...result, rerenderCockpit: () => result.rerender(cockpit(qc)) };
 }
 
 describe('CockpitPage with no races', () => {
@@ -112,5 +120,50 @@ describe('CockpitPage with a running race', () => {
     mockUser.mockReturnValue({ roles: ['REFEREE'] });
     renderCockpit();
     expect(screen.queryByRole('button', { name: 'Finish Race' })).not.toBeInTheDocument();
+  });
+});
+
+describe('CockpitPage bump-up alert', () => {
+  const bumpUpTopic = '/topic/race/5/bump-up-alert';
+
+  function runOrderWith(status: string, roundType: string) {
+    mockRunOrder.mockReturnValue({
+      data: [{ raceId: 5, status, roundType, roundNumber: 1, className: '13.5 Touring', heatNumber: 2 }],
+      isLoading: false,
+      isError: false,
+    });
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUser.mockReturnValue({ roles: ['RACE_DIRECTOR'] });
+    mockUseStomp.mockImplementation(() => ({ data: null, status: 'connected' }));
+  });
+
+  it('listens while a final is still running, before the server sends the alert', () => {
+    runOrderWith('RUNNING', 'FINAL');
+    renderCockpit();
+    expect(mockUseStomp).toHaveBeenCalledWith(bumpUpTopic);
+  });
+
+  it('does not listen for a race that is not a final', () => {
+    runOrderWith('RUNNING', 'QUALIFIER');
+    renderCockpit();
+    expect(mockUseStomp).not.toHaveBeenCalledWith(bumpUpTopic);
+  });
+
+  it('toasts a bump-up once, even when the frame comes back again', async () => {
+    runOrderWith('FINISHED', 'FINAL');
+    // A fresh object on every render stands in for the frame reappearing when the final is selected again
+    mockUseStomp.mockImplementation((topic) => ({
+      data: topic === bumpUpTopic ? { finishedRaceId: 5, promotedEntryIds: [21, 22] } : null,
+      status: 'connected',
+    }));
+    const { rerenderCockpit } = renderCockpit();
+    await waitFor(() => expect(toast.success).toHaveBeenCalled());
+    rerenderCockpit();
+    rerenderCockpit();
+    expect(toast.success).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(toast.success).mock.calls[0][0]).toMatch(/2 driver\(s\) promoted/);
   });
 });
