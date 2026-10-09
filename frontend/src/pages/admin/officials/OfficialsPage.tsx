@@ -24,10 +24,11 @@ import {
   useSetOfficialPassword,
 } from '@/hooks/admin/useAdminOfficials';
 import { useAuth } from '@/hooks/useAuth';
+import { useRecheckConfirmation } from '@/hooks/useRecheckConfirmation';
 import type { OfficialAction, OfficialDto, OfficialRole } from '@/lib/adminApi';
 import { getApiErrorMessage } from '@/lib/errors';
 import { formatDate, formatDateTime } from '@/lib/dates';
-import { MIN_PASSWORD_LENGTH, officialSchema } from '@/lib/officials';
+import { MIN_PASSWORD_LENGTH, officialSchema, passwordRule, PASSWORDS_DIFFER } from '@/lib/officials';
 import type { OfficialFormValues } from '@/lib/officials';
 
 const ROLE_LABEL: Record<OfficialRole, string> = {
@@ -126,8 +127,8 @@ function RolesDialog({ official, onClose }: { official: OfficialDto; onClose: ()
 }
 
 const passwordSchema = z
-  .object({ password: officialSchema.shape.password, confirm: z.string() })
-  .refine(d => d.password === d.confirm, { message: "The passwords don't match.", path: ['confirm'] });
+  .object({ password: passwordRule, confirm: z.string() })
+  .refine(d => d.password === d.confirm, { message: PASSWORDS_DIFFER, path: ['confirm'] });
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
 function PasswordDialog({ official, onClose }: { official: OfficialDto; onClose: () => void }) {
@@ -138,6 +139,7 @@ function PasswordDialog({ official, onClose }: { official: OfficialDto; onClose:
     mode: 'onChange',
     defaultValues: { password: '', confirm: '' },
   });
+  useRecheckConfirmation(form, 'password', 'confirm');
 
   function submit({ password }: PasswordFormValues) {
     setOfficialPassword.mutate({ id: official.id, password }, {

@@ -10,12 +10,13 @@ import { createSetupStaff } from '@/lib/setupApi';
 import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
 import { TextField } from '@/components/TextField';
 import { OfficialFields } from '@/components/OfficialFields';
-import { officialSchema } from '@/lib/officials';
+import { officialSchema, PASSWORDS_DIFFER } from '@/lib/officials';
+import { useRecheckConfirmation } from '@/hooks/useRecheckConfirmation';
 
 const schema = officialSchema
   .extend({ confirmPassword: z.string().min(1, 'Please confirm your password') })
   .refine((d) => d.password === d.confirmPassword, {
-    message: 'Passwords do not match',
+    message: PASSWORDS_DIFFER,
     path: ['confirmPassword'],
   });
 
@@ -41,6 +42,7 @@ export default function StaffStep({ onNext, onBack }: Props) {
       roles: [],
     },
   });
+  useRecheckConfirmation(form, 'password', 'confirmPassword');
 
   async function onSave(values: FormValues) {
     try {

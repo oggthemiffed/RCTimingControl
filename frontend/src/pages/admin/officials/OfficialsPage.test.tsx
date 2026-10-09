@@ -123,6 +123,11 @@ describe('OfficialsPage', () => {
     expect(await screen.findByText("The passwords don't match.")).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Set password' })).toBeDisabled();
 
+    fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'new-passw' } });
+    await waitFor(() => expect(screen.queryByText("The passwords don't match.")).not.toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'new-password' } });
+    expect(await screen.findByText("The passwords don't match.")).toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText('Type it again'), { target: { value: 'new-password' } });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Set password' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Set password' }));
