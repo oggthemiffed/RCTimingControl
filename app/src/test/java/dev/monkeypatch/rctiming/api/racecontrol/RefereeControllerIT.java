@@ -32,6 +32,7 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.query.racecontrol.RaceEntryDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -220,14 +221,14 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
     void aRefereeCanListTheEntriesOfAFinishedRaceToPickADriver() {
         RaceAndEntry re = seedRaceAndEntry(RaceStatus.FINISHED);
 
-        ResponseEntity<dev.monkeypatch.rctiming.query.racecontrol.RaceEntryDto[]> resp = restTemplate.exchange(
+        ResponseEntity<RaceEntryDto[]> resp = restTemplate.exchange(
                 "/api/v1/race-control/races/" + re.race().getId() + "/entries",
                 org.springframework.http.HttpMethod.GET,
                 new HttpEntity<>(refereeHeaders()),
-                dev.monkeypatch.rctiming.query.racecontrol.RaceEntryDto[].class);
+                RaceEntryDto[].class);
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(resp.getBody()).extracting(dev.monkeypatch.rctiming.query.racecontrol.RaceEntryDto::entryId)
+        assertThat(resp.getBody()).extracting(RaceEntryDto::entryId)
                 .containsExactly(re.entry().getId());
     }
 

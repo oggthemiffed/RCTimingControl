@@ -14,27 +14,28 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Keeps the layers pointing one way (#143): the domain, query and service packages never use a type from
- * {@code api}. Services take plain values and return entities or their own records, and query classes return
- * projections from their own packages; controllers map those to API DTOs.
+ * Keeps the layers pointing one way (#143): only the {@code api} package uses its own types. Services take plain
+ * values and return entities or their own records, and query classes return projections from their own packages;
+ * controllers map those to API DTOs.
  */
 class LayeringTest {
 
     private static final Path MAIN_SOURCES = Path.of("src/main/java/dev/monkeypatch/rctiming");
-    private static final List<String> LOWER_LAYERS = List.of("domain", "query", "service");
+    private static final Path API_PACKAGE = Path.of("api");
     private static final Pattern API_REFERENCE = Pattern.compile("\\bdev\\.monkeypatch\\.rctiming\\.api\\.");
 
     @Test
-    void lowerLayersDoNotUseApiTypes() throws IOException {
+    void onlyTheApiPackageUsesApiTypes() throws IOException {
         List<String> violations = new ArrayList<>();
-        for (String layer : LOWER_LAYERS) {
-            try (Stream<Path> files = Files.walk(MAIN_SOURCES.resolve(layer))) {
-                for (Path file : files.filter(p -> p.toString().endsWith(".java")).toList()) {
-                    violations.addAll(violations(MAIN_SOURCES.relativize(file).toString(), Files.readString(file)));
+        try (Stream<Path> files = Files.walk(MAIN_SOURCES)) {
+            for (Path file : files.filter(p -> p.toString().endsWith(".java")).toList()) {
+                Path relative = MAIN_SOURCES.relativize(file);
+                if (!relative.startsWith(API_PACKAGE)) {
+                    violations.addAll(violations(relative.toString(), Files.readString(file)));
                 }
             }
         }
-        assertThat(violations).as("domain, query or service code using an api type").isEmpty();
+        assertThat(violations).as("code outside api using an api type").isEmpty();
     }
 
     @Test
