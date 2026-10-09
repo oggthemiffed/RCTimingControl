@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.query.boards;
 
-import dev.monkeypatch.rctiming.api.boards.dto.BoardRaceDto;
 import dev.monkeypatch.rctiming.domain.race.RaceLabel;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.Condition;

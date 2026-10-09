@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.api.racecontrol.dto;
+package dev.monkeypatch.rctiming.query.racecontrol;
 
 /**
  * A single slot in the grid call list for the upcoming race.

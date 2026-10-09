@@ -1,8 +1,8 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto;
 import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.query.racecontrol.RaceEntriesQuery;
+import dev.monkeypatch.rctiming.query.racecontrol.RaceEntryDto;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.service.TransponderLinkService;
 import dev.monkeypatch.rctiming.timing.LapTimingService;

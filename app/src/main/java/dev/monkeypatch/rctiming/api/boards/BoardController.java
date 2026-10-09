@@ -1,17 +1,17 @@
 package dev.monkeypatch.rctiming.api.boards;
 
-import dev.monkeypatch.rctiming.api.boards.dto.BoardRaceDto;
 import dev.monkeypatch.rctiming.api.boards.dto.NowNextDto;
 import dev.monkeypatch.rctiming.api.boards.dto.ResultsBoardDto;
+import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.query.boards.BoardQuery;
+import dev.monkeypatch.rctiming.query.boards.BoardRaceDto;
 import dev.monkeypatch.rctiming.query.racecontrol.ResultSnapshotQuery;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.LiveRaceState;
 import dev.monkeypatch.rctiming.timing.RaceClockService;
-import dev.monkeypatch.rctiming.timing.dto.RaceClockDto;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
-import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.timing.dto.RaceClockDto;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;

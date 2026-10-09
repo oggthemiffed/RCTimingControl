@@ -1,10 +1,7 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.GridCallSlotDto;
-import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
-import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalDutyRowDto;
-import dev.monkeypatch.rctiming.api.racecontrol.dto.PreRaceReadinessDto;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
 import dev.monkeypatch.rctiming.domain.race.RaceLabel;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;

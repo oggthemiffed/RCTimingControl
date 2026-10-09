@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.jooq.impl.DSL;

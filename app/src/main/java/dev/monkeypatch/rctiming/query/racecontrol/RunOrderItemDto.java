@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.api.racecontrol.dto;
+package dev.monkeypatch.rctiming.query.racecontrol;
 
 import java.time.Instant;
 

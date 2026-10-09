@@ -1,15 +1,15 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
-import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.CheckInConfirmResponse;
-import dev.monkeypatch.rctiming.api.racecontrol.dto.CheckInEntryDto;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.CheckInResolveRequest;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.TransponderSwapRequest;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.TransponderSwapResponse;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.checkin.CheckInResult;
 import dev.monkeypatch.rctiming.domain.checkin.CheckInService;
 import dev.monkeypatch.rctiming.domain.checkin.SwapResult;
 import dev.monkeypatch.rctiming.domain.checkin.TransponderSwapService;
+import dev.monkeypatch.rctiming.query.racecontrol.CheckInEntryDto;
 import dev.monkeypatch.rctiming.query.racecontrol.CheckInQuery;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;

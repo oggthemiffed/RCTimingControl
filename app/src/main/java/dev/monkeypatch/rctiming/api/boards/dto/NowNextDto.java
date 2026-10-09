@@ -1,5 +1,7 @@
 package dev.monkeypatch.rctiming.api.boards.dto;
 
+import dev.monkeypatch.rctiming.query.boards.BoardRaceDto;
+
 /**
  * What the now/next board shows for one event (L12). Any race may be
  * null: before the first heat only {@code nextRace} is set, after the last only
