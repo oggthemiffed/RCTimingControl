@@ -44,8 +44,6 @@ class RoundGeneratorServiceTest {
     @Mock
     private EventClassRepository eventClassRepository;
     @Mock
-    private BumpUpSeedingService bumpUpSeedingService;
-    @Mock
     private RaceFormatService raceFormatService;
 
     @InjectMocks

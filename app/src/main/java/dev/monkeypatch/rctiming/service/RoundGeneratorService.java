@@ -47,7 +47,6 @@ public class RoundGeneratorService {
     private final RaceEntryRepository raceEntryRepository;
     private final EntryRepository entryRepository;
     private final EventClassRepository eventClassRepository;
-    private final BumpUpSeedingService bumpUpSeedingService;
     private final RaceFormatService raceFormatService;
 
     public RoundGeneratorService(RoundRepository roundRepository,
@@ -55,14 +54,12 @@ public class RoundGeneratorService {
                                   RaceEntryRepository raceEntryRepository,
                                   EntryRepository entryRepository,
                                   EventClassRepository eventClassRepository,
-                                  BumpUpSeedingService bumpUpSeedingService,
                                   RaceFormatService raceFormatService) {
         this.roundRepository = roundRepository;
         this.raceRepository = raceRepository;
         this.raceEntryRepository = raceEntryRepository;
         this.entryRepository = entryRepository;
         this.eventClassRepository = eventClassRepository;
-        this.bumpUpSeedingService = bumpUpSeedingService;
         this.raceFormatService = raceFormatService;
     }
 
