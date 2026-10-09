@@ -11,9 +11,9 @@ import dev.monkeypatch.rctiming.domain.competitor.PossibleDuplicateCompetitorExc
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
+import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.StateConflictException;
-import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +23,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
-
 @Service
 @Transactional
 public class EntryService {
 
     private final EntryRepository entryRepository;
     private final EventRepository eventRepository;
-    private final DSLContext dsl;
+    private final EventClassRepository eventClassRepository;
     private final EntryAuditLogRepository auditLogRepository;
     private final ObjectMapper objectMapper;
     private final CompetitorService competitorService;
@@ -39,14 +37,14 @@ public class EntryService {
 
     public EntryService(EntryRepository entryRepository,
                         EventRepository eventRepository,
-                        DSLContext dsl,
+                        EventClassRepository eventClassRepository,
                         EntryAuditLogRepository auditLogRepository,
                         ObjectMapper objectMapper,
                         CompetitorService competitorService,
                         CompetitorRepository competitorRepository) {
         this.entryRepository = entryRepository;
         this.eventRepository = eventRepository;
-        this.dsl = dsl;
+        this.eventClassRepository = eventClassRepository;
         this.auditLogRepository = auditLogRepository;
         this.objectMapper = objectMapper;
         this.competitorService = competitorService;
@@ -64,10 +62,7 @@ public class EntryService {
         if (event.getStatus() == EventStatus.COMPLETED) {
             throw new StateConflictException("Event is completed");
         }
-        Long ecEventId = dsl.select(EVENT_CLASSES.EVENT_ID)
-                .from(EVENT_CLASSES)
-                .where(EVENT_CLASSES.ID.eq(req.eventClassId()))
-                .fetchOptional(EVENT_CLASSES.EVENT_ID)
+        Long ecEventId = eventClassRepository.findEventIdById(req.eventClassId())
                 .orElseThrow(() -> new EntityNotFoundException("Event class not found: " + req.eventClassId()));
         if (!req.eventId().equals(ecEventId)) {
             throw new IllegalArgumentException("Event class does not belong to the event");

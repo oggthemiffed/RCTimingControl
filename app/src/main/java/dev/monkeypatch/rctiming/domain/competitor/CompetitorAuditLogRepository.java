@@ -23,6 +23,14 @@ public class CompetitorAuditLogRepository extends JooqRepository<CompetitorAudit
                 COMPETITOR_AUDIT_LOG.CREATED_AT.asc(), COMPETITOR_AUDIT_LOG.ID.asc());
     }
 
+    /** Moves one competitor's change history to another, as a merge does (#123). */
+    public void moveToCompetitor(Long fromCompetitorId, Long toCompetitorId) {
+        dsl.update(COMPETITOR_AUDIT_LOG)
+                .set(COMPETITOR_AUDIT_LOG.COMPETITOR_ID, toCompetitorId)
+                .where(COMPETITOR_AUDIT_LOG.COMPETITOR_ID.eq(fromCompetitorId))
+                .execute();
+    }
+
     @Override
     protected List<Field<?>> insertOnly() {
         return List.of(COMPETITOR_AUDIT_LOG.CREATED_AT);

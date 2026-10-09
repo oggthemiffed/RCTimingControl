@@ -28,6 +28,18 @@ public class ChampionshipExclusionRepository extends JooqRepository<Championship
                 .and(CHAMPIONSHIP_EXCLUSIONS.EVENT_ID.eq(eventId)));
     }
 
+    public long countByDriverId(Long driverId) {
+        return dsl.fetchCount(CHAMPIONSHIP_EXCLUSIONS, CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID.eq(driverId));
+    }
+
+    /** Moves one competitor's exclusions to another, as a merge does (#123). Returns how many moved. */
+    public int moveDriver(Long fromDriverId, Long toDriverId) {
+        return dsl.update(CHAMPIONSHIP_EXCLUSIONS)
+                .set(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID, toDriverId)
+                .where(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID.eq(fromDriverId))
+                .execute();
+    }
+
     @Override
     protected List<Field<?>> insertOnly() {
         return List.of(CHAMPIONSHIP_EXCLUSIONS.CREATED_AT);

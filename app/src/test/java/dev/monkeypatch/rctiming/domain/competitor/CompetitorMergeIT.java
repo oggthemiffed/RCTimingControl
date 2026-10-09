@@ -231,7 +231,8 @@ class CompetitorMergeIT extends AbstractIntegrationTest {
 
         CompetitorMergeService.Preview preview = mergeService.preview(keep.getId(), duplicate.getId());
         assertThat(preview.canMerge()).isFalse();
-        assertThat(preview.blockers()).singleElement().asString().contains("Both have an active entry");
+        assertThat(preview.blockers()).singleElement().asString()
+                .contains("Both have an active entry in Merge class " + run + " at Conflict meeting " + run);
 
         assertThatThrownBy(() -> mergeService.merge(keep.getId(), duplicate.getId(), adminId))
                 .isInstanceOf(CompetitorMergeRefusedException.class);

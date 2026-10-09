@@ -7,9 +7,15 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.Events.EVENTS;
+import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACING_CLASSES;
 
 @Repository
 public class EventClassRepository extends JooqRepository<EventClass, EventClassesRecord> {
@@ -32,6 +38,27 @@ public class EventClassRepository extends JooqRepository<EventClass, EventClasse
                 .where(EVENT_CLASSES.EVENT_ID.eq(eventId))
                 .orderBy(EVENT_CLASSES.ID)
                 .fetch(row -> new EventClassRef(row.value1(), row.value2()));
+    }
+
+    /** The event a class belongs to, without loading its format config. Empty when there is no such class. */
+    public Optional<Long> findEventIdById(Long eventClassId) {
+        return dsl.select(EVENT_CLASSES.EVENT_ID)
+                .from(EVENT_CLASSES)
+                .where(EVENT_CLASSES.ID.eq(eventClassId))
+                .fetchOptional(EVENT_CLASSES.EVENT_ID);
+    }
+
+    /** "Racing class at event" for each of the given classes, by id; a class that doesn't exist is left out. */
+    public Map<Long, String> labelsByIds(Collection<Long> eventClassIds) {
+        Map<Long, String> labels = new LinkedHashMap<>();
+        dsl.select(EVENT_CLASSES.ID, EVENTS.NAME, RACING_CLASSES.NAME)
+                .from(EVENT_CLASSES)
+                .join(EVENTS).on(EVENTS.ID.eq(EVENT_CLASSES.EVENT_ID))
+                .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
+                .where(EVENT_CLASSES.ID.in(eventClassIds))
+                .fetch()
+                .forEach(r -> labels.put(r.get(EVENT_CLASSES.ID), r.get(RACING_CLASSES.NAME) + " at " + r.get(EVENTS.NAME)));
+        return labels;
     }
 
     public record EventClassRef(Long id, Long racingClassId) {
