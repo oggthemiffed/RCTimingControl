@@ -78,6 +78,25 @@ public class EventService {
         return EventDto.from(saved);
     }
 
+    /**
+     * Turns the live feed (#28) on or off for the event's races, recording the switch only when it changes.
+     *
+     * @return whether the feed is now on
+     */
+    public boolean setLiveFeedEnabled(Actor actor, Long id, boolean enabled) {
+        Event event = getEventOrThrow(id);
+        boolean before = event.isLiveFeedEnabled();
+        if (before == enabled) {
+            return enabled;
+        }
+        event.setLiveFeedEnabled(enabled);
+        eventRepository.save(event);
+        audit.entry(actor, "LIVE_FEED_SWITCHED").entity("event", id).event(id)
+                .summary("Turned the live feed " + (enabled ? "on" : "off") + " for " + event.getName())
+                .before(before).after(enabled).record();
+        return enabled;
+    }
+
     @Transactional(readOnly = true)
     public Event findByIdOrThrow(Long id) {
         return getEventOrThrow(id);
