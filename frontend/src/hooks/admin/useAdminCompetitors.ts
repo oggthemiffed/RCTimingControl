@@ -57,6 +57,6 @@ export function useMergeCompetitors() {
   return useMutation({
     mutationFn: ({ keepId, duplicateId }: { keepId: number; duplicateId: number }) =>
       adminApi.competitors.merge(keepId, duplicateId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: adminQueryKeys.all }),
   });
 }

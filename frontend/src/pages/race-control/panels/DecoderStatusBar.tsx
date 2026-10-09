@@ -4,6 +4,7 @@ import { useStomp } from '@/hooks/race-control/useStomp';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { fetchDecoderStatus, type ConnectionState, type DecoderStatusDto } from '@/lib/raceControlApi';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 function getStateColor(state: ConnectionState | null): string {
   if (state === 'CONNECTED') return 'bg-[var(--flag-green)]';
@@ -59,7 +60,7 @@ export function DecoderStatusBar({ children }: { children?: ReactNode }) {
 
   // Seed initial state from REST on mount and re-poll every 5s to catch missed STOMP disconnects
   const { data: initialStatus } = useQuery({
-    queryKey: ['decoder-status'],
+    queryKey: raceControlQueryKeys.decoderStatus(),
     queryFn: fetchDecoderStatus,
     staleTime: 0,
     refetchInterval: 5000,

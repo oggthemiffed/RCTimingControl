@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import TrackStep from '../steps/TrackStep';
 import { adminApi } from '@/lib/adminApi';
+import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/adminApi', () => ({
@@ -127,6 +128,6 @@ describe('TrackStep', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save and Continue' }));
 
     await waitFor(() => expect(adminApi.tracks.create).toHaveBeenCalledTimes(1));
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['admin', 'tracks'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: adminQueryKeys.tracks.all() });
   });
 });

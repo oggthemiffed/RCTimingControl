@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getRaceEntries, linkUnknownTransponder } from '@/lib/raceControlApi';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 type Props = {
   transponderNumber: string;
@@ -45,7 +46,7 @@ export function UnknownTransponderLinkDialog({
   }
 
   const { data: entries = [], isLoading: entriesLoading } = useQuery({
-    queryKey: ['race-entries', raceId],
+    queryKey: raceControlQueryKeys.raceEntries(raceId),
     queryFn: () => getRaceEntries(raceId),
     enabled: open && raceId > 0,
   });

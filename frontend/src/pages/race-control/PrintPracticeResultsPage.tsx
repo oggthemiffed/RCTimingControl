@@ -5,6 +5,7 @@ import { getResults, getSession } from '@/lib/practiceApi';
 import type { PracticeTimingRowDto } from '@/lib/practiceApi';
 import { fmtMs } from '@/lib/format';
 import { formatDateTime } from '@/lib/dates';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 export default function PrintPracticeResultsPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -13,13 +14,13 @@ export default function PrintPracticeResultsPage() {
   const validId = Number.isFinite(id) && id > 0;
 
   const { data: session, isPending: sessionPending, isError: sessionError } = useQuery({
-    queryKey: ['practice-session', id],
+    queryKey: raceControlQueryKeys.practice.session(id),
     queryFn: () => getSession(id),
     enabled: validId,
   });
 
   const { data: results, isPending: resultsPending, isError: resultsError } = useQuery({
-    queryKey: ['practice-results', id],
+    queryKey: raceControlQueryKeys.practice.results(id),
     queryFn: () => getResults(id),
     enabled: validId,
   });

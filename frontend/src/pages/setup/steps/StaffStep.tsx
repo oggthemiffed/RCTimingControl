@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { createSetupStaff } from '@/lib/setupApi';
+import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
 
 const ROLES = [
   { value: 'ADMIN', label: 'Admin' },
@@ -71,8 +72,8 @@ export default function StaffStep({ onNext, onBack }: Props) {
         password: values.password,
         roles: values.roles,
       });
-      queryClient.invalidateQueries({ queryKey: ['setup-status'] });
-      queryClient.invalidateQueries({ queryKey: ['setup-progress'] });
+      queryClient.invalidateQueries({ queryKey: setupQueryKeys.status() });
+      queryClient.invalidateQueries({ queryKey: setupQueryKeys.progress() });
       toast.success('Staff account created');
       onNext();
     } catch (err) {

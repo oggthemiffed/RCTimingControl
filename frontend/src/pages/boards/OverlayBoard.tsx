@@ -9,6 +9,7 @@ import { getRaceClock } from '@/lib/boardsApi';
 import { fmtMs } from '@/lib/format';
 import { BOARD_POLL_MS, fmtClock, parseOverlayOptions } from './boardFormat';
 import { useBoardRace } from './useBoardRace';
+import { publicQueryKeys } from '@/hooks/publicQueryKeys';
 
 const THEMES = {
   dark: {
@@ -59,7 +60,7 @@ export default function OverlayBoard() {
 
   const { currentRace: race, raceId, rows: allRows } = useBoardRace(eventId);
   const { data: clock, dataUpdatedAt: clockReadAt } = useQuery({
-    queryKey: ['boards', 'clock', raceId],
+    queryKey: publicQueryKeys.boards.clock(raceId),
     queryFn: () => getRaceClock(raceId!),
     enabled: raceId !== null,
     refetchInterval: BOARD_POLL_MS,

@@ -5,6 +5,7 @@ import type { EventScheduleDto } from '@/lib/raceControlApi';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatEventDate } from '@/lib/dates';
+import { publicQueryKeys } from '@/hooks/publicQueryKeys';
 
 function entryAvailabilityBadge(availability: EventScheduleDto['entryAvailability']) {
   switch (availability) {
@@ -20,7 +21,7 @@ function entryAvailabilityBadge(availability: EventScheduleDto['entryAvailabilit
 
 export default function EventSchedulePage() {
   const { data: events, isLoading, isError } = useQuery({
-    queryKey: ['public', 'events'],
+    queryKey: publicQueryKeys.events(),
     queryFn: getEventSchedule,
     staleTime: 60_000,
   });

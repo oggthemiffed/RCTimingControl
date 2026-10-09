@@ -16,6 +16,7 @@ import {
 } from '@/lib/practiceApi';
 import { toast } from 'sonner';
 import { getApiErrorMessage, getApiErrorStatus } from '@/lib/errors';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 function statusBadgeVariant(
   status: PracticeSessionDto['status'],
@@ -39,7 +40,7 @@ export function PracticeSessionPage() {
     isFetching: sessionFetching,
     refetch: refetchSession,
   } = useQuery({
-    queryKey: ['practice-session', id],
+    queryKey: raceControlQueryKeys.practice.session(id),
     queryFn: () => getSession(id),
     enabled: !isNaN(id),
     // A race starting stops practice from the server's side, so keep a running session's view fresh
@@ -53,7 +54,7 @@ export function PracticeSessionPage() {
   const startMutation = useMutation({
     mutationFn: () => startSession(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['practice-session', id] });
+      queryClient.invalidateQueries({ queryKey: raceControlQueryKeys.practice.session(id) });
       toast.success('Practice session started.');
     },
     onError: (err) => {
@@ -65,7 +66,7 @@ export function PracticeSessionPage() {
   const stopMutation = useMutation({
     mutationFn: () => stopSession(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['practice-session', id] });
+      queryClient.invalidateQueries({ queryKey: raceControlQueryKeys.practice.session(id) });
       toast.success('Practice session stopped.');
     },
     onError: (err) => {

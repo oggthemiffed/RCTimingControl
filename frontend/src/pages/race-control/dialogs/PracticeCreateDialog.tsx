@@ -23,6 +23,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createSession, type PracticeSessionDto } from '@/lib/practiceApi';
 import { toast } from 'sonner';
+import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
 const createSchema = z.object({
   name: z.string().min(1, 'Session name is required').max(120),
@@ -67,7 +68,7 @@ export function PracticeCreateDialog({
         bestLapN: values.bestLapN,
       }),
     onSuccess: (session) => {
-      queryClient.invalidateQueries({ queryKey: ['practice-sessions'] });
+      queryClient.invalidateQueries({ queryKey: raceControlQueryKeys.practice.sessions() });
       toast.success(`Practice session "${session.name}" created.`);
       form.reset();
       onOpenChange(false);

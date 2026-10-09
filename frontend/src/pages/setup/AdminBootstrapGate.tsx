@@ -21,6 +21,7 @@ import {
 import { bootstrap } from '@/lib/setupApi';
 import { useAuth } from '@/hooks/useAuth';
 import type { AuthUser } from '@/providers/AuthProvider';
+import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
 
 const bootstrapSchema = z
   .object({
@@ -76,7 +77,7 @@ export default function AdminBootstrapGate() {
       setAuthFromToken(response.accessToken, authUser);
 
       // Invalidate setup-status so SetupLayout re-renders into wizard mode
-      await queryClient.invalidateQueries({ queryKey: ['setup-status'] });
+      await queryClient.invalidateQueries({ queryKey: setupQueryKeys.status() });
       navigate('/setup', { replace: true });
     } catch (err) {
       if (isAxiosError(err)) {
