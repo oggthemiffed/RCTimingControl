@@ -1,8 +1,13 @@
-package dev.monkeypatch.rctiming.api.racecontrol.dto;
+package dev.monkeypatch.rctiming.domain.race;
 
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * A finished race's result as it is stored in a {@link ResultSnapshot} (see {@link ResultSnapshotJson}) and
+ * served to race control, the boards and the public results. It lives with the snapshot because the domain,
+ * the services and the read side all build or read it.
+ */
 public record ResultSnapshotDto(
         long raceId,
         String raceLabel,

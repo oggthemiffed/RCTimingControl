@@ -1,6 +1,6 @@
 package dev.monkeypatch.rctiming.service;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto.ResultRow;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotDto.ResultRow;
 
 import java.util.ArrayList;
 import java.util.Comparator;
