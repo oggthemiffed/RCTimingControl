@@ -14,7 +14,6 @@ import {
   type AudioSettingsDto,
 } from '@/lib/audioApi';
 
-
 export function AudioSettingsPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [volume, setVolume] = useAudioVolume();
@@ -30,6 +29,7 @@ export function AudioSettingsPanel() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['audio-settings'] }),
   });
 
+  // Test audio: speak a sample sentence through the browser voice (AUDIO-11)
   const testAudio = () => speakWithBrowser(
     'Testing audio. Race control online. First place, Car 12. Second place, Car 7.',
     volume / 100,

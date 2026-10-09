@@ -239,13 +239,6 @@ export function useAnnouncements({
     [],
   );
 
-  // Test audio: speak a sample sentence (AUDIO-11)
-  const testAudio = useCallback(() => {
-    fallbackSpeak(
-      'Testing audio. Race control online. First place, Car 12. Second place, Car 7.',
-    );
-  }, [fallbackSpeak]);
-
   // Global cleanup on unmount
   useEffect(() => {
     return () => {
@@ -259,6 +252,5 @@ export function useAnnouncements({
     playBeep,
     playClip,
     setClipMap,
-    testAudio,
   };
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 
 import { useAudioVolume } from './useAudioVolume';
@@ -24,5 +24,24 @@ describe('useAudioVolume', () => {
 
     expect(cockpit.result.current[0]).toBe(40);
     expect(localStorage.getItem('rc-audio-volume')).toBe('40');
+  });
+
+  it('keeps a stored volume within 0 to 100', () => {
+    localStorage.setItem('rc-audio-volume', '150');
+
+    expect(renderHook(() => useAudioVolume()).result.current[0]).toBe(100);
+  });
+
+  it('still changes when the browser refuses to store it', () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('QuotaExceededError');
+    });
+    const { result } = renderHook(() => useAudioVolume());
+
+    act(() => result.current[1](30));
+
+    expect(result.current[0]).toBe(30);
+    setItem.mockRestore();
+    act(() => result.current[1](80));
   });
 });
