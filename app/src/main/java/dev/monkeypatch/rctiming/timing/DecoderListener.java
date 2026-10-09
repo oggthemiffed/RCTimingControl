@@ -103,18 +103,14 @@ public class DecoderListener implements SmartLifecycle {
         applySettings(clubProfileService.getDecoderSettings());
     }
 
-    /** Async stop overload: {@link AmbRc4TimingSource#stop()} is fire-and-forget, so the callback runs straight after. */
+    /**
+     * {@link AmbRc4TimingSource#stop()} is fire-and-forget, so SmartLifecycle's default {@code stop(Runnable)}, which
+     * calls this and then the callback, is all Spring needs.
+     */
     @Override
-    public synchronized void stop(Runnable callback) {
+    public synchronized void stop() {
         running = false;
         stopSource();
-        callback.run();
-    }
-
-    /** Synchronous fallback. Spring prefers {@link #stop(Runnable)}. */
-    @Override
-    public void stop() {
-        stop(() -> { });
     }
 
     @Override

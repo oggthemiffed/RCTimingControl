@@ -24,7 +24,6 @@ import java.util.Set;
  */
 public class LiveRaceState {
 
-    final long raceId;
     final Map<Long, LiveRacePosition> positions = new HashMap<>();
     final List<LapPassingEvent> lapHistory = new ArrayList<>();
     final Set<String> seenUnknownTransponders = new HashSet<>();
@@ -34,14 +33,6 @@ public class LiveRaceState {
     final Map<Long, String> entryNames = new HashMap<>();
     /** Fastest lap recorded across ALL entries this race session. */
     Long overallBestLapMs = null;
-
-    public LiveRaceState(long raceId) {
-        this.raceId = raceId;
-    }
-
-    public long getRaceId() {
-        return raceId;
-    }
 
     /** Returns the runtime-linked entryId for this transponder, or null if not linked. */
     public synchronized Long getRuntimeLink(String transponderNumber) {

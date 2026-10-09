@@ -15,7 +15,7 @@ import java.util.function.Consumer;
  * converts relative timestamps via {@link EpochAnchor}, monitors sequence gaps via
  * {@link SeqGapDetector}, and passes {@link EpochCorrectedPassing} objects to the callback.
  *
- * <p>On {@code READER_IDLE} (no STATUS or PASSING for 30 s), closes the channel so that
+ * <p>On {@code READER_IDLE} (no STATUS or PASSING for 8 s), closes the channel so that
  * the {@link AmbRc4TimingSource} reconnect logic can fire (T-05-04 + TIMING-02).
  */
 public class Rc4InboundHandler extends SimpleChannelInboundHandler<String> {
@@ -26,18 +26,15 @@ public class Rc4InboundHandler extends SimpleChannelInboundHandler<String> {
     private final EpochAnchor                     epochAnchor;
     private final SeqGapDetector                  gapDetector;
     private final Consumer<EpochCorrectedPassing> onPassing;
-    private final Runnable                        onReconnect;
 
     public Rc4InboundHandler(Rc4TextParser parser,
                              EpochAnchor epochAnchor,
                              SeqGapDetector gapDetector,
-                             Consumer<EpochCorrectedPassing> onPassing,
-                             Runnable onReconnect) {
+                             Consumer<EpochCorrectedPassing> onPassing) {
         this.parser      = parser;
         this.epochAnchor = epochAnchor;
         this.gapDetector = gapDetector;
         this.onPassing   = onPassing;
-        this.onReconnect = onReconnect;
     }
 
     @Override

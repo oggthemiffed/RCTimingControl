@@ -2,7 +2,6 @@ package dev.monkeypatch.rctiming.practice;
 
 import dev.monkeypatch.rctiming.practice.dto.PracticeTimingRowDto;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -24,20 +23,14 @@ import java.util.function.IntSupplier;
  */
 public class LivePracticeState {
 
-    private final Long sessionId;
     private final int bestLapN;
     private final Map<String, ParticipantState> participants = new ConcurrentHashMap<>();
     private final Map<String, Long> lastRtcMicros = new ConcurrentHashMap<>();
     /** The highest lap number given to each transponder so far. */
     private final Map<String, Integer> savedLaps = new ConcurrentHashMap<>();
 
-    public LivePracticeState(Long sessionId, int bestLapN) {
-        this.sessionId = sessionId;
+    public LivePracticeState(int bestLapN) {
         this.bestLapN = bestLapN;
-    }
-
-    public Long getSessionId() {
-        return sessionId;
     }
 
     /**
@@ -65,10 +58,9 @@ public class LivePracticeState {
 
     /**
      * Record a lap passing for a transponder.
-     * If lapTimeMs is null (first crossing), increments crossing count only.
+     * If lapTimeMs is null (first crossing), the participant is noted with no lap.
      */
-    public void recordLap(String transponderNumber, Long userId, String racerName,
-                          Long lapTimeMs, Instant crossingTime) {
+    public void recordLap(String transponderNumber, Long userId, String racerName, Long lapTimeMs) {
         participants.compute(transponderNumber, (k, state) -> {
             if (state == null) {
                 state = new ParticipantState(transponderNumber, userId, racerName);
@@ -78,7 +70,7 @@ public class LivePracticeState {
                 state.userId = userId;
                 state.racerName = racerName;
             }
-            state.addLap(lapTimeMs, crossingTime);
+            state.addLap(lapTimeMs);
             return state;
         });
     }
@@ -154,9 +146,6 @@ public class LivePracticeState {
         String racerName;
         /** Only lap times with non-null lapTimeMs (real completed laps). */
         final List<Long> lapTimes = new ArrayList<>();
-        /** Total crossings including the first (which has no lap time). */
-        int crossingCount = 0;
-        Instant lastCrossing;
 
         ParticipantState(String transponderNumber, Long userId, String racerName) {
             this.transponderNumber = transponderNumber;
@@ -164,12 +153,10 @@ public class LivePracticeState {
             this.racerName = racerName;
         }
 
-        void addLap(Long lapTimeMs, Instant crossingTime) {
-            crossingCount++;
+        void addLap(Long lapTimeMs) {
             if (lapTimeMs != null && lapTimeMs > 0) {
                 lapTimes.add(lapTimeMs);
             }
-            lastCrossing = crossingTime;
         }
 
         int getLapCount() {

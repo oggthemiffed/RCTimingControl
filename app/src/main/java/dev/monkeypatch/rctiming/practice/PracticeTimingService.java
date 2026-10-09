@@ -78,7 +78,7 @@ public class PracticeTimingService {
      * Called from PracticeSessionService.start() after the session is persisted.
      */
     public void startSession(PracticeSession session) {
-        LivePracticeState state = new LivePracticeState(session.getId(), session.getBestLapN());
+        LivePracticeState state = new LivePracticeState(session.getBestLapN());
         activeStates.put(session.getId(), state);
         log.info("Practice session {} ({}) started timing", session.getId(), session.getName());
     }
@@ -130,7 +130,7 @@ public class PracticeTimingService {
         String racerName = resolveCompetitorName(session, transponderNumber);
 
         // Record in in-memory state
-        state.recordLap(transponderNumber, null, racerName, lapTimeMs, crossingTime);
+        state.recordLap(transponderNumber, null, racerName, lapTimeMs);
 
         // Persist lap record (only when we have a real lap time)
         if (lapTimeMs != null) {
@@ -204,7 +204,7 @@ public class PracticeTimingService {
             return Collections.emptyList();
         }
 
-        LivePracticeState state = new LivePracticeState(sessionId, session.getBestLapN());
+        LivePracticeState state = new LivePracticeState(session.getBestLapN());
         List<PracticeLap> laps = lapRepository.findByPracticeSessionIdOrderByCrossingTimeAsc(sessionId);
 
         // Laps recorded before L10 carry a user; later ones are named through the event's entries
@@ -221,8 +221,7 @@ public class PracticeTimingService {
                     lap.getTransponderNumber(),
                     userId,
                     racerName,
-                    lap.getLapTimeMs(),
-                    lap.getCrossingTime()
+                    lap.getLapTimeMs()
             );
         }
 

@@ -23,7 +23,7 @@ import java.util.function.Consumer;
  * Port 5100 (firmware &lt; 4.5) confirmed from club hardware captures.
  *
  * <p>Auto-reconnects on TCP disconnect or {@code READER_IDLE} (8 s with no STATUS/PASSING)
- * using exponential backoff: 1 s, 2 s, 4 s, 8 s, 16 s, 30 s (capped).
+ * using exponential backoff: 1 s, 2 s, 4 s, 8 s, then 16 s (capped).
  * Reconnect attempts are prevented once {@link #stop()} has been called.
  *
  * <p>Owns single instances of {@link Rc4TextParser}, {@link EpochAnchor}, and
@@ -107,8 +107,7 @@ public class AmbRc4TimingSource implements TimingSource {
                         new IdleStateHandler(8, 0, 0, TimeUnit.SECONDS),
                         new LineBasedFrameDecoder(1024),
                         new StringDecoder(StandardCharsets.US_ASCII),
-                        new Rc4InboundHandler(parser, epochAnchor, gapDetector,
-                                             onPassing, AmbRc4TimingSource.this::scheduleReconnect)
+                        new Rc4InboundHandler(parser, epochAnchor, gapDetector, onPassing)
                     );
                 }
             });
@@ -136,15 +135,13 @@ public class AmbRc4TimingSource implements TimingSource {
     }
 
     /**
-     * Schedule the next reconnect attempt with exponential backoff capped at 30 s.
-     * Backoff sequence: 1, 2, 4, 8, 16, 30, 30, 30 ...
+     * Schedule the next reconnect attempt with exponential backoff capped at 16 s.
+     * Backoff sequence: 1, 2, 4, 8, 16, 16, 16 ...
      */
-    void scheduleReconnect() {
+    private void scheduleReconnect() {
         if (stopped) return;
         backoffIdx++;
-        long delaySeconds = Math.min(30L, 1L << Math.min(backoffIdx - 1, 4));
-        // Ensure at least 1 s for first attempt (backoffIdx == 1 → shift 0 → 1s)
-        delaySeconds = Math.max(1L, delaySeconds);
+        long delaySeconds = 1L << Math.min(backoffIdx - 1, 4);
         log.info("Reconnecting to {}:{} in {} s (attempt {})", host, port, delaySeconds, backoffIdx);
         group.schedule(this::connect, delaySeconds, TimeUnit.SECONDS);
     }

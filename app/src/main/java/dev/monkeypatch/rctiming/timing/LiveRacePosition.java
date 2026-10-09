@@ -33,9 +33,6 @@ public class LiveRacePosition {
     public Long getBestLapMs() { return bestLapMs; }
     public void setBestLapMs(Long bestLapMs) { this.bestLapMs = bestLapMs; }
 
-    public int getLapCount() { return lapCount; }
-    public long getLapSumMs() { return lapSumMs; }
-
     public void accumulateLap(long lapMs) {
         lapCount++;
         lapSumMs += lapMs;

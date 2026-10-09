@@ -26,6 +26,7 @@ public class EventClassService {
     private final EventRepository eventRepository;
     private final RaceFormatTemplateRepository templateRepository;
     private final RacingClassRepository racingClassRepository;
+    private final RaceFormatService raceFormatService;
     private final ObjectMapper objectMapper;
     private final AuditService audit;
 
@@ -33,12 +34,14 @@ public class EventClassService {
                              EventRepository eventRepository,
                              RaceFormatTemplateRepository templateRepository,
                              RacingClassRepository racingClassRepository,
+                             RaceFormatService raceFormatService,
                              ObjectMapper objectMapper,
                              AuditService audit) {
         this.eventClassRepository = eventClassRepository;
         this.eventRepository = eventRepository;
         this.templateRepository = templateRepository;
         this.racingClassRepository = racingClassRepository;
+        this.raceFormatService = raceFormatService;
         this.objectMapper = objectMapper;
         this.audit = audit;
     }
@@ -54,15 +57,9 @@ public class EventClassService {
         RacingClass racingClass = racingClassRepository.getOrThrow(racingClassId);
         RaceFormatTemplate template = templateRepository.getOrThrow(templateId);
 
-        // Snapshot via ObjectMapper deep-copy — same pattern as RaceFormatService.assignTemplateToEventClass
-        RaceFormatConfig snapshot = objectMapper.convertValue(template.getConfig(), RaceFormatConfig.class);
-
-        EventClass ec = new EventClass();
+        EventClass ec = raceFormatService.assignTemplateToEventClass(template);
         ec.setEventId(eventId);
         ec.setRacingClassId(racingClassId);
-        ec.setTemplateId(template.getId());
-        ec.setConfigSnapshot(snapshot);
-        ec.setConfigOverride(null);
         EventClass saved = eventClassRepository.save(ec);
         Map<String, Object> after = new LinkedHashMap<>();
         after.put("racingClassId", racingClass.getId());
@@ -121,12 +118,6 @@ public class EventClassService {
                 .summary("Combined " + String.join(", ", names) + " to race together and score separately")
                 .after(after).record();
         return result;
-    }
-
-    /** Returns the effective config = snapshot + override merge, for use by Phase 4 race control. */
-    @Transactional(readOnly = true)
-    public RaceFormatConfig getEffectiveConfig(Long classId) {
-        return effectiveConfig(getEventClassOrThrow(classId));
     }
 
     /** The snapshot with the override laid over it; an override that does not fit the format is a bad request. */

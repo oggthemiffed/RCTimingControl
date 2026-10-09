@@ -50,7 +50,7 @@ class TransponderLinkServiceTest {
 
     @Test
     void link_recordsItThenCreditsThePassingsCountedBeforehand() {
-        runningRaceWithEntry11(new LiveRaceState(7L));
+        runningRaceWithEntry11(new LiveRaceState());
         when(lapTimingService.countPassingsForTransponder(7L, "1234567")).thenReturn(4);
 
         int lapsCredited = service().link(7L, "1234567", 11L, 3L);
@@ -70,7 +70,7 @@ class TransponderLinkServiceTest {
 
     @Test
     void link_whenRecordingFails_doesNotLink() {
-        runningRaceWithEntry11(new LiveRaceState(7L));
+        runningRaceWithEntry11(new LiveRaceState());
         when(linkAuditRepository.save(any())).thenThrow(new IllegalStateException("disk full"));
 
         assertThatThrownBy(() -> service().link(7L, "1234567", 11L, 3L)).isInstanceOf(IllegalStateException.class);
@@ -101,7 +101,7 @@ class TransponderLinkServiceTest {
 
     @Test
     void link_again_toTheSameEntry_creditsAndRecordsNothing() {
-        LiveRaceState state = new LiveRaceState(7L);
+        LiveRaceState state = new LiveRaceState();
         state.retroactiveLinkTransponder("1234567", 11L);
         runningRaceWithEntry11(state);
 
@@ -113,7 +113,7 @@ class TransponderLinkServiceTest {
 
     @Test
     void link_ofATransponderLinkedToAnotherEntry_isRefused() {
-        LiveRaceState state = new LiveRaceState(7L);
+        LiveRaceState state = new LiveRaceState();
         state.retroactiveLinkTransponder("1234567", 12L);
         runningRaceWithEntry11(state);
 

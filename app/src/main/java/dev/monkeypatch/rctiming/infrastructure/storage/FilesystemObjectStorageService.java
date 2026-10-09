@@ -33,7 +33,7 @@ public class FilesystemObjectStorageService implements ObjectStorageService {
     }
 
     @Override
-    public String upload(String key, byte[] content, String contentType) {
+    public String upload(String key, byte[] content) {
         Path target = rootDir.resolve(key).normalize();
         // Keys are built server-side (LogoUploadService, TtsClipService) from fixed prefixes
         // plus numeric IDs, never from raw user input — this guard is defense in depth against
