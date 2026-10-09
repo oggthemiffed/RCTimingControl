@@ -44,4 +44,35 @@ describe('RoundGeneratorWizard', () => {
     await waitFor(() => expect(screen.getByText('Mod Buggy')).toBeInTheDocument());
     expect(finals().value).toBe(before);
   });
+
+  it('generates rounds with the counts entered', async () => {
+    vi.mocked(adminApi.generateRounds).mockResolvedValue(undefined as never);
+    render(wizard(true));
+    await screen.findByText('Mod Buggy');
+
+    fireEvent.change(screen.getByLabelText('Qualifying rounds'), { target: { value: '4' } });
+    fireEvent.change(screen.getByLabelText('Finals'), { target: { value: '3' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Generate Rounds' }));
+
+    await waitFor(() => expect(adminApi.generateRounds).toHaveBeenCalledWith(5, {
+      practiceRoundsCount: 2,
+      qualifyingRoundsCount: 4,
+      maxCarsPerHeat: 10,
+      classFinalsConfigs: [{ eventClassId: 11, finalsCount: 3, carsPerFinal: 10, bumpCount: 2 }],
+    }));
+  });
+
+  it('says which count is out of range rather than sending it', async () => {
+    render(wizard(true));
+    await screen.findByText('Mod Buggy');
+
+    fireEvent.change(screen.getByLabelText('Qualifying rounds'), { target: { value: '0' } });
+    fireEvent.change(screen.getByLabelText('Max cars/heat'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Generate Rounds' }));
+
+    expect(await screen.findByText('At least 1')).toBeInTheDocument();
+    expect(screen.getByText('Enter a number')).toBeInTheDocument();
+    expect(screen.getByLabelText('Qualifying rounds')).toHaveAttribute('aria-invalid', 'true');
+    expect(adminApi.generateRounds).not.toHaveBeenCalled();
+  });
 });
