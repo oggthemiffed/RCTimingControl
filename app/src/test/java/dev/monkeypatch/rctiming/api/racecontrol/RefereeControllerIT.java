@@ -223,7 +223,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
         RaceAndEntry re = seedRaceAndEntry(RaceStatus.FINISHED);
 
         ResponseEntity<RaceEntryDto[]> resp = restTemplate.exchange(
-                "/api/v1/race-control/races/" + re.race().getId() + "/entries",
+                "/api/v1/race-control/race/" + re.race().getId() + "/entries",
                 org.springframework.http.HttpMethod.GET,
                 new HttpEntity<>(refereeHeaders()),
                 RaceEntryDto[].class);
@@ -322,7 +322,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
         String number = "UNK" + UUID.randomUUID().toString().substring(0, 8);
 
         ResponseEntity<Map> resp = restTemplate.exchange(
-                "/api/v1/race-control/races/" + re.race().getId() + "/transponders/link",
+                "/api/v1/race-control/race/" + re.race().getId() + "/transponders/link",
                 org.springframework.http.HttpMethod.POST,
                 new HttpEntity<>(Map.of("transponderNumber", number, "entryId", re.entry().getId()), adminHeaders()),
                 Map.class);
@@ -397,7 +397,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
                         "reason", "Jumped start"), refereeHeaders()), Map.class);
 
         ResponseEntity<List<Map<String, Object>>> resp = restTemplate.exchange(
-                "/api/v1/race-control/races/" + raceId + "/history",
+                "/api/v1/race-control/race/" + raceId + "/history",
                 org.springframework.http.HttpMethod.GET,
                 new HttpEntity<>(refereeHeaders()),
                 new org.springframework.core.ParameterizedTypeReference<>() {});
@@ -413,7 +413,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
     @Test
     void history_ofAnUnknownRaceIsNotFound() {
         ResponseEntity<Map> resp = restTemplate.exchange(
-                "/api/v1/race-control/races/999999/history",
+                "/api/v1/race-control/race/999999/history",
                 org.springframework.http.HttpMethod.GET,
                 new HttpEntity<>(refereeHeaders()), Map.class);
 
@@ -425,7 +425,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
         RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
 
         ResponseEntity<Map> resp = restTemplate.getForEntity(
-                "/api/v1/race-control/races/" + re.race().getId() + "/history", Map.class);
+                "/api/v1/race-control/race/" + re.race().getId() + "/history", Map.class);
 
         assertThat(resp.getStatusCode()).isIn(HttpStatus.UNAUTHORIZED, HttpStatus.FORBIDDEN);
     }
@@ -440,7 +440,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
                         refereeHeaders()), Map.class);
 
         ResponseEntity<List<Map<String, Object>>> resp = restTemplate.exchange(
-                "/api/v1/race-control/races/" + raceId + "/history",
+                "/api/v1/race-control/race/" + raceId + "/history",
                 org.springframework.http.HttpMethod.GET,
                 new HttpEntity<>(refereeHeaders()),
                 new org.springframework.core.ParameterizedTypeReference<>() {});

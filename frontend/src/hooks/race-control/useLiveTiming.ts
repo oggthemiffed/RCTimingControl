@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useStomp } from './useStomp';
-import { getLiveTimingSnapshot } from '@/lib/raceControlApi';
+import { getBoardLiveTiming } from '@/lib/boardsApi';
 import type { LiveTimingRowDto } from '@/lib/raceControlApi';
 import { raceControlQueryKeys } from '@/hooks/race-control/raceControlQueryKeys';
 
@@ -19,7 +19,7 @@ export function useLiveTiming(raceId: number | null) {
 
   const { data: snapshot, isError: snapshotFailed } = useQuery({
     queryKey: raceControlQueryKeys.liveTimingSnapshot(raceId),
-    queryFn: () => getLiveTimingSnapshot(raceId!),
+    queryFn: () => getBoardLiveTiming(raceId!),
     enabled: (raceId ?? 0) > 0,
   });
 

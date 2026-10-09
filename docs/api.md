@@ -660,6 +660,16 @@ Content-Type: application/json
 
 The pre-race readiness grid call (`GET /race-control/race/{raceId}/pre-race-readiness`) carries `checkedIn` and `racehubArrival` on each slot.
 
+## Race control — Race entries, transponder links and history
+
+```http
+GET  /race-control/race/{raceId}/entries
+POST /race-control/race/{raceId}/transponders/link   { "transponderNumber": "1234567", "entryId": 101 }
+GET  /race-control/race/{raceId}/history
+```
+
+`entries` lists everyone in the race, in any state, for linking a transponder or picking a driver for an incident or penalty (`RACE_DIRECTOR`, `REFEREE` or `ADMIN`). `transponders/link` links an unknown transponder to an entry and credits the laps it has already done, answering `{ "lapsCredited": 3 }` (`RACE_DIRECTOR` or `ADMIN`). `history` is the race's own audit log rows (`RACE_DIRECTOR`, `REFEREE` or `ADMIN`). A race's results come from the public `GET /results/{raceId}`, and its live timing from `GET /boards/races/{raceId}/live-timing`.
+
 ---
 
 ## Spectator boards
@@ -679,7 +689,7 @@ GET /boards/results?eventId=7
 ```http
 GET /boards/races/{raceId}/live-timing
 ```
-**200 OK** — the race's current live timing rows (the same shape as the `/topic/race/{raceId}/timing` frames), or `[]` before the first passing. Boards use it once to fill the table, then follow STOMP.
+**200 OK** — the race's current live timing rows (the same shape as the `/topic/race/{raceId}/timing` frames), or `[]` before the first passing. Boards, and the race control and referee live timing panels, use it once to fill the table, then follow STOMP.
 
 ```http
 GET /boards/races/{raceId}/clock
@@ -757,7 +767,7 @@ Newest first. Every filter is optional and the ones given must all match: `entit
 }
 ```
 
-`source` is `UI` (a request through the app), `CLI` (a command line tool, with `actorUserId` null and `actor` like `cli:rob`) or `SYSTEM` (a background job, `actor` like `system:bump-up`). `before` and `after` are the stored JSON values, or null. There is no screen for the log yet; the referee view shows a race's own history from `GET /api/v1/race-control/races/{raceId}/history`, and an admin sees an entry's on the entry list.
+`source` is `UI` (a request through the app), `CLI` (a command line tool, with `actorUserId` null and `actor` like `cli:rob`) or `SYSTEM` (a background job, `actor` like `system:bump-up`). `before` and `after` are the stored JSON values, or null. There is no screen for the log yet; the referee view shows a race's own history from `GET /api/v1/race-control/race/{raceId}/history`, and an admin sees an entry's on the entry list.
 
 ---
 
