@@ -125,21 +125,22 @@ export default function CompetitorsPage() {
               <li key={g.competitors.map(c => c.id).join('-')} className="space-y-1">
                 <p className="text-xs font-medium">{g.reason}</p>
                 <ul className="divide-y rounded-md border">
-                  {g.competitors.map(c => (
-                    <li key={c.id} className="flex items-center justify-between gap-3 px-3 py-1.5 text-sm">
-                      <span>
-                        {c.displayName}
-                        {formatCompetitorMeta(c) && (
-                          <span className="text-muted-foreground"> · {formatCompetitorMeta(c)}</span>
-                        )}
-                      </span>
-                      <Button type="button" variant="outline" size="sm"
-                        aria-label={`Merge ${c.displayName} into another competitor (from possible duplicates)`}
-                        onClick={() => setMerging({ duplicate: c, suggested: g.competitors })}>
-                        Merge…
-                      </Button>
-                    </li>
-                  ))}
+                  {g.competitors.map(c => {
+                    const meta = formatCompetitorMeta(c);
+                    return (
+                      <li key={c.id} className="flex items-center justify-between gap-3 px-3 py-1.5 text-sm">
+                        <span>
+                          {c.displayName}
+                          {meta && <span className="text-muted-foreground"> · {meta}</span>}
+                        </span>
+                        <Button type="button" variant="outline" size="sm"
+                          aria-label={`Merge ${c.displayName} into another competitor (from possible duplicates)`}
+                          onClick={() => setMerging({ duplicate: c, suggested: g.competitors })}>
+                          Merge…
+                        </Button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </li>
             ))}

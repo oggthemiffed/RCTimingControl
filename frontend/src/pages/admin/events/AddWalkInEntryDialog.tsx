@@ -17,7 +17,6 @@ import {
 import { useAdminCompetitorsList } from '@/hooks/admin/useAdminCompetitors';
 import { useCreateWalkInEntry } from '@/hooks/admin/useAdminEntries';
 import type { CompetitorSummaryDto } from '@/lib/adminApi';
-import { matchesCompetitor } from '@/lib/competitors';
 import { ChosenCompetitor, CompetitorChoices } from '@/components/CompetitorPicker';
 import { getApiErrorMessage } from '@/lib/errors';
 
@@ -61,7 +60,8 @@ export default function AddWalkInEntryDialog({ eventId, classId, open, onOpenCha
   const query = driverText.trim().toLowerCase();
   const matches = selected || !query
     ? []
-    : competitors.filter(c => matchesCompetitor(c, query)).slice(0, MAX_MATCHES);
+    // Name only: the box is also the new driver's name, so a club or BRCA match would only get in the way
+    : competitors.filter(c => c.displayName.toLowerCase().includes(query)).slice(0, MAX_MATCHES);
   const exactMatch = query
     ? competitors.find(c => sameNameKey(c.displayName) === sameNameKey(driverText))
     : undefined;

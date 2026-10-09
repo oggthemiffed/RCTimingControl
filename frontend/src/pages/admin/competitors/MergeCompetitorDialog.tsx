@@ -51,10 +51,9 @@ export default function MergeCompetitorDialog({ duplicate, suggested = [], onOpe
     onOpenChange(open);
   }
 
-  const query = search.trim().toLowerCase();
   const pool = competitors.filter(c => c.id !== duplicate?.id);
-  const choices = (query
-    ? pool.filter(c => matchesCompetitor(c, query))
+  const choices = (search.trim()
+    ? pool.filter(c => matchesCompetitor(c, search))
     : [...suggested.filter(c => c.id !== duplicate?.id), ...pool.filter(c => !suggested.some(s => s.id === c.id))]
   ).slice(0, MAX_CHOICES);
   const keeping = keepId == null ? null : competitors.find(c => c.id === keepId) ?? null;

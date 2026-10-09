@@ -51,9 +51,9 @@ import {
 import { useAdminEventsList } from '@/hooks/admin/useAdminEvents';
 import { useAdminCompetitorsList } from '@/hooks/admin/useAdminCompetitors';
 import type { ChampionshipDto } from '@/lib/adminApi';
+import { adminApi } from '@/lib/adminApi';
 import { matchesCompetitor } from '@/lib/competitors';
 import { ChosenCompetitor, CompetitorChoices } from '@/components/CompetitorPicker';
-import { adminApi } from '@/lib/adminApi';
 import { useQuery } from '@tanstack/react-query';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 import { useHelpContent } from '@/context/HelpContext';
@@ -64,6 +64,8 @@ import { optionalPositiveInt, refineBestXFromY } from './bestXFromY';
 
 // ── Driver picker ──────────────────────────────────────────────────────────
 
+const MAX_DRIVER_CHOICES = 8;
+
 function DriverPicker({
   value,
   onChange,
@@ -71,10 +73,13 @@ function DriverPicker({
   value: number | undefined;
   onChange: (id: number | undefined) => void;
 }) {
-  const { data: competitors = [] } = useAdminCompetitorsList();
+  const { data: competitors = [], isLoading } = useAdminCompetitorsList();
   const [search, setSearch] = useState('');
   const chosen = value == null ? undefined : competitors.find(c => c.id === value);
 
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground">Loading drivers…</p>;
+  }
   if (chosen) {
     return <ChosenCompetitor competitor={chosen} onChange={() => onChange(undefined)} />;
   }
@@ -88,7 +93,7 @@ function DriverPicker({
         autoComplete="off"
       />
       <CompetitorChoices
-        choices={competitors.filter(c => matchesCompetitor(c, search)).slice(0, 30)}
+        choices={competitors.filter(c => matchesCompetitor(c, search)).slice(0, MAX_DRIVER_CHOICES)}
         onPick={c => { onChange(c.id); setSearch(''); }}
         label="Drivers"
         emptyText="No one matches."
