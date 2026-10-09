@@ -595,7 +595,7 @@ Content-Type: application/json
 }
 ```
 
-Requires `ADMIN` or `RACE_DIRECTOR`. Give either `competitorId` (an existing competitor) or `competitorName` (a new one), not both. **201 Created** with `{ "entry": {...}, "warnings": [...] }`; a transponder another active entry in the event uses is a warning. **409** if the competitor already has an entry in the class; **422** if the event is completed. A new `competitorName` that matches an existing competitor (same name, ignoring case and spacing) is refused with **409** and `{ "code": "POSSIBLE_DUPLICATE_COMPETITOR", "matches": [{ "id": 7, "displayName": "Wendy Walkin", "brcaNumber": null, "homeClub": null, "spokenName": null }] }`. Send that `competitorId` to use them, or add `"confirmNewCompetitor": true` to say this is a different person.
+Requires `ADMIN` or `RACE_DIRECTOR`. Give either `competitorId` (an existing competitor) or `competitorName` (a new one), not both. **201 Created** with `{ "entry": {...}, "warnings": [...] }`; a transponder another active entry in the event uses is a warning. **409** if the competitor already has an entry in the class or the event is completed. A new `competitorName` that matches an existing competitor (same name, ignoring case and spacing) is refused with **409** and `{ "code": "POSSIBLE_DUPLICATE_COMPETITOR", "matches": [{ "id": 7, "displayName": "Wendy Walkin", "brcaNumber": null, "homeClub": null, "spokenName": null }] }`. Send that `competitorId` to use them, or add `"confirmNewCompetitor": true` to say this is a different person.
 
 ---
 
@@ -647,7 +647,7 @@ GET  /race-control/events/{eventId}/check-in/search?query=jane
 POST /race-control/events/{eventId}/check-in/entries/{entryId}/confirm
 ```
 
-`resolve` matches the primary or secondary transponder and returns a list, because one competitor may use a transponder in more than one class. Each item is `{ "entryId": 101, "competitorName": "Jane Doe", "className": "Stock Buggy", "transponderNumber": "1234567", "secondaryTransponderNumber": null, "checkedIn": false, "checkedInAt": null, "racehubArrival": "ARRIVED" }`. **404** `{ "error": "not_found" }` when nothing matches. `search` is a case-insensitive name match. `confirm` returns `{ "entry": {...}, "alreadyCheckedIn": false }` and is idempotent: a repeat keeps the first check-in time. **409** `entry_withdrawn`.
+`resolve` matches the primary or secondary transponder and returns a list, because one competitor may use a transponder in more than one class. Each item is `{ "entryId": 101, "competitorName": "Jane Doe", "className": "Stock Buggy", "transponderNumber": "1234567", "secondaryTransponderNumber": null, "checkedIn": false, "checkedInAt": null, "racehubArrival": "ARRIVED" }`. **404** when nothing matches. Refusals are Problem Details with a readable `detail` and a code in `error`, here `"error": "not_found"`. `search` is a case-insensitive name match. `confirm` returns `{ "entry": {...}, "alreadyCheckedIn": false }` and is idempotent: a repeat keeps the first check-in time. **409** `entry_withdrawn`.
 
 ```http
 POST /race-control/events/{eventId}/entries/{entryId}/transponder-swap

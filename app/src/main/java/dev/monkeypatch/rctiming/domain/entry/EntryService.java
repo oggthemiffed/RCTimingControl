@@ -103,8 +103,7 @@ public class EntryService {
         boolean duplicate = eventEntries.stream().anyMatch(e ->
                 competitor.getId().equals(e.getCompetitorId()) && req.eventClassId().equals(e.getEventClassId()));
         if (duplicate) {
-            throw new StateConflictException(
-                    competitor.getDisplayName() + " already has an entry in this class");
+            throw new StateConflictException(competitor.getDisplayName() + " already has an entry in this class");
         }
 
         Instant now = Instant.now();

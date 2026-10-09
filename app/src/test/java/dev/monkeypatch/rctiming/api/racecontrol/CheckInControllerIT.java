@@ -124,7 +124,10 @@ class CheckInControllerIT extends AbstractIntegrationTest {
             ResponseEntity<Map> resp = post(directorToken, checkIn("/resolve"),
                     Map.of("transponderNumber", number), Map.class);
             assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-            assertThat(resp.getBody()).containsEntry("error", "not_found");
+            assertThat(resp.getBody())
+                    .containsEntry("error", "not_found")
+                    .containsEntry("status", 404)
+                    .containsEntry("detail", "No entry in this event has that transponder");
         }
     }
 

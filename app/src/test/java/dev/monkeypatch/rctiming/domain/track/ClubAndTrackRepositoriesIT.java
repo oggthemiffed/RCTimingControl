@@ -11,7 +11,7 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -104,13 +104,13 @@ class ClubAndTrackRepositoriesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void aFailedConstraintIsADataIntegrityViolation() {
+    void aTakenUniqueValueIsADuplicateKey() {
         String code = "DUP-" + System.nanoTime();
         GoverningBodyAffiliation first = affiliations.save(affiliation(code));
         cleanup.add(() -> affiliations.deleteById(first.getId()));
 
         assertThatThrownBy(() -> affiliations.save(affiliation(code)))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DuplicateKeyException.class);
     }
 
     @Test

@@ -10,8 +10,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -91,7 +91,7 @@ public class ClubProfileService {
         try {
             ZoneId.of(request.timezone());
         } catch (DateTimeException e) {
-            throw new IllegalArgumentException("Invalid timezone: " + e.getMessage(), e);
+            throw new IllegalArgumentException("Invalid timezone: " + request.timezone(), e);
         }
 
         ClubProfile profile = clubProfileRepository.findCurrent().orElseGet(ClubProfile::new);
