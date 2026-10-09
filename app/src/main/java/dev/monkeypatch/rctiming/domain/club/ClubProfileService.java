@@ -1,9 +1,5 @@
 package dev.monkeypatch.rctiming.domain.club;
 
-import dev.monkeypatch.rctiming.api.admin.dto.ClubProfileDto;
-import dev.monkeypatch.rctiming.api.admin.dto.CreateClubProfileRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.CreateGoverningBodyRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.GoverningBodyAffiliationDto;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
 import org.springframework.context.ApplicationEventPublisher;
@@ -21,6 +17,10 @@ import java.util.function.Consumer;
 @Service
 @Transactional
 public class ClubProfileService {
+
+    /** The club's details as the setup wizard and the club page edit them. */
+    public record ClubDetails(String name, String email, String phone, String websiteUrl, Double latitude,
+                              Double longitude, String timezone, String logoType) {}
 
     private final ClubProfileRepository clubProfileRepository;
     private final GoverningBodyAffiliationRepository affiliationRepository;
@@ -45,11 +45,10 @@ public class ClubProfileService {
                 .orElseGet(() -> new DecoderSettings(null, null, null));
     }
 
+    /** The club's profile; empty until the setup wizard saves one. */
     @Transactional(readOnly = true)
-    public ClubProfileDto getProfile() {
-        return clubProfileRepository.findCurrent()
-                .map(ClubProfileDto::from)
-                .orElseGet(() -> new ClubProfileDto(null, "", null, null, null, null, null, "UTC", null, null));
+    public Optional<ClubProfile> getProfile() {
+        return clubProfileRepository.findCurrent();
     }
 
     /** The announcer settings, or the defaults before a club profile exists. */
@@ -83,11 +82,11 @@ public class ClubProfileService {
                 });
     }
 
-    public ClubProfileDto createOrUpdateProfile(Actor actor, CreateClubProfileRequest request) {
+    public ClubProfile createOrUpdateProfile(Actor actor, ClubDetails details) {
         try {
-            ZoneId.of(request.timezone());
+            ZoneId.of(details.timezone());
         } catch (DateTimeException e) {
-            throw new IllegalArgumentException("Invalid timezone: " + request.timezone(), e);
+            throw new IllegalArgumentException("Invalid timezone: " + details.timezone(), e);
         }
 
         ClubProfile profile = clubProfileRepository.findCurrent().orElseGet(ClubProfile::new);
@@ -95,54 +94,54 @@ public class ClubProfileService {
         boolean isNew = profile.getId() == null;
         Map<String, Object> before = isNew ? null : profileValues(profile);
 
-        profile.setName(request.name());
-        profile.setEmail(request.email());
-        profile.setPhone(request.phone());
-        profile.setWebsiteUrl(request.websiteUrl());
-        profile.setLatitude(request.latitude());
-        profile.setLongitude(request.longitude());
+        profile.setName(details.name());
+        profile.setEmail(details.email());
+        profile.setPhone(details.phone());
+        profile.setWebsiteUrl(details.websiteUrl());
+        profile.setLatitude(details.latitude());
+        profile.setLongitude(details.longitude());
         // Use the raw field setter to avoid double-validation
-        profile.setTimezone(request.timezone());
-        profile.setLogoType(request.logoType());
+        profile.setTimezone(details.timezone());
+        profile.setLogoType(details.logoType());
 
         ClubProfile saved = clubProfileRepository.save(profile);
         audit.entry(actor, isNew ? "CLUB_PROFILE_CREATED" : "CLUB_PROFILE_UPDATED")
                 .entity("club_profile", saved.getId())
                 .summary("Saved the club details for " + saved.getName())
                 .before(before).after(profileValues(saved)).record();
-        return ClubProfileDto.from(saved);
+        return saved;
     }
 
     @Transactional(readOnly = true)
-    public List<GoverningBodyAffiliationDto> listAffiliations() {
-        return affiliationRepository.findAll().stream()
-                .map(GoverningBodyAffiliationDto::from)
-                .toList();
+    public List<GoverningBodyAffiliation> listAffiliations() {
+        return affiliationRepository.findAll();
     }
 
-    public GoverningBodyAffiliationDto createAffiliation(Actor actor, CreateGoverningBodyRequest request) {
+    public GoverningBodyAffiliation createAffiliation(Actor actor, String code, String displayName,
+                                                      boolean membershipRequired) {
         GoverningBodyAffiliation affiliation = new GoverningBodyAffiliation();
-        affiliation.setCode(request.code());
-        affiliation.setDisplayName(request.displayName());
-        affiliation.setMembershipRequired(request.membershipRequired());
+        affiliation.setCode(code);
+        affiliation.setDisplayName(displayName);
+        affiliation.setMembershipRequired(membershipRequired);
         GoverningBodyAffiliation saved = affiliationRepository.save(affiliation);
         audit.entry(actor, "AFFILIATION_CREATED").entity("affiliation", saved.getId())
                 .summary("Added the governing body " + saved.getDisplayName())
                 .after(affiliationValues(saved)).record();
-        return GoverningBodyAffiliationDto.from(saved);
+        return saved;
     }
 
-    public GoverningBodyAffiliationDto updateAffiliation(Actor actor, Long id, CreateGoverningBodyRequest request) {
+    public GoverningBodyAffiliation updateAffiliation(Actor actor, Long id, String code, String displayName,
+                                                      boolean membershipRequired) {
         GoverningBodyAffiliation affiliation = affiliationRepository.getOrThrow(id);
         Map<String, Object> before = affiliationValues(affiliation);
-        affiliation.setCode(request.code());
-        affiliation.setDisplayName(request.displayName());
-        affiliation.setMembershipRequired(request.membershipRequired());
+        affiliation.setCode(code);
+        affiliation.setDisplayName(displayName);
+        affiliation.setMembershipRequired(membershipRequired);
         GoverningBodyAffiliation saved = affiliationRepository.save(affiliation);
         audit.entry(actor, "AFFILIATION_UPDATED").entity("affiliation", id)
                 .summary("Changed the governing body " + saved.getDisplayName())
                 .before(before).after(affiliationValues(saved)).record();
-        return GoverningBodyAffiliationDto.from(saved);
+        return saved;
     }
 
     public void deleteAffiliation(Actor actor, Long id) {
