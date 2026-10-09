@@ -1,6 +1,6 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.PreRaceReadinessDto;
+import dev.monkeypatch.rctiming.query.racecontrol.PreRaceReadinessDto;
 import dev.monkeypatch.rctiming.query.racecontrol.PreRaceReadinessQuery;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;

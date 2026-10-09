@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.api.racecontrol.dto;
+package dev.monkeypatch.rctiming.query.racecontrol;
 
 /**
  * A row in the marshal duty list — one driver from the previous race, annotated with

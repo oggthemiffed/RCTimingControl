@@ -6,6 +6,8 @@ import dev.monkeypatch.rctiming.api.auth.LoginRequest;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
+import dev.monkeypatch.rctiming.domain.event.Event;
+import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.format.EventClass;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.QualifyingType;
@@ -30,8 +32,7 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
-import dev.monkeypatch.rctiming.domain.event.Event;
-import dev.monkeypatch.rctiming.domain.event.EventRepository;
+import dev.monkeypatch.rctiming.query.racecontrol.RaceEntryDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -220,14 +221,14 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
     void aRefereeCanListTheEntriesOfAFinishedRaceToPickADriver() {
         RaceAndEntry re = seedRaceAndEntry(RaceStatus.FINISHED);
 
-        ResponseEntity<dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto[]> resp = restTemplate.exchange(
+        ResponseEntity<RaceEntryDto[]> resp = restTemplate.exchange(
                 "/api/v1/race-control/races/" + re.race().getId() + "/entries",
                 org.springframework.http.HttpMethod.GET,
                 new HttpEntity<>(refereeHeaders()),
-                dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto[].class);
+                RaceEntryDto[].class);
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(resp.getBody()).extracting(dev.monkeypatch.rctiming.api.racecontrol.dto.RaceEntryDto::entryId)
+        assertThat(resp.getBody()).extracting(RaceEntryDto::entryId)
                 .containsExactly(re.entry().getId());
     }
 

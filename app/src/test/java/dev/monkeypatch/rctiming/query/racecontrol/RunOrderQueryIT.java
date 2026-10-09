@@ -1,7 +1,6 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
-import dev.monkeypatch.rctiming.api.racecontrol.dto.RunOrderItemDto;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

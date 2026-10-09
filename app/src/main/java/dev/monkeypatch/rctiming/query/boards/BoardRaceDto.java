@@ -1,4 +1,4 @@
-package dev.monkeypatch.rctiming.api.boards.dto;
+package dev.monkeypatch.rctiming.query.boards;
 
 /**
  * A race as the spectator boards show it (L12).

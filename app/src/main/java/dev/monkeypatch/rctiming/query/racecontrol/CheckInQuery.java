@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.CheckInEntryDto;
 import dev.monkeypatch.rctiming.domain.competitor.SpeechName;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.Condition;

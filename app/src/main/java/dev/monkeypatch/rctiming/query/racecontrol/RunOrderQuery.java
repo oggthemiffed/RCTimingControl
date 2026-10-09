@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.query.racecontrol;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.RunOrderItemDto;
 import dev.monkeypatch.rctiming.persistence.ReadTransaction;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Component;

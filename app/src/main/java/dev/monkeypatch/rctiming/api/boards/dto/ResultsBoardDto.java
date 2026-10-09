@@ -1,6 +1,7 @@
 package dev.monkeypatch.rctiming.api.boards.dto;
 
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotDto;
+import dev.monkeypatch.rctiming.query.boards.BoardRaceDto;
 
 import java.util.List;
 
