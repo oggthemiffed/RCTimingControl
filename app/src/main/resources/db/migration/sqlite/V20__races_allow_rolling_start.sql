@@ -42,6 +42,10 @@ SELECT id, round_id, event_class_id, heat_number, sequence_in_round, final_lette
        abandoned_at, bump_slots
 FROM races;
 
+-- Carry the id counter across, so the id of a race that was deleted is never handed out again
+DELETE FROM sqlite_sequence WHERE name = 'races_new';
+INSERT INTO sqlite_sequence (name, seq) SELECT 'races_new', seq FROM sqlite_sequence WHERE name = 'races';
+
 DROP TABLE races;
 ALTER TABLE races_new RENAME TO races;
 

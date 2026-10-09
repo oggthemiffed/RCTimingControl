@@ -7,6 +7,7 @@ import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
 import dev.monkeypatch.rctiming.domain.format.EventClass;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatService;
+import dev.monkeypatch.rctiming.domain.format.StartType;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
@@ -295,6 +296,7 @@ public class RoundGeneratorService {
             int seq = sequenceStart;
             for (EventClass ec : eventClasses) {
                 List<List<Long>> heats = heatsByClass.getOrDefault(ec.getId(), List.of());
+                StartType startType = raceFormatService.startType(ec, type);
                 for (int h = 0; h < heats.size(); h++) {
                     Race race = new Race();
                     race.setRoundId(savedRound.getId());
@@ -302,7 +304,7 @@ public class RoundGeneratorService {
                     race.setHeatNumber(h + 1);
                     race.setSequenceInRound(seq++);
                     race.setFinalLetter(null);
-                    race.setStartType(raceFormatService.startType(ec, type));
+                    race.setStartType(startType);
                     race.setStatus(RaceStatus.PENDING);
                     Race savedRace = raceRepository.save(race);
 

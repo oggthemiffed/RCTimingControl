@@ -10,6 +10,7 @@ import dev.monkeypatch.rctiming.domain.event.EventStatus;
 import dev.monkeypatch.rctiming.domain.format.EventClass;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.QualifyingType;
+import dev.monkeypatch.rctiming.domain.format.StartType;
 import dev.monkeypatch.rctiming.domain.format.TimedRaceConfig;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
@@ -85,7 +86,7 @@ class BoardFixtures {
         ec.setEventId(event.getId());
         ec.setRacingClassId(rc.getId());
         ec.setConfigSnapshot(new TimedRaceConfig(5,
-                dev.monkeypatch.rctiming.domain.format.StartType.ROLLING,
+                StartType.ROLLING,
                 QualifyingType.FASTEST_LAP, 1, 3));
         ec.setCreatedAt(now);
         ec.setUpdatedAt(now);
@@ -112,7 +113,7 @@ class BoardFixtures {
         race.setEventClassId(eventClass.getId());
         race.setHeatNumber(heatNumber);
         race.setSequenceInRound(heatNumber);
-        race.setStartType(dev.monkeypatch.rctiming.domain.format.StartType.GRID);
+        race.setStartType(StartType.GRID);
         race.setStatus(status);
         if (status != RaceStatus.PENDING && status != RaceStatus.GRID) {
             race.setStartedAt(now);

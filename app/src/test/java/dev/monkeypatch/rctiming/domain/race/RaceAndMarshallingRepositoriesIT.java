@@ -362,7 +362,7 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
     private static RaceFormatTemplate template() {
         RaceFormatTemplate t = new RaceFormatTemplate();
         t.setName("5-minute timed");
-        t.setConfig(new TimedRaceConfig(5, dev.monkeypatch.rctiming.domain.format.StartType.STAGGER,
+        t.setConfig(new TimedRaceConfig(5, StartType.STAGGER,
                 QualifyingType.FTQ, 2, 3));
         t.setCreatedAt(T1);
         t.setUpdatedAt(T1);

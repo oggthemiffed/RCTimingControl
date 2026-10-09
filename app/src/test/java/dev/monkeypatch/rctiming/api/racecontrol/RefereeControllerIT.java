@@ -473,7 +473,7 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
         race.setEventClassId(ec.getId());
         race.setHeatNumber(1);
         race.setSequenceInRound(1);
-        race.setStartType(dev.monkeypatch.rctiming.domain.format.StartType.GRID);
+        race.setStartType(StartType.GRID);
         race.setStatus(status);
         race.setCreatedAt(now);
         race.setUpdatedAt(now);
