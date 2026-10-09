@@ -104,7 +104,7 @@ public class LapTimingService {
 
     /**
      * Apply a marshal lap adjustment and rebroadcast positions.
-     * Called by RaceControlController after persisting the MarshalAdjustment row.
+     * Called by MarshalService after saving the MarshalAdjustment row.
      */
     public void applyMarshalAdjustment(long raceId, long entryId, int lapDelta, MarshalAdjustmentDto dto) {
         LiveRaceState state = stateFor(raceId);
@@ -113,6 +113,19 @@ public class LapTimingService {
         }
         liveTimingHub.broadcastMarshalAdjustment(raceId, dto);
         liveTimingHub.broadcastTimingUpdate(raceId, state.calculatePositions());
+    }
+
+    /**
+     * Takes a lap penalty off a car in live timing and rebroadcasts positions. Does nothing for a race with no live
+     * timing; a penalty given after the finish is applied to the result instead.
+     */
+    public void applyLapPenalty(long raceId, long entryId, int laps) {
+        peek(raceId).ifPresent(state -> {
+            synchronized (state) {
+                state.applyLapDelta(entryId, -laps);
+            }
+            liveTimingHub.broadcastTimingUpdate(raceId, state.calculatePositions());
+        });
     }
 
     /**

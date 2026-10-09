@@ -12,7 +12,7 @@ public class Penalty {
 
     private Long entryId;
 
-    private String penaltyType;
+    private PenaltyType penaltyType;
 
     private BigDecimal value;
 
@@ -31,8 +31,8 @@ public class Penalty {
     public Long getEntryId() { return entryId; }
     public void setEntryId(Long entryId) { this.entryId = entryId; }
 
-    public String getPenaltyType() { return penaltyType; }
-    public void setPenaltyType(String penaltyType) { this.penaltyType = penaltyType; }
+    public PenaltyType getPenaltyType() { return penaltyType; }
+    public void setPenaltyType(PenaltyType penaltyType) { this.penaltyType = penaltyType; }
 
     public BigDecimal getValue() { return value; }
     public void setValue(BigDecimal value) { this.value = value; }

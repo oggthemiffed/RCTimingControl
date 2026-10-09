@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.domain.race.MarshalAdjustment;
 import dev.monkeypatch.rctiming.domain.race.MarshalAdjustmentRepository;
 import dev.monkeypatch.rctiming.domain.race.Penalty;
+import dev.monkeypatch.rctiming.domain.race.PenaltyType;
 import dev.monkeypatch.rctiming.domain.race.PenaltyRepository;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
@@ -188,11 +189,11 @@ public class ResultSnapshotService {
         for (Penalty penalty : penaltyRepository.findByRaceId(race.getId())) {
             Instant at = penalty.getAppliedAt();
             if (at == null || (startedAt != null && at.isBefore(startedAt))) continue;
-            if ("TIME".equals(penalty.getPenaltyType())) {
+            if (penalty.getPenaltyType() == PenaltyType.TIME) {
                 long ms = penalty.getValue().multiply(BigDecimal.valueOf(1000))
                         .setScale(0, RoundingMode.HALF_UP).longValueExact();
                 addedTimeMs.merge(penalty.getEntryId(), ms, Long::sum);
-            } else if ("LAP".equals(penalty.getPenaltyType()) && !at.isBefore(finishedAt)) {
+            } else if (penalty.getPenaltyType() == PenaltyType.LAP && !at.isBefore(finishedAt)) {
                 lapDeltas.merge(penalty.getEntryId(), -penalty.getValue().intValue(), Integer::sum);
             }
         }

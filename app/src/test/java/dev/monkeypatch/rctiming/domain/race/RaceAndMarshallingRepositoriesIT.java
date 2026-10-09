@@ -241,13 +241,13 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
         Penalty p = new Penalty();
         p.setRaceId(race.getId());
         p.setEntryId(entry.getId());
-        p.setPenaltyType("TIME");
+        p.setPenaltyType(PenaltyType.TIME);
         p.setValue(new BigDecimal("2.5"));
         p.setReason("Cutting");
         p.setAppliedBy(official.getId());
         p.setAppliedAt(T1);
         Penalty penalty = assertSavedAndReloaded(penalties, p, c -> {
-            c.setPenaltyType("LAP");
+            c.setPenaltyType(PenaltyType.LAP);
             c.setValue(new BigDecimal("1"));
             c.setReason(null);
             c.setAppliedAt(T2);
