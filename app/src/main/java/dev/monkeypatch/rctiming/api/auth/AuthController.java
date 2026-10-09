@@ -40,17 +40,20 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
         return switch (authService.login(request.email(), request.password())) {
             case Outcome.SignedIn signedIn -> signedIn(signedIn, response);
-            // Generic answer: never say which field is wrong
-            case Outcome.Refused(Refusal refusal) when refusal == Refusal.WRONG_CREDENTIALS ->
-                    ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            case Outcome.Refused(Refusal refusal) when refusal == Refusal.DISABLED -> {
+            case Outcome.Refused(Refusal refusal) -> switch (refusal) {
+                // Generic answer: never say which field is wrong
+                case WRONG_CREDENTIALS -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
                 // The password was right, so say why
-                ProblemDetail disabled = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN,
-                        "This account has been disabled. Ask a club admin to enable it.");
-                disabled.setProperty("reason", "disabled");
-                yield ResponseEntity.status(HttpStatus.FORBIDDEN).body(disabled);
-            }
-            case Outcome.Refused refused -> ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                case DISABLED -> {
+                    ProblemDetail disabled = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN,
+                            "This account has been disabled. Ask a club admin to enable it.");
+                    disabled.setProperty("reason", "disabled");
+                    yield ResponseEntity.status(HttpStatus.FORBIDDEN).body(disabled);
+                }
+                case NOT_AN_OFFICIAL -> ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                case UNKNOWN_TOKEN, TOKEN_USED, TOKEN_EXPIRED, NO_SUCH_OFFICIAL ->
+                        throw new IllegalStateException("Not a sign-in refusal: " + refusal);
+            };
         };
     }
 
@@ -68,9 +71,12 @@ public class AuthController {
         }
         return switch (authService.refresh(rawCookieToken)) {
             case Outcome.SignedIn signedIn -> signedIn(signedIn, response);
-            case Outcome.Refused(Refusal refusal) when refusal == Refusal.NOT_AN_OFFICIAL ->
-                    ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            case Outcome.Refused refused -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            case Outcome.Refused(Refusal refusal) -> switch (refusal) {
+                case NOT_AN_OFFICIAL -> ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                // A disabled account answers 401 like a dead token, so the page goes back to sign-in
+                case UNKNOWN_TOKEN, TOKEN_USED, TOKEN_EXPIRED, NO_SUCH_OFFICIAL, DISABLED, WRONG_CREDENTIALS ->
+                        ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            };
         };
     }
 

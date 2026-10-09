@@ -49,10 +49,22 @@ public class AuthService {
     /** The outcome of a sign-in or a refresh. */
     public sealed interface Outcome {
         /** Signed in: the official, their access token and the raw refresh token for the cookie. */
-        record SignedIn(User user, String accessToken, String refreshToken) implements Outcome {}
+        record SignedIn(User user, String accessToken, String refreshToken) implements Outcome {
+            /** Leaves out the user (with its password hash) and both tokens, in case an outcome is ever logged. */
+            @Override
+            public String toString() {
+                return "SignedIn[userId=" + user.getId() + "]";
+            }
+        }
 
         record Refused(Refusal refusal) implements Outcome {}
     }
+
+    /**
+     * Checked against when no official has the email, so an unknown email takes as long to refuse as a wrong
+     * password and the timing does not tell anyone which emails belong to officials.
+     */
+    private final String unknownEmailHash;
 
     private final UserService userService;
     private final JwtTokenService jwtTokenService;
@@ -73,12 +85,14 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
         this.audit = audit;
         this.transactions = transactions;
+        this.unknownEmailHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
     /** Signs in. Every attempt is recorded in the audit log, wrong passwords included. */
     public Outcome login(String email, String password) {
         Optional<User> userOpt = userService.findByEmail(email);
-        if (userOpt.isEmpty() || !passwordEncoder.matches(password, userOpt.get().getPasswordHash())) {
+        String passwordHash = userOpt.map(User::getPasswordHash).orElse(unknownEmailHash);
+        if (!passwordEncoder.matches(password, passwordHash) || userOpt.isEmpty()) {
             // Never say which field is wrong (credential enumeration prevention). The audit row is just as
             // vague about it: only an admin reads it, but it names no password.
             return refuseLogin(email, userOpt.map(User::getId).orElse(null), Refusal.WRONG_CREDENTIALS);
