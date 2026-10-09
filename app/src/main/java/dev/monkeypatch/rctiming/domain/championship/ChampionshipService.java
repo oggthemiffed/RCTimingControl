@@ -1,17 +1,5 @@
 package dev.monkeypatch.rctiming.domain.championship;
 
-import dev.monkeypatch.rctiming.api.admin.dto.AddChampionshipClassRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.AddChampionshipEventRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.ChampionshipClassDto;
-import dev.monkeypatch.rctiming.api.admin.dto.ChampionshipDetailDto;
-import dev.monkeypatch.rctiming.api.admin.dto.ChampionshipDto;
-import dev.monkeypatch.rctiming.api.admin.dto.ChampionshipEventLinkDto;
-import dev.monkeypatch.rctiming.api.admin.dto.ChampionshipExclusionDto;
-import dev.monkeypatch.rctiming.api.admin.dto.CreateChampionshipRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.CreateExclusionRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.PointsScaleEntryDto;
-import dev.monkeypatch.rctiming.api.admin.dto.UpdateChampionshipRequest;
-import dev.monkeypatch.rctiming.api.admin.dto.UpdatePointsScaleRequest;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
@@ -67,74 +55,79 @@ public class ChampionshipService {
         this.audit = audit;
     }
 
-    public ChampionshipDto create(Actor actor, CreateChampionshipRequest request) {
+    /** A championship's own settings, as an official sets them on create or update. */
+    public record Settings(String name, Integer bestXFromYX, Integer bestXFromYY, ScoringSource scoringSource,
+                           int tqBonusPoints, int afinalWinnerBonusPoints) {}
+
+    /** A championship with its classes, rounds in order and points scale by position. */
+    public record Detail(Championship championship, List<ChampionshipClass> classes,
+                         List<ChampionshipEventLink> events, List<ChampionshipPointsScaleEntry> pointsScale) {}
+
+    /** The points one finishing position scores. */
+    public record ScalePoint(Integer position, Integer points) {
+        static ScalePoint of(ChampionshipPointsScaleEntry e) {
+            return new ScalePoint(e.getPosition(), e.getPoints());
+        }
+    }
+
+    /** An exclusion and the name of the official who recorded it, null if that account has been removed. */
+    public record Exclusion(ChampionshipExclusion exclusion, String createdByName) {}
+
+    public Championship create(Actor actor, Settings settings) {
         Championship c = new Championship();
-        c.setName(request.name());
-        c.setBestXFromYX(request.bestXFromYX());
-        c.setBestXFromYY(request.bestXFromYY());
-        c.setScoringSource(request.scoringSource());
-        c.setTqBonusPoints(request.tqBonusPoints());
-        c.setAfinalWinnerBonusPoints(request.afinalWinnerBonusPoints());
+        apply(c, settings);
         Championship saved = championshipRepository.save(c);
         audit.entry(actor, "CHAMPIONSHIP_CREATED").entity("championship", saved.getId())
                 .summary("Created championship " + saved.getName())
                 .after(settingsOf(saved)).record();
-        return ChampionshipDto.from(saved);
+        return saved;
     }
 
-    public ChampionshipDto update(Actor actor, Long id, UpdateChampionshipRequest request) {
+    public Championship update(Actor actor, Long id, Settings settings) {
         Championship c = getChampionshipOrThrow(id);
         Map<String, Object> before = settingsOf(c);
-        c.setName(request.name());
-        c.setBestXFromYX(request.bestXFromYX());
-        c.setBestXFromYY(request.bestXFromYY());
-        c.setScoringSource(request.scoringSource());
-        c.setTqBonusPoints(request.tqBonusPoints());
-        c.setAfinalWinnerBonusPoints(request.afinalWinnerBonusPoints());
+        apply(c, settings);
         Championship saved = championshipRepository.save(c);
         audit.entry(actor, "CHAMPIONSHIP_UPDATED").entity("championship", id)
                 .summary("Changed the settings of championship " + saved.getName())
                 .before(before).after(settingsOf(saved)).record();
-        return ChampionshipDto.from(saved);
+        return saved;
     }
 
     @Transactional(readOnly = true)
-    public List<ChampionshipDto> listAll() {
-        return championshipRepository.findAll().stream()
-                .map(ChampionshipDto::from)
-                .toList();
+    public List<Championship> listAll() {
+        return championshipRepository.findAll();
     }
 
     @Transactional(readOnly = true)
-    public ChampionshipDetailDto getDetail(Long id) {
+    public Detail getDetail(Long id) {
         Championship c = getChampionshipOrThrow(id);
-        List<ChampionshipClassDto> classes = classRepository.findByChampionshipId(id)
-                .stream().map(ChampionshipClassDto::from).toList();
-        List<ChampionshipEventLinkDto> events = eventLinkRepository.findByChampionshipIdOrderByRoundNumberAsc(id)
-                .stream().map(ChampionshipEventLinkDto::from).toList();
-        List<PointsScaleEntryDto> scale = pointsScaleRepository.findByChampionshipIdOrderByPositionAsc(id)
-                .stream().map(PointsScaleEntryDto::from).toList();
-        return ChampionshipDetailDto.from(c, classes, events, scale);
+        return new Detail(c,
+                classRepository.findByChampionshipId(id),
+                eventLinkRepository.findByChampionshipIdOrderByRoundNumberAsc(id),
+                pointsScaleRepository.findByChampionshipIdOrderByPositionAsc(id));
     }
 
-    public ChampionshipClassDto addClass(Actor actor, Long championshipId, AddChampionshipClassRequest request) {
+    /** Adds a class; a null best-X-from-Y inherits the championship's (D-11). */
+    public ChampionshipClass addClass(Actor actor, Long championshipId, Long racingClassId,
+                                      Integer bestXFromYX, Integer bestXFromYY) {
         championshipRepository.requireExists(championshipId);
-        racingClassRepository.requireExists(request.racingClassId());
-        if (classRepository.existsByChampionshipIdAndRacingClassId(championshipId, request.racingClassId())) {
+        racingClassRepository.requireExists(racingClassId);
+        if (classRepository.existsByChampionshipIdAndRacingClassId(championshipId, racingClassId)) {
             throw new DataIntegrityViolationException(
-                    "Racing class " + request.racingClassId() + " already belongs to championship " + championshipId);
+                    "Racing class " + racingClassId + " already belongs to championship " + championshipId);
         }
         ChampionshipClass cc = new ChampionshipClass();
         cc.setChampionshipId(championshipId);
-        cc.setRacingClassId(request.racingClassId());
-        cc.setBestXFromYX(request.bestXFromYX());
-        cc.setBestXFromYY(request.bestXFromYY());
+        cc.setRacingClassId(racingClassId);
+        cc.setBestXFromYX(bestXFromYX);
+        cc.setBestXFromYY(bestXFromYY);
         ChampionshipClass saved = classRepository.save(cc);
         audit.entry(actor, "CHAMPIONSHIP_CLASS_ADDED").entity("championship", championshipId)
                 .summary("Added class " + className(saved.getRacingClassId()) + " to championship "
                         + championshipName(championshipId))
                 .after(classValues(saved)).record();
-        return ChampionshipClassDto.from(saved);
+        return saved;
     }
 
     public void removeClass(Actor actor, Long championshipId, Long racingClassId) {
@@ -151,27 +144,27 @@ public class ChampionshipService {
         classRepository.deleteByChampionshipIdAndRacingClassId(championshipId, racingClassId);
     }
 
-    public ChampionshipEventLinkDto linkEvent(Actor actor, Long championshipId, AddChampionshipEventRequest request) {
+    public ChampionshipEventLink linkEvent(Actor actor, Long championshipId, Long eventId, Integer roundNumber) {
         championshipRepository.requireExists(championshipId);
-        eventRepository.requireExists(request.eventId());
-        if (eventLinkRepository.existsByChampionshipIdAndEventId(championshipId, request.eventId())) {
+        eventRepository.requireExists(eventId);
+        if (eventLinkRepository.existsByChampionshipIdAndEventId(championshipId, eventId)) {
             throw new DataIntegrityViolationException(
-                    "Event " + request.eventId() + " already linked to championship " + championshipId);
+                    "Event " + eventId + " already linked to championship " + championshipId);
         }
-        if (eventLinkRepository.existsByChampionshipIdAndRoundNumber(championshipId, request.roundNumber())) {
+        if (eventLinkRepository.existsByChampionshipIdAndRoundNumber(championshipId, roundNumber)) {
             throw new DataIntegrityViolationException(
-                    "Round " + request.roundNumber() + " already assigned in championship " + championshipId);
+                    "Round " + roundNumber + " already assigned in championship " + championshipId);
         }
         ChampionshipEventLink link = new ChampionshipEventLink();
         link.setChampionshipId(championshipId);
-        link.setEventId(request.eventId());
-        link.setRoundNumber(request.roundNumber());
+        link.setEventId(eventId);
+        link.setRoundNumber(roundNumber);
         ChampionshipEventLink saved = eventLinkRepository.save(link);
         audit.entry(actor, "CHAMPIONSHIP_EVENT_LINKED").entity("championship", championshipId).event(saved.getEventId())
                 .summary("Linked " + eventName(saved.getEventId()) + " to championship "
                         + championshipName(championshipId) + " as round " + saved.getRoundNumber())
                 .after(linkValues(saved)).record();
-        return ChampionshipEventLinkDto.from(saved);
+        return saved;
     }
 
     public void unlinkEvent(Actor actor, Long championshipId, Long eventId) {
@@ -189,55 +182,50 @@ public class ChampionshipService {
     }
 
     /** CHAMP-04: replace-all points scale in a single transaction. */
-    public List<PointsScaleEntryDto> replacePointsScale(Actor actor, Long championshipId,
-                                                        UpdatePointsScaleRequest request) {
+    public List<ChampionshipPointsScaleEntry> replacePointsScale(Actor actor, Long championshipId,
+                                                                 List<ScalePoint> scale) {
         championshipRepository.requireExists(championshipId);
-        List<PointsScaleEntryDto> before = pointsScaleRepository.findByChampionshipIdOrderByPositionAsc(championshipId)
-                .stream().map(PointsScaleEntryDto::from).toList();
+        List<ScalePoint> before = pointsScaleRepository.findByChampionshipIdOrderByPositionAsc(championshipId)
+                .stream().map(ScalePoint::of).toList();
         pointsScaleRepository.deleteAllByChampionshipId(championshipId);
-        List<ChampionshipPointsScaleEntry> toSave = new ArrayList<>(request.entries().size());
-        for (PointsScaleEntryDto entry : request.entries()) {
+        List<ChampionshipPointsScaleEntry> toSave = new ArrayList<>(scale.size());
+        for (ScalePoint entry : scale) {
             toSave.add(new ChampionshipPointsScaleEntry(championshipId, entry.position(), entry.points()));
         }
-        List<ChampionshipPointsScaleEntry> saved = pointsScaleRepository.saveAll(toSave);
-        List<PointsScaleEntryDto> after = saved.stream()
+        List<ChampionshipPointsScaleEntry> saved = pointsScaleRepository.saveAll(toSave).stream()
                 .sorted((a, b) -> Integer.compare(a.getPosition(), b.getPosition()))
-                .map(PointsScaleEntryDto::from)
                 .toList();
         audit.entry(actor, "CHAMPIONSHIP_POINTS_SCALE_CHANGED").entity("championship", championshipId)
                 .summary("Changed the points scale of championship " + championshipName(championshipId))
-                .before(before).after(after).record();
-        return after;
+                .before(before).after(saved.stream().map(ScalePoint::of).toList()).record();
+        return saved;
     }
 
     /**
      * CHAMP-02 + CHAMP-09: exclude a driver (a competitor, L5) from one event and record an audit row.
-     * `actingAdminId` is sourced from the JWT subject at the controller layer — NEVER from the request body.
+     * The recording official comes from the authenticated {@code actor}, never from the request body.
      */
-    public ChampionshipExclusionDto createExclusion(Actor actor,
-                                                    Long championshipId,
-                                                    CreateExclusionRequest request) {
+    public Exclusion createExclusion(Actor actor, Long championshipId, Long driverId, Long eventId, String reason) {
         championshipRepository.requireExists(championshipId);
-        competitorRepository.requireExists(request.driverId());
-        eventRepository.requireExists(request.eventId());
-        if (exclusionRepository.existsByChampionshipIdAndDriverIdAndEventId(
-                championshipId, request.driverId(), request.eventId())) {
+        competitorRepository.requireExists(driverId);
+        eventRepository.requireExists(eventId);
+        if (exclusionRepository.existsByChampionshipIdAndDriverIdAndEventId(championshipId, driverId, eventId)) {
             throw new DataIntegrityViolationException(
-                    "Driver " + request.driverId() + " is already excluded from event " + request.eventId()
+                    "Driver " + driverId + " is already excluded from event " + eventId
                             + " in championship " + championshipId);
         }
         ChampionshipExclusion x = new ChampionshipExclusion();
         x.setChampionshipId(championshipId);
-        x.setDriverId(request.driverId());
-        x.setEventId(request.eventId());
-        x.setReason(request.reason());
+        x.setDriverId(driverId);
+        x.setEventId(eventId);
+        x.setReason(reason);
         x.setCreatedBy(actor.userId());
         ChampionshipExclusion saved = exclusionRepository.save(x);
         audit.entry(actor, "CHAMPIONSHIP_EXCLUSION_ADDED").entity("championship", championshipId).event(saved.getEventId())
                 .summary("Excluded " + competitorName(saved.getDriverId()) + " from " + eventName(saved.getEventId())
                         + " in championship " + championshipName(championshipId) + ": " + saved.getReason())
                 .after(exclusionValues(saved)).record();
-        return ChampionshipExclusionDto.from(saved, officialName(actor.userId()));
+        return new Exclusion(saved, officialName(actor.userId()));
     }
 
     public void deleteExclusion(Actor actor, Long championshipId, Long exclusionId) {
@@ -255,7 +243,7 @@ public class ChampionshipService {
     }
 
     @Transactional(readOnly = true)
-    public List<ChampionshipExclusionDto> listExclusions(Long championshipId) {
+    public List<Exclusion> listExclusions(Long championshipId) {
         championshipRepository.requireExists(championshipId);
         List<ChampionshipExclusion> exclusions =
                 exclusionRepository.findByChampionshipIdOrderByCreatedAtDesc(championshipId);
@@ -263,7 +251,7 @@ public class ChampionshipService {
         userRepository.findAllById(exclusions.stream().map(ChampionshipExclusion::getCreatedBy).distinct().toList())
                 .forEach(u -> officials.put(u.getId(), fullName(u)));
         return exclusions.stream()
-                .map(x -> ChampionshipExclusionDto.from(x, officials.get(x.getCreatedBy())))
+                .map(x -> new Exclusion(x, officials.get(x.getCreatedBy())))
                 .toList();
     }
 
@@ -273,6 +261,15 @@ public class ChampionshipService {
 
     private static String fullName(User user) {
         return (user.getFirstName() + " " + user.getLastName()).trim();
+    }
+
+    private static void apply(Championship c, Settings settings) {
+        c.setName(settings.name());
+        c.setBestXFromYX(settings.bestXFromYX());
+        c.setBestXFromYY(settings.bestXFromYY());
+        c.setScoringSource(settings.scoringSource());
+        c.setTqBonusPoints(settings.tqBonusPoints());
+        c.setAfinalWinnerBonusPoints(settings.afinalWinnerBonusPoints());
     }
 
     // ── Audit values ────────────────────────────────────────────────────────────

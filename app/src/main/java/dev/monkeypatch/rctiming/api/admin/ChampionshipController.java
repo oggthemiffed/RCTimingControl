@@ -49,12 +49,16 @@ public class ChampionshipController {
 
     @GetMapping
     public List<ChampionshipDto> list() {
-        return championshipService.listAll();
+        return championshipService.listAll().stream().map(ChampionshipDto::from).toList();
     }
 
     @GetMapping("/{id}")
     public ChampionshipDetailDto getDetail(@PathVariable Long id) {
-        return championshipService.getDetail(id);
+        ChampionshipService.Detail detail = championshipService.getDetail(id);
+        return ChampionshipDetailDto.from(detail.championship(),
+                detail.classes().stream().map(ChampionshipClassDto::from).toList(),
+                detail.events().stream().map(ChampionshipEventLinkDto::from).toList(),
+                detail.pointsScale().stream().map(PointsScaleEntryDto::from).toList());
     }
 
     @Audited("audit_log")
@@ -62,7 +66,7 @@ public class ChampionshipController {
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public ChampionshipDto create(Authentication auth, @RequestBody @Valid CreateChampionshipRequest request) {
-        return championshipService.create(CurrentOfficial.actor(auth), request);
+        return ChampionshipDto.from(championshipService.create(CurrentOfficial.actor(auth), settings(request)));
     }
 
     @Audited("audit_log")
@@ -70,7 +74,7 @@ public class ChampionshipController {
     @PreAuthorize("hasRole('ADMIN')")
     public ChampionshipDto update(Authentication auth, @PathVariable Long id,
                                    @RequestBody @Valid UpdateChampionshipRequest request) {
-        return championshipService.update(CurrentOfficial.actor(auth), id, request);
+        return ChampionshipDto.from(championshipService.update(CurrentOfficial.actor(auth), id, settings(request)));
     }
 
     @Audited("audit_log")
@@ -79,7 +83,8 @@ public class ChampionshipController {
     @ResponseStatus(HttpStatus.CREATED)
     public ChampionshipClassDto addClass(Authentication auth, @PathVariable Long id,
                                           @RequestBody @Valid AddChampionshipClassRequest request) {
-        return championshipService.addClass(CurrentOfficial.actor(auth), id, request);
+        return ChampionshipClassDto.from(championshipService.addClass(CurrentOfficial.actor(auth), id,
+                request.racingClassId(), request.bestXFromYX(), request.bestXFromYY()));
     }
 
     @Audited("audit_log")
@@ -96,7 +101,8 @@ public class ChampionshipController {
     @ResponseStatus(HttpStatus.CREATED)
     public ChampionshipEventLinkDto linkEvent(Authentication auth, @PathVariable Long id,
                                                @RequestBody @Valid AddChampionshipEventRequest request) {
-        return championshipService.linkEvent(CurrentOfficial.actor(auth), id, request);
+        return ChampionshipEventLinkDto.from(championshipService.linkEvent(CurrentOfficial.actor(auth), id,
+                request.eventId(), request.roundNumber()));
     }
 
     @Audited("audit_log")
@@ -112,12 +118,17 @@ public class ChampionshipController {
     @PreAuthorize("hasRole('ADMIN')")
     public List<PointsScaleEntryDto> replacePointsScale(Authentication auth, @PathVariable Long id,
                                                          @RequestBody @Valid UpdatePointsScaleRequest request) {
-        return championshipService.replacePointsScale(CurrentOfficial.actor(auth), id, request);
+        List<ChampionshipService.ScalePoint> scale = request.entries().stream()
+                .map(e -> new ChampionshipService.ScalePoint(e.position(), e.points()))
+                .toList();
+        return championshipService.replacePointsScale(CurrentOfficial.actor(auth), id, scale).stream()
+                .map(PointsScaleEntryDto::from)
+                .toList();
     }
 
     @GetMapping("/{id}/exclusions")
     public List<ChampionshipExclusionDto> listExclusions(@PathVariable Long id) {
-        return championshipService.listExclusions(id);
+        return championshipService.listExclusions(id).stream().map(ChampionshipExclusionDto::from).toList();
     }
 
     // Not admin-only, unlike the rest of championship setup: a referee records a disqualification (DQ), so
@@ -128,7 +139,8 @@ public class ChampionshipController {
     public ChampionshipExclusionDto createExclusion(@PathVariable Long id,
                                                      Authentication auth,
                                                      @RequestBody @Valid CreateExclusionRequest request) {
-        return championshipService.createExclusion(CurrentOfficial.actor(auth), id, request);
+        return ChampionshipExclusionDto.from(championshipService.createExclusion(CurrentOfficial.actor(auth), id,
+                request.driverId(), request.eventId(), request.reason()));
     }
 
     @Audited("audit_log")
@@ -142,5 +154,15 @@ public class ChampionshipController {
     @GetMapping("/{id}/standings")
     public List<StandingsRowDto> getStandings(@PathVariable Long id) {
         return standingsQuery.computeStandings(id);
+    }
+
+    private static ChampionshipService.Settings settings(CreateChampionshipRequest r) {
+        return new ChampionshipService.Settings(r.name(), r.bestXFromYX(), r.bestXFromYY(), r.scoringSource(),
+                r.tqBonusPoints(), r.afinalWinnerBonusPoints());
+    }
+
+    private static ChampionshipService.Settings settings(UpdateChampionshipRequest r) {
+        return new ChampionshipService.Settings(r.name(), r.bestXFromYX(), r.bestXFromYY(), r.scoringSource(),
+                r.tqBonusPoints(), r.afinalWinnerBonusPoints());
     }
 }
