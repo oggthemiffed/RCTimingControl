@@ -21,7 +21,7 @@ vi.mock('@/hooks/useAuth', () => ({
   }),
 }));
 
-describe('AdminPanelLayout (Wave 0 stub — enabled in Plan 04)', () => {
+describe('AdminPanelLayout', () => {
   it('renders Setup Wizard nav entry linking to /setup (SC-5)', () => {
     render(
       <MemoryRouter initialEntries={['/admin']}>
