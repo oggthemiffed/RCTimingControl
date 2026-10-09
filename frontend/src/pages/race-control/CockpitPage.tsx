@@ -19,6 +19,7 @@ import { GridEditorPanel } from './panels/GridEditorPanel';
 import { LiveTimingPanel } from './panels/LiveTimingPanel';
 import { FinishedPanel } from './panels/FinishedPanel';
 import { AudioSettingsPanel } from './panels/AudioSettingsPanel';
+import { useAudioVolume } from '@/hooks/race-control/useAudioVolume';
 import { UnknownTransponderLinkDialog } from './dialogs/UnknownTransponderLinkDialog';
 import { RoundGeneratorWizard } from './RoundGeneratorWizard';
 import { Button } from '@/components/ui/button';
@@ -75,15 +76,12 @@ export default function CockpitPage() {
   const { rows: liveRows } = useLiveTiming(selectedRaceId);
 
   // Audio announcements hook (AUDIO-02, AUDIO-03, AUDIO-04, AUDIO-05, AUDIO-06, AUDIO-11)
-  const audioVolume = (() => {
-    const stored = localStorage.getItem('rc-audio-volume');
-    return stored ? parseInt(stored, 10) / 100 : 0.8;
-  })();
+  const [volumePercent] = useAudioVolume();
 
   // Fetch audio settings — shared query key with AudioSettingsPanel so only one request fires
   const { data: audioSettings } = useQuery({
     queryKey: ['audio-settings'],
-    queryFn: () => getAudioSettings().then((r) => r.data),
+    queryFn: () => getAudioSettings(),
   });
 
   // Fetch grid entries for stagger sequencer when race is at GRID state
@@ -103,7 +101,7 @@ export default function CockpitPage() {
   const { playBeep, setClipMap } = useAnnouncements({
     raceId: selectedRaceId,
     settings: audioSettings ?? null,
-    volume: audioVolume,
+    volume: volumePercent / 100,
     raceState: selectedRace?.status,
     raceEndsAt: raceEndsAt(raceClock, raceClockReadAt),
     gridEntries,
@@ -440,7 +438,7 @@ export default function CockpitPage() {
           )}
 
         {/* Audio settings collapsible panel */}
-        <AudioSettingsPanel raceId={selectedRaceId} />
+        <AudioSettingsPanel />
       </aside>
 
       <Separator orientation="vertical" />

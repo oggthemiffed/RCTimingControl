@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useStomp } from '@/hooks/race-control/useStomp';
 import type { AudioSettingsDto } from '@/lib/audioApi';
+import { speakWithBrowser } from '@/lib/speech';
 
 const DEFAULT_COUNTDOWN_INTERVALS = [600, 300, 120, 60, 30];
 
@@ -84,10 +85,7 @@ export function useAnnouncements({
 
   // Web Speech API fallback (AUDIO-11)
   const fallbackSpeak = useCallback((text: string) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.volume = volumeRef.current;
-    window.speechSynthesis.speak(utterance);
+    speakWithBrowser(text, volumeRef.current);
   }, []);
 
   // playClip: play a pre-generated clip URL; fall back to Web Speech API (AUDIO-10, AUDIO-11)
@@ -241,13 +239,6 @@ export function useAnnouncements({
     [],
   );
 
-  // Test audio: speak a sample sentence (AUDIO-11)
-  const testAudio = useCallback(() => {
-    fallbackSpeak(
-      'Testing audio. Race control online. First place, Car 12. Second place, Car 7.',
-    );
-  }, [fallbackSpeak]);
-
   // Global cleanup on unmount
   useEffect(() => {
     return () => {
@@ -261,6 +252,5 @@ export function useAnnouncements({
     playBeep,
     playClip,
     setClipMap,
-    testAudio,
   };
 }

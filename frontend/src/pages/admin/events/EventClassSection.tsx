@@ -32,8 +32,8 @@ import {
   useCombineClasses,
   useUpdateEventClassOverrides,
   useRacingClasses,
-  useFormatTemplates,
 } from '@/hooks/admin/useAdminEventClasses';
+import { useFormatsList } from '@/hooks/admin/useAdminFormats';
 import type { EventClassDto } from '@/lib/adminApi';
 
 // ── Add class form ─────────────────────────────────────────────────────────
@@ -192,7 +192,7 @@ function AddClassDialog({
   isSubmitting: boolean;
 }) {
   const { data: racingClasses = [], isLoading: classesLoading } = useRacingClasses();
-  const { data: templates = [], isLoading: templatesLoading } = useFormatTemplates();
+  const { data: templates = [], isLoading: templatesLoading } = useFormatsList();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

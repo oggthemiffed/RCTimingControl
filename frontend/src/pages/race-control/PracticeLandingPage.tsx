@@ -27,7 +27,7 @@ export function PracticeLandingPage() {
 
   const { data: sessions, isLoading } = useQuery({
     queryKey: ['practice-sessions'],
-    queryFn: () => listSessions(20).then((r) => r.data),
+    queryFn: () => listSessions(20),
   });
 
   return (

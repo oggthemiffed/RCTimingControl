@@ -36,7 +36,7 @@ export function usePregeneratedClips({
     const poll = () => {
       attempts += 1;
       getRaceClipMap(raceId)
-        .then(({ data }) => {
+        .then((data) => {
           if (cancelled) return;
           if (Object.keys(data).length > 0) {
             setClipMap(data);

@@ -65,7 +65,7 @@ export function PracticeCreateDialog({
         name: values.name,
         eventId,
         bestLapN: values.bestLapN,
-      }).then((r) => r.data),
+      }),
     onSuccess: (session) => {
       queryClient.invalidateQueries({ queryKey: ['practice-sessions'] });
       toast.success(`Practice session "${session.name}" created.`);

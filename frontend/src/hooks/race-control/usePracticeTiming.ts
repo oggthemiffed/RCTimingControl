@@ -19,7 +19,7 @@ export function usePracticeTiming(sessionId: number | null) {
 
   const { data: snapshot, isLoading } = useQuery({
     queryKey: ['practice-snapshot', sessionId],
-    queryFn: () => getSnapshot(sessionId!).then((r) => r.data),
+    queryFn: () => getSnapshot(sessionId!),
     enabled: (sessionId ?? 0) > 0,
   });
 

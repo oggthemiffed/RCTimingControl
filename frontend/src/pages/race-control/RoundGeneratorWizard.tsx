@@ -57,7 +57,7 @@ export function RoundGeneratorWizard({ open, onOpenChange, eventId }: Props) {
   const eventClasses = eventDetail?.classes ?? [];
 
   const { data: racingClasses = [] } = useQuery({
-    queryKey: ['adminApi', 'racingClasses'],
+    queryKey: adminQueryKeys.racingClasses.all(),
     queryFn: () => adminApi.listRacingClasses(),
     enabled: open,
   });

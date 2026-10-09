@@ -14,13 +14,13 @@ export default function PrintPracticeResultsPage() {
 
   const { data: session, isPending: sessionPending, isError: sessionError } = useQuery({
     queryKey: ['practice-session', id],
-    queryFn: () => getSession(id).then((r) => r.data),
+    queryFn: () => getSession(id),
     enabled: validId,
   });
 
   const { data: results, isPending: resultsPending, isError: resultsError } = useQuery({
     queryKey: ['practice-results', id],
-    queryFn: () => getResults(id).then((r) => r.data),
+    queryFn: () => getResults(id),
     enabled: validId,
   });
 

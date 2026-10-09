@@ -32,8 +32,8 @@ import {
   useAdminEventDetail,
   useUpdateAdminEvent,
   useTransitionEvent,
-  useTracks,
 } from '@/hooks/admin/useAdminEvents';
+import { useTracksList } from '@/hooks/admin/useAdminTracks';
 import type { EventStatus } from '@/lib/adminApi';
 import { useRoles } from '@/hooks/useRoles';
 import { useHelpContent } from '@/context/HelpContext';
@@ -121,7 +121,7 @@ export default function EventDetailPage() {
   const { data, isLoading, isError, refetch } = useAdminEventDetail(id);
   const updateEvent = useUpdateAdminEvent(id);
   const transitionMutation = useTransitionEvent(id);
-  const { data: tracks = [] } = useTracks();
+  const { data: tracks = [] } = useTracksList();
   const { isAdmin, canRunEvent } = useRoles();
 
   const [transitionTarget, setTransitionTarget] = useState<EventStatus | null>(null);

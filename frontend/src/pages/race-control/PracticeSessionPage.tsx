@@ -37,7 +37,7 @@ export function PracticeSessionPage() {
     isLoading: sessionLoading,
   } = useQuery({
     queryKey: ['practice-session', id],
-    queryFn: () => getSession(id).then((r) => r.data),
+    queryFn: () => getSession(id),
     enabled: !isNaN(id),
     // A race starting stops practice from the server's side, so keep a running session's view fresh
     refetchInterval: (query) => (query.state.data?.status === 'RUNNING' ? 5000 : false),
@@ -48,7 +48,7 @@ export function PracticeSessionPage() {
   );
 
   const startMutation = useMutation({
-    mutationFn: () => startSession(id).then((r) => r.data),
+    mutationFn: () => startSession(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['practice-session', id] });
       toast.success('Practice session started.');
@@ -60,7 +60,7 @@ export function PracticeSessionPage() {
   });
 
   const stopMutation = useMutation({
-    mutationFn: () => stopSession(id).then((r) => r.data),
+    mutationFn: () => stopSession(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['practice-session', id] });
       toast.success('Practice session stopped.');

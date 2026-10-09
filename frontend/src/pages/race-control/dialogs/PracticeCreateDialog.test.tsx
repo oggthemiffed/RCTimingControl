@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PracticeCreateDialog } from './PracticeCreateDialog';
 
 vi.mock('@/lib/practiceApi', () => ({
-  createSession: vi.fn().mockResolvedValue({ data: { id: 5, name: 'Morning practice' } }),
+  createSession: vi.fn().mockResolvedValue({ id: 5, name: 'Morning practice' }),
 }));
 
 import { createSession } from '@/lib/practiceApi';
