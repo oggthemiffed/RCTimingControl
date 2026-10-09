@@ -8,20 +8,13 @@ import { isAxiosError } from 'axios';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 import { bootstrap } from '@/lib/setupApi';
 import { useAuth } from '@/hooks/useAuth';
 import type { AuthUser } from '@/providers/AuthProvider';
 import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
+import { TextField } from '@/components/TextField';
 
 const bootstrapSchema = z
   .object({
@@ -106,71 +99,35 @@ export default function AdminBootstrapGate() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
-                <FormField
+                <TextField
                   control={form.control}
                   name="firstName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>First name</FormLabel>
-                      <FormControl>
-                        <Input type="text" autoComplete="given-name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="First name"
+                  type="text"
+                  autoComplete="given-name"
                 />
-                <FormField
+                <TextField
                   control={form.control}
                   name="lastName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Last name</FormLabel>
-                      <FormControl>
-                        <Input type="text" autoComplete="family-name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  label="Last name"
+                  type="text"
+                  autoComplete="family-name"
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" autoComplete="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
+              <TextField control={form.control} name="email" label="Email" type="email" autoComplete="email" />
+              <TextField
                 control={form.control}
                 name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" autoComplete="new-password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Password"
+                type="password"
+                autoComplete="new-password"
               />
-              <FormField
+              <TextField
                 control={form.control}
                 name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirm password</FormLabel>
-                    <FormControl>
-                      <Input type="password" autoComplete="new-password" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                label="Confirm password"
+                type="password"
+                autoComplete="new-password"
               />
               <Button type="submit" className="w-full" disabled={isPending}>
                 {isPending ? (

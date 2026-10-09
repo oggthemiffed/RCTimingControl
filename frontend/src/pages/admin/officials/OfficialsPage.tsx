@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { KeyRound, Loader2, Plus, ShieldCheck, UserCheck, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { OfficialRoleCheckboxes } from '@/components/OfficialRoleCheckboxes';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,12 +26,6 @@ import { formatDate, formatDateTime } from '@/lib/dates';
 
 const MIN_PASSWORD_LENGTH = 8;
 
-const ROLES: { role: OfficialRole; label: string; description: string }[] = [
-  { role: 'ADMIN', label: 'Admin', description: 'Club set-up, events, entries, officials and backups' },
-  { role: 'RACE_DIRECTOR', label: 'Race director', description: 'Race control: grid, start, stop, marshal laps' },
-  { role: 'REFEREE', label: 'Referee', description: 'Penalties, incidents and unknown transponders' },
-];
-
 const ROLE_LABEL: Record<OfficialRole, string> = {
   ADMIN: 'Admin',
   RACE_DIRECTOR: 'Race director',
@@ -45,37 +39,6 @@ const ACTION_LABEL: Record<OfficialAction, string> = {
   DISABLED: 'Disabled',
   ENABLED: 'Enabled',
 };
-
-function RoleCheckboxes({
-  idPrefix,
-  value,
-  onChange,
-}: {
-  idPrefix: string;
-  value: OfficialRole[];
-  onChange: (roles: OfficialRole[]) => void;
-}) {
-  return (
-    <fieldset className="space-y-2">
-      <legend className="text-sm font-medium mb-1">Roles</legend>
-      {ROLES.map(({ role, label, description }) => (
-        <div key={role} className="flex items-start gap-2">
-          <Checkbox
-            id={`${idPrefix}-${role}`}
-            checked={value.includes(role)}
-            onCheckedChange={checked =>
-              onChange(checked ? [...value, role] : value.filter(r => r !== role))
-            }
-          />
-          <div className="grid gap-0.5 leading-none">
-            <Label htmlFor={`${idPrefix}-${role}`}>{label}</Label>
-            <span className="text-xs text-muted-foreground">{description}</span>
-          </div>
-        </div>
-      ))}
-    </fieldset>
-  );
-}
 
 function AddOfficialDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const addOfficial = useAddOfficial();
@@ -142,7 +105,7 @@ function AddOfficialDialog({ open, onOpenChange }: { open: boolean; onOpenChange
               onChange={e => setPassword(e.target.value)} />
             <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD_LENGTH} characters.</p>
           </div>
-          <RoleCheckboxes idPrefix="add-role" value={roles} onChange={setRoles} />
+          <OfficialRoleCheckboxes idPrefix="add-role" value={roles} onChange={setRoles} />
           <DialogFooter>
             <Button type="submit" disabled={!valid || addOfficial.isPending}>
               {addOfficial.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
@@ -178,7 +141,7 @@ function RolesDialog({ official, onClose }: { official: OfficialDto; onClose: ()
           <DialogDescription>Changes apply the next time they sign in.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
-          <RoleCheckboxes idPrefix="edit-role" value={roles} onChange={setRoles} />
+          <OfficialRoleCheckboxes idPrefix="edit-role" value={roles} onChange={setRoles} />
           <DialogFooter>
             <Button type="submit" disabled={roles.length === 0 || changeRoles.isPending}>
               {changeRoles.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
