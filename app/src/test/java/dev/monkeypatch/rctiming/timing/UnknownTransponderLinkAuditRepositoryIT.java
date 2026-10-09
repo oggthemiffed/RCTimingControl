@@ -9,6 +9,7 @@ import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.format.EventClass;
 import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.QualifyingType;
+import dev.monkeypatch.rctiming.domain.format.StartType;
 import dev.monkeypatch.rctiming.domain.format.TimedRaceConfig;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
@@ -17,7 +18,6 @@ import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
 import dev.monkeypatch.rctiming.domain.race.RoundStatus;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
-import dev.monkeypatch.rctiming.domain.race.StartType;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
@@ -96,7 +96,7 @@ class UnknownTransponderLinkAuditRepositoryIT extends AbstractIntegrationTest {
     private static EventClass eventClass(Long eventId) {
         EventClass ec = new EventClass();
         ec.setEventId(eventId);
-        ec.setConfigSnapshot(new TimedRaceConfig(5, dev.monkeypatch.rctiming.domain.format.StartType.STAGGER,
+        ec.setConfigSnapshot(new TimedRaceConfig(5, StartType.STAGGER,
                 QualifyingType.FTQ, 2, 3));
         ec.setCreatedAt(T1);
         ec.setUpdatedAt(T1);

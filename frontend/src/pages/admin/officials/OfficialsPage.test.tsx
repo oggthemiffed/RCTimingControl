@@ -101,6 +101,18 @@ describe('OfficialsPage', () => {
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Added Sam New'));
   });
 
+  it('says what is missing rather than adding an official', async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Add official' }));
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'short' } });
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Add official' }));
+
+    expect(await screen.findByText('First name required')).toBeInTheDocument();
+    expect(screen.getByText('Password must be at least 8 characters')).toBeInTheDocument();
+    expect(api.officials.add).not.toHaveBeenCalled();
+  });
+
   it('only sets a password once it is typed the same twice', async () => {
     api.officials.setPassword.mockResolvedValue(undefined);
     renderPage();
@@ -108,10 +120,16 @@ describe('OfficialsPage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Set a new password for Rob Director' }));
     fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'new-password' } });
     fireEvent.change(screen.getByLabelText('Type it again'), { target: { value: 'new-passw' } });
-    expect(screen.getByText("The passwords don't match.")).toBeInTheDocument();
+    expect(await screen.findByText("The passwords don't match.")).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Set password' })).toBeDisabled();
 
+    fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'new-passw' } });
+    await waitFor(() => expect(screen.queryByText("The passwords don't match.")).not.toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'new-password' } });
+    expect(await screen.findByText("The passwords don't match.")).toBeInTheDocument();
+
     fireEvent.change(screen.getByLabelText('Type it again'), { target: { value: 'new-password' } });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Set password' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: 'Set password' }));
 
     await waitFor(() => expect(api.officials.setPassword).toHaveBeenCalledWith(2, 'new-password'));

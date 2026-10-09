@@ -8,6 +8,7 @@ import dev.monkeypatch.rctiming.api.auth.LoginRequest;
 import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
+import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatTemplate;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatTemplateRepository;
 import dev.monkeypatch.rctiming.domain.format.StartType;
@@ -59,6 +60,9 @@ class EventClassControllerIT extends AbstractIntegrationTest {
 
     @Autowired
     EventRepository eventRepository;
+
+    @Autowired
+    EventClassRepository eventClassRepository;
 
     private String adminToken;
 
@@ -173,6 +177,22 @@ class EventClassControllerIT extends AbstractIntegrationTest {
 
         assertThat(clearResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(clearResp.getBody().configOverride()).isNull();
+    }
+
+    /** Rounds are generated from the format with its override laid over it, so one that does not fit is refused. */
+    @Test
+    void updateOverrides_thatDoNotFitTheFormat_areRefusedAndNotStored() {
+        Long eventId = createEventInDb();
+        Long classId = addClassToEvent(eventId, createTemplateInDb(10), createRacingClassInDb());
+
+        ResponseEntity<String> resp = restTemplate.exchange(
+                "/api/v1/admin/events/" + eventId + "/classes/" + classId + "/overrides",
+                HttpMethod.PUT,
+                new HttpEntity<>(Map.of("override", Map.of("startType", "ROLLING_START")), adminHeaders()),
+                String.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(eventClassRepository.getOrThrow(classId).getConfigOverride()).isNull();
     }
 
     @Test

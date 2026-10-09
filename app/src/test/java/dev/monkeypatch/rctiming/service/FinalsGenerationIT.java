@@ -4,6 +4,7 @@ import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
+import dev.monkeypatch.rctiming.domain.format.StartType;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
@@ -137,6 +138,29 @@ class FinalsGenerationIT extends AbstractIntegrationTest {
                 left join entries e on e.id = re.entry_id
                 where ro.event_id = ? and e.id is null""", Integer.class, eventId);
         assertThat(orphans).isZero();
+    }
+
+    /** Races take their start from the class's format, and a rolling start can now be stored on a race (#142). */
+    @Test
+    void racesTakeTheirStartTypeFromTheClassFormat() {
+        long racingClassId = jdbc.queryForObject(
+                "insert into racing_classes (name) values (?) returning id", Long.class, "Rolling " + run);
+        racingClassIds.add(racingClassId);
+        long rollingClass = jdbc.queryForObject("""
+                insert into event_classes (event_id, racing_class_id, config_snapshot)
+                values (?, ?, '{"type":"BUMP_UP","qualifyingStartType":"GRID","finalsStartType":"ROLLING"}')
+                returning id""", Long.class, eventId, racingClassId);
+        addEntries(rollingClass, 6);
+
+        roundGeneratorService.generate(new RoundGenerationRequest(eventId, 1, 1, 10, List.of(
+                new ClassFinalsConfig(rollingClass, 1, 10, 0))));
+
+        assertThat(raceRepository.findByEventClassIdAndRoundType(rollingClass, RoundType.PRACTICE))
+                .extracting(Race::getStartType).containsOnly(StartType.GRID);
+        assertThat(raceRepository.findByEventClassIdAndRoundType(rollingClass, RoundType.QUALIFIER))
+                .extracting(Race::getStartType).containsOnly(StartType.GRID);
+        assertThat(raceRepository.findByEventClassIdAndRoundType(rollingClass, RoundType.FINAL))
+                .extracting(Race::getStartType).containsExactly(StartType.ROLLING);
     }
 
     @Test

@@ -375,7 +375,7 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
         race.setEventClassId(eventClassId);
         race.setHeatNumber(1);
         race.setSequenceInRound(sequenceInRound);
-        race.setStartType(dev.monkeypatch.rctiming.domain.race.StartType.GRID);
+        race.setStartType(StartType.GRID);
         race.setStatus(status);
         Instant now = Instant.now();
         race.setCreatedAt(now);

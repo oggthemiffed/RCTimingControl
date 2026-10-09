@@ -88,6 +88,7 @@ public class EventClassService {
                 ? null
                 : new HashMap<>(request.override());
         ec.setConfigOverride(override);
+        effectiveConfig(ec); // refuse an override that does not fit the format, before races are generated from it
         EventClass saved = eventClassRepository.save(ec);
         audit.entry(actor, "EVENT_CLASS_OVERRIDES_CHANGED").entity("event_class", classId).event(ec.getEventId())
                 .summary((override == null ? "Cleared the format overrides of " : "Changed the format overrides of ")
@@ -130,14 +131,23 @@ public class EventClassService {
     /** Returns the effective config = snapshot + override merge, for use by Phase 4 race control. */
     @Transactional(readOnly = true)
     public RaceFormatConfig getEffectiveConfig(Long classId) {
-        EventClass ec = getEventClassOrThrow(classId);
-        if (ec.getConfigOverride() == null || ec.getConfigOverride().isEmpty()) {
+        return effectiveConfig(getEventClassOrThrow(classId));
+    }
+
+    /** The snapshot with the override laid over it; an override that does not fit the format is a bad request. */
+    private RaceFormatConfig effectiveConfig(EventClass ec) {
+        if (ec.getConfigOverride() == null || ec.getConfigOverride().isEmpty() || ec.getConfigSnapshot() == null) {
             return ec.getConfigSnapshot();
         }
         Map<String, Object> snapshotMap = objectMapper.convertValue(
                 ec.getConfigSnapshot(), new TypeReference<Map<String, Object>>() {});
         snapshotMap.putAll(ec.getConfigOverride());
-        return objectMapper.convertValue(snapshotMap, RaceFormatConfig.class);
+        try {
+            return objectMapper.convertValue(snapshotMap, RaceFormatConfig.class);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("The format overrides do not fit the class's format: "
+                    + e.getMessage(), e);
+        }
     }
 
     /** The class's name, for an audit summary. */

@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Controller, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Form } from '@/components/ui/form';
 import {
   Dialog,
   DialogContent,
@@ -29,6 +31,7 @@ import {
 } from '@/hooks/admin/useAdminFormats';
 import type { RaceFormatConfig, RaceFormatTemplateDto } from '@/lib/adminApi';
 import { useConfirm } from '@/components/ConfirmDialog';
+import { TextField } from '@/components/TextField';
 
 const DEFAULT_CONFIG: RaceFormatConfig = {
   type: 'TIMED',
@@ -38,6 +41,13 @@ const DEFAULT_CONFIG: RaceFormatConfig = {
   racePaddingMinutes: 2,
   staggerIntervalSeconds: 5,
 };
+
+const formatSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(255, 'Use at most 255 characters'),
+  // FormatConfigFields builds the settings; this form only checks the name
+  config: z.custom<RaceFormatConfig>(),
+});
+type FormatFormValues = z.infer<typeof formatSchema>;
 
 function FormatDialog({
   open,
@@ -54,54 +64,38 @@ function FormatDialog({
   onSubmit: (name: string, config: RaceFormatConfig) => Promise<void>;
   title: string;
 }) {
-  const [name, setName] = useState(initialName ?? '');
-  const [config, setConfig] = useState<RaceFormatConfig>(initialConfig ?? DEFAULT_CONFIG);
-  const [submitting, setSubmitting] = useState(false);
-  const [nameError, setNameError] = useState('');
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) { setNameError('Name is required'); return; }
-    setNameError('');
-    setSubmitting(true);
-    try {
-      await onSubmit(name, config);
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  const initialValues = { name: initialName ?? '', config: initialConfig ?? DEFAULT_CONFIG };
+  const form = useForm<FormatFormValues>({ resolver: zodResolver(formatSchema), defaultValues: initialValues });
 
   function handleOpen(v: boolean) {
     onOpenChange(v);
-    if (!v) {
-      setName(initialName ?? '');
-      setConfig(initialConfig ?? DEFAULT_CONFIG);
-      setNameError('');
-    }
+    if (!v) form.reset(initialValues);
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{title}</DialogTitle></DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="fmt-name">Template Name</Label>
-            <Input
-              id="fmt-name"
-              value={name}
-              onChange={e => setName(e.target.value)}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(values => onSubmit(values.name, values.config))} className="space-y-4">
+            <TextField
+              control={form.control}
+              name="name"
+              label="Template Name"
               placeholder="e.g. Standard 5-minute Timed"
             />
-            {nameError && <p className="text-xs text-destructive">{nameError}</p>}
-          </div>
-          <FormatConfigFields value={config} onChange={setConfig} />
-          <DialogFooter>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Saving…' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </form>
+            <Controller
+              control={form.control}
+              name="config"
+              render={({ field }) => <FormatConfigFields value={field.value} onChange={field.onChange} />}
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? 'Saving…' : 'Save'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
@@ -115,6 +109,8 @@ export default function FormatsPage() {
   const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [createOpen, setCreateOpen] = useState(false);
+  // A new key after each save, so the next new template starts from an empty form
+  const [createKey, setCreateKey] = useState(0);
   const [editTarget, setEditTarget] = useState<RaceFormatTemplateDto | null>(null);
 
   async function handleCreate(name: string, config: RaceFormatConfig) {
@@ -122,6 +118,7 @@ export default function FormatsPage() {
       await createMutation.mutateAsync({ name, config });
       toast.success('Format template created');
       setCreateOpen(false);
+      setCreateKey(k => k + 1);
     } catch {
       toast.error('Could not create format template. Try again.');
     }
@@ -230,6 +227,7 @@ export default function FormatsPage() {
       )}
 
       <FormatDialog
+        key={createKey}
         open={createOpen}
         onOpenChange={setCreateOpen}
         onSubmit={handleCreate}
