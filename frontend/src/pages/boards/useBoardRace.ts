@@ -35,7 +35,7 @@ export function useBoardRace(eventId: number | null) {
 
   useEffect(() => {
     if (stateChange) {
-      void queryClient.invalidateQueries({ queryKey: publicQueryKeys.boards.all() });
+      void queryClient.invalidateQueries({ queryKey: publicQueryKeys.boards.all });
     }
   }, [stateChange, queryClient]);
 

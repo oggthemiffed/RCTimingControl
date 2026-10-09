@@ -30,7 +30,6 @@ import {
   type DecoderConfigUpdateRequest,
   type DecoderTestResult,
 } from '@/lib/setupApi';
-import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
 
 const PORT_DEFAULTS: Record<string, number> = { RC4: 5100, P3: 5403 };
@@ -78,7 +77,7 @@ export function DecoderSettingsForm({ onSaved, onBack, onSkip, saveLabel = 'Save
   // Pre-fill from the saved settings. A saved port counts as user-edited only when it differs from
   // the standard port for its protocol. Otherwise switching protocol still moves the port.
   const configQuery = useQuery({
-    queryKey: adminQueryKeys.decoderConfig(),
+    queryKey: setupQueryKeys.decoderConfig(),
     queryFn: getDecoderConfig,
   });
 
@@ -118,7 +117,7 @@ export function DecoderSettingsForm({ onSaved, onBack, onSkip, saveLabel = 'Save
   async function onSave(values: FormValues) {
     try {
       await updateDecoderConfig(values);
-      queryClient.invalidateQueries({ queryKey: adminQueryKeys.decoderConfig() });
+      queryClient.invalidateQueries({ queryKey: setupQueryKeys.decoderConfig() });
       queryClient.invalidateQueries({ queryKey: setupQueryKeys.status() });
       queryClient.invalidateQueries({ queryKey: setupQueryKeys.progress() });
       toast.success('Decoder configuration saved');

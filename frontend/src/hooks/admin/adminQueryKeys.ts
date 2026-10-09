@@ -49,5 +49,4 @@ export const adminQueryKeys = {
   },
   audioSettings: () => ['admin', 'audio-settings'] as const,
   voices: () => ['admin', 'voices'] as const,
-  decoderConfig: () => ['admin', 'decoder-config'] as const,
 };

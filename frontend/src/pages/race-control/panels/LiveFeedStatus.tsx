@@ -56,7 +56,7 @@ export function LiveFeedStatus({ eventId }: { eventId: number }) {
   }, [pushed, queryClient]);
 
   const setUp = !!status && status.state !== 'NOT_SET_UP';
-  const settingKey = ['live-feed-setting', eventId];
+  const settingKey = raceControlQueryKeys.liveFeedSetting(eventId);
   const { data: setting } = useQuery({
     queryKey: settingKey,
     queryFn: () => getLiveFeedSetting(eventId),

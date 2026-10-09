@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import FormatStep from '../steps/FormatStep';
 import { adminApi } from '@/lib/adminApi';
+import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 vi.mock('@/lib/adminApi', () => ({
@@ -134,6 +135,6 @@ describe('FormatStep', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save and Continue' }));
 
     await waitFor(() => expect(adminApi.formats.create).toHaveBeenCalledTimes(1));
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['admin', 'formats'] });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: adminQueryKeys.formats.all() });
   });
 });
