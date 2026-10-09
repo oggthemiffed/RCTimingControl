@@ -197,4 +197,12 @@ describe('NowNextBoard', () => {
     await screen.findByText('No race data yet.');
     expect(getNowNext).toHaveBeenCalledWith(42);
   });
+
+  it('says it cannot reach the server before its first answer', async () => {
+    vi.mocked(getNowNext).mockRejectedValue(new Error('Network Error'));
+
+    renderBoard();
+
+    expect(await screen.findByText('Can’t reach the timing system. Trying again…')).toBeInTheDocument();
+  });
 });

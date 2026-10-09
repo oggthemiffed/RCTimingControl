@@ -36,6 +36,7 @@ export function PracticeSessionPage() {
     data: session,
     isLoading: sessionLoading,
     error: sessionError,
+    isFetching: sessionFetching,
     refetch: refetchSession,
   } = useQuery({
     queryKey: ['practice-session', id],
@@ -77,7 +78,9 @@ export function PracticeSessionPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 h-48 text-muted-foreground text-sm">
         <p>The session could not be loaded. Check the connection and try again.</p>
-        <Button size="sm" variant="outline" onClick={() => void refetchSession()}>Try again</Button>
+        <Button size="sm" variant="outline" disabled={sessionFetching} onClick={() => void refetchSession()}>
+          {sessionFetching ? 'Trying again…' : 'Try again'}
+        </Button>
       </div>
     );
   }

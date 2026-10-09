@@ -3,7 +3,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getResultsBoard } from '@/lib/boardsApi';
-import { BoardShell, BoardMessage } from './BoardShell';
+import { BoardShell, BoardMessage, BoardUnreachable } from './BoardShell';
 import { BoardResultsTable } from './BoardResultsTable';
 import { BOARD_POLL_MS, parseEventParam } from './boardFormat';
 
@@ -26,11 +26,7 @@ export default function ResultsBoard() {
   }
 
   if (isError && !data) {
-    return (
-      <BoardShell>
-        <BoardMessage>Can’t reach the timing system. Trying again…</BoardMessage>
-      </BoardShell>
-    );
+    return <BoardUnreachable />;
   }
 
   if (!data?.race) {

@@ -45,7 +45,7 @@ export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
       {sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {snapshotFailed
-            ? 'The laps so far could not be loaded. They will show from the next passing.'
+            ? 'The laps so far could not be loaded. They will show from the next passing, or refresh the page to try again.'
             : wsStatus === 'connected' ? 'Waiting for first passing…' : 'Connecting to timing…'}
         </p>
       ) : (

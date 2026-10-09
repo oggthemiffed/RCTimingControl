@@ -25,7 +25,11 @@ export default function RefereePage() {
 
   useHelpContent(RefereeHelp);
 
-  const { data: runOrder = [], isLoading: runOrderLoading, isError: runOrderFailed } = useRunOrder(eventId || null);
+  const {
+    data: runOrder = [],
+    isLoading: runOrderLoading,
+    isError: runOrderFailed,
+  } = useRunOrder(eventId || null);
   const [selectedRaceId, setSelectedRaceId] = useState<number | null>(null);
   const [incidentOpen, setIncidentOpen] = useState(false);
   const [penaltyOpen, setPenaltyOpen] = useState(false);

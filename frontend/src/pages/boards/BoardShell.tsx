@@ -27,3 +27,12 @@ export function BoardMessage({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+// Shown when a board has had no answer from the server yet; its polling keeps trying.
+export function BoardUnreachable() {
+  return (
+    <BoardShell>
+      <BoardMessage>Can’t reach the timing system. Trying again…</BoardMessage>
+    </BoardShell>
+  );
+}
