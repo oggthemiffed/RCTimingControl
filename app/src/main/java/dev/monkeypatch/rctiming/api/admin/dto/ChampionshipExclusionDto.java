@@ -17,12 +17,9 @@ public record ChampionshipExclusionDto(
         Instant createdAt
 ) {
     public static ChampionshipExclusionDto from(ChampionshipService.Exclusion exclusion) {
-        return from(exclusion.exclusion(), exclusion.recordedByName());
-    }
-
-    public static ChampionshipExclusionDto from(ChampionshipExclusion x, String createdByName) {
+        ChampionshipExclusion x = exclusion.exclusion();
         return new ChampionshipExclusionDto(
                 x.getId(), x.getChampionshipId(), x.getDriverId(), x.getEventId(),
-                x.getReason(), x.getCreatedBy(), createdByName, x.getCreatedAt());
+                x.getReason(), x.getCreatedBy(), exclusion.createdByName(), x.getCreatedAt());
     }
 }

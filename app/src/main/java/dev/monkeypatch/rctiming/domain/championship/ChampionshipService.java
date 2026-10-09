@@ -64,14 +64,14 @@ public class ChampionshipService {
                          List<ChampionshipEventLink> events, List<ChampionshipPointsScaleEntry> pointsScale) {}
 
     /** The points one finishing position scores. */
-    public record Points(Integer position, Integer points) {
-        static Points of(ChampionshipPointsScaleEntry e) {
-            return new Points(e.getPosition(), e.getPoints());
+    public record ScalePoint(Integer position, Integer points) {
+        static ScalePoint of(ChampionshipPointsScaleEntry e) {
+            return new ScalePoint(e.getPosition(), e.getPoints());
         }
     }
 
     /** An exclusion and the name of the official who recorded it, null if that account has been removed. */
-    public record Exclusion(ChampionshipExclusion exclusion, String recordedByName) {}
+    public record Exclusion(ChampionshipExclusion exclusion, String createdByName) {}
 
     public Championship create(Actor actor, Settings settings) {
         Championship c = new Championship();
@@ -183,13 +183,13 @@ public class ChampionshipService {
 
     /** CHAMP-04: replace-all points scale in a single transaction. */
     public List<ChampionshipPointsScaleEntry> replacePointsScale(Actor actor, Long championshipId,
-                                                                 List<Points> entries) {
+                                                                 List<ScalePoint> scale) {
         championshipRepository.requireExists(championshipId);
-        List<Points> before = pointsScaleRepository.findByChampionshipIdOrderByPositionAsc(championshipId)
-                .stream().map(Points::of).toList();
+        List<ScalePoint> before = pointsScaleRepository.findByChampionshipIdOrderByPositionAsc(championshipId)
+                .stream().map(ScalePoint::of).toList();
         pointsScaleRepository.deleteAllByChampionshipId(championshipId);
-        List<ChampionshipPointsScaleEntry> toSave = new ArrayList<>(entries.size());
-        for (Points entry : entries) {
+        List<ChampionshipPointsScaleEntry> toSave = new ArrayList<>(scale.size());
+        for (ScalePoint entry : scale) {
             toSave.add(new ChampionshipPointsScaleEntry(championshipId, entry.position(), entry.points()));
         }
         List<ChampionshipPointsScaleEntry> saved = pointsScaleRepository.saveAll(toSave).stream()
@@ -197,13 +197,13 @@ public class ChampionshipService {
                 .toList();
         audit.entry(actor, "CHAMPIONSHIP_POINTS_SCALE_CHANGED").entity("championship", championshipId)
                 .summary("Changed the points scale of championship " + championshipName(championshipId))
-                .before(before).after(saved.stream().map(Points::of).toList()).record();
+                .before(before).after(saved.stream().map(ScalePoint::of).toList()).record();
         return saved;
     }
 
     /**
      * CHAMP-02 + CHAMP-09: exclude a driver (a competitor, L5) from one event and record an audit row.
-     * `actingAdminId` is sourced from the JWT subject at the controller layer — NEVER from the request body.
+     * The recording official comes from the authenticated {@code actor}, never from the request body.
      */
     public Exclusion createExclusion(Actor actor, Long championshipId, Long driverId, Long eventId, String reason) {
         championshipRepository.requireExists(championshipId);

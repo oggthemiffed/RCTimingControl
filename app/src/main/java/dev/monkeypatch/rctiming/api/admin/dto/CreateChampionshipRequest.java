@@ -1,6 +1,5 @@
 package dev.monkeypatch.rctiming.api.admin.dto;
 
-import dev.monkeypatch.rctiming.domain.championship.ChampionshipService;
 import dev.monkeypatch.rctiming.domain.championship.ScoringSource;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -14,9 +13,4 @@ public record CreateChampionshipRequest(
         @NotNull ScoringSource scoringSource, // CHAMP-06
         @Min(0) int tqBonusPoints,            // CHAMP-07 (D-15)
         @Min(0) int afinalWinnerBonusPoints   // CHAMP-08 (D-15)
-) {
-    public ChampionshipService.Settings settings() {
-        return new ChampionshipService.Settings(name, bestXFromYX, bestXFromYY, scoringSource,
-                tqBonusPoints, afinalWinnerBonusPoints);
-    }
-}
+) {}

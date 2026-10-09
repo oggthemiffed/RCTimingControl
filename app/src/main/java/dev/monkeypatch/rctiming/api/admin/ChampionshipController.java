@@ -66,7 +66,7 @@ public class ChampionshipController {
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public ChampionshipDto create(Authentication auth, @RequestBody @Valid CreateChampionshipRequest request) {
-        return ChampionshipDto.from(championshipService.create(CurrentOfficial.actor(auth), request.settings()));
+        return ChampionshipDto.from(championshipService.create(CurrentOfficial.actor(auth), settings(request)));
     }
 
     @Audited("audit_log")
@@ -74,7 +74,7 @@ public class ChampionshipController {
     @PreAuthorize("hasRole('ADMIN')")
     public ChampionshipDto update(Authentication auth, @PathVariable Long id,
                                    @RequestBody @Valid UpdateChampionshipRequest request) {
-        return ChampionshipDto.from(championshipService.update(CurrentOfficial.actor(auth), id, request.settings()));
+        return ChampionshipDto.from(championshipService.update(CurrentOfficial.actor(auth), id, settings(request)));
     }
 
     @Audited("audit_log")
@@ -118,10 +118,10 @@ public class ChampionshipController {
     @PreAuthorize("hasRole('ADMIN')")
     public List<PointsScaleEntryDto> replacePointsScale(Authentication auth, @PathVariable Long id,
                                                          @RequestBody @Valid UpdatePointsScaleRequest request) {
-        List<ChampionshipService.Points> entries = request.entries().stream()
-                .map(e -> new ChampionshipService.Points(e.position(), e.points()))
+        List<ChampionshipService.ScalePoint> scale = request.entries().stream()
+                .map(e -> new ChampionshipService.ScalePoint(e.position(), e.points()))
                 .toList();
-        return championshipService.replacePointsScale(CurrentOfficial.actor(auth), id, entries).stream()
+        return championshipService.replacePointsScale(CurrentOfficial.actor(auth), id, scale).stream()
                 .map(PointsScaleEntryDto::from)
                 .toList();
     }
@@ -154,5 +154,15 @@ public class ChampionshipController {
     @GetMapping("/{id}/standings")
     public List<StandingsRowDto> getStandings(@PathVariable Long id) {
         return standingsQuery.computeStandings(id);
+    }
+
+    private static ChampionshipService.Settings settings(CreateChampionshipRequest r) {
+        return new ChampionshipService.Settings(r.name(), r.bestXFromYX(), r.bestXFromYY(), r.scoringSource(),
+                r.tqBonusPoints(), r.afinalWinnerBonusPoints());
+    }
+
+    private static ChampionshipService.Settings settings(UpdateChampionshipRequest r) {
+        return new ChampionshipService.Settings(r.name(), r.bestXFromYX(), r.bestXFromYY(), r.scoringSource(),
+                r.tqBonusPoints(), r.afinalWinnerBonusPoints());
     }
 }
