@@ -40,6 +40,14 @@ public class UserRepository extends JooqRepository<User, UsersRecord> {
                         .where(USER_ROLES.USER_ID.eq(USERS.ID).and(USER_ROLES.ROLE.eq(role.name())))));
     }
 
+    /** Officials holding any official role, whether or not they can sign in. */
+    public long countOfficials() {
+        return dsl.fetchCount(dsl.selectFrom(USERS)
+                .whereExists(dsl.selectOne().from(USER_ROLES)
+                        .where(USER_ROLES.USER_ID.eq(USERS.ID)
+                                .and(USER_ROLES.ROLE.in(Role.OFFICIAL_ROLES.stream().map(Role::name).toList())))));
+    }
+
     /** Saves the official and replaces their roles with the ones they hold now. */
     @Override
     @Transactional

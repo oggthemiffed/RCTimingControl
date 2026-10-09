@@ -77,6 +77,18 @@ class OfficialRepositoriesIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void countsOfficialsOnce_disabledOnesIncluded_andNotAccountsWithNoRole() {
+        long before = users.countOfficials();
+        saved(official(Role.REFEREE, Role.ADMIN));
+        User disabled = official(Role.RACE_DIRECTOR);
+        disabled.setDisabledAt(T1);
+        saved(disabled);
+        saved(official());
+
+        assertThat(users.countOfficials()).isEqualTo(before + 2);
+    }
+
+    @Test
     void refreshTokenRoundTripFindersAndRevoking() {
         User official = saved(official(Role.REFEREE));
         User other = saved(official(Role.REFEREE));

@@ -1,8 +1,6 @@
-package dev.monkeypatch.rctiming.api.setup;
+package dev.monkeypatch.rctiming.service;
 
-import dev.monkeypatch.rctiming.api.auth.AuthResponse;
-import dev.monkeypatch.rctiming.api.setup.dto.BootstrapRequest;
-import dev.monkeypatch.rctiming.api.setup.dto.SetupProgressDto;
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatTemplateRepository;
@@ -11,7 +9,6 @@ import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.domain.user.UserService;
-import dev.monkeypatch.rctiming.security.JwtTokenService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -37,8 +33,6 @@ class SetupServiceTest {
     @Mock
     private UserService userService;
     @Mock
-    private JwtTokenService jwtTokenService;
-    @Mock
     private TrackRepository trackRepository;
     @Mock
     private RaceFormatTemplateRepository raceFormatTemplateRepository;
@@ -47,15 +41,14 @@ class SetupServiceTest {
     @BeforeEach
     void setUp() {
         setupService = new SetupService(
-                clubProfileRepository, userRepository, userService,
-                jwtTokenService, trackRepository, raceFormatTemplateRepository);
+                clubProfileRepository, userRepository, userService, trackRepository, raceFormatTemplateRepository);
     }
 
     @Test
     void bootstrap_throws_whenAnyUserExists() {
         when(userRepository.count()).thenReturn(1L);
-        assertThrows(IllegalStateException.class,
-                () -> setupService.bootstrap(new BootstrapRequest("First", "Last", "admin@test.com", "password123")));
+        assertThrows(StateConflictException.class,
+                () -> setupService.bootstrap("admin@test.com", "password123", "First", "Last"));
     }
 
     @Test
@@ -71,13 +64,10 @@ class SetupServiceTest {
         adminUser.setCreatedAt(now);
         adminUser.setUpdatedAt(now);
         when(userService.createAdmin("admin@test.com", "password123", "First", "Last")).thenReturn(adminUser);
-        when(jwtTokenService.generateAccessToken(adminUser)).thenReturn("test-token");
 
-        AuthResponse response = setupService.bootstrap(
-                new BootstrapRequest("First", "Last", "admin@test.com", "password123"));
+        User admin = setupService.bootstrap("admin@test.com", "password123", "First", "Last");
 
-        assertThat(response.roles()).contains("ADMIN");
-        assertThat(response.roles()).doesNotContain("RACER");
+        assertThat(admin.getRoles()).containsExactly(Role.ADMIN);
     }
 
     @Test
@@ -85,10 +75,10 @@ class SetupServiceTest {
         when(clubProfileRepository.count()).thenReturn(0L);
         when(trackRepository.count()).thenReturn(0L);
         when(raceFormatTemplateRepository.count()).thenReturn(0L);
-        when(userRepository.findAll()).thenReturn(List.of());
+        when(userRepository.countOfficials()).thenReturn(0L);
         when(clubProfileRepository.findCurrent()).thenReturn(Optional.empty());
 
-        SetupProgressDto result = setupService.getProgress();
+        SetupService.Progress result = setupService.getProgress();
 
         assertThat(result.club()).isFalse();
         assertThat(result.track()).isFalse();
@@ -102,12 +92,12 @@ class SetupServiceTest {
         when(clubProfileRepository.count()).thenReturn(1L);
         when(trackRepository.count()).thenReturn(0L);
         when(raceFormatTemplateRepository.count()).thenReturn(0L);
-        when(userRepository.findAll()).thenReturn(List.of());
+        when(userRepository.countOfficials()).thenReturn(0L);
         // Club profile without decoder fields — decoder=false
         ClubProfile profile = new ClubProfile();
         when(clubProfileRepository.findCurrent()).thenReturn(Optional.of(profile));
 
-        SetupProgressDto result = setupService.getProgress();
+        SetupService.Progress result = setupService.getProgress();
 
         assertThat(result.club()).isTrue();
         assertThat(result.decoder()).isFalse();
