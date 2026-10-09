@@ -37,4 +37,15 @@ class EventScheduleQueryTest {
     void aPublishedEventBeforeItsOpeningTimeIsNotYetOpen() {
         assertThat(entryAvailability("PUBLISHED", LATER, null, NOW)).isEqualTo(EntryAvailability.ENTRY_NOT_YET_OPEN);
     }
+
+    @Test
+    void aPublishedEventClosingNowIsClosed() {
+        assertThat(entryAvailability("PUBLISHED", EARLIER, NOW, NOW)).isEqualTo(EntryAvailability.ENTRY_CLOSED);
+    }
+
+    /** Opening exactly now is neither before nor after now, so it falls through to closed; this pins existing behaviour. */
+    @Test
+    void aPublishedEventOpeningExactlyNowCountsAsClosed() {
+        assertThat(entryAvailability("PUBLISHED", NOW, LATER, NOW)).isEqualTo(EntryAvailability.ENTRY_CLOSED);
+    }
 }
