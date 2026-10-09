@@ -1,6 +1,6 @@
 package dev.monkeypatch.rctiming.api.racecontrol;
 
-import dev.monkeypatch.rctiming.api.racecontrol.dto.ResultSnapshotDto;
+import dev.monkeypatch.rctiming.domain.race.ResultSnapshotDto;
 import dev.monkeypatch.rctiming.query.racecontrol.ResultSnapshotQuery;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
