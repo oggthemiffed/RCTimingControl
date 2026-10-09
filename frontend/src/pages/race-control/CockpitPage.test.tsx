@@ -15,7 +15,8 @@ vi.mock('@/hooks/race-control/useRaceStateMutations', () => ({
     new Proxy({}, { get: () => ({ mutate: vi.fn(), isPending: false }) }),
 }));
 vi.mock('./panels/LiveTimingPanel', () => ({ LiveTimingPanel: () => null }));
-vi.mock('@/hooks/race-control/useStomp', () => ({ useStomp: () => ({ data: null }) }));
+const mockUseStomp = vi.fn((topic: string | null) => ({ data: null as unknown, topic }));
+vi.mock('@/hooks/race-control/useStomp', () => ({ useStomp: (topic: string | null) => mockUseStomp(topic) }));
 vi.mock('@/hooks/race-control/useLiveTiming', () => ({ useLiveTiming: () => ({ rows: [] }) }));
 vi.mock('@/hooks/race-control/useAnnouncements', () => ({
   useAnnouncements: () => ({ playBeep: vi.fn(), setClipMap: vi.fn() }),
@@ -112,5 +113,34 @@ describe('CockpitPage with a running race', () => {
     mockUser.mockReturnValue({ roles: ['REFEREE'] });
     renderCockpit();
     expect(screen.queryByRole('button', { name: 'Finish Race' })).not.toBeInTheDocument();
+  });
+});
+
+describe('CockpitPage bump-up alert', () => {
+  const bumpUpTopic = '/topic/race/5/bump-up-alert';
+
+  function runOrderWith(status: string, roundType: string) {
+    mockRunOrder.mockReturnValue({
+      data: [{ raceId: 5, status, roundType, roundNumber: 1, className: '13.5 Touring', heatNumber: 2 }],
+      isLoading: false,
+      isError: false,
+    });
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUser.mockReturnValue({ roles: ['RACE_DIRECTOR'] });
+  });
+
+  it('listens while a final is still running, before the server sends the alert', () => {
+    runOrderWith('RUNNING', 'FINAL');
+    renderCockpit();
+    expect(mockUseStomp).toHaveBeenCalledWith(bumpUpTopic);
+  });
+
+  it('does not listen for a race that is not a final', () => {
+    runOrderWith('RUNNING', 'QUALIFYING');
+    renderCockpit();
+    expect(mockUseStomp).not.toHaveBeenCalledWith(bumpUpTopic);
   });
 });

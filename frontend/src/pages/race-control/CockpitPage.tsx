@@ -163,11 +163,10 @@ export default function CockpitPage() {
   }
   const unknownTransponders = unknown.raceId === selectedRaceId ? unknown.numbers : [];
 
-  // Subscribe to bump-up alert — fires when a B/C-final finishes and promotes drivers to the next final
+  // Subscribe to the bump-up alert for any selected final. The server sends it once, as a B/C-final finishes and
+  // promotes drivers to the next final, so the subscription must already be open before the race finishes.
   const bumpUpTopic =
-    selectedRace?.status === 'FINISHED' && selectedRace.roundType === 'FINAL'
-      ? `/topic/race/${selectedRace.raceId}/bump-up-alert`
-      : null;
+    selectedRace?.roundType === 'FINAL' ? `/topic/race/${selectedRace.raceId}/bump-up-alert` : null;
   const { data: bumpUpAlert } = useStomp<{ finishedRaceId: number; promotedEntryIds: number[] }>(bumpUpTopic);
 
   useEffect(() => {
