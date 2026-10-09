@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
 
@@ -67,7 +66,7 @@ public class GenerativeMode {
             // Emit STATUS heartbeat every 5 s
             if (nowMs - lastStatusMs >= 5_000) {
                 String status = String.format("#\t20\t%d\t72\t0\txDEAD", seqNum++);
-                emit(out, status);
+                Rc4Lines.write(out, status);
                 lastStatusMs = nowMs;
                 log.debug("[SIMULATOR] STATUS emitted: {}", status);
             }
@@ -77,7 +76,7 @@ public class GenerativeMode {
                 if (nowMs >= nextPassingMs[i]) {
                     String passing = String.format("@\t20\t%d\t%s\t%.3f\t300\t130\t2\txDEAD",
                             seqNum++, transponders.get(i), elapsedSec);
-                    emit(out, passing);
+                    Rc4Lines.write(out, passing);
                     log.debug("[SIMULATOR] PASSING emitted: {}", passing);
 
                     // Next lap: base interval + random jitter in [-jitterMs, +jitterMs]
@@ -88,19 +87,7 @@ public class GenerativeMode {
                 }
             }
 
-            sleep(250); // 250 ms tick — tight enough for 10 s laps, light on CPU
+            Rc4Lines.pause(250); // 250 ms tick — tight enough for 10 s laps, light on CPU
         }
-    }
-
-    private static void emit(OutputStream out, String line) throws IOException {
-        out.write(0x01);                                          // SOH
-        out.write(line.getBytes(StandardCharsets.US_ASCII));
-        out.write('\r');
-        out.write('\n');
-        out.flush();
-    }
-
-    private static void sleep(long ms) {
-        try { Thread.sleep(ms); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
     }
 }

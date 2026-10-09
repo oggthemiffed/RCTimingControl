@@ -46,7 +46,7 @@ public class PlaybackMode {
                         if (prevTime >= 0) {
                             long delayMs = (long)((t - prevTime) * 1000 / speed);
                             if (delayMs > 0) {
-                                sleep(delayMs);
+                                Rc4Lines.pause(delayMs);
                             }
                         }
                         prevTime = t;
@@ -54,15 +54,10 @@ public class PlaybackMode {
                 }
             } else if (line.startsWith("#\t")) {
                 // STATUS lines: emit with 5 s inter-arrival (STATUS heartbeat); don't delay exactly
-                if (prevTime < 0) sleep((long)(5000 / speed));
+                if (prevTime < 0) Rc4Lines.pause((long)(5000 / speed));
             }
 
-            // Write raw bytes: SOH + line + CRLF
-            out.write(0x01);
-            out.write(line.getBytes(StandardCharsets.US_ASCII));
-            out.write('\r');
-            out.write('\n');
-            out.flush();
+            Rc4Lines.write(out, line);
             log.debug("[SIMULATOR] Emitting: {}", line);
         }
         log.info("[SIMULATOR] Playback complete");
@@ -86,9 +81,5 @@ public class PlaybackMode {
             }
         }
         return lines;
-    }
-
-    private static void sleep(long ms) {
-        try { Thread.sleep(ms); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
     }
 }
