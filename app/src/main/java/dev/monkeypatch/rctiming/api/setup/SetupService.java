@@ -67,14 +67,6 @@ public class SetupService {
             throw new StateConflictException("Bootstrap already complete");
         }
         User user = userService.createAdmin(req.email(), req.password(), req.firstName(), req.lastName());
-        String token = jwtTokenService.generateAccessToken(user);
-        return new AuthResponse(
-                token,
-                user.getId().toString(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getRoles().stream().map(Enum::name).toList()
-        );
+        return AuthResponse.of(user, jwtTokenService.generateAccessToken(user));
     }
 }
