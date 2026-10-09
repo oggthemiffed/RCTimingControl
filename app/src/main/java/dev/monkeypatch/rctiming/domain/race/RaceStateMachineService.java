@@ -1,17 +1,19 @@
 package dev.monkeypatch.rctiming.domain.race;
 
 import dev.monkeypatch.rctiming.domain.event.IllegalStateTransitionException;
+import dev.monkeypatch.rctiming.service.BumpUpSeedingService;
 import dev.monkeypatch.rctiming.service.ResultSnapshotService;
 import dev.monkeypatch.rctiming.service.RoundGeneratorService;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
+import dev.monkeypatch.rctiming.timing.LiveRaceState;
 import dev.monkeypatch.rctiming.timing.LiveTimingHub;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
@@ -41,36 +43,18 @@ public class RaceStateMachineService {
     private final RaceRepository raceRepository;
     private final LapTimingService lapTimingService;
     private final RoundRepository roundRepository;
-    @Nullable
     private final ResultSnapshotService resultSnapshotService;
-    @Nullable
     private final ApplicationEventPublisher eventPublisher;
-    @Nullable
-    private final dev.monkeypatch.rctiming.service.BumpUpSeedingService bumpUpSeedingService;
+    private final BumpUpSeedingService bumpUpSeedingService;
 
-    /**
-     * Full constructor for production use — all collaborators required.
-     */
     public RaceStateMachineService(LiveTimingHub liveTimingHub,
                                    RoundGeneratorService roundGeneratorService,
                                    RaceRepository raceRepository,
                                    LapTimingService lapTimingService,
                                    RoundRepository roundRepository,
-                                   @Nullable ResultSnapshotService resultSnapshotService,
-                                   @Nullable ApplicationEventPublisher eventPublisher) {
-        this(liveTimingHub, roundGeneratorService, raceRepository, lapTimingService,
-                roundRepository, resultSnapshotService, eventPublisher, null);
-    }
-
-    @org.springframework.beans.factory.annotation.Autowired
-    public RaceStateMachineService(LiveTimingHub liveTimingHub,
-                                   RoundGeneratorService roundGeneratorService,
-                                   RaceRepository raceRepository,
-                                   LapTimingService lapTimingService,
-                                   RoundRepository roundRepository,
-                                   @Nullable ResultSnapshotService resultSnapshotService,
-                                   @Nullable ApplicationEventPublisher eventPublisher,
-                                   @Nullable dev.monkeypatch.rctiming.service.BumpUpSeedingService bumpUpSeedingService) {
+                                   ResultSnapshotService resultSnapshotService,
+                                   ApplicationEventPublisher eventPublisher,
+                                   BumpUpSeedingService bumpUpSeedingService) {
         this.liveTimingHub = liveTimingHub;
         this.roundGeneratorService = roundGeneratorService;
         this.raceRepository = raceRepository;
@@ -81,13 +65,39 @@ public class RaceStateMachineService {
         this.bumpUpSeedingService = bumpUpSeedingService;
     }
 
-    /**
-     * Zero-arg convenience constructor for unit tests (plan 02).
-     * Delegates to full constructor with all-null collaborators.
-     * Broadcasts and finishing-order propagation are short-circuited when hub is null.
-     */
-    public RaceStateMachineService() {
-        this(null, null, null, null, null, null, null);
+    // ── Commands ───────────────────────────────────────────────────────────────────
+    // Each sets the race's times before the transition saves it, so every listener reads them.
+
+    public void callGrid(Race race) {
+        transition(race, RaceStatus.GRID);
+    }
+
+    /** Starts the race, or resumes a stopped one: a resume keeps the first start time, so the clock carries on. */
+    public void start(Race race) {
+        requireAllowed(race, RaceStatus.RUNNING);
+        if (race.getStartedAt() == null) {
+            race.setStartedAt(Instant.now());
+        }
+        transition(race, RaceStatus.RUNNING);
+    }
+
+    public void stop(Race race) {
+        transition(race, RaceStatus.STOPPED);
+    }
+
+    public void finish(Race race) {
+        requireAllowed(race, RaceStatus.FINISHED);
+        race.setFinishedAt(Instant.now());
+        transition(race, RaceStatus.FINISHED);
+    }
+
+    /** Finishes the race and marks it abandoned at the same moment. */
+    public void abandon(Race race) {
+        requireAllowed(race, RaceStatus.FINISHED);
+        Instant now = Instant.now();
+        race.setFinishedAt(now);
+        race.setAbandonedAt(now);
+        transition(race, RaceStatus.FINISHED);
     }
 
     /**
@@ -104,49 +114,43 @@ public class RaceStateMachineService {
         race.setStartedAt(null);
         race.setFinishedAt(null);
         race.setAbandonedAt(null);
+        raceRepository.save(race);
 
-        if (lapTimingService != null) {
-            lapTimingService.releaseState(race.getId());
-        }
-        if (resultSnapshotService != null) {
-            resultSnapshotService.deleteByRaceId(race.getId());
-        }
-        if (liveTimingHub != null) {
-            liveTimingHub.broadcastStateChange(race.getId(), RaceStatus.PENDING);
-        }
+        lapTimingService.releaseState(race.getId());
+        resultSnapshotService.deleteByRaceId(race.getId());
+        liveTimingHub.broadcastStateChange(race.getId(), RaceStatus.PENDING);
     }
 
-    public void transition(Race race, RaceStatus target) {
-        Set<RaceStatus> valid = VALID_TRANSITIONS.getOrDefault(race.getStatus(), Set.of());
-        if (!valid.contains(target)) {
-            throw new IllegalStateTransitionException(
-                "Cannot transition race " + race.getId()
-                + " from " + race.getStatus() + " to " + target);
-        }
+    /**
+     * Moves the race to {@code target} if the transition table allows it, saves it, and tells
+     * everything that reacts. Use the commands above, which also set the race's times.
+     */
+    void transition(Race race, RaceStatus target) {
+        requireAllowed(race, target);
         race.setStatus(target);
 
         // Save before anything reacts, so the result snapshot and the listeners read the race's new
         // status and times from the database
-        if (raceRepository != null && race.getId() != null) {
-            raceRepository.save(race);
-        }
+        raceRepository.save(race);
 
         // Publish domain event for audio/other listeners
-        if (eventPublisher != null && race.getId() != null) {
-            eventPublisher.publishEvent(new RaceStatusChangedEvent(this, race.getId(), target));
-        }
+        eventPublisher.publishEvent(new RaceStatusChangedEvent(this, race.getId(), target));
 
         // Broadcast state change over STOMP
-        if (liveTimingHub != null) {
-            liveTimingHub.broadcastStateChange(race.getId(), target);
-        }
+        liveTimingHub.broadcastStateChange(race.getId(), target);
 
         // On RUNNING/STOPPED → FINISHED: propagate finishing order, then persist result snapshot
-        if (target == RaceStatus.FINISHED && liveTimingHub != null) {
+        if (target == RaceStatus.FINISHED) {
             applyFinishingOrderToNextRace(race);
-        }
-        if (target == RaceStatus.FINISHED && resultSnapshotService != null) {
             resultSnapshotService.snapshot(race.getId());
+        }
+    }
+
+    private static void requireAllowed(Race race, RaceStatus target) {
+        if (!VALID_TRANSITIONS.getOrDefault(race.getStatus(), Set.of()).contains(target)) {
+            throw new IllegalStateTransitionException(
+                "Cannot transition race " + race.getId()
+                + " from " + race.getStatus() + " to " + target);
         }
     }
 
@@ -157,10 +161,6 @@ public class RaceStateMachineService {
      * Bump-up finals are handled separately by BumpUpSeedingService — not here.
      */
     private void applyFinishingOrderToNextRace(Race finishedRace) {
-        if (lapTimingService == null || roundRepository == null || raceRepository == null) {
-            return;
-        }
-
         // Only apply for PRACTICE and QUALIFIER rounds
         Round finishedRound = roundRepository.findById(finishedRace.getRoundId()).orElse(null);
         if (finishedRound == null) {
@@ -203,7 +203,7 @@ public class RaceStateMachineService {
         }
 
         // Get finishing order from in-memory state
-        Optional<dev.monkeypatch.rctiming.timing.LiveRaceState> state = lapTimingService.peek(finishedRace.getId());
+        Optional<LiveRaceState> state = lapTimingService.peek(finishedRace.getId());
         if (state.isEmpty()) {
             log.info("Race {} finished with no in-memory state — skipping finishing-order propagation", finishedRace.getId());
             return;
@@ -240,12 +240,7 @@ public class RaceStateMachineService {
             return;
         }
 
-        if (bumpUpSeedingService == null) {
-            log.warn("Bump-up: BumpUpSeedingService unavailable, skipping promotion for race {}", finishedFinalRace.getId());
-            return;
-        }
-
-        Optional<dev.monkeypatch.rctiming.timing.LiveRaceState> state = lapTimingService.peek(finishedFinalRace.getId());
+        Optional<LiveRaceState> state = lapTimingService.peek(finishedFinalRace.getId());
         if (state.isEmpty()) {
             log.warn("Bump-up: no live state for finished final race {}", finishedFinalRace.getId());
             return;
@@ -258,7 +253,7 @@ public class RaceStateMachineService {
         try {
             List<Long> promoted = bumpUpSeedingService.applyBumpUpResults(finishedFinalRace.getId(), finishers);
             log.info("Bump-up: promoted {} from {}-final race {}", promoted, letter, finishedFinalRace.getId());
-            if (liveTimingHub != null && !promoted.isEmpty()) {
+            if (!promoted.isEmpty()) {
                 liveTimingHub.broadcastBumpUpAlert(finishedFinalRace.getId(), promoted);
             }
         } catch (Exception e) {
