@@ -275,7 +275,7 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void finishingARaceSnapshotsItWithTheFinishTimeNotYetSavedByTheCaller() {
+    void finishingARaceSnapshotsItWithItsFinishTime() {
         Round round = rounds.save(round(RoundType.QUALIFIER, 1));
         cleanup.add(() -> rounds.deleteById(round.getId()));
         Race r = race(round.getId(), 1);
@@ -283,16 +283,14 @@ class RaceAndMarshallingRepositoriesIT extends AbstractIntegrationTest {
         r.setStartedAt(T1);
         Race race = races.save(r);
 
-        // As abandoning does: set the finish time, then finish, with the caller saving afterwards
-        new TransactionTemplate(transactionManager).executeWithoutResult(tx -> {
-            Race loaded = races.findById(race.getId()).orElseThrow();
-            loaded.setFinishedAt(T2);
-            stateMachine.transition(loaded, RaceStatus.FINISHED);
-        });
+        new TransactionTemplate(transactionManager).executeWithoutResult(tx ->
+                stateMachine.abandon(races.findById(race.getId()).orElseThrow()));
 
-        assertThat(races.findById(race.getId()).orElseThrow().getStatus()).isEqualTo(RaceStatus.FINISHED);
+        Race finished = races.findById(race.getId()).orElseThrow();
+        assertThat(finished.getStatus()).isEqualTo(RaceStatus.FINISHED);
+        assertThat(finished.getFinishedAt()).isNotNull().isEqualTo(finished.getAbandonedAt());
         assertThat(snapshots.findByRaceId(race.getId())).get()
-                .extracting(ResultSnapshot::getFinishedAt).isEqualTo(T2);
+                .extracting(ResultSnapshot::getFinishedAt).isEqualTo(finished.getFinishedAt());
     }
 
     @Test

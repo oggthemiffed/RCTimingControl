@@ -66,7 +66,8 @@ public class RaceStateMachineService {
     }
 
     // ── Commands ───────────────────────────────────────────────────────────────────
-    // Each sets the race's times before the transition saves it, so every listener reads them.
+    // start, finish and abandon set the race's times before the transition saves it, so every
+    // listener reads them.
 
     public void callGrid(Race race) {
         transition(race, RaceStatus.GRID);
@@ -105,8 +106,8 @@ public class RaceStateMachineService {
      * in-memory timing state, and deletes any persisted result snapshot.
      * Intended for false starts or technical issues requiring a full re-run.
      *
-     * <p>Unlike {@link #transition}, this does not go through the transition table, so it works from any
-     * state, including FINISHED. The start, finish and abandon times are cleared, so a race that was
+     * <p>Unlike the commands above, this does not go through the transition table, so it works from any
+     * state, including FINISHED. It saves the race. The start, finish and abandon times are cleared, so a race that was
      * abandoned and is restarted is no longer marked abandoned.
      */
     public void restart(Race race) {

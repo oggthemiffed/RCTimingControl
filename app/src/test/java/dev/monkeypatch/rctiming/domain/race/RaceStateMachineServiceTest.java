@@ -50,7 +50,8 @@ class RaceStateMachineServiceTest {
             lastSaved = copy(race);
             return race;
         });
-        doAnswer(inv -> savedWhenPublished.add(lastSaved)).when(eventPublisher).publishEvent(any(ApplicationEvent.class));
+        doAnswer(inv -> savedWhenPublished.add(lastSaved))
+                .when(eventPublisher).publishEvent(any(ApplicationEvent.class));
         when(roundRepository.findById(any())).thenReturn(Optional.empty());
     }
 
@@ -127,6 +128,31 @@ class RaceStateMachineServiceTest {
         assertThat(race.getAbandonedAt()).isNotNull().isEqualTo(race.getFinishedAt());
         assertThat(savedWhenPublished).singleElement()
                 .satisfies(saved -> assertThat(saved.getAbandonedAt()).isNotNull());
+    }
+
+    @Test
+    void stop_movesARunningRaceToStoppedAndTellsListeners() {
+        Race race = race(RaceStatus.RUNNING);
+        service.stop(race);
+
+        assertThat(race.getStatus()).isEqualTo(RaceStatus.STOPPED);
+        assertThat(savedWhenPublished).singleElement()
+                .satisfies(saved -> assertThat(saved.getStatus()).isEqualTo(RaceStatus.STOPPED));
+        verify(liveTimingHub).broadcastStateChange(7L, RaceStatus.STOPPED);
+    }
+
+    @Test
+    void finishOrAbandonTwice_isRefusedAndKeepsTheFirstTimes() {
+        Instant then = Instant.parse("2026-10-18T14:00:00Z");
+        Race race = race(RaceStatus.FINISHED);
+        race.setFinishedAt(then);
+
+        assertThatThrownBy(() -> service.finish(race)).isInstanceOf(IllegalStateTransitionException.class);
+        assertThatThrownBy(() -> service.abandon(race)).isInstanceOf(IllegalStateTransitionException.class);
+
+        assertThat(race.getFinishedAt()).isEqualTo(then);
+        assertThat(race.getAbandonedAt()).isNull();
+        verify(raceRepository, never()).save(any());
     }
 
     @Test
