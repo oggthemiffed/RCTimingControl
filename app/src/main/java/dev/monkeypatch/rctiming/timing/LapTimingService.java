@@ -152,7 +152,7 @@ public class LapTimingService {
 
     /**
      * Phase 5: returns the count of lapHistory entries matching the given transponder number.
-     * Used by TransponderLinkController to report lapsCredited before linking.
+     * Used by TransponderLinkService to report lapsCredited before linking.
      */
     public int countPassingsForTransponder(long raceId, String transponderNumber) {
         LiveRaceState state = stateFor(raceId);

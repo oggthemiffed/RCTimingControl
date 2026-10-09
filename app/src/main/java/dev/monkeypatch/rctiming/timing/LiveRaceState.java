@@ -178,7 +178,7 @@ public class LiveRaceState {
 
     /**
      * Phase 5: counts lapHistory entries for a given transponder number.
-     * Used by TransponderLinkController to report lapsCredited before linking.
+     * Used by TransponderLinkService to report lapsCredited before linking.
      */
     public synchronized int countPassingsForTransponder(String transponderNumber) {
         return (int) lapHistory.stream()
