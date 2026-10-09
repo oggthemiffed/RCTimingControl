@@ -44,8 +44,8 @@ public class UserRepository extends JooqRepository<User, UsersRecord> {
     public long countOfficials() {
         return dsl.fetchCount(dsl.selectFrom(USERS)
                 .whereExists(dsl.selectOne().from(USER_ROLES)
-                        .where(USER_ROLES.USER_ID.eq(USERS.ID))
-                        .and(USER_ROLES.ROLE.in(Role.OFFICIAL_ROLES.stream().map(Role::name).toList()))));
+                        .where(USER_ROLES.USER_ID.eq(USERS.ID)
+                                .and(USER_ROLES.ROLE.in(Role.OFFICIAL_ROLES.stream().map(Role::name).toList())))));
     }
 
     /** Saves the official and replaces their roles with the ones they hold now. */

@@ -1,5 +1,6 @@
 package dev.monkeypatch.rctiming.service;
 
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import dev.monkeypatch.rctiming.domain.club.ClubProfile;
 import dev.monkeypatch.rctiming.domain.club.ClubProfileRepository;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatTemplateRepository;
@@ -46,7 +47,7 @@ class SetupServiceTest {
     @Test
     void bootstrap_throws_whenAnyUserExists() {
         when(userRepository.count()).thenReturn(1L);
-        assertThrows(IllegalStateException.class,
+        assertThrows(StateConflictException.class,
                 () -> setupService.bootstrap("admin@test.com", "password123", "First", "Last"));
     }
 

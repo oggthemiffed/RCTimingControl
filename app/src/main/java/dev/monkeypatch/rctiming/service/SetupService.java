@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class SetupService {
 
-    /** Whether the first admin exists, and whether the club profile has been saved. */
+    /** Whether anyone has an account yet (the first admin), and whether the club profile has been saved. */
     public record Status(boolean bootstrapped, boolean setupComplete) {}
 
     /** Which of the wizard's steps have been done. */
@@ -62,7 +62,7 @@ public class SetupService {
     /**
      * Creates the first admin, on a fresh install only.
      *
-     * @throws StateConflictException once any official exists
+     * @throws StateConflictException once anyone has an account
      */
     public User bootstrap(String email, String password, String firstName, String lastName) {
         if (userRepository.count() > 0) {
