@@ -279,6 +279,61 @@ class FormatControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void exportOfAMissingFormat_returns404() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(adminToken);
+        headers.set(HttpHeaders.ACCEPT, "application/yaml");
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/v1/admin/formats/999999/export", HttpMethod.GET,
+                new HttpEntity<>(headers), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void importOfAYamlNull_returns400() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(adminToken);
+        headers.setContentType(MediaType.parseMediaType("application/yaml"));
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/v1/admin/formats/import?name=Null", HttpMethod.POST,
+                new HttpEntity<>("~\n", headers), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void importOfAnUnknownType_namesTheTypes_notTheJavaClass() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(adminToken);
+        headers.setContentType(MediaType.parseMediaType("application/yaml"));
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/v1/admin/formats/import?name=Odd", HttpMethod.POST,
+                new HttpEntity<>("type: RELAY\n", headers), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().get("detail").toString())
+                .contains("TIMED, BUMP_UP, POINTS_FINALS")
+                .doesNotContain("dev.monkeypatch");
+    }
+
+    @Test
+    void importOfAnEmptyYamlFile_returns400() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(adminToken);
+        headers.setContentType(MediaType.parseMediaType("application/yaml"));
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/v1/admin/formats/import?name=Empty", HttpMethod.POST,
+                new HttpEntity<>("# nothing here\n", headers), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void snapshotImmutability_templateEditDoesNotAffectEventClass() {
         // Create template with 5-minute timed config
         TimedRaceConfig originalConfig = new TimedRaceConfig(5, StartType.STAGGER, QualifyingType.FTQ, 2, 3);

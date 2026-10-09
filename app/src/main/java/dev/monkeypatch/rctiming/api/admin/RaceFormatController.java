@@ -1,11 +1,10 @@
 package dev.monkeypatch.rctiming.api.admin;
 
-import dev.monkeypatch.rctiming.domain.audit.Audited;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateRaceFormatTemplateRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.RaceFormatTemplateDto;
-import dev.monkeypatch.rctiming.domain.format.RaceFormatConfig;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
+import dev.monkeypatch.rctiming.domain.format.RaceFormatCodec;
+import dev.monkeypatch.rctiming.domain.format.RaceFormatCodec.FileType;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatService;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
@@ -33,16 +32,12 @@ import java.util.List;
 @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR', 'REFEREE')")
 public class RaceFormatController {
 
-    private static final ObjectMapper YAML_MAPPER =
-            new ObjectMapper(new YAMLFactory()).findAndRegisterModules();
-
     private final RaceFormatService raceFormatService;
-    private final ObjectMapper jsonObjectMapper;
+    private final RaceFormatCodec codec;
 
-    public RaceFormatController(RaceFormatService raceFormatService,
-                                 ObjectMapper jsonObjectMapper) {
+    public RaceFormatController(RaceFormatService raceFormatService, RaceFormatCodec codec) {
         this.raceFormatService = raceFormatService;
-        this.jsonObjectMapper = jsonObjectMapper;
+        this.codec = codec;
     }
 
     @GetMapping
@@ -88,17 +83,10 @@ public class RaceFormatController {
     public ResponseEntity<String> exportFormat(
             @PathVariable Long id,
             @RequestHeader(value = "Accept", defaultValue = MediaType.APPLICATION_JSON_VALUE) String accept) {
-        try {
-            RaceFormatConfig config = raceFormatService.exportConfig(id);
-            ObjectMapper mapper = accept.contains("yaml") ? YAML_MAPPER : jsonObjectMapper;
-            String output = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(config);
-            String contentType = accept.contains("yaml") ? "application/yaml" : MediaType.APPLICATION_JSON_VALUE;
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .body(output);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to export format config", e);
-        }
+        FileType fileType = FileType.of(accept);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(fileType.mediaType()))
+                .body(codec.write(raceFormatService.exportConfig(id), fileType));
     }
 
     @Audited("audit_log")
@@ -111,13 +99,7 @@ public class RaceFormatController {
             @RequestParam(defaultValue = "Imported template") String name,
             @RequestBody String body,
             @RequestHeader("Content-Type") String contentType) {
-        try {
-            ObjectMapper mapper = contentType.contains("yaml") ? YAML_MAPPER : jsonObjectMapper;
-            RaceFormatConfig config = mapper.readValue(body, RaceFormatConfig.class);
-            return RaceFormatTemplateDto.from(
-                    raceFormatService.importConfig(CurrentOfficial.actor(auth), name, config));
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Failed to parse format config: " + e.getMessage(), e);
-        }
+        return RaceFormatTemplateDto.from(raceFormatService.importConfig(
+                CurrentOfficial.actor(auth), name, codec.read(body, FileType.of(contentType))));
     }
 }
