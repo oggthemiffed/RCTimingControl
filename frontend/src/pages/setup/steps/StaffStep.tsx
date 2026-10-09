@@ -5,17 +5,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Form, FormItem, FormLabel } from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 import { createSetupStaff } from '@/lib/setupApi';
 import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
 import { TextField } from '@/components/TextField';
-
-const ROLES = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'RACE_DIRECTOR', label: 'Race Director' },
-  { value: 'REFEREE', label: 'Referee' },
-] as const;
+import { OfficialRoleCheckboxes } from '@/components/OfficialRoleCheckboxes';
 
 const schema = z
   .object({
@@ -132,44 +126,16 @@ export default function StaffStep({ onNext, onBack }: Props) {
             autoComplete="new-password"
           />
 
-          {/* Role checkboxes */}
           <Controller
             control={form.control}
             name="roles"
             render={({ field, fieldState }) => (
-              <FormItem>
-                <FormLabel>Roles</FormLabel>
-                <div className="space-y-2 pt-1">
-                  {ROLES.map((role) => {
-                    const checked = field.value.includes(role.value);
-                    return (
-                      <label
-                        key={role.value}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={(isChecked) => {
-                            if (isChecked) {
-                              field.onChange([...field.value, role.value]);
-                            } else {
-                              field.onChange(
-                                field.value.filter((r) => r !== role.value),
-                              );
-                            }
-                          }}
-                        />
-                        <span className="text-sm">{role.label}</span>
-                      </label>
-                    );
-                  })}
-                </div>
+              <div className="space-y-1">
+                <OfficialRoleCheckboxes idPrefix="staff-role" value={field.value} onChange={field.onChange} />
                 {fieldState.error && (
-                  <p className="text-sm font-medium text-destructive mt-1">
-                    {fieldState.error.message}
-                  </p>
+                  <p className="text-sm font-medium text-destructive">{fieldState.error.message}</p>
                 )}
-              </FormItem>
+              </div>
             )}
           />
 
