@@ -5,12 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.monkeypatch.rctiming.domain.ExternalSources;
 import dev.monkeypatch.rctiming.domain.audit.Actor;
 import dev.monkeypatch.rctiming.domain.audit.AuditService;
+import dev.monkeypatch.rctiming.domain.championship.ChampionshipExclusionRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
 import dev.monkeypatch.rctiming.domain.entry.EntryAuditLog;
 import dev.monkeypatch.rctiming.domain.entry.EntryAuditLogRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
-import org.jooq.DSLContext;
+import dev.monkeypatch.rctiming.domain.format.EventClassRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,12 +25,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static dev.monkeypatch.rctiming.jooq.generated.tables.ChampionshipExclusions.CHAMPIONSHIP_EXCLUSIONS;
-import static dev.monkeypatch.rctiming.jooq.generated.tables.CompetitorAuditLog.COMPETITOR_AUDIT_LOG;
-import static dev.monkeypatch.rctiming.jooq.generated.tables.EventClasses.EVENT_CLASSES;
-import static dev.monkeypatch.rctiming.jooq.generated.tables.Events.EVENTS;
-import static dev.monkeypatch.rctiming.jooq.generated.tables.RacingClasses.RACING_CLASSES;
 
 /**
  * Merges a duplicate competitor into the one to keep (#123). Results, live timing and championship
@@ -53,20 +48,26 @@ public class CompetitorMergeService {
     private final CompetitorRepository competitorRepository;
     private final EntryRepository entryRepository;
     private final EntryAuditLogRepository auditLogRepository;
-    private final DSLContext dsl;
+    private final CompetitorAuditLogRepository competitorAuditLogRepository;
+    private final ChampionshipExclusionRepository exclusionRepository;
+    private final EventClassRepository eventClassRepository;
     private final ObjectMapper objectMapper;
     private final AuditService audit;
 
     public CompetitorMergeService(CompetitorRepository competitorRepository,
                                   EntryRepository entryRepository,
                                   EntryAuditLogRepository auditLogRepository,
-                                  DSLContext dsl,
+                                  CompetitorAuditLogRepository competitorAuditLogRepository,
+                                  ChampionshipExclusionRepository exclusionRepository,
+                                  EventClassRepository eventClassRepository,
                                   ObjectMapper objectMapper,
                                   AuditService audit) {
         this.competitorRepository = competitorRepository;
         this.entryRepository = entryRepository;
         this.auditLogRepository = auditLogRepository;
-        this.dsl = dsl;
+        this.competitorAuditLogRepository = competitorAuditLogRepository;
+        this.exclusionRepository = exclusionRepository;
+        this.eventClassRepository = eventClassRepository;
         this.objectMapper = objectMapper;
         this.audit = audit;
     }
@@ -120,16 +121,10 @@ public class CompetitorMergeService {
             entryRepository.save(entry);
             writeAudit(entry.getId(), adminUserId, reason, snapshot(duplicate), snapshot(keep), now);
         }
-        int exclusions = dsl.update(CHAMPIONSHIP_EXCLUSIONS)
-                .set(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID, keepId)
-                .where(CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID.eq(duplicateId))
-                .execute();
+        int exclusions = exclusionRepository.moveDriver(duplicateId, keepId);
 
         // The duplicate's change history goes with the competitor that is kept
-        dsl.update(COMPETITOR_AUDIT_LOG)
-                .set(COMPETITOR_AUDIT_LOG.COMPETITOR_ID, keepId)
-                .where(COMPETITOR_AUDIT_LOG.COMPETITOR_ID.eq(duplicateId))
-                .execute();
+        competitorAuditLogRepository.moveCompetitor(duplicateId, keepId);
 
         // The external id is unique, so the duplicate lets go of it before the kept competitor takes it
         boolean takesIdentity = duplicateIdentityWins(keep, duplicate);
@@ -209,8 +204,7 @@ public class CompetitorMergeService {
         }
 
         int events = (int) moving.stream().map(Entry::getEventId).distinct().count();
-        int exclusions = (int) dsl.fetchCount(CHAMPIONSHIP_EXCLUSIONS,
-                CHAMPIONSHIP_EXCLUSIONS.DRIVER_ID.eq(duplicate.getId()));
+        int exclusions = exclusionRepository.countByDriverId(duplicate.getId());
         String spoken = isBlank(keep.getSpokenName()) ? duplicate.getSpokenName() : keep.getSpokenName();
         String source = duplicateIdentityWins(keep, duplicate) ? duplicate.getExternalSource() : keep.getExternalSource();
         return new Preview(side(keep, keepEntries.size()), side(duplicate, moving.size()), moving.size(), events,
@@ -233,18 +227,14 @@ public class CompetitorMergeService {
         if (conflictingClasses.isEmpty()) {
             return List.of();
         }
-        Map<Long, String> labels = new LinkedHashMap<>();
-        dsl.select(EVENT_CLASSES.ID, EVENTS.NAME, RACING_CLASSES.NAME)
-                .from(EVENT_CLASSES)
-                .join(EVENTS).on(EVENTS.ID.eq(EVENT_CLASSES.EVENT_ID))
-                .join(RACING_CLASSES).on(RACING_CLASSES.ID.eq(EVENT_CLASSES.RACING_CLASS_ID))
-                .where(EVENT_CLASSES.ID.in(conflictingClasses))
-                .fetch()
-                .forEach(r -> labels.put(r.get(EVENT_CLASSES.ID), r.get(RACING_CLASSES.NAME) + " at " + r.get(EVENTS.NAME)));
+        Map<Long, EventClassRepository.EventClassNames> names = eventClassRepository.namesByIds(conflictingClasses);
         return conflictingClasses.stream()
-                .map(id -> "Both have an active entry in " + labels.getOrDefault(id, "class " + id)
-                        + ". Withdraw one of them first.")
+                .map(id -> "Both have an active entry in " + label(names.get(id), id) + ". Withdraw one of them first.")
                 .toList();
+    }
+
+    private static String label(EventClassRepository.EventClassNames names, Long eventClassId) {
+        return names == null ? "class " + eventClassId : names.racingClassName() + " at " + names.eventName();
     }
 
     /** True when the duplicate's external id should end up on the kept competitor. */
