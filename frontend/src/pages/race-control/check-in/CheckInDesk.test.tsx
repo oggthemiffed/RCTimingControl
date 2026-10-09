@@ -213,6 +213,7 @@ describe('CheckInDesk: camera unavailable', () => {
 describe('CheckInDesk: unmatched scan', () => {
   it('falls back to search pre-filled with the scanned code instead of a dead end', async () => {
     vi.mocked(checkInResolve).mockRejectedValue({
+      isAxiosError: true,
       response: { status: 404, data: { error: 'not_found' } },
     });
     vi.mocked(checkInSearch).mockResolvedValue([]);
@@ -249,6 +250,7 @@ describe('CheckInDesk: withdrawn entry', () => {
   it('says the entry was withdrawn when the confirm is refused', async () => {
     vi.mocked(checkInResolve).mockResolvedValue([sampleEntry]);
     vi.mocked(checkInConfirm).mockRejectedValue({
+      isAxiosError: true,
       response: { status: 409, data: { error: 'entry_withdrawn' } },
     });
 

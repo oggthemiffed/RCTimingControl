@@ -22,7 +22,7 @@ type Props = {
 };
 
 export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
-  const { rows: sorted, wsStatus } = useLiveTiming(raceId);
+  const { rows: sorted, wsStatus, snapshotFailed } = useLiveTiming(raceId);
   const lappedEntryIds = useLappedBadge(sorted);
   const lapFlash = useLapFlash(sorted);
 
@@ -44,7 +44,9 @@ export function LiveTimingPanel({ raceId, status, highlightEntryIds }: Props) {
 
       {sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {wsStatus === 'connected' ? 'Waiting for first passing…' : 'Connecting to timing…'}
+          {snapshotFailed
+            ? 'The laps so far could not be loaded. They will show from the next passing, or refresh the page to try again.'
+            : wsStatus === 'connected' ? 'Waiting for first passing…' : 'Connecting to timing…'}
         </p>
       ) : (
         <Table>

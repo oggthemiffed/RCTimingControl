@@ -4,7 +4,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getResultsBoard } from '@/lib/boardsApi';
-import { BoardShell, BoardMessage } from './BoardShell';
+import { BoardShell, BoardMessage, BoardUnreachable } from './BoardShell';
 import { BoardLiveTable } from './BoardLiveTable';
 import { BoardResultsTable } from './BoardResultsTable';
 import { BOARD_POLL_MS, parseEventParam } from './boardFormat';
@@ -13,7 +13,7 @@ import { useBoardRace } from './useBoardRace';
 export default function NowNextBoard() {
   const [searchParams] = useSearchParams();
   const eventId = parseEventParam(searchParams.get('event'));
-  const { nowNext, isPending, currentRace, rows } = useBoardRace(eventId);
+  const { nowNext, isPending, isError, currentRace, rows } = useBoardRace(eventId);
   const nextRace = nowNext?.nextRace ?? null;
   const lastCompletedRace = nowNext?.lastCompletedRace ?? null;
 
@@ -30,6 +30,10 @@ export default function NowNextBoard() {
         <BoardMessage>Loading…</BoardMessage>
       </BoardShell>
     );
+  }
+
+  if (isError && !nowNext) {
+    return <BoardUnreachable />;
   }
 
   if (currentRace) {

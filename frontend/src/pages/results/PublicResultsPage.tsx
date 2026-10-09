@@ -4,6 +4,7 @@ import { usePublicResultSnapshot } from '@/hooks/race-control/usePublicResultSna
 import type { PositionAtLap } from '@/lib/raceControlApi';
 import { fmtMs } from '@/lib/format';
 import { formatDateTime } from '@/lib/dates';
+import { getApiErrorStatus } from '@/lib/errors';
 
 function LapTimesPanel({ entryId, lapHistory }: { entryId: number; lapHistory: PositionAtLap[] }) {
   const laps = lapHistory.filter(l => l.entryId === entryId);
@@ -59,7 +60,17 @@ export default function PublicResultsPage() {
     );
   }
 
-  if (error || !data) {
+  // A 4xx means there is nothing to show for this race (a 404, or a malformed id); anything else is the connection
+  const status = error ? getApiErrorStatus(error) : undefined;
+  if (error && !(status != null && status >= 400 && status < 500)) {
+    return (
+      <div className="p-8 text-sm text-destructive">
+        The results could not be loaded. Check the connection and refresh the page.
+      </div>
+    );
+  }
+
+  if (!data) {
     return (
       <div className="p-8 text-sm text-destructive">
         Results are not available yet. The race has not finished.

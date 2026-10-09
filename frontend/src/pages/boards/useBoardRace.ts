@@ -14,7 +14,9 @@ import { BOARD_POLL_MS } from './boardFormat';
 export function useBoardRace(eventId: number | null) {
   const queryClient = useQueryClient();
 
-  const { data: nowNext, isPending } = useQuery({
+  // Polling keeps retrying, so a board that lost the server shows the last answer it had; before its first
+  // answer it reports isError
+  const { data: nowNext, isPending, isError } = useQuery({
     queryKey: ['boards', 'now-next', eventId],
     queryFn: () => getNowNext(eventId),
     refetchInterval: BOARD_POLL_MS,
@@ -41,5 +43,5 @@ export function useBoardRace(eventId: number | null) {
     return [...source].sort((a, b) => a.position - b.position);
   }, [liveRows, seedRows]);
 
-  return { nowNext, isPending, currentRace, raceId, rows };
+  return { nowNext, isPending, isError, currentRace, raceId, rows };
 }

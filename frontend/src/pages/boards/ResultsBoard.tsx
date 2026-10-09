@@ -3,7 +3,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getResultsBoard } from '@/lib/boardsApi';
-import { BoardShell, BoardMessage } from './BoardShell';
+import { BoardShell, BoardMessage, BoardUnreachable } from './BoardShell';
 import { BoardResultsTable } from './BoardResultsTable';
 import { BOARD_POLL_MS, parseEventParam } from './boardFormat';
 
@@ -11,7 +11,7 @@ export default function ResultsBoard() {
   const [searchParams] = useSearchParams();
   const eventId = parseEventParam(searchParams.get('event'));
 
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: ['boards', 'results', eventId],
     queryFn: () => getResultsBoard(eventId),
     refetchInterval: BOARD_POLL_MS,
@@ -23,6 +23,10 @@ export default function ResultsBoard() {
         <BoardMessage>Loading…</BoardMessage>
       </BoardShell>
     );
+  }
+
+  if (isError && !data) {
+    return <BoardUnreachable />;
   }
 
   if (!data?.race) {

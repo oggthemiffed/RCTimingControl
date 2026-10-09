@@ -8,11 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { ChampionshipDto, ScoringSource } from '@/lib/adminApi';
-
-const optionalPositiveInt = z.preprocess(
-  (v) => (v === '' || v == null) ? null : Number(v),
-  z.number().int().positive().nullable()
-);
+import { optionalPositiveInt, refineBestXFromY } from './bestXFromY';
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -21,26 +17,10 @@ const schema = z.object({
   bestXFromYY: optionalPositiveInt,
   tqBonusPoints: z.coerce.number().int().min(0),
   afinalWinnerBonusPoints: z.coerce.number().int().min(0),
-}).superRefine((data, ctx) => {
-  const bothSet = data.bestXFromYX !== null && data.bestXFromYY !== null;
-  const neitherSet = data.bestXFromYX === null && data.bestXFromYY === null;
-  if (!bothSet && !neitherSet) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Set both fields or leave both empty',
-      path: ['bestXFromYX'],
-    });
-  }
-  if (bothSet && data.bestXFromYX! > data.bestXFromYY!) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Rounds to count cannot exceed total rounds',
-      path: ['bestXFromYX'],
-    });
-  }
-});
+}).superRefine(refineBestXFromY);
 
-type FormValues = z.infer<typeof schema>;
+type FormInput = z.input<typeof schema>;
+type FormValues = z.output<typeof schema>;
 
 interface Props {
   initialValue?: Partial<ChampionshipDto>;
@@ -54,9 +34,8 @@ export function ChampionshipConfigForm({ initialValue, onSubmit, submitLabel }: 
     handleSubmit,
     control,
     formState: { errors, isSubmitting, isDirty },
-  } = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(schema) as any,
+  } = useForm<FormInput, unknown, FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: {
       name: initialValue?.name ?? '',
       scoringSource: (initialValue?.scoringSource as ScoringSource) ?? 'QUALIFYING',
