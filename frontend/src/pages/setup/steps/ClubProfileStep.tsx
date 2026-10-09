@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -25,6 +24,7 @@ import { adminApi } from '@/lib/adminApi';
 import { useClubProfile } from '@/hooks/admin/useAdminClub';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
+import { TextField } from '@/components/TextField';
 
 const TIMEZONES = Intl.supportedValuesOf('timeZone');
 const BROWSER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -104,19 +104,7 @@ export default function ClubProfileStep({ onNext }: Props) {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Club Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Riverside RC Club" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <TextField control={form.control} name="name" label="Club Name" placeholder="e.g. Riverside RC Club" />
 
           <FormField
             control={form.control}
@@ -143,46 +131,28 @@ export default function ClubProfileStep({ onNext }: Props) {
             )}
           />
 
-          <FormField
+          <TextField
             control={form.control}
             name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Contact Email (optional)</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="club@example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Contact Email (optional)"
+            type="email"
+            placeholder="club@example.com"
           />
 
-          <FormField
+          <TextField
             control={form.control}
             name="phone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone (optional)</FormLabel>
-                <FormControl>
-                  <Input type="tel" placeholder="+44 7700 000000" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Phone (optional)"
+            type="tel"
+            placeholder="+44 7700 000000"
           />
 
-          <FormField
+          <TextField
             control={form.control}
             name="websiteUrl"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Website URL (optional)</FormLabel>
-                <FormControl>
-                  <Input type="url" placeholder="https://yourclub.example.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Website URL (optional)"
+            type="url"
+            placeholder="https://yourclub.example.com"
           />
 
           <div className="flex justify-end gap-2 pt-4">

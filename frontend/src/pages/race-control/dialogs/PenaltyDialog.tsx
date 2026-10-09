@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { PenaltyRequest } from '@/lib/raceControlApi';
+import { TextField } from '@/components/TextField';
 
 const schema = z.object({
   entryId: z.coerce.number().int().positive('Select a driver'),
@@ -139,19 +140,7 @@ export function PenaltyDialog({ open, onOpenChange, onSubmit, isPending, drivers
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="reason"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Reason</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Brief reason" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <TextField control={form.control} name="reason" label="Reason" placeholder="Brief reason" />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
