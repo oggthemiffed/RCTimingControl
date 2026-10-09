@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import { KeyRound, Loader2, Plus, ShieldCheck, UserCheck, UserX } from 'lucide-react';
 import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
+import { OfficialFields } from '@/components/OfficialFields';
 import { OfficialRoleCheckboxes } from '@/components/OfficialRoleCheckboxes';
+import { TextField } from '@/components/TextField';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Form } from '@/components/ui/form';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useHelpContent } from '@/context/HelpContext';
 import { OfficialsHelp } from '@/help/OfficialsHelp';
@@ -23,8 +27,8 @@ import { useAuth } from '@/hooks/useAuth';
 import type { OfficialAction, OfficialDto, OfficialRole } from '@/lib/adminApi';
 import { getApiErrorMessage } from '@/lib/errors';
 import { formatDate, formatDateTime } from '@/lib/dates';
-
-const MIN_PASSWORD_LENGTH = 8;
+import { MIN_PASSWORD_LENGTH, officialSchema } from '@/lib/officials';
+import type { OfficialFormValues } from '@/lib/officials';
 
 const ROLE_LABEL: Record<OfficialRole, string> = {
   ADMIN: 'Admin',
@@ -42,39 +46,24 @@ const ACTION_LABEL: Record<OfficialAction, string> = {
 
 function AddOfficialDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const addOfficial = useAddOfficial();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [roles, setRoles] = useState<OfficialRole[]>(['RACE_DIRECTOR']);
+  const form = useForm<OfficialFormValues>({
+    resolver: zodResolver(officialSchema),
+    defaultValues: { firstName: '', lastName: '', email: '', password: '', roles: ['RACE_DIRECTOR'] },
+  });
 
   function close(next: boolean) {
     onOpenChange(next);
-    if (!next) {
-      setFirstName('');
-      setLastName('');
-      setEmail('');
-      setPassword('');
-      setRoles(['RACE_DIRECTOR']);
-    }
+    if (!next) form.reset();
   }
 
-  const valid = firstName.trim() && lastName.trim() && email.includes('@')
-    && password.length >= MIN_PASSWORD_LENGTH && roles.length > 0;
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!valid) return;
-    addOfficial.mutate(
-      { firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim(), password, roles },
-      {
-        onSuccess: official => {
-          toast.success(`Added ${official.firstName} ${official.lastName}`);
-          close(false);
-        },
-        onError: err => toast.error(getApiErrorMessage(err, 'Could not add the official. Try again.')),
+  function submit(values: OfficialFormValues) {
+    addOfficial.mutate(values, {
+      onSuccess: official => {
+        toast.success(`Added ${official.firstName} ${official.lastName}`);
+        close(false);
       },
-    );
+      onError: err => toast.error(getApiErrorMessage(err, 'Could not add the official. Try again.')),
+    });
   }
 
   return (
@@ -84,35 +73,17 @@ function AddOfficialDialog({ open, onOpenChange }: { open: boolean; onOpenChange
           <DialogTitle>Add an official</DialogTitle>
           <DialogDescription>Give them their password in person. They can sign in straight away.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="official-first-name">First name</Label>
-              <Input id="official-first-name" value={firstName} onChange={e => setFirstName(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="official-last-name">Last name</Label>
-              <Input id="official-last-name" value={lastName} onChange={e => setLastName(e.target.value)} />
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="official-email">Email</Label>
-            <Input id="official-email" type="email" value={email} onChange={e => setEmail(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="official-password">Password</Label>
-            <Input id="official-password" type="password" autoComplete="new-password" value={password}
-              onChange={e => setPassword(e.target.value)} />
-            <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD_LENGTH} characters.</p>
-          </div>
-          <OfficialRoleCheckboxes idPrefix="add-role" value={roles} onChange={setRoles} />
-          <DialogFooter>
-            <Button type="submit" disabled={!valid || addOfficial.isPending}>
-              {addOfficial.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              Add official
-            </Button>
-          </DialogFooter>
-        </form>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(submit)} className="space-y-4">
+            <OfficialFields control={form.control} rolesIdPrefix="add-role" />
+            <DialogFooter>
+              <Button type="submit" disabled={addOfficial.isPending}>
+                {addOfficial.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                Add official
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
@@ -154,16 +125,21 @@ function RolesDialog({ official, onClose }: { official: OfficialDto; onClose: ()
   );
 }
 
+const passwordSchema = z
+  .object({ password: officialSchema.shape.password, confirm: z.string() })
+  .refine(d => d.password === d.confirm, { message: "The passwords don't match.", path: ['confirm'] });
+type PasswordFormValues = z.infer<typeof passwordSchema>;
+
 function PasswordDialog({ official, onClose }: { official: OfficialDto; onClose: () => void }) {
   const setOfficialPassword = useSetOfficialPassword();
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-  const mismatch = confirm.length > 0 && password !== confirm;
-  const valid = password.length >= MIN_PASSWORD_LENGTH && password === confirm;
+  // Checked as they type, so Set password stays off until the two match
+  const form = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordSchema),
+    mode: 'onChange',
+    defaultValues: { password: '', confirm: '' },
+  });
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!valid) return;
+  function submit({ password }: PasswordFormValues) {
     setOfficialPassword.mutate({ id: official.id, password }, {
       onSuccess: () => {
         toast.success(`New password set for ${official.firstName} ${official.lastName}`);
@@ -182,26 +158,31 @@ function PasswordDialog({ official, onClose }: { official: OfficialDto; onClose:
             Tell them it in person. Their other sessions end, so they sign in again with the new password.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="new-password">New password</Label>
-            <Input id="new-password" type="password" autoComplete="new-password" value={password}
-              onChange={e => setPassword(e.target.value)} />
-            <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD_LENGTH} characters.</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="confirm-password">Type it again</Label>
-            <Input id="confirm-password" type="password" autoComplete="new-password" value={confirm}
-              onChange={e => setConfirm(e.target.value)} />
-            {mismatch && <p className="text-xs text-destructive">The passwords don&apos;t match.</p>}
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={!valid || setOfficialPassword.isPending}>
-              {setOfficialPassword.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              Set password
-            </Button>
-          </DialogFooter>
-        </form>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(submit)} className="space-y-4">
+            <TextField
+              control={form.control}
+              name="password"
+              label="New password"
+              type="password"
+              autoComplete="new-password"
+              description={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+            />
+            <TextField
+              control={form.control}
+              name="confirm"
+              label="Type it again"
+              type="password"
+              autoComplete="new-password"
+            />
+            <DialogFooter>
+              <Button type="submit" disabled={!form.formState.isValid || setOfficialPassword.isPending}>
+                {setOfficialPassword.isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                Set password
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

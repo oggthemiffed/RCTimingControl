@@ -1,4 +1,4 @@
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,19 +9,11 @@ import { Form } from '@/components/ui/form';
 import { createSetupStaff } from '@/lib/setupApi';
 import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
 import { TextField } from '@/components/TextField';
-import { OfficialRoleCheckboxes } from '@/components/OfficialRoleCheckboxes';
+import { OfficialFields } from '@/components/OfficialFields';
+import { officialSchema } from '@/lib/officials';
 
-const schema = z
-  .object({
-    firstName: z.string().min(1, 'First name required').max(100),
-    lastName: z.string().min(1, 'Last name required').max(100),
-    email: z.string().email('Valid email required'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
-    roles: z
-      .array(z.enum(['ADMIN', 'RACE_DIRECTOR', 'REFEREE']))
-      .min(1, 'Select at least one role'),
-  })
+const schema = officialSchema
+  .extend({ confirmPassword: z.string().min(1, 'Please confirm your password') })
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
@@ -91,52 +83,18 @@ export default function StaffStep({ onNext, onBack }: Props) {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <TextField
-              control={form.control}
-              name="firstName"
-              label="First name"
-              type="text"
-              autoComplete="given-name"
-            />
-            <TextField
-              control={form.control}
-              name="lastName"
-              label="Last name"
-              type="text"
-              autoComplete="family-name"
-            />
-          </div>
-
-          <TextField control={form.control} name="email" label="Email" type="email" autoComplete="email" />
-
-          <TextField
+          <OfficialFields
             control={form.control}
-            name="password"
-            label="Password"
-            type="password"
-            autoComplete="new-password"
-          />
-
-          <TextField
-            control={form.control}
-            name="confirmPassword"
-            label="Confirm password"
-            type="password"
-            autoComplete="new-password"
-          />
-
-          <Controller
-            control={form.control}
-            name="roles"
-            render={({ field, fieldState }) => (
-              <OfficialRoleCheckboxes
-                idPrefix="staff-role"
-                value={field.value}
-                onChange={field.onChange}
-                error={fieldState.error?.message}
+            rolesIdPrefix="staff-role"
+            afterPassword={
+              <TextField
+                control={form.control}
+                name="confirmPassword"
+                label="Confirm password"
+                type="password"
+                autoComplete="new-password"
               />
-            )}
+            }
           />
 
           <div className="flex justify-between gap-2 pt-4">
