@@ -8,17 +8,10 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import AuthLayout from '@/components/layout/AuthLayout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 import { useAuth } from '@/hooks/useAuth';
 import { NotAnOfficialError } from '@/lib/auth';
+import { TextField } from '@/components/TextField';
 
 const loginSchema = z.object({
   email: z.string().email('Valid email required'),
@@ -71,31 +64,13 @@ export default function LoginPage() {
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" autoComplete="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
+          <TextField control={form.control} name="email" label="Email" type="email" autoComplete="email" />
+          <TextField
             control={form.control}
             name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" autoComplete="current-password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Password"
+            type="password"
+            autoComplete="current-password"
           />
           <Button type="submit" className="w-full" disabled={isPending}>
             {isPending ? (

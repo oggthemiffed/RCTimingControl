@@ -31,6 +31,7 @@ import {
   type DecoderTestResult,
 } from '@/lib/setupApi';
 import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
+import { TextField } from '@/components/TextField';
 
 const PORT_DEFAULTS: Record<string, number> = { RC4: 5100, P3: 5403 };
 
@@ -130,19 +131,7 @@ export function DecoderSettingsForm({ onSaved, onBack, onSkip, saveLabel = 'Save
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="decoderHost"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Decoder Host</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. 192.168.1.50" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <TextField control={form.control} name="decoderHost" label="Decoder Host" placeholder="e.g. 192.168.1.50" />
 
         <FormField
           control={form.control}

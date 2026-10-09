@@ -26,6 +26,7 @@ import { adminApi } from '@/lib/adminApi';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 import { useFormatsList } from '@/hooks/admin/useAdminFormats';
 import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
+import { TextField } from '@/components/TextField';
 
 const schema = z.object({
   name: z.string().min(1, 'Format name is required').max(200),
@@ -198,18 +199,11 @@ export default function FormatStep({ onNext, onBack }: Props) {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
-          <FormField
+          <TextField
             control={form.control}
             name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Format Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Standard 5-minute Timed" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Format Name"
+            placeholder="e.g. Standard 5-minute Timed"
           />
 
           <FormField

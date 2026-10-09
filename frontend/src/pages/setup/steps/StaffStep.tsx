@@ -5,18 +5,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormItem, FormLabel } from '@/components/ui/form';
 import { createSetupStaff } from '@/lib/setupApi';
 import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
+import { TextField } from '@/components/TextField';
 
 const ROLES = [
   { value: 'ADMIN', label: 'Admin' },
@@ -105,74 +98,38 @@ export default function StaffStep({ onNext, onBack }: Props) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
-            <FormField
+            <TextField
               control={form.control}
               name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>First name</FormLabel>
-                  <FormControl>
-                    <Input type="text" autoComplete="given-name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="First name"
+              type="text"
+              autoComplete="given-name"
             />
-            <FormField
+            <TextField
               control={form.control}
               name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last name</FormLabel>
-                  <FormControl>
-                    <Input type="text" autoComplete="family-name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              label="Last name"
+              type="text"
+              autoComplete="family-name"
             />
           </div>
 
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" autoComplete="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <TextField control={form.control} name="email" label="Email" type="email" autoComplete="email" />
 
-          <FormField
+          <TextField
             control={form.control}
             name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input type="password" autoComplete="new-password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Password"
+            type="password"
+            autoComplete="new-password"
           />
 
-          <FormField
+          <TextField
             control={form.control}
             name="confirmPassword"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm password</FormLabel>
-                <FormControl>
-                  <Input type="password" autoComplete="new-password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Confirm password"
+            type="password"
+            autoComplete="new-password"
           />
 
           {/* Role checkboxes */}

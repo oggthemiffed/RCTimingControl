@@ -19,6 +19,7 @@ import { adminApi } from '@/lib/adminApi';
 import { adminQueryKeys } from '@/hooks/admin/adminQueryKeys';
 import { useTracksList } from '@/hooks/admin/useAdminTracks';
 import { setupQueryKeys } from '@/hooks/setup/setupQueryKeys';
+import { TextField } from '@/components/TextField';
 
 const schema = z.object({
   name: z.string().min(1, 'Track name is required').max(200),
@@ -147,19 +148,7 @@ export default function TrackStep({ onNext, onBack }: Props) {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSave)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Track Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g. Club Track A" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <TextField control={form.control} name="name" label="Track Name" placeholder="e.g. Club Track A" />
 
           <FormField
             control={form.control}
@@ -183,18 +172,11 @@ export default function TrackStep({ onNext, onBack }: Props) {
             )}
           />
 
-          <FormField
+          <TextField
             control={form.control}
             name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Notes (optional)</FormLabel>
-                <FormControl>
-                  <Input placeholder="Venue notes, directions, etc." {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="Notes (optional)"
+            placeholder="Venue notes, directions, etc."
           />
 
           <div className="flex justify-between gap-2 pt-4">
