@@ -14,12 +14,15 @@ public record GenerateRoundsRequest(
         @Min(1) @Max(64) int maxCarsPerHeat,
         @NotNull List<@NotNull @Valid ClassFinalsConfigDto> classFinalsConfigs
 ) {
-    /** A class's finals layout; a null count keeps the class's own setting. */
+    /**
+     * A class's finals layout; a null count keeps the class's own setting. Finals are lettered from A, so there
+     * are at most 26.
+     */
     public record ClassFinalsConfigDto(
             @NotNull Long eventClassId,
-            @Min(1) Integer finalsCount,
+            @Min(1) @Max(26) Integer finalsCount,
             @Min(1) @Max(64) Integer carsPerFinal,
-            @Min(0) Integer bumpCount
+            @Min(0) @Max(64) Integer bumpCount
     ) {}
 
     public RoundGenerationRequest toServiceRequest(long eventId) {

@@ -180,7 +180,7 @@ class EventAuditIT extends AbstractIntegrationTest {
         long eventId = createEvent("No class " + run);
         Map<String, Object> config = new HashMap<>();
         config.put("eventClassId", null);
-        config.put("finalsCount", 0);
+        config.put("finalsCount", 1);
 
         ResponseEntity<String> refused = send("POST", "/api/v1/admin/events/" + eventId + "/generate-rounds",
                 Map.of("practiceRoundsCount", 0, "qualifyingRoundsCount", 1, "maxCarsPerHeat", 10,
@@ -188,6 +188,21 @@ class EventAuditIT extends AbstractIntegrationTest {
 
         assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(rows(eventId)).extracting(r -> r.get("action")).containsExactly("EVENT_CREATED");
+    }
+
+    @Test
+    void generatingRounds_withMoreFinalsThanLetters_isRefusedAndGeneratesNothing() {
+        long eventId = createEvent("Too many finals " + run);
+        long eventClassId = addClass(eventId, racingClassId);
+
+        ResponseEntity<String> refused = send("POST", "/api/v1/admin/events/" + eventId + "/generate-rounds",
+                Map.of("practiceRoundsCount", 0, "qualifyingRoundsCount", 1, "maxCarsPerHeat", 10,
+                        "classFinalsConfigs", List.of(Map.of("eventClassId", eventClassId, "finalsCount", 27,
+                                "carsPerFinal", 10, "bumpCount", 0))));
+
+        assertThat(refused.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(rows(eventId)).extracting(r -> r.get("action"))
+                .containsExactly("EVENT_CREATED", "EVENT_CLASS_ADDED");
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
