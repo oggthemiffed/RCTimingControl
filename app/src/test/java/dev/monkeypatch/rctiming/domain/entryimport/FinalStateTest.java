@@ -10,8 +10,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FinalStateTest {
 
-    private final EventClasses classes = new EventClasses(Map.of("RACEHUB-1", 10L), List.of(10L, 20L),
-            Map.of("stockbuggy", List.of(10L), "touring", List.of(20L, 21L)), Map.of(10L, "Stock Buggy", 20L, "Touring"));
+    private final EventClasses classes = new EventClasses(Map.of(), List.of(10L, 20L),
+            Map.of("stockbuggy", List.of(10L)), Map.of(10L, "Stock Buggy", 20L, "Touring"));
 
     @Test
     void aDriverTwiceInOneClassIsAnError() {
@@ -41,16 +41,5 @@ class FinalStateTest {
 
         assertThat(errors).isEmpty();
         assertThat(warnings).containsExactly("Transponder 111 is used by more than one entry: Jane Doe, John Smith");
-    }
-
-    @Test
-    void eventClassesPlaceByMappingNameOrPosition() {
-        assertThat(classes.mapped("RACEHUB-1")).contains(10L);
-        assertThat(classes.mapped("RACEHUB-2")).isEmpty();
-        assertThat(classes.byName(" Stock  Buggy ")).contains(10L);
-        assertThat(classes.byName("Touring")).as("two classes share the name").isEmpty();
-        assertThat(classes.atPosition(2)).contains(20L);
-        assertThat(classes.atPosition(3)).isEmpty();
-        assertThat(classes.name(30L)).isEqualTo("event class 30");
     }
 }

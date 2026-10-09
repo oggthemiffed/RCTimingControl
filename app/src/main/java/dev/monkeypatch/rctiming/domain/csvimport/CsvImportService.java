@@ -159,8 +159,9 @@ public class CsvImportService {
         return new CsvImportResult(dryRun, blocked, apply, summary, unmappedClasses, errors, warnings, rows);
     }
 
-    /** One audit row per import that changed entries: the counts, and each entry created, updated or withdrawn. */
-    private void recordImport(Actor actor, Event event, CsvImportResult.Summary summary, List<CsvImportResult.Row> rows) {
+    /** One audit row per import that changed entries: the counts, and each entry created, updated, withdrawn. */
+    private void recordImport(Actor actor, Event event, CsvImportResult.Summary summary,
+                              List<CsvImportResult.Row> rows) {
         List<Map<String, Object>> changed = new ArrayList<>();
         for (CsvImportResult.Row r : rows) {
             if (r.applied()) {
@@ -187,9 +188,9 @@ public class CsvImportService {
      * One planned entry per booked row. {@code update} rows go to {@code skipped}, a row booked twice
      * adds to {@code errors}, and each driver's competitor, if one exists, goes in {@code competitors}.
      */
-    private List<Planned> plan(Long eventId, ParsedCsv parsed, Classes classes, Map<String, UnmappedAccumulator> unmapped,
-                               Map<String, Competitor> competitors, List<CsvImportResult.Row> skipped,
-                               List<String> errors) {
+    private List<Planned> plan(Long eventId, ParsedCsv parsed, Classes classes,
+                               Map<String, UnmappedAccumulator> unmapped, Map<String, Competitor> competitors,
+                               List<CsvImportResult.Row> skipped, List<String> errors) {
         Map<String, List<Competitor>> withoutBrcaNumber = competitorRepository.findWithoutBrcaNumberByMatchKey();
         Map<String, Integer> lineByKey = new HashMap<>();
         List<Planned> plan = new ArrayList<>();
@@ -294,7 +295,7 @@ public class CsvImportService {
         plan.stream().filter(p -> p.existing != null).forEach(p -> replaced.add(p.existing.getId()));
         missing.stream().filter(e -> picked.withdraw().contains(e.getId())).forEach(e -> replaced.add(e.getId()));
 
-        FinalState state = entryImports.finalState(eventId, replaced, classes.eventClasses);
+        FinalState state = entryImports.finalState(eventId, replaced, classes.eventClasses());
         for (Planned p : plan) {
             boolean fromFile = p.group() == Group.NEW || p.group() == Group.CHANGED && picked.update().contains(p.key);
             if (!fromFile && p.existing.getStatus() == EntryStatus.WITHDRAWN) {
@@ -422,6 +423,10 @@ public class CsvImportService {
 
         Classes(EventClasses eventClasses) {
             this.eventClasses = eventClasses;
+        }
+
+        EventClasses eventClasses() {
+            return eventClasses;
         }
 
         String mappingKey(RcTimingCsvParser.Row row) {

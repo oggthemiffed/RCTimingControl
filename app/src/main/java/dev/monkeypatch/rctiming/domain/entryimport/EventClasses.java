@@ -8,7 +8,8 @@ import java.util.Optional;
 
 /**
  * An event's classes as the entry imports place rows in them: the class mappings an official set
- * up, the classes in order and by racing class name. Loaded once per import by {@link EntryImports}.
+ * up, the classes in order and by racing class name. Loaded once per import by
+ * {@link EntryImports}.
  */
 public final class EventClasses {
 
@@ -17,11 +18,13 @@ public final class EventClasses {
     private final Map<String, List<Long>> byName;
     private final Map<Long, String> names;
 
-    EventClasses(Map<String, Long> mapped, List<Long> inOrder, Map<String, List<Long>> byName, Map<Long, String> names) {
-        this.mapped = mapped;
-        this.inOrder = inOrder;
-        this.byName = byName;
-        this.names = names;
+    /** {@code names} holds only the classes whose racing class still exists. */
+    EventClasses(Map<String, Long> mapped, List<Long> inOrder, Map<String, List<Long>> byName,
+                 Map<Long, String> names) {
+        this.mapped = Map.copyOf(mapped);
+        this.inOrder = List.copyOf(inOrder);
+        this.byName = Map.copyOf(byName);
+        this.names = Map.copyOf(names);
     }
 
     /** The event class a stored mapping puts {@code mappingKey} in. */
@@ -45,7 +48,6 @@ public final class EventClasses {
         if (eventClassId == null) {
             return null;
         }
-        String name = names.get(eventClassId);
-        return name != null ? name : "event class " + eventClassId;
+        return names.getOrDefault(eventClassId, "event class " + eventClassId);
     }
 }

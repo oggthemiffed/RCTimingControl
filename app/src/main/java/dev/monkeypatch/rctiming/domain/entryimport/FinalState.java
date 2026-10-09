@@ -41,7 +41,8 @@ public final class FinalState {
     /** Adds what is wrong with the result to {@code errors} and {@code warnings}. */
     public void check(List<String> errors, List<String> warnings) {
         active.stream().filter(a -> a.eventClassId() != null)
-                .collect(Collectors.groupingBy(a -> a.driverKey() + "/" + a.eventClassId(), LinkedHashMap::new, Collectors.toList()))
+                .collect(Collectors.groupingBy(a -> a.driverKey() + "/" + a.eventClassId(),
+                        LinkedHashMap::new, Collectors.toList()))
                 .values().stream().filter(l -> l.size() > 1)
                 .forEach(l -> errors.add(l.get(0).name() + " would have " + l.size() + " entries in "
                         + classes.name(l.get(0).eventClassId())));

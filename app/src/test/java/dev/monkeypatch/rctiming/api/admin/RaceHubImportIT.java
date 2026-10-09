@@ -389,6 +389,23 @@ class RaceHubImportIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void oneDriverTwiceInAClass_blocksTheImportAndNamesTheClass() {
+        // Grace's entry becomes a second entry for Ada in the buggy class
+        String json = fixture("entries-v1-duplicate-transponder.json")
+                .replace("rh-class-truck-" + run, "rh-class-buggy-" + run)
+                .replace("rh truck " + run, "RH Buggy " + run)
+                .replace("drv-grace-" + run, "drv-ada-" + run);
+        var resp = restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-import?dryRun=false",
+                HttpMethod.POST, new HttpEntity<>(json, adminHeaders()), JsonNode.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(resp.getBody().get("blocked").asBoolean()).isTrue();
+        assertThat(resp.getBody().get("errors").get(0).asText())
+                .isEqualTo("Ada Lovelace would have 2 entries in RH Buggy " + run);
+        assertThat(entryRepository.findByEventId(eventId)).isEmpty();
+    }
+
+    @Test
     void nullEntry_blocksTheImportWithAnError() {
         String json = fixture("entries-v1-unmapped-class.json").replace("\"entries\": [", "\"entries\": [null, ");
         var resp = restTemplate.exchange("/api/v1/admin/events/" + eventId + "/racehub-import?dryRun=true",

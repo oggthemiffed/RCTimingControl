@@ -114,6 +114,7 @@ public class RaceHubImportService {
         String racehubEventId = !fromRaceHub || export.event() == null ? null : blankToNull(export.event().id());
 
         List<String> errors = new ArrayList<>();
+        // Another system's event id means nothing to RaceHub, so only a RaceHub file links the event
         if (fromRaceHub) {
             checkRaceHubEvent(event, racehubEventId, errors);
         }
@@ -175,7 +176,7 @@ public class RaceHubImportService {
             errors.add("This file has no RaceHub event id, so the results couldn't be sent back to RaceHub. "
                     + "Download the entry export from RaceHub again.");
         } else if (event.getRacehubEventId() != null && !event.getRacehubEventId().equals(racehubEventId)) {
-            // Results go back to the RaceHub event recorded here (#27)
+            // Results go back to the RaceHub event recorded here (#27), so one event takes one RaceHub event's entries
             errors.add("This file is for RaceHub event " + racehubEventId + ", but this event's entries came from "
                     + "RaceHub event " + event.getRacehubEventId());
         }
@@ -336,7 +337,8 @@ public class RaceHubImportService {
                 }
                 transponders = transponders(row, existing,
                         existing == null ? Set.of() : swapped.getOrDefault(existing.getId(), Set.of()));
-                warnings.addAll(transponders.differences(row.driverDisplayName() != null ? row.driverDisplayName() : label));
+                String name = row.driverDisplayName() != null ? row.driverDisplayName() : label;
+                warnings.addAll(transponders.differences(name));
             }
             plan.add(new Planned(row, action, existing, eventClassId, transponders));
         }

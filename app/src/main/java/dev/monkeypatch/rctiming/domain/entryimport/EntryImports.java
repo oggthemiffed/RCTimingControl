@@ -22,7 +22,11 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** What the RaceHub and RC-Timing CSV imports share: placing rows in the event's classes and checking the result. */
+/**
+ * What the RaceHub and RC-Timing CSV imports share: placing rows in the event's classes and
+ * checking the result. The class mappings live in RaceHub's table, which both imports use, keyed
+ * by source.
+ */
 @Component
 public class EntryImports {
 
@@ -46,13 +50,16 @@ public class EntryImports {
 
     public EventClasses eventClasses(Long eventId) {
         Map<String, Long> mapped = mappingRepository.findByEventIdOrderByRacehubEventClassId(eventId).stream()
-                .collect(Collectors.toMap(RaceHubClassMapping::getRacehubEventClassId, RaceHubClassMapping::getEventClassId));
+                .collect(Collectors.toMap(RaceHubClassMapping::getRacehubEventClassId,
+                        RaceHubClassMapping::getEventClassId));
         List<EventClassRef> eventClasses = eventClassRepository.findRefsByEventId(eventId);
         Map<Long, String> racingClassNames = racingClassRepository.findAllById(eventClasses.stream()
                         .map(EventClassRef::getRacingClassId).filter(Objects::nonNull).collect(Collectors.toSet()))
                 .stream().collect(Collectors.toMap(RacingClass::getId, RacingClass::getName));
         Map<Long, String> names = new HashMap<>();
-        eventClasses.forEach(ec -> names.put(ec.getId(), racingClassNames.get(ec.getRacingClassId())));
+        // A class whose racing class was deleted has no name
+        eventClasses.stream().filter(ec -> racingClassNames.containsKey(ec.getRacingClassId()))
+                .forEach(ec -> names.put(ec.getId(), racingClassNames.get(ec.getRacingClassId())));
         Map<String, List<Long>> byName = eventClasses.stream()
                 .filter(ec -> racingClassNames.containsKey(ec.getRacingClassId()))
                 .collect(Collectors.groupingBy(ec -> Names.matchKey(racingClassNames.get(ec.getRacingClassId())),
