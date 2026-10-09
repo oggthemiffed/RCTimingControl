@@ -139,13 +139,6 @@ export async function getRunOrder(eventId: number): Promise<RunOrderItemDto[]> {
   return data;
 }
 
-export async function getResultSnapshot(raceId: number): Promise<ResultSnapshotDto> {
-  const { data } = await api.get<ResultSnapshotDto>(
-    `/api/v1/race-control/race/${raceId}/result-snapshot`,
-  );
-  return data;
-}
-
 export async function callGrid(raceId: number): Promise<void> {
   await api.post(`/api/v1/race-control/race/${raceId}/call-grid`);
 }
@@ -214,7 +207,7 @@ export type LinkTransponderResponse = {
 };
 
 export async function getRaceEntries(raceId: number): Promise<RaceEntryDto[]> {
-  const { data } = await api.get<RaceEntryDto[]>(`/api/v1/race-control/races/${raceId}/entries`);
+  const { data } = await api.get<RaceEntryDto[]>(`/api/v1/race-control/race/${raceId}/entries`);
   return data;
 }
 
@@ -224,14 +217,9 @@ export async function linkUnknownTransponder(
   entryId: number,
 ): Promise<LinkTransponderResponse> {
   const { data } = await api.post<LinkTransponderResponse>(
-    `/api/v1/race-control/races/${raceId}/transponders/link`,
+    `/api/v1/race-control/race/${raceId}/transponders/link`,
     { transponderNumber, entryId },
   );
-  return data;
-}
-
-export async function getLiveTimingSnapshot(raceId: number): Promise<LiveTimingRowDto[]> {
-  const { data } = await api.get<LiveTimingRowDto[]>(`/api/v1/race-control/races/${raceId}/live-timing`);
   return data;
 }
 
@@ -400,6 +388,6 @@ export type RaceHistoryItem = {
 
 /** Everything that happened in a race, oldest first (#140). */
 export async function getRaceHistory(raceId: number): Promise<RaceHistoryItem[]> {
-  const { data } = await api.get<RaceHistoryItem[]>(`/api/v1/race-control/races/${raceId}/history`);
+  const { data } = await api.get<RaceHistoryItem[]>(`/api/v1/race-control/race/${raceId}/history`);
   return data;
 }

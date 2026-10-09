@@ -208,7 +208,7 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
         assertThat(reloaded.getAbandonedAt()).isNull();
 
         ResponseEntity<Map> snapshot = restTemplate.exchange(
-                "/api/v1/race-control/race/" + race.getId() + "/result-snapshot",
+                "/api/v1/results/" + race.getId(),
                 HttpMethod.GET, new HttpEntity<>(directorHeaders()), Map.class);
         assertThat(snapshot.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
@@ -276,7 +276,7 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
                 HttpMethod.POST, new HttpEntity<>(directorHeaders()), Void.class);
 
         ResponseEntity<Map> resp = restTemplate.exchange(
-                "/api/v1/race-control/race/" + race.getId() + "/result-snapshot",
+                "/api/v1/results/" + race.getId(),
                 HttpMethod.GET, new HttpEntity<>(directorHeaders()), Map.class);
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);

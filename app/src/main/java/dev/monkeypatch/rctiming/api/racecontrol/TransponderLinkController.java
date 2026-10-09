@@ -5,9 +5,7 @@ import dev.monkeypatch.rctiming.query.racecontrol.RaceEntriesQuery;
 import dev.monkeypatch.rctiming.query.racecontrol.RaceEntryDto;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import dev.monkeypatch.rctiming.service.TransponderLinkService;
-import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.dto.LinkTransponderRequestDto;
-import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,17 +28,14 @@ import java.util.Map;
  * T-05-16: audit record persisted with actor userId, raceId, entryId, linkedAt.
  */
 @RestController
-@RequestMapping("/api/v1/race-control/races/{raceId}")
+@RequestMapping("/api/v1/race-control/race/{raceId}")
 public class TransponderLinkController {
 
-    private final LapTimingService lapTimingService;
     private final RaceEntriesQuery raceEntriesQuery;
     private final TransponderLinkService transponderLinkService;
 
-    public TransponderLinkController(LapTimingService lapTimingService,
-                                     RaceEntriesQuery raceEntriesQuery,
+    public TransponderLinkController(RaceEntriesQuery raceEntriesQuery,
                                      TransponderLinkService transponderLinkService) {
-        this.lapTimingService = lapTimingService;
         this.raceEntriesQuery = raceEntriesQuery;
         this.transponderLinkService = transponderLinkService;
     }
@@ -54,15 +49,6 @@ public class TransponderLinkController {
     @PreAuthorize("hasAnyRole('RACE_DIRECTOR', 'REFEREE', 'ADMIN')")
     public ResponseEntity<List<RaceEntryDto>> getEntries(@PathVariable Long raceId) {
         return ResponseEntity.ok(raceEntriesQuery.findForRace(raceId));
-    }
-
-    @GetMapping("/live-timing")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<LiveTimingRowDto>> getLiveTimingSnapshot(@PathVariable Long raceId) {
-        List<LiveTimingRowDto> rows = lapTimingService.peek(raceId)
-                .map(state -> state.calculatePositions())
-                .orElse(List.of());
-        return ResponseEntity.ok(rows);
     }
 
     /** Links the transponder and answers with how many laps it credited; see {@link TransponderLinkService#link}. */

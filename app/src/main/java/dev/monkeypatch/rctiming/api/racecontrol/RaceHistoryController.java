@@ -13,7 +13,7 @@ import java.util.List;
 
 /** Read-only account of what happened in a race (#140): lifecycle, penalties, incidents, marshal laps and links. */
 @RestController
-@RequestMapping("/api/v1/race-control/races/{raceId}/history")
+@RequestMapping("/api/v1/race-control/race/{raceId}/history")
 @PreAuthorize("hasAnyRole('ADMIN', 'RACE_DIRECTOR', 'REFEREE')")
 public class RaceHistoryController {
 

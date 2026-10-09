@@ -757,7 +757,7 @@ Newest first. Every filter is optional and the ones given must all match: `entit
 }
 ```
 
-`source` is `UI` (a request through the app), `CLI` (a command line tool, with `actorUserId` null and `actor` like `cli:rob`) or `SYSTEM` (a background job, `actor` like `system:bump-up`). `before` and `after` are the stored JSON values, or null. There is no screen for the log yet; the referee view shows a race's own history from `GET /api/v1/race-control/races/{raceId}/history`, and an admin sees an entry's on the entry list.
+`source` is `UI` (a request through the app), `CLI` (a command line tool, with `actorUserId` null and `actor` like `cli:rob`) or `SYSTEM` (a background job, `actor` like `system:bump-up`). `before` and `after` are the stored JSON values, or null. There is no screen for the log yet; the referee view shows a race's own history from `GET /api/v1/race-control/race/{raceId}/history`, and an admin sees an entry's on the entry list.
 
 ---
 
