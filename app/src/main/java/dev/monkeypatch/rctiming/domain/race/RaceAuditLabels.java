@@ -15,8 +15,8 @@ public class RaceAuditLabels {
     private final EntryRepository entryRepository;
     private final CompetitorRepository competitorRepository;
 
-    public RaceAuditLabels(RaceRepository raceRepository, RoundRepository roundRepository, EntryRepository entryRepository,
-                    CompetitorRepository competitorRepository) {
+    public RaceAuditLabels(RaceRepository raceRepository, RoundRepository roundRepository,
+                           EntryRepository entryRepository, CompetitorRepository competitorRepository) {
         this.raceRepository = raceRepository;
         this.roundRepository = roundRepository;
         this.entryRepository = entryRepository;

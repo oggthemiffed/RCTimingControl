@@ -189,6 +189,30 @@ public class RefereeControllerIT extends AbstractIntegrationTest {
                 Map.class);
 
         assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(resp.getBody().get("detail"))
+                .isEqualTo("penaltyType must be one of [LAP, TIME], got: SPEED");
+        assertThat(penaltyRepository.findByRaceId(re.race().getId())).isEmpty();
+        assertThat(jdbc.queryForList("select id from audit_log where race_id = ?", re.race().getId())).isEmpty();
+    }
+
+    @Test
+    void applyLapPenalty_ofMoreLapsThanARaceRuns_isRefusedAndRecordsNothing() {
+        RaceAndEntry re = seedRaceAndEntry(RaceStatus.RUNNING);
+
+        Map<String, Object> body = Map.of(
+                "entryId", re.entry().getId(),
+                "penaltyType", "LAP",
+                "value", 3_000_000_000L,
+                "reason", "Typed too many zeros"
+        );
+
+        ResponseEntity<Map> resp = restTemplate.exchange(
+                "/api/v1/race-control/referee/race/" + re.race().getId() + "/penalty",
+                org.springframework.http.HttpMethod.POST,
+                new HttpEntity<>(body, refereeHeaders()),
+                Map.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(penaltyRepository.findByRaceId(re.race().getId())).isEmpty();
     }
 

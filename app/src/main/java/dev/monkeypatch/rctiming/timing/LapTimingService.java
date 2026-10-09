@@ -26,8 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p><strong>Threading.</strong> Decoder passings reach {@link #onLapPassing} synchronously on the
  * single timing thread ({@code timingExecutor}), so they are handled one at a time in decoder order and
- * broadcasts go out in that order. REST requests (marshal laps, transponder links) call in from request
- * threads, so every change to a {@link LiveRaceState} is made while holding that state's monitor.
+ * broadcasts go out in that order. REST requests (marshal laps, lap penalties, transponder links) call in from
+ * request threads, so every change to a {@link LiveRaceState} is made while holding that state's monitor.
  */
 @Service
 public class LapTimingService {

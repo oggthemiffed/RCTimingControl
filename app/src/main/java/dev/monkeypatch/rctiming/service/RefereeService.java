@@ -35,6 +35,9 @@ import java.util.Map;
 @Transactional
 public class RefereeService {
 
+    /** More laps than any club race runs: a bigger LAP penalty is a typing mistake. */
+    static final BigDecimal MAX_LAP_PENALTY = BigDecimal.valueOf(100);
+
     private final IncidentReportRepository incidentReportRepository;
     private final PenaltyRepository penaltyRepository;
     private final MarshalAbsenceRepository marshalAbsenceRepository;
@@ -65,7 +68,7 @@ public class RefereeService {
         this.labels = labels;
     }
 
-    public IncidentReport raiseIncident(long raceId, Long entryId, String incidentType, String description,
+    public IncidentReport raiseIncident(long raceId, long entryId, String incidentType, String description,
                                         long userId) {
         IncidentReport report = new IncidentReport();
         report.setRaceId(raceId);
@@ -93,8 +96,10 @@ public class RefereeService {
      */
     public Penalty applyPenalty(long raceId, long entryId, PenaltyType type, BigDecimal value, String reason,
                                 long userId) {
-        if (type == PenaltyType.LAP && value.stripTrailingZeros().scale() > 0) {
-            throw new IllegalArgumentException("A LAP penalty must be a whole number of laps, got: " + value);
+        if (type == PenaltyType.LAP
+                && (value.stripTrailingZeros().scale() > 0 || value.compareTo(MAX_LAP_PENALTY) > 0)) {
+            throw new IllegalArgumentException(
+                    "A LAP penalty must be a whole number of laps, at most " + MAX_LAP_PENALTY + ", got: " + value);
         }
 
         Penalty penalty = new Penalty();
