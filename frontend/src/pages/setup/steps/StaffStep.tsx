@@ -130,12 +130,12 @@ export default function StaffStep({ onNext, onBack }: Props) {
             control={form.control}
             name="roles"
             render={({ field, fieldState }) => (
-              <div className="space-y-1">
-                <OfficialRoleCheckboxes idPrefix="staff-role" value={field.value} onChange={field.onChange} />
-                {fieldState.error && (
-                  <p className="text-sm font-medium text-destructive">{fieldState.error.message}</p>
-                )}
-              </div>
+              <OfficialRoleCheckboxes
+                idPrefix="staff-role"
+                value={field.value}
+                onChange={field.onChange}
+                error={fieldState.error?.message}
+              />
             )}
           />
 

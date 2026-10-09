@@ -8,9 +8,16 @@ type TextFieldProps<T extends FieldValues> = {
   control: Control<T>;
   name: FieldPath<T>;
   label: string;
-} & Omit<ComponentProps<typeof Input>, 'name' | 'value' | 'onChange' | 'onBlur' | 'ref'>;
+} & Omit<
+  ComponentProps<typeof Input>,
+  // FormControl sets the id and aria attributes that tie the input to its label and message
+  'name' | 'value' | 'onChange' | 'onBlur' | 'ref' | 'id' | 'aria-describedby' | 'aria-invalid'
+>;
 
-/** A labelled text input bound to a React Hook Form field, with its validation message underneath. */
+/**
+ * A labelled text input bound to a React Hook Form field, with its validation message underneath. The field's own
+ * props go last, so a form or field set disabled in React Hook Form wins over a disabled prop here.
+ */
 export function TextField<T extends FieldValues>({ control, name, label, ...inputProps }: TextFieldProps<T>) {
   return (
     <FormField

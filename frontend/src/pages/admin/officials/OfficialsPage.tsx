@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { KeyRound, Loader2, Plus, ShieldCheck, UserCheck, UserX } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { OfficialRoleCheckboxes } from '@/components/OfficialRoleCheckboxes';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -22,10 +23,8 @@ import { useAuth } from '@/hooks/useAuth';
 import type { OfficialAction, OfficialDto, OfficialRole } from '@/lib/adminApi';
 import { getApiErrorMessage } from '@/lib/errors';
 import { formatDate, formatDateTime } from '@/lib/dates';
-import { OfficialRoleCheckboxes } from '@/components/OfficialRoleCheckboxes';
 
 const MIN_PASSWORD_LENGTH = 8;
-
 
 const ROLE_LABEL: Record<OfficialRole, string> = {
   ADMIN: 'Admin',
@@ -40,7 +39,6 @@ const ACTION_LABEL: Record<OfficialAction, string> = {
   DISABLED: 'Disabled',
   ENABLED: 'Enabled',
 };
-
 
 function AddOfficialDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const addOfficial = useAddOfficial();
