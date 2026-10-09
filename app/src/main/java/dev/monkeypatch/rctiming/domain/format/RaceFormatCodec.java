@@ -2,6 +2,7 @@ package dev.monkeypatch.rctiming.domain.format;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.springframework.stereotype.Component;
 
@@ -29,12 +30,13 @@ public class RaceFormatCodec {
         }
     }
 
-    private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory()).findAndRegisterModules();
-
     private final ObjectMapper jsonMapper;
+    /** Spring's mapper with a YAML parser, so both file types read and write a config the same way. */
+    private final ObjectMapper yamlMapper;
 
     public RaceFormatCodec(ObjectMapper jsonMapper) {
         this.jsonMapper = jsonMapper;
+        this.yamlMapper = jsonMapper.copyWith(new YAMLFactory());
     }
 
     public String write(RaceFormatConfig config, FileType fileType) {
@@ -53,12 +55,18 @@ public class RaceFormatCodec {
                 throw new IllegalArgumentException("The format file is empty");
             }
             return config;
+        } catch (InvalidTypeIdException e) {
+            // Jackson's own message names the Java class
+            throw new IllegalArgumentException(
+                    "Failed to parse format config: type must be one of TIMED, BUMP_UP, POINTS_FINALS", e);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Failed to parse format config: " + e.getOriginalMessage(), e);
+            String where = e.getLocation() == null ? ""
+                    : " (line " + e.getLocation().getLineNr() + ", column " + e.getLocation().getColumnNr() + ")";
+            throw new IllegalArgumentException("Failed to parse format config: " + e.getOriginalMessage() + where, e);
         }
     }
 
     private ObjectMapper mapper(FileType fileType) {
-        return fileType == FileType.YAML ? YAML_MAPPER : jsonMapper;
+        return fileType == FileType.YAML ? yamlMapper : jsonMapper;
     }
 }

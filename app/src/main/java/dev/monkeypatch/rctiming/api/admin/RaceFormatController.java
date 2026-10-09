@@ -1,8 +1,8 @@
 package dev.monkeypatch.rctiming.api.admin;
 
-import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.admin.dto.CreateRaceFormatTemplateRequest;
 import dev.monkeypatch.rctiming.api.admin.dto.RaceFormatTemplateDto;
+import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatCodec;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatCodec.FileType;
 import dev.monkeypatch.rctiming.domain.format.RaceFormatService;

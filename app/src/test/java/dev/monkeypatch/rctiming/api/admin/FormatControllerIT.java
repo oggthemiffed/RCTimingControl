@@ -292,6 +292,35 @@ class FormatControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void importOfAYamlNull_returns400() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(adminToken);
+        headers.setContentType(MediaType.parseMediaType("application/yaml"));
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/v1/admin/formats/import?name=Null", HttpMethod.POST,
+                new HttpEntity<>("~\n", headers), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void importOfAnUnknownType_namesTheTypes_notTheJavaClass() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(adminToken);
+        headers.setContentType(MediaType.parseMediaType("application/yaml"));
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/v1/admin/formats/import?name=Odd", HttpMethod.POST,
+                new HttpEntity<>("type: RELAY\n", headers), Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().get("detail").toString())
+                .contains("TIMED, BUMP_UP, POINTS_FINALS")
+                .doesNotContain("dev.monkeypatch");
+    }
+
+    @Test
     void importOfAnEmptyYamlFile_returns400() {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(adminToken);
