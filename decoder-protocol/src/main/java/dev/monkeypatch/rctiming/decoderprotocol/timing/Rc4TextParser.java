@@ -29,11 +29,8 @@ public class Rc4TextParser {
         if (line == null || line.isEmpty()) return Optional.empty();
         String[] f = line.split("\t");
         if (f.length < 1) return Optional.empty();
-        return switch (f[0]) {
-            case "@" -> parsePassing(f);
-            case "#" -> Optional.empty();
-            default  -> Optional.empty();
-        };
+        // A STATUS record ("#") carries no passing, so it falls to empty with anything malformed
+        return "@".equals(f[0]) ? parsePassing(f) : Optional.empty();
     }
 
     /**

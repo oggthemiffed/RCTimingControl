@@ -112,7 +112,7 @@ class RunningOrderAnnouncementServiceTest {
         LiveTimingRowDto row1 = makeRow(1, "Racer A");
         LiveTimingRowDto row2 = makeRow(2, "Racer B");
 
-        LiveRaceState liveState = new LiveRaceState(1L);
+        LiveRaceState liveState = new LiveRaceState();
         // Inject pre-calculated rows via mock
         LapTimingService mockLts = lapTimingService;
         when(mockLts.peek(1L)).thenReturn(Optional.of(liveState));

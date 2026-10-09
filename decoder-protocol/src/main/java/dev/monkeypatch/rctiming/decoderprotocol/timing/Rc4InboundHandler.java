@@ -26,18 +26,15 @@ public class Rc4InboundHandler extends SimpleChannelInboundHandler<String> {
     private final EpochAnchor                     epochAnchor;
     private final SeqGapDetector                  gapDetector;
     private final Consumer<EpochCorrectedPassing> onPassing;
-    private final Runnable                        onReconnect;
 
     public Rc4InboundHandler(Rc4TextParser parser,
                              EpochAnchor epochAnchor,
                              SeqGapDetector gapDetector,
-                             Consumer<EpochCorrectedPassing> onPassing,
-                             Runnable onReconnect) {
+                             Consumer<EpochCorrectedPassing> onPassing) {
         this.parser      = parser;
         this.epochAnchor = epochAnchor;
         this.gapDetector = gapDetector;
         this.onPassing   = onPassing;
-        this.onReconnect = onReconnect;
     }
 
     @Override

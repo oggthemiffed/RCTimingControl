@@ -40,13 +40,13 @@ class TtsClipServiceTest {
         when(piperClient.synthesize("Race finished. Checkered flag.", "en_GB-cori-high")).thenReturn(FAKE_WAV);
         when(storageService.upload(
                 eq("audio/race/3/finish-en_GB-cori-high.wav"),
-                any(), any()))
+                any()))
                 .thenReturn("http://localhost:8080/storage/rctiming/audio/race/3/finish-en_GB-cori-high.wav");
 
         String url = service.generateRaceFinishedClip(3L, "Race finished. Checkered flag.", "en_GB-cori-high");
 
         assertNotNull(url);
-        verify(storageService).upload(eq("audio/race/3/finish-en_GB-cori-high.wav"), eq(FAKE_WAV), eq("audio/wav"));
+        verify(storageService).upload(eq("audio/race/3/finish-en_GB-cori-high.wav"), eq(FAKE_WAV));
     }
 
     @Test
@@ -57,7 +57,7 @@ class TtsClipServiceTest {
         String url = service.generateCountdownClip(1L, 60, "Race, 1 minute", null);
 
         assertNull(url, "Should return null when Piper is unavailable");
-        verify(storageService, never()).upload(any(), any(), any());
+        verify(storageService, never()).upload(any(), any());
     }
 
     @Test
@@ -65,7 +65,7 @@ class TtsClipServiceTest {
         when(piperClient.synthesize(eq("Race Finals, 5 minutes"), anyString())).thenReturn(FAKE_WAV);
         when(storageService.upload(
                 eq("audio/race/10/countdown-300-en_GB-alan-medium.wav"),
-                any(), any()))
+                any()))
                 .thenReturn("http://localhost:8080/storage/rctiming/audio/race/10/countdown-300-en_GB-alan-medium.wav");
 
         String url = service.generateCountdownClip(10L, 300, "Race Finals, 5 minutes", null);
@@ -73,7 +73,7 @@ class TtsClipServiceTest {
         assertNotNull(url);
         verify(storageService).upload(
                 eq("audio/race/10/countdown-300-en_GB-alan-medium.wav"),
-                eq(FAKE_WAV), eq("audio/wav"));
+                eq(FAKE_WAV));
     }
 
     @Test
@@ -81,13 +81,13 @@ class TtsClipServiceTest {
         when(piperClient.synthesize(eq("Alan Smith."), anyString())).thenReturn(FAKE_WAV);
         when(storageService.upload(
                 eq("audio/race/5/grid-42-en_GB-alan-medium.wav"),
-                any(), any()))
+                any()))
                 .thenReturn("http://localhost:8080/storage/");
 
         service.generateGridCallClip(5L, 42L, "Alan Smith.", null);
 
         verify(storageService).upload(
                 eq("audio/race/5/grid-42-en_GB-alan-medium.wav"),
-                eq(FAKE_WAV), eq("audio/wav"));
+                eq(FAKE_WAV));
     }
 }

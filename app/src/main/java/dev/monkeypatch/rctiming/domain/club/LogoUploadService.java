@@ -61,7 +61,7 @@ public class LogoUploadService {
             throw new IllegalArgumentException("Could not read uploaded file: " + e.getMessage(), e);
         }
 
-        String url = storage.upload(key, bytes, contentType);
+        String url = storage.upload(key, bytes);
         String before = profile.getLogoUrl();
         profile.setLogoUrl(url);
         clubProfileRepository.save(profile);

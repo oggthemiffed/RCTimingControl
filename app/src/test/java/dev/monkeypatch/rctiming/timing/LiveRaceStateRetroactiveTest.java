@@ -14,7 +14,7 @@ class LiveRaceStateRetroactiveTest {
 
     @BeforeEach
     void setUp() {
-        state = new LiveRaceState(1L);
+        state = new LiveRaceState();
     }
 
     @Test

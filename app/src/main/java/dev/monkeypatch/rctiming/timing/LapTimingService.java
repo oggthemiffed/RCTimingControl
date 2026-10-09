@@ -56,7 +56,7 @@ public class LapTimingService {
      */
     public LiveRaceState stateFor(long raceId) {
         return states.computeIfAbsent(raceId, id -> {
-            LiveRaceState state = new LiveRaceState(id);
+            LiveRaceState state = new LiveRaceState();
             loadEntryNames(id, state);
             return state;
         });

@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 public class TtsClipService {
 
     private static final Logger log = LoggerFactory.getLogger(TtsClipService.class);
-    private static final String CONTENT_TYPE_WAV = "audio/wav";
 
     private final PiperTtsClient piperClient;
     private final ObjectStorageService storageService;
@@ -93,7 +92,7 @@ public class TtsClipService {
                                         String logPattern, Object... logArgs) {
         try {
             byte[] wavData = piperClient.synthesize(text, voice);
-            return storageService.upload(key, wavData, CONTENT_TYPE_WAV);
+            return storageService.upload(key, wavData);
         } catch (TtsUnavailableException e) {
             Object[] fullArgs = new Object[logArgs.length + 1];
             System.arraycopy(logArgs, 0, fullArgs, 0, logArgs.length);

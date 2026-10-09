@@ -107,8 +107,7 @@ public class AmbRc4TimingSource implements TimingSource {
                         new IdleStateHandler(8, 0, 0, TimeUnit.SECONDS),
                         new LineBasedFrameDecoder(1024),
                         new StringDecoder(StandardCharsets.US_ASCII),
-                        new Rc4InboundHandler(parser, epochAnchor, gapDetector,
-                                             onPassing, AmbRc4TimingSource.this::scheduleReconnect)
+                        new Rc4InboundHandler(parser, epochAnchor, gapDetector, onPassing)
                     );
                 }
             });
@@ -143,8 +142,6 @@ public class AmbRc4TimingSource implements TimingSource {
         if (stopped) return;
         backoffIdx++;
         long delaySeconds = Math.min(30L, 1L << Math.min(backoffIdx - 1, 4));
-        // Ensure at least 1 s for first attempt (backoffIdx == 1 → shift 0 → 1s)
-        delaySeconds = Math.max(1L, delaySeconds);
         log.info("Reconnecting to {}:{} in {} s (attempt {})", host, port, delaySeconds, backoffIdx);
         group.schedule(this::connect, delaySeconds, TimeUnit.SECONDS);
     }
