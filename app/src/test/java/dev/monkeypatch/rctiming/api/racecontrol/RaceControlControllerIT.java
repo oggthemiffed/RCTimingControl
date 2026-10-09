@@ -169,6 +169,28 @@ public class RaceControlControllerIT extends AbstractIntegrationTest {
         assertThat(adj.getAdjustedAt()).isNotNull();
     }
 
+    @Test
+    void marshalAdjustment_ofTwoLaps_isRefusedAndRecordsNothing() {
+        Race race = seedRace(RaceStatus.RUNNING);
+        Entry entry = seedEntry(race);
+        RaceEntry raceEntry = seedRaceEntry(race, entry);
+
+        Map<String, Object> body = Map.of(
+                "entryId", raceEntry.getEntryId(),
+                "transponderNumber", entry.getTransponderNumberSnapshot(),
+                "lapDelta", 2
+        );
+
+        ResponseEntity<Void> resp = restTemplate.exchange(
+                "/api/v1/race-control/race/" + race.getId() + "/marshal-adjustment",
+                HttpMethod.POST,
+                new HttpEntity<>(body, directorHeaders()),
+                Void.class);
+
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(marshalAdjustmentRepository.findByRaceIdOrderByAdjustedAt(race.getId())).isEmpty();
+    }
+
     // --- CTRL-01: finish ---
 
     @Test
