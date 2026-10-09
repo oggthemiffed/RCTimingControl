@@ -122,8 +122,8 @@ public class DatabaseConfig {
     }
 
     /**
-     * jOOQ reports a failed constraint as Spring's data integrity violation. Other
-     * errors get Spring's usual translation.
+     * jOOQ reports a failed constraint as Spring's data integrity violation (a duplicate key for a
+     * unique or primary key). Other errors get Spring's usual translation.
      */
     @Bean
     ExceptionTranslatorExecuteListener vendorJooqExceptionTranslator() {

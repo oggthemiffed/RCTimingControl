@@ -12,11 +12,10 @@ import dev.monkeypatch.rctiming.domain.event.Event;
 import dev.monkeypatch.rctiming.domain.event.EventRepository;
 import dev.monkeypatch.rctiming.domain.event.EventStatus;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
+import dev.monkeypatch.rctiming.domain.StateConflictException;
 import org.jooq.DSLContext;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -63,7 +62,7 @@ public class EntryService {
     public EntryResult adminCreateEntry(Long adminUserId, AdminCreateEntryRequest req) {
         Event event = eventRepository.getOrThrow(req.eventId());
         if (event.getStatus() == EventStatus.COMPLETED) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Event is completed");
+            throw new StateConflictException("Event is completed");
         }
         Long ecEventId = dsl.select(EVENT_CLASSES.EVENT_ID)
                 .from(EVENT_CLASSES)
@@ -104,8 +103,7 @@ public class EntryService {
         boolean duplicate = eventEntries.stream().anyMatch(e ->
                 competitor.getId().equals(e.getCompetitorId()) && req.eventClassId().equals(e.getEventClassId()));
         if (duplicate) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    competitor.getDisplayName() + " already has an entry in this class");
+            throw new StateConflictException(competitor.getDisplayName() + " already has an entry in this class");
         }
 
         Instant now = Instant.now();
@@ -143,7 +141,7 @@ public class EntryService {
     public EntryDto adminWithdraw(Long entryId, Long adminUserId, String reason) {
         Entry entry = entryRepository.getOrThrow(entryId);
         if (entry.getStatus() == EntryStatus.WITHDRAWN) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Entry already withdrawn");
+            throw new StateConflictException("Entry already withdrawn");
         }
         String beforeJson = EntryAuditLog.snapshot(objectMapper, Map.of("status", entry.getStatus().name()));
         Instant now = Instant.now();

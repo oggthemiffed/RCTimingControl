@@ -16,6 +16,7 @@ import dev.monkeypatch.rctiming.domain.raceclass.RacingClassRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -64,7 +65,16 @@ class CompetitorEntryIT extends AbstractIntegrationTest {
         entryRepository.save(newEntry(competitor, eventClassId, "201"));
 
         assertThatThrownBy(() -> entryRepository.save(newEntry(competitor, eventClassId, "201")))
-                .isInstanceOf(DataIntegrityViolationException.class);
+                .isInstanceOf(DuplicateKeyException.class);
+    }
+
+    @Test
+    void anEntryForAMissingClass_isAnIntegrityViolationButNotADuplicate() {
+        seedEventClass();
+        Competitor competitor = saveCompetitor("orphan-" + unique());
+
+        assertThatThrownBy(() -> entryRepository.save(newEntry(competitor, Long.MAX_VALUE, "301")))
+                .isExactlyInstanceOf(DataIntegrityViolationException.class);
     }
 
     private Competitor saveCompetitor(String name) {

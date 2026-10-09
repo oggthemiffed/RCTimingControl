@@ -8,8 +8,10 @@ import dev.monkeypatch.rctiming.domain.event.IllegalStateTransitionException;
 import dev.monkeypatch.rctiming.domain.EntityNotFoundException;
 import dev.monkeypatch.rctiming.domain.StateConflictException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -17,14 +19,13 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.DateTimeException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-// Note: ResponseStatusException is handled directly by Spring MVC — no handler needed here.
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -76,10 +77,19 @@ public class GlobalExceptionHandler {
         return detail;
     }
 
+    /** A unique value is taken, such as a second racing class with the same name. */
+    @ExceptionHandler(DuplicateKeyException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ProblemDetail handleDuplicate(DuplicateKeyException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Resource already exists");
+    }
+
+    /** Any other broken data rule, most often deleting something that is still used elsewhere. */
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ProblemDetail handleConflict(DataIntegrityViolationException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, "Resource already exists");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "The change conflicts with other data: something still uses it, or it refers to something missing");
     }
 
     @ExceptionHandler(IllegalStateTransitionException.class)
@@ -101,6 +111,12 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    /** A controller refused with a status of its own, such as the announcer voice not being installed. */
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ProblemDetail> handleResponseStatus(ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode()).body(ex.getBody());
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ProblemDetail handleAccessDenied(AccessDeniedException ex) {
@@ -117,7 +133,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DateTimeException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ProblemDetail handleDateTimeException(DateTimeException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid timezone: " + ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Invalid date or time: " + ex.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

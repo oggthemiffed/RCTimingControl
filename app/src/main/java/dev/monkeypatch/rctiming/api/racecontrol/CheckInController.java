@@ -14,6 +14,7 @@ import dev.monkeypatch.rctiming.query.racecontrol.CheckInQuery;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +36,15 @@ import java.util.Map;
 @RequestMapping("/api/v1/race-control/events/{eventId}")
 @PreAuthorize("hasAnyRole('RACE_DIRECTOR','REFEREE','ADMIN')")
 public class CheckInController {
+
+    /** What each refusal code means, for the error's detail. */
+    private static final Map<String, String> MESSAGES = Map.of(
+            "not_found", "No entry in this event has that transponder",
+            "entry_not_found", "No such entry in this event",
+            "entry_withdrawn", "The entry has been withdrawn",
+            "transponder_already_assigned", "Another competitor already has that transponder in this event",
+            "same_as_other_transponder", "The transponder is already this entry's other transponder",
+            "primary_required", "An entry must keep a primary transponder");
 
     private final CheckInQuery checkInQuery;
     private final CheckInService checkInService;
@@ -99,7 +109,13 @@ public class CheckInController {
         };
     }
 
+    /**
+     * A refusal as a ProblemDetail, like every other error the API gives, keeping the {@code error} code the
+     * check-in desk has always had.
+     */
     private static ResponseEntity<?> error(HttpStatus status, String code) {
-        return ResponseEntity.status(status).body(Map.of("error", code));
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(status, MESSAGES.getOrDefault(code, code));
+        detail.setProperty("error", code);
+        return ResponseEntity.status(status).body(detail);
     }
 }
