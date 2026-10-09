@@ -43,10 +43,11 @@ public class MarshalService {
 
     /**
      * Records the adjustment and applies it: to the live timing while the race runs, or, once it has finished,
-     * by sending its corrected results again.
+     * by sending its corrected results again. A lap delta other than +1 or -1 is refused before anything is read,
+     * as the table allows only those.
      *
-     * @param lapDelta     +1 or -1; anything else is refused, as the table allows only those
      * @param actingUserId the official making the adjustment
+     * @return the adjustment as saved
      */
     public MarshalAdjustment adjust(long raceId, long entryId, String transponderNumber, int lapDelta,
                                     long actingUserId) {

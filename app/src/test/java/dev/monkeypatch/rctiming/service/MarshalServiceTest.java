@@ -13,6 +13,7 @@ import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -70,7 +72,10 @@ class MarshalServiceTest {
         MarshalAdjustment adjustment = service().adjust(7L, 11L, "1234567", 1, 3L);
 
         assertThat(adjustment.getActingUserName()).isEqualTo("ref@club.test");
-        verify(eventPublisher).publishEvent(new FinishedRaceCorrected(7L));
+        // The corrected results are built from the stored adjustments, so the row must be saved first
+        InOrder inOrder = inOrder(marshalAdjustmentRepository, eventPublisher);
+        inOrder.verify(marshalAdjustmentRepository).save(adjustment);
+        inOrder.verify(eventPublisher).publishEvent(new FinishedRaceCorrected(7L));
         verify(lapTimingService, never()).applyMarshalAdjustment(anyLong(), anyLong(), anyInt(), any());
     }
 
