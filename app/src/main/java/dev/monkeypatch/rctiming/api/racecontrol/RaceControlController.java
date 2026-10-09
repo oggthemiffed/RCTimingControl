@@ -6,8 +6,6 @@ import dev.monkeypatch.rctiming.domain.audit.Audited;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.MarshalAdjustmentRequest;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.RunOrderItemDto;
 import dev.monkeypatch.rctiming.api.racecontrol.dto.SkipToRaceRequest;
-import dev.monkeypatch.rctiming.domain.race.MarshalAdjustment;
-import dev.monkeypatch.rctiming.domain.race.MarshalAdjustmentRepository;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStateMachineService;
@@ -15,14 +13,11 @@ import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.ResultSnapshotRepository;
 import dev.monkeypatch.rctiming.domain.race.Round;
 import dev.monkeypatch.rctiming.domain.race.RoundRepository;
-import dev.monkeypatch.rctiming.domain.user.UserRepository;
 import dev.monkeypatch.rctiming.query.racecontrol.RunOrderQuery;
-import dev.monkeypatch.rctiming.resultsexport.FinishedRaceCorrected;
 import dev.monkeypatch.rctiming.security.CurrentOfficial;
+import dev.monkeypatch.rctiming.service.MarshalService;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
-import dev.monkeypatch.rctiming.timing.dto.MarshalAdjustmentDto;
 import jakarta.validation.Valid;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,32 +47,26 @@ public class RaceControlController {
     private final RunOrderQuery runOrderQuery;
     private final RaceRepository raceRepository;
     private final RaceStateMachineService stateMachine;
-    private final MarshalAdjustmentRepository marshalAdjustmentRepository;
+    private final MarshalService marshalService;
     private final LapTimingService lapTimingService;
-    private final UserRepository userRepository;
     private final RoundRepository roundRepository;
-    private final ApplicationEventPublisher eventPublisher;
     private final AuditService audit;
     private final ResultSnapshotRepository resultSnapshotRepository;
 
     public RaceControlController(RunOrderQuery runOrderQuery,
                                   RaceRepository raceRepository,
                                   RaceStateMachineService stateMachine,
-                                  MarshalAdjustmentRepository marshalAdjustmentRepository,
+                                  MarshalService marshalService,
                                   LapTimingService lapTimingService,
-                                  UserRepository userRepository,
                                   RoundRepository roundRepository,
-                                  ApplicationEventPublisher eventPublisher,
                                   AuditService audit,
                                   ResultSnapshotRepository resultSnapshotRepository) {
         this.runOrderQuery = runOrderQuery;
         this.raceRepository = raceRepository;
         this.stateMachine = stateMachine;
-        this.marshalAdjustmentRepository = marshalAdjustmentRepository;
+        this.marshalService = marshalService;
         this.lapTimingService = lapTimingService;
-        this.userRepository = userRepository;
         this.roundRepository = roundRepository;
-        this.eventPublisher = eventPublisher;
         this.audit = audit;
         this.resultSnapshotRepository = resultSnapshotRepository;
     }
@@ -175,38 +163,9 @@ public class RaceControlController {
 
     @Audited("marshal_adjustments")
     @PostMapping("/race/{raceId}/marshal-adjustment")
-    @Transactional
     public ResponseEntity<Void> marshalAdjustment(@PathVariable long raceId,
                                                    @Valid @RequestBody MarshalAdjustmentRequest req) {
-        Race race = loadRace(raceId);
-        long actingUserId = CurrentOfficial.id();
-        String actingUserName = resolveUserName(actingUserId);
-
-        MarshalAdjustment adjustment = new MarshalAdjustment();
-        adjustment.setRaceId(raceId);
-        adjustment.setEntryId(req.entryId());
-        adjustment.setTransponderNumber(req.transponderNumber());
-        adjustment.setLapDelta(req.lapDelta());
-        adjustment.setRaceStateAtTime(race.getStatus().name());
-        adjustment.setActingUserId(actingUserId);
-        adjustment.setActingUserName(actingUserName);
-        adjustment.setAdjustedAt(Instant.now());
-        marshalAdjustmentRepository.save(adjustment);
-
-        MarshalAdjustmentDto dto = new MarshalAdjustmentDto(
-                raceId,
-                req.entryId(),
-                req.transponderNumber(),
-                req.lapDelta(),
-                actingUserName,
-                adjustment.getAdjustedAt().toEpochMilli()
-        );
-        if (race.getStatus() == RaceStatus.FINISHED) {
-            // No live timing is left to adjust once a race finishes; send its results again instead (#27)
-            eventPublisher.publishEvent(new FinishedRaceCorrected(raceId));
-        } else {
-            lapTimingService.applyMarshalAdjustment(raceId, req.entryId(), req.lapDelta(), dto);
-        }
+        marshalService.adjust(raceId, req.entryId(), req.transponderNumber(), req.lapDelta(), CurrentOfficial.id());
         return ResponseEntity.ok().build();
     }
 
@@ -272,16 +231,6 @@ public class RaceControlController {
 
     private Race loadRace(long raceId) {
         return raceRepository.getOrThrow(raceId);
-    }
-
-    private String resolveUserName(long userId) {
-        return userRepository.findById(userId)
-                .map(u -> {
-                    String name = (u.getFirstName() != null ? u.getFirstName() + " " : "")
-                                + (u.getLastName() != null ? u.getLastName() : "");
-                    return name.isBlank() ? u.getEmail() : name.trim();
-                })
-                .orElse("Unknown");
     }
 
     private long resolveEventId(Race race) {
