@@ -2,7 +2,10 @@ package dev.monkeypatch.rctiming.persistence.vendor;
 
 import org.jooq.SQLDialect;
 import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteErrorCode;
+import org.sqlite.SQLiteException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.support.SQLExceptionTranslator;
 
 import java.io.IOException;
@@ -58,14 +61,24 @@ public enum DatabaseVendor {
         }
 
         /**
-         * A failed unique, foreign key, check or not-null constraint becomes Spring's
-         * {@link DataIntegrityViolationException}.
+         * A failed unique or primary key constraint becomes Spring's {@link DuplicateKeyException}, and any
+         * other failed constraint (foreign key, check, not-null) its parent {@link DataIntegrityViolationException},
+         * so the API can tell "already exists" from "still in use".
          */
         @Override
         public SQLExceptionTranslator exceptionTranslator() {
-            return (task, sql, ex) -> (ex.getErrorCode() & 0xFF) == SQLITE_CONSTRAINT
-                    ? new DataIntegrityViolationException(task + "; " + ex.getMessage(), ex)
-                    : null;
+            return (task, sql, ex) -> {
+                if ((ex.getErrorCode() & 0xFF) != SQLITE_CONSTRAINT) {
+                    return null;
+                }
+                String message = task + "; " + ex.getMessage();
+                boolean duplicate = ex instanceof SQLiteException sqlite
+                        && (sqlite.getResultCode() == SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE
+                        || sqlite.getResultCode() == SQLiteErrorCode.SQLITE_CONSTRAINT_PRIMARYKEY);
+                return duplicate
+                        ? new DuplicateKeyException(message, ex)
+                        : new DataIntegrityViolationException(message, ex);
+            };
         }
 
         /**

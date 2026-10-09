@@ -243,7 +243,7 @@ class WalkInEntryIT extends AbstractIntegrationTest {
     void rejectsAWalkInForACompletedEvent() {
         jdbc.update("update events set status = 'COMPLETED' where id = ?", eventId);
         var resp = create(Map.of("competitorName", "Late " + run, "primaryTransponder", "74" + run));
-        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(entryRepository.findByEventId(eventId)).isEmpty();
     }
 
