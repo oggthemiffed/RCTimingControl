@@ -44,19 +44,24 @@ public class ClubProfileController {
 
     @GetMapping("/profile")
     public ClubProfileDto getProfile() {
-        return clubProfileService.getProfile();
+        return clubProfileService.getProfile()
+                .map(ClubProfileDto::from)
+                .orElseGet(() -> new ClubProfileDto(null, "", null, null, null, null, null, "UTC", null, null));
     }
 
     @Audited("audit_log")
     @PutMapping("/profile")
     @PreAuthorize("hasRole('ADMIN')")
     public ClubProfileDto createOrUpdateProfile(Authentication auth, @RequestBody @Valid CreateClubProfileRequest request) {
-        return clubProfileService.createOrUpdateProfile(CurrentOfficial.actor(auth), request);
+        return ClubProfileDto.from(clubProfileService.createOrUpdateProfile(CurrentOfficial.actor(auth),
+                new ClubProfileService.ClubDetails(request.name(), request.email(), request.phone(),
+                        request.websiteUrl(), request.latitude(), request.longitude(), request.timezone(),
+                        request.logoType())));
     }
 
     @GetMapping("/affiliations")
     public List<GoverningBodyAffiliationDto> listAffiliations() {
-        return clubProfileService.listAffiliations();
+        return clubProfileService.listAffiliations().stream().map(GoverningBodyAffiliationDto::from).toList();
     }
 
     @Audited("audit_log")
@@ -65,7 +70,8 @@ public class ClubProfileController {
     @ResponseStatus(HttpStatus.CREATED)
     public GoverningBodyAffiliationDto createAffiliation(Authentication auth,
                                                           @RequestBody @Valid CreateGoverningBodyRequest request) {
-        return clubProfileService.createAffiliation(CurrentOfficial.actor(auth), request);
+        return GoverningBodyAffiliationDto.from(clubProfileService.createAffiliation(CurrentOfficial.actor(auth),
+                request.code(), request.displayName(), request.membershipRequired()));
     }
 
     @Audited("audit_log")
@@ -73,7 +79,8 @@ public class ClubProfileController {
     @PreAuthorize("hasRole('ADMIN')")
     public GoverningBodyAffiliationDto updateAffiliation(Authentication auth, @PathVariable Long id,
                                                           @RequestBody @Valid CreateGoverningBodyRequest request) {
-        return clubProfileService.updateAffiliation(CurrentOfficial.actor(auth), id, request);
+        return GoverningBodyAffiliationDto.from(clubProfileService.updateAffiliation(CurrentOfficial.actor(auth), id,
+                request.code(), request.displayName(), request.membershipRequired()));
     }
 
     @Audited("audit_log")
