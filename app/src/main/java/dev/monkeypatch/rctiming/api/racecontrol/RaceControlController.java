@@ -100,8 +100,7 @@ public class RaceControlController {
     public ResponseEntity<Void> callGrid(@PathVariable long raceId) {
         Race race = loadRace(raceId);
         RaceStatus before = race.getStatus();
-        stateMachine.transition(race, RaceStatus.GRID);
-        raceRepository.save(race);
+        stateMachine.callGrid(race);
         recordLifecycle(race, "RACE_GRID_CALLED", "Called the grid for", before);
         return ResponseEntity.ok().build();
     }
@@ -112,11 +111,7 @@ public class RaceControlController {
     public ResponseEntity<Void> startRace(@PathVariable long raceId) {
         Race race = loadRace(raceId);
         RaceStatus before = race.getStatus();
-        stateMachine.transition(race, RaceStatus.RUNNING);
-        if (race.getStartedAt() == null) {
-            race.setStartedAt(Instant.now());
-        }
-        raceRepository.save(race);
+        stateMachine.start(race);
         // A start from STOPPED is a resume: say so, since the clock carries on
         recordLifecycle(race, before == RaceStatus.STOPPED ? "RACE_RESUMED" : "RACE_STARTED",
                 before == RaceStatus.STOPPED ? "Resumed" : "Started", before);
@@ -129,8 +124,7 @@ public class RaceControlController {
     public ResponseEntity<Void> stopRace(@PathVariable long raceId) {
         Race race = loadRace(raceId);
         RaceStatus before = race.getStatus();
-        stateMachine.transition(race, RaceStatus.STOPPED);
-        raceRepository.save(race);
+        stateMachine.stop(race);
         recordLifecycle(race, "RACE_STOPPED", "Stopped", before);
         return ResponseEntity.ok().build();
     }
@@ -145,7 +139,6 @@ public class RaceControlController {
         // Restart throws away the result snapshot and the live timing, so what is lost is written down first
         Map<String, Object> lost = whatARestartDiscards(race);
         stateMachine.restart(race);
-        raceRepository.save(race);
         audit.entry(CurrentOfficial.actor(), "RACE_RESTARTED")
                 .entity("race", race.getId()).race(race.getId()).event(resolveEventId(race))
                 .summary("Restarted " + describe(race) + ", discarding its timing and any result")
@@ -160,10 +153,7 @@ public class RaceControlController {
     public ResponseEntity<Void> finishRace(@PathVariable long raceId) {
         Race race = loadRace(raceId);
         RaceStatus before = race.getStatus();
-        // Set before the transition, which saves the race before the result snapshot reads it
-        race.setFinishedAt(Instant.now());
-        stateMachine.transition(race, RaceStatus.FINISHED);
-        raceRepository.save(race);
+        stateMachine.finish(race);
         recordLifecycle(race, "RACE_FINISHED", "Finished", before);
         return ResponseEntity.ok().build();
     }
@@ -176,11 +166,7 @@ public class RaceControlController {
     public ResponseEntity<Void> abandonRace(@PathVariable long raceId) {
         Race race = loadRace(raceId);
         RaceStatus before = race.getStatus();
-        Instant now = Instant.now();
-        race.setFinishedAt(now);
-        race.setAbandonedAt(now);
-        stateMachine.transition(race, RaceStatus.FINISHED);
-        raceRepository.save(race);
+        stateMachine.abandon(race);
         recordLifecycle(race, "RACE_ABANDONED", "Abandoned", before);
         return ResponseEntity.ok().build();
     }
