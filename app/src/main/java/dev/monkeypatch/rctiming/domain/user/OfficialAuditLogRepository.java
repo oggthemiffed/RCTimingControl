@@ -17,11 +17,6 @@ public class OfficialAuditLogRepository extends JooqRepository<OfficialAuditLog,
         super(dsl, OFFICIAL_AUDIT_LOG, OFFICIAL_AUDIT_LOG.ID);
     }
 
-    public List<OfficialAuditLog> findByOfficialUserIdOrderByCreatedAtAsc(Long officialUserId) {
-        return findWhere(OFFICIAL_AUDIT_LOG.OFFICIAL_USER_ID.eq(officialUserId),
-                OFFICIAL_AUDIT_LOG.CREATED_AT.asc(), OFFICIAL_AUDIT_LOG.ID.asc());
-    }
-
     @Override
     protected List<Field<?>> insertOnly() {
         return List.of(OFFICIAL_AUDIT_LOG.CREATED_AT);

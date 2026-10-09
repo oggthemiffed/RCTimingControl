@@ -119,7 +119,6 @@ class EventAndClassRepositoriesIT extends AbstractIntegrationTest {
         String stored = dsl.select(cast(EVENTS.EVENT_DATE, String.class)).from(EVENTS)
                 .where(EVENTS.ID.eq(saved.getId())).fetchSingle().value1();
         assertThat(stored).isEqualTo("2026-11-01");
-        assertThat(events.findByStatus(EventStatus.COMPLETED)).extracting(Event::getId).contains(saved.getId());
     }
 
     @Test

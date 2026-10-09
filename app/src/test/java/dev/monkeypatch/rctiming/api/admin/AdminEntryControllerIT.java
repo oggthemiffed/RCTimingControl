@@ -3,12 +3,12 @@ package dev.monkeypatch.rctiming.api.admin;
 import dev.monkeypatch.rctiming.AbstractIntegrationTest;
 import dev.monkeypatch.rctiming.api.auth.AuthResponse;
 import dev.monkeypatch.rctiming.api.auth.LoginRequest;
-import dev.monkeypatch.rctiming.domain.entry.EntryAuditLog;
-import dev.monkeypatch.rctiming.domain.entry.EntryAuditLogRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.EntryAuditLogRecord;
 import dev.monkeypatch.rctiming.security.JwtTokenService;
+import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.ENTRY_AUDIT_LOG;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AdminEntryControllerIT extends AbstractIntegrationTest {
@@ -39,7 +40,7 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
     UserRepository userRepository;
 
     @Autowired
-    EntryAuditLogRepository entryAuditLogRepository;
+    DSLContext dsl;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -94,7 +95,7 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
         assertThat(withdrawResp.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(withdrawResp.getBody().get("status")).isEqualTo("WITHDRAWN");
 
-        List<EntryAuditLog> logs = entryAuditLogRepository.findByEntryIdOrderByCreatedAtAsc(entryId);
+        List<EntryAuditLogRecord> logs = entryLog(entryId);
         assertThat(logs).anyMatch(l -> "ADMIN_WITHDRAW".equals(l.getAction()));
     }
 
@@ -247,5 +248,12 @@ class AdminEntryControllerIT extends AbstractIntegrationTest {
     /** Transponder numbers are at most 20 characters. */
     private String uniqueNumber() {
         return "A" + (System.nanoTime() % 1_000_000_000_000L) + (++counter);
+    }
+
+    private List<EntryAuditLogRecord> entryLog(Long entryId) {
+        return dsl.selectFrom(ENTRY_AUDIT_LOG)
+                .where(ENTRY_AUDIT_LOG.ENTRY_ID.eq(entryId))
+                .orderBy(ENTRY_AUDIT_LOG.CREATED_AT, ENTRY_AUDIT_LOG.ID)
+                .fetch();
     }
 }

@@ -28,10 +28,6 @@ public class EntryAuditLogRepository extends JooqRepository<EntryAuditLog, Entry
                 .fetch(r -> toEntity(r.into(ENTRY_AUDIT_LOG)));
     }
 
-    public List<EntryAuditLog> findByEntryIdOrderByCreatedAtAsc(Long entryId) {
-        return findWhere(ENTRY_AUDIT_LOG.ENTRY_ID.eq(entryId), ENTRY_AUDIT_LOG.CREATED_AT.asc(), ENTRY_AUDIT_LOG.ID.asc());
-    }
-
     @Override
     protected EntryAuditLog toEntity(EntryAuditLogRecord r) {
         EntryAuditLog log = new EntryAuditLog();

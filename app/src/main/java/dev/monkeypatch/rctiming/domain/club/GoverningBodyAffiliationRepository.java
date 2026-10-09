@@ -5,8 +5,6 @@ import dev.monkeypatch.rctiming.persistence.JooqRepository;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 import static dev.monkeypatch.rctiming.jooq.generated.tables.GoverningBodyAffiliations.GOVERNING_BODY_AFFILIATIONS;
 
 @Repository
@@ -15,14 +13,6 @@ public class GoverningBodyAffiliationRepository
 
     public GoverningBodyAffiliationRepository(DSLContext dsl) {
         super(dsl, GOVERNING_BODY_AFFILIATIONS, GOVERNING_BODY_AFFILIATIONS.ID);
-    }
-
-    public Optional<GoverningBodyAffiliation> findByCode(String code) {
-        return findOne(GOVERNING_BODY_AFFILIATIONS.CODE.eq(code));
-    }
-
-    public boolean existsByCode(String code) {
-        return dsl.fetchExists(GOVERNING_BODY_AFFILIATIONS, GOVERNING_BODY_AFFILIATIONS.CODE.eq(code));
     }
 
     @Override

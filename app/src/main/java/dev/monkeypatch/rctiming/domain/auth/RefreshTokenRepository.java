@@ -23,10 +23,6 @@ public class RefreshTokenRepository extends JooqRepository<RefreshToken, Refresh
         return findOne(REFRESH_TOKENS.TOKEN_HASH.eq(tokenHash));
     }
 
-    public List<RefreshToken> findByUserIdAndRevokedFalse(Long userId) {
-        return findWhere(REFRESH_TOKENS.USER_ID.eq(userId).and(REFRESH_TOKENS.REVOKED.isFalse()));
-    }
-
     /**
      * Revokes one token if it is still active, in a single statement. Returns false when it was already
      * revoked, so of two requests that present the same token at once, only one gets true. That keeps a

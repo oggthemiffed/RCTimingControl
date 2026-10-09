@@ -14,6 +14,7 @@ import dev.monkeypatch.rctiming.domain.format.TimedRaceConfig;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import org.jooq.DSLContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.ENTRY_AUDIT_LOG;
 import static dev.monkeypatch.rctiming.persistence.RoundTrip.assertSavedAndReloaded;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,6 +42,7 @@ class CompetitorAndEntryRepositoriesIT extends AbstractIntegrationTest {
     @Autowired EventRepository events;
     @Autowired EventClassRepository eventClasses;
     @Autowired UserRepository users;
+    @Autowired DSLContext dsl;
 
     private final List<Runnable> cleanup = new ArrayList<>();
 
@@ -197,12 +200,10 @@ class CompetitorAndEntryRepositoriesIT extends AbstractIntegrationTest {
                     c.setAfterSnapshot("{\"status\":\"PENDING\"}");
                     return c;
                 }, EntryAuditLog::getId);
-        assertThat(auditLogs.findByEntryIdOrderByCreatedAtAsc(saved.getId()))
-                .extracting(EntryAuditLog::getId).containsExactly(first.getId(), later.getId());
+        assertThat(entryLogIds(saved.getId())).containsExactly(first.getId(), later.getId());
 
         entries.deleteById(saved.getId());
-        assertThat(auditLogs.findByEntryIdOrderByCreatedAtAsc(saved.getId()))
-                .as("the audit log goes with its entry").isEmpty();
+        assertThat(entryLogIds(saved.getId())).as("the audit log goes with its entry").isEmpty();
     }
 
     private static Competitor competitor(String externalId) {
@@ -258,5 +259,12 @@ class CompetitorAndEntryRepositoriesIT extends AbstractIntegrationTest {
         u.setCreatedAt(T1);
         u.setUpdatedAt(T1);
         return u;
+    }
+
+    private List<Long> entryLogIds(Long entryId) {
+        return dsl.select(ENTRY_AUDIT_LOG.ID).from(ENTRY_AUDIT_LOG)
+                .where(ENTRY_AUDIT_LOG.ENTRY_ID.eq(entryId))
+                .orderBy(ENTRY_AUDIT_LOG.CREATED_AT, ENTRY_AUDIT_LOG.ID)
+                .fetch(ENTRY_AUDIT_LOG.ID);
     }
 }

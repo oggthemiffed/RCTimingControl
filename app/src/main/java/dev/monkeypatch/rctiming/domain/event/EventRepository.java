@@ -17,10 +17,6 @@ public class EventRepository extends JooqRepository<Event, EventsRecord> {
         super(dsl, EVENTS, EVENTS.ID);
     }
 
-    public List<Event> findByStatus(EventStatus status) {
-        return findWhere(EVENTS.STATUS.eq(status.name()));
-    }
-
     /**
      * Loads an event to change something checked across the whole event (L11). Write transactions
      * already run one at a time on the single write connection, so no row lock is needed; call this

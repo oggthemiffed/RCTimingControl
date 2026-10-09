@@ -7,19 +7,20 @@ import dev.monkeypatch.rctiming.api.auth.LoginRequest;
 import dev.monkeypatch.rctiming.domain.competitor.Competitor;
 import dev.monkeypatch.rctiming.domain.competitor.CompetitorRepository;
 import dev.monkeypatch.rctiming.domain.entry.Entry;
-import dev.monkeypatch.rctiming.domain.entry.EntryAuditLogRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryRepository;
 import dev.monkeypatch.rctiming.domain.entry.EntryStatus;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
 import dev.monkeypatch.rctiming.domain.user.Role;
 import dev.monkeypatch.rctiming.domain.user.User;
 import dev.monkeypatch.rctiming.domain.user.UserRepository;
+import dev.monkeypatch.rctiming.jooq.generated.tables.records.EntryAuditLogRecord;
 import dev.monkeypatch.rctiming.service.RoundGeneratorService;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest;
 import dev.monkeypatch.rctiming.timing.LapPassingEvent;
 import dev.monkeypatch.rctiming.timing.LapTimingService;
 import dev.monkeypatch.rctiming.timing.LiveTimingHub;
 import dev.monkeypatch.rctiming.timing.dto.LiveTimingRowDto;
+import org.jooq.DSLContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static dev.monkeypatch.rctiming.jooq.generated.tables.EntryAuditLog.ENTRY_AUDIT_LOG;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -51,11 +53,11 @@ class WalkInEntryIT extends AbstractIntegrationTest {
     @Autowired UserRepository userRepository;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired EntryRepository entryRepository;
-    @Autowired EntryAuditLogRepository auditLogRepository;
     @Autowired CompetitorRepository competitorRepository;
     @Autowired RaceEntryRepository raceEntryRepository;
     @Autowired RoundGeneratorService roundGeneratorService;
     @Autowired JdbcTemplate jdbc;
+    @Autowired DSLContext dsl;
 
     private String run;
     private String adminToken;
@@ -101,8 +103,8 @@ class WalkInEntryIT extends AbstractIntegrationTest {
         assertThat(competitor.getDisplayName()).isEqualTo("Wendy Walkin");
         assertThat(competitor.getExternalSource()).isNull();
 
-        assertThat(auditLogRepository.findByEntryIdOrderByCreatedAtAsc(entryId))
-                .extracting(log -> log.getAction()).containsExactly("ADMIN_CREATE");
+        assertThat(entryLog(entryId))
+                .extracting(EntryAuditLogRecord::getAction).containsExactly("ADMIN_CREATE");
     }
 
     @Test
@@ -115,7 +117,7 @@ class WalkInEntryIT extends AbstractIntegrationTest {
         Entry entry = entryRepository.findById(resp.getBody().get("entry").get("id").asLong()).orElseThrow();
         assertThat(entry.getCompetitorId()).isEqualTo(competitorId);
         // With no secondary transponder the audit row records JSON null, not the string "null"
-        String after = auditLogRepository.findByEntryIdOrderByCreatedAtAsc(entry.getId()).get(0).getAfterSnapshot();
+        String after = entryLog(entry.getId()).get(0).getAfterSnapshot();
         assertThat(after).contains("\"secondaryTransponderNumber\":null");
     }
 
@@ -150,19 +152,15 @@ class WalkInEntryIT extends AbstractIntegrationTest {
                 .getBody().get("entry").get("id").asLong();
 
         // The round generator puts the walk-in in a qualifying heat
-        var heats = roundGeneratorService.preview(new RoundGenerationRequest(eventId, 0, 1, 8,
+        roundGeneratorService.generate(new RoundGenerationRequest(eventId, 0, 1, 8,
                 List.of(new RoundGenerationRequest.ClassFinalsConfig(classId, 1, 10, 0))));
-        assertThat(heats).filteredOn(h -> h.finalLetter() == null)
-                .anySatisfy(h -> assertThat(h.driverNames()).contains("Entry#" + entryId));
-
-        // Grid it in a heat, as race control does, and feed it passings
-        long roundId = jdbc.queryForObject("""
-                insert into rounds (event_id, type, round_number, sequence_in_event)
-                values (?, 'QUALIFIER', 1, 1) returning id""", Long.class, eventId);
         long raceId = jdbc.queryForObject("""
-                insert into races (round_id, event_class_id, heat_number, sequence_in_round, start_type, status)
-                values (?, ?, 1, 1, 'STAGGER', 'RUNNING') returning id""", Long.class, roundId, classId);
-        jdbc.update("insert into race_entries (race_id, entry_id, grid_position) values (?, ?, 1)", raceId, entryId);
+                select r.id from race_entries re
+                join races r on r.id = re.race_id join rounds ro on ro.id = r.round_id
+                where re.entry_id = ? and ro.type = 'QUALIFIER'""", Long.class, entryId);
+
+        // Run that heat, as race control does, and feed it passings
+        jdbc.update("update races set status = 'RUNNING' where id = ?", raceId);
 
         // Called directly so the passings are processed synchronously (the bean's listener is @Async)
         LapTimingService timing = new LapTimingService(mock(LiveTimingHub.class), raceEntryRepository,
@@ -307,5 +305,12 @@ class WalkInEntryIT extends AbstractIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(token);
         return headers;
+    }
+
+    private List<EntryAuditLogRecord> entryLog(Long entryId) {
+        return dsl.selectFrom(ENTRY_AUDIT_LOG)
+                .where(ENTRY_AUDIT_LOG.ENTRY_ID.eq(entryId))
+                .orderBy(ENTRY_AUDIT_LOG.CREATED_AT, ENTRY_AUDIT_LOG.ID)
+                .fetch();
     }
 }

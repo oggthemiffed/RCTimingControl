@@ -11,7 +11,6 @@ import dev.monkeypatch.rctiming.domain.format.StartType;
 import dev.monkeypatch.rctiming.domain.race.Race;
 import dev.monkeypatch.rctiming.domain.race.RaceEntry;
 import dev.monkeypatch.rctiming.domain.race.RaceEntryRepository;
-import dev.monkeypatch.rctiming.domain.race.RaceLabel;
 import dev.monkeypatch.rctiming.domain.race.RaceRepository;
 import dev.monkeypatch.rctiming.domain.race.RaceStatus;
 import dev.monkeypatch.rctiming.domain.race.Round;
@@ -20,7 +19,6 @@ import dev.monkeypatch.rctiming.domain.race.RoundStatus;
 import dev.monkeypatch.rctiming.domain.race.RoundType;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest;
 import dev.monkeypatch.rctiming.service.dto.RoundGenerationRequest.ClassFinalsConfig;
-import dev.monkeypatch.rctiming.service.dto.RoundPreviewDto;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +27,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Generates all Round, Race, and RaceEntry records for an event in a single transaction.
@@ -67,17 +64,6 @@ public class RoundGeneratorService {
         this.eventClassRepository = eventClassRepository;
         this.bumpUpSeedingService = bumpUpSeedingService;
         this.raceFormatService = raceFormatService;
-    }
-
-    /**
-     * Computes what would be generated without persisting anything.
-     *
-     * @param request generation parameters
-     * @return preview rows ordered by sequenceInEvent
-     */
-    public List<RoundPreviewDto> preview(RoundGenerationRequest request) {
-        GenerationPlan plan = buildPlan(request);
-        return plan.toPreviewDtos();
     }
 
     /**
@@ -134,7 +120,6 @@ public class RoundGeneratorService {
 
         // For each class, load CONFIRMED entries and compute snake-draft heat assignment
         Map<Long, List<List<Long>>> heatsByClass = new HashMap<>(); // classId -> list of heats (each heat is list of entryIds)
-        Map<Long, Map<Long, String>> driverNamesByClass = new HashMap<>(); // classId -> entryId -> display name (stub: entryId as string)
 
         for (EventClass ec : eventClasses) {
             List<Entry> entries = entryRepository.findByEventClassIdAndStatus(
@@ -147,7 +132,6 @@ public class RoundGeneratorService {
                     : (int) Math.ceil((double) entries.size() / request.maxCarsPerHeat());
             if (heatCount == 0) {
                 heatsByClass.put(ec.getId(), List.of());
-                driverNamesByClass.put(ec.getId(), Map.of());
                 continue;
             }
 
@@ -164,16 +148,9 @@ public class RoundGeneratorService {
             }
 
             heatsByClass.put(ec.getId(), heats);
-
-            // Driver names: use entryId as placeholder (no User join in this layer)
-            Map<Long, String> names = new HashMap<>();
-            for (Entry e : entries) {
-                names.put(e.getId(), "Entry#" + e.getId());
-            }
-            driverNamesByClass.put(ec.getId(), names);
         }
 
-        return new GenerationPlan(request, eventClasses, heatsByClass, driverNamesByClass);
+        return new GenerationPlan(request, eventClasses, heatsByClass);
     }
 
     // -------------------------------------------------------------------------
@@ -185,34 +162,13 @@ public class RoundGeneratorService {
         private final RoundGenerationRequest request;
         private final List<EventClass> eventClasses;
         private final Map<Long, List<List<Long>>> heatsByClass;
-        private final Map<Long, Map<Long, String>> driverNamesByClass;
 
         GenerationPlan(RoundGenerationRequest request,
                        List<EventClass> eventClasses,
-                       Map<Long, List<List<Long>>> heatsByClass,
-                       Map<Long, Map<Long, String>> driverNamesByClass) {
+                       Map<Long, List<List<Long>>> heatsByClass) {
             this.request = request;
             this.eventClasses = eventClasses;
             this.heatsByClass = heatsByClass;
-            this.driverNamesByClass = driverNamesByClass;
-        }
-
-        List<RoundPreviewDto> toPreviewDtos() {
-            List<RoundPreviewDto> result = new ArrayList<>();
-            int sequence = 1;
-
-            // Practice rounds
-            for (int r = 1; r <= request.practiceRoundsCount(); r++) {
-                sequence = addPreviewRound(result, RoundType.PRACTICE, r, sequence, false);
-            }
-            // Qualifying rounds
-            for (int r = 1; r <= request.qualifyingRoundsCount(); r++) {
-                sequence = addPreviewRound(result, RoundType.QUALIFIER, r, sequence, false);
-            }
-            // Finals rounds (one "round" per final letter per class)
-            sequence = addFinalsPreview(result, sequence);
-
-            return result;
         }
 
         void persist() {
@@ -220,8 +176,7 @@ public class RoundGeneratorService {
 
             // Practice rounds
             for (int r = 1; r <= request.practiceRoundsCount(); r++) {
-                sequence = persistRound(RoundType.PRACTICE, r, sequence,
-                        r == 1 && request.practiceRoundsCount() >= 1);
+                sequence = persistRound(RoundType.PRACTICE, r, sequence, r == 1);
             }
             // Qualifying rounds
             for (int r = 1; r <= request.qualifyingRoundsCount(); r++) {
@@ -230,56 +185,6 @@ public class RoundGeneratorService {
             }
             // Finals (empty grids — seeded by BumpUpSeedingService after qualifying)
             persistFinals(sequence);
-        }
-
-        // --- Preview helpers ---
-
-        private int addPreviewRound(List<RoundPreviewDto> result,
-                                     RoundType type, int roundNumber,
-                                     int sequenceStart, boolean isFinals) {
-            int seq = sequenceStart;
-            for (EventClass ec : eventClasses) {
-                List<List<Long>> heats = heatsByClass.getOrDefault(ec.getId(), List.of());
-                Map<Long, String> names = driverNamesByClass.getOrDefault(ec.getId(), Map.of());
-                for (int h = 0; h < heats.size(); h++) {
-                    List<String> driverNames = heats.get(h).stream()
-                            .map(eid -> names.getOrDefault(eid, "Entry#" + eid))
-                            .collect(Collectors.toList());
-                    result.add(new RoundPreviewDto(
-                            seq++,
-                            RaceLabel.round(type.name(), roundNumber, null),
-                            roundNumber,
-                            "Class#" + ec.getId(),
-                            h + 1,
-                            null,
-                            driverNames
-                    ));
-                }
-            }
-            return seq;
-        }
-
-        private int addFinalsPreview(List<RoundPreviewDto> result, int sequenceStart) {
-            int seq = sequenceStart;
-            for (EventClass ec : eventClasses) {
-                int[] finalsConfig = resolveFinalsConfig(ec);
-                int finalsCount = finalsConfig[0];
-                for (int f = 0; f < finalsCount; f++) {
-                    // finals go from highest letter to lowest (C runs first, then B, then A)
-                    // but in preview we list them by final letter A, B, C ordering
-                    String finalLetter = String.valueOf((char) ('A' + f));
-                    result.add(new RoundPreviewDto(
-                            seq++,
-                            RaceLabel.round(RoundType.FINAL.name(), 1, finalLetter),
-                            1,
-                            "Class#" + ec.getId(),
-                            1,
-                            finalLetter,
-                            List.of() // empty until seeded
-                    ));
-                }
-            }
-            return seq;
         }
 
         // --- Persist helpers ---
@@ -331,8 +236,7 @@ public class RoundGeneratorService {
             // Run order: lowest final first (C runs before B before A).
             // We create rounds in A→B→C order here; the sequenceInEvent determines run order.
             for (EventClass ec : eventClasses) {
-                int[] finalsConfig = resolveFinalsConfig(ec);
-                int finalsCount = finalsConfig[0];
+                int finalsCount = resolveFinalsConfig(ec).finalsCount();
                 // finals run lowest-first (C→B→A), so we persist C first with lower sequence
                 // Actually we store them A=1, B=2, C=3 in finalLetter, but run C first by
                 // assigning sequenceInEvent in reverse (C gets lower seq than B, B lower than A).
@@ -366,7 +270,7 @@ public class RoundGeneratorService {
 
         // --- Config helpers ---
 
-        private int[] resolveFinalsConfig(EventClass ec) {
+        private FinalsConfig resolveFinalsConfig(EventClass ec) {
             // Look for per-class override in request first
             ClassFinalsConfig override = request.classFinalsConfigs().stream()
                     .filter(c -> ec.getId().equals(c.eventClassId()))
@@ -386,7 +290,7 @@ public class RoundGeneratorService {
                     ec.getBumpCount(),
                     0);
 
-            return new int[]{finalsCount, carsPerFinal, bumpCount};
+            return new FinalsConfig(finalsCount, carsPerFinal, bumpCount);
         }
 
         private int coalesce(Integer... values) {
@@ -395,5 +299,9 @@ public class RoundGeneratorService {
             }
             return 0;
         }
+    }
+
+    /** A class's finals, from the request's override, then the class, then the defaults. */
+    private record FinalsConfig(int finalsCount, int carsPerFinal, int bumpCount) {
     }
 }
